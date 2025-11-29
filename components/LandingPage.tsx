@@ -321,13 +321,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
 
       {/* Main Content */}
       <div className="relative z-10 flex items-center justify-center min-h-[calc(100vh-73px)]">
-        <div className="w-full max-w-6xl px-4 flex flex-col items-center gap-12 pt-40 pb-4 sm:py-12">
+        <div className="w-full max-w-6xl px-4 flex flex-col items-center gap-12 pt-28 pb-4 sm:py-12">
           {view === 'landing' ? (
             // Welcome Screen
             <>
               {/* Hero Section */}
               <div className="flex flex-col items-center gap-6 animate-in fade-in slide-in-from-top-8 duration-1000 text-center max-w-3xl px-4">
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">
                     Gerencie Suas Apostas com <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#17baa4] to-emerald-400">Inteligência</span>
                   </h2>
@@ -337,7 +337,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
                 </div>
 
                 {/* Mobile/Desktop Hero Buttons */}
-                <div className="flex flex-row items-center justify-center gap-4 w-full mt-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+                <div className="flex flex-row items-center justify-center gap-6 w-full mt-12 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
                   <Button
                     variant="primary"
                     size="lg"
