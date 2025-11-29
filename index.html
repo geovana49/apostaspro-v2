@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ApostasPro</title>
+  <!-- Favicon: Green Rounded Square with Trending Arrow -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            background: '#090c19', // New Deep Midnight Blue
+            surface: '#151b2e',    // Harmonized Dark Navy Surface
+            primary: '#17baa4',    // New Teal
+            primaryDark: '#129683', // Darker shade for gradients
+            secondary: '#FFAB00',  // Golden Amber
+            danger: '#FF5252',     // Coral Red
+            promotion: '#8B5CF6',  // Violet
+            textMain: '#FFFFFF',
+            textMuted: '#94a3b8',  // Slate-400 (Blue-ish gray)
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          animation: {
+            'float': 'float 6s ease-in-out infinite',
+            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'wiggle': 'wiggle 1s ease-in-out infinite',
+            'spin-slow': 'spin 8s linear infinite',
+            'bounce-subtle': 'bounce-subtle 2s infinite',
+            'spin-y-slow': 'spin-y 6s linear infinite',
+            'sheen': 'sheen 8s ease-in-out infinite',
+            'pulse-scale': 'pulse-scale 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-10px)' },
+            },
+            wiggle: {
+              '0%, 100%': { transform: 'rotate(-3deg)' },
+              '50%': { transform: 'rotate(3deg)' },
+            },
+            'bounce-subtle': {
+              '0%, 100%': { transform: 'translateY(-2%)' },
+              '50%': { transform: 'translateY(0)' },
+            },
+            'spin-y': {
+              '0%': { transform: 'rotateY(0deg)' },
+              '100%': { transform: 'rotateY(360deg)' },
+            },
+            sheen: {
+              '0%': { left: '-100%' },
+              '50%, 100%': { left: '200%' },
+            },
+            'pulse-scale': {
+              '0%, 100%': { transform: 'scale(1)' },
+              '50%': { transform: 'scale(1.05)' },
+            }
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    body {
+      background-color: #090c19;
+      color: white;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    /* 3D Utilities */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+
+    .rotate-x-12 {
+      transform: rotateX(12deg);
+    }
+
+    .group:hover .group-hover\:rotate-x-0 {
+      transform: rotateX(0deg);
+    }
+
+    .hero-card-transform {
+      transform: rotateY(-12deg) rotateX(5deg);
+      transition: transform 0.7s ease-out;
+    }
+
+    .hero-card-transform:hover {
+      transform: rotateY(0deg) rotateX(0deg);
+    }
+
+    /* Animations */
+    .animate-in {
+      animation-duration: 0.5s;
+      animation-fill-mode: both;
+      animation-timing-function: ease-out;
+    }
+
+    .fade-in {
+      animation-name: fadeIn;
+    }
+
+    .slide-in-from-bottom-4 {
+      --tw-enter-translate-y: 1rem;
+      animation-name: slideIn;
+    }
+
+    .slide-in-from-bottom-6 {
+      --tw-enter-translate-y: 1.5rem;
+      animation-name: slideIn;
+    }
+
+    .slide-in-from-bottom-8 {
+      --tw-enter-translate-y: 2rem;
+      animation-name: slideIn;
+    }
+
+    .slide-in-from-bottom-10 {
+      --tw-enter-translate-y: 2.5rem;
+      animation-name: slideIn;
+    }
+
+    .slide-in-from-bottom-12 {
+      --tw-enter-translate-y: 3rem;
+      animation-name: slideIn;
+    }
+
+    .delay-100 {
+      animation-delay: 100ms;
+    }
+
+    .delay-200 {
+      animation-delay: 200ms;
+    }
+
+    .delay-300 {
+      animation-delay: 300ms;
+    }
+
+    .delay-500 {
+      animation-delay: 500ms;
+    }
+
+    .duration-1000 {
+      animation-duration: 1000ms;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(var(--tw-enter-translate-y, 1rem));
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "recharts": "https://aistudiocdn.com/recharts@^3.5.0",
+    "firebase/app": "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js",
+    "firebase/auth": "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js",
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js",
+    "firebase/storage": "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js",
+    "firebase/": "https://aistudiocdn.com/firebase@^12.6.0/"
+  }
+}
+</script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>
