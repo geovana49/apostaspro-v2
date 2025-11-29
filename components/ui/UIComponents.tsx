@@ -271,7 +271,7 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
   return createPortal(
     <div
       ref={pickerRef}
-      className="fixed z-[9999] w-[280px] bg-[#1c2438] border border-white/10 rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+      className="fixed z-[100001] w-[280px] bg-[#1c2438] border border-white/10 rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
       style={{
         top: anchorEl ? position.top : '50%',
         left: anchorEl ? position.left : '50%',
@@ -707,7 +707,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
             position: 'fixed',
             left: coords.left,
             width: coords.width,
-            zIndex: 9999,
+            zIndex: 999999,
             ...(coords.placement === 'bottom'
               ? { top: coords.top }
               : { bottom: coords.bottom }
@@ -789,13 +789,14 @@ interface ModalProps {
   title: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  zIndex?: number;
 }
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer }) => {
+export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer, zIndex = 99999 }) => {
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+    <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex }}>
       <div className="absolute inset-0 bg-[#090c19]/80 backdrop-blur-md transition-opacity" onClick={onClose} />
       <div className="relative bg-[#151b2e] border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-300">
         <div className="flex items-center justify-between p-5 border-b border-white/5 bg-[#1c2438]">
@@ -933,7 +934,7 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[100002] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-[#151b2e] border border-white/10 rounded-2xl w-full max-w-sm flex flex-col shadow-2xl">
         <div className="p-4 border-b border-white/5 flex items-center justify-between">
           <h3 className="font-bold text-white flex items-center gap-2"><Crop size={16} /> Ajustar Imagem</h3>
@@ -1078,7 +1079,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ isOpen, onClose, image
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[100002] bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
       {/* Header with Counter and Close Button */}
@@ -1127,5 +1128,155 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ isOpen, onClose, image
       </div>
     </div>,
     document.body
+  );
+};
+
+export const DateRangePickerModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  startDate: Date;
+  endDate: Date;
+  onSelect: (start: Date, end: Date) => void;
+}> = ({ isOpen, onClose, startDate, endDate, onSelect }) => {
+  const [start, setStart] = useState(startDate.toISOString().split('T')[0]);
+  const [end, setEnd] = useState(endDate.toISOString().split('T')[0]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setStart(startDate.toISOString().split('T')[0]);
+      setEnd(endDate.toISOString().split('T')[0]);
+    }
+  }, [isOpen, startDate, endDate]);
+
+  const handleSave = () => {
+    const [sy, sm, sd] = start.split('-').map(Number);
+    const [ey, em, ed] = end.split('-').map(Number);
+    onSelect(new Date(sy, sm - 1, sd), new Date(ey, em - 1, ed));
+    onClose();
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Selecionar Período" zIndex={100000}>
+      <div className="space-y-4">
+        <Input
+          type="date"
+          label="Data Inicial"
+          value={start}
+          onChange={(e) => setStart(e.target.value)}
+        />
+        <Input
+          type="date"
+          label="Data Final"
+          value={end}
+          onChange={(e) => setEnd(e.target.value)}
+        />
+        <div className="flex justify-end gap-2 mt-4">
+          <Button variant="neutral" onClick={onClose}>Cancelar</Button>
+          <Button onClick={handleSave}>Aplicar</Button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+// --- Custom Calendar ---
+const Calendar: React.FC<{
+  selectedDate: Date;
+  onChange: (date: Date) => void;
+}> = ({ selectedDate, onChange }) => {
+  const [viewDate, setViewDate] = useState(selectedDate);
+
+  const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
+
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const daysInMonth = getDaysInMonth(year, month);
+  const firstDay = getFirstDayOfMonth(year, month);
+
+  const days = [];
+  for (let i = 0; i < firstDay; i++) {
+    days.push(<div key={`empty-${i}`} className="h-8" />);
+  }
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(year, month, day);
+    const isSelected = date.toDateString() === selectedDate.toDateString();
+    const isToday = date.toDateString() === new Date().toDateString();
+
+    days.push(
+      <button
+        key={day}
+        onClick={() => onChange(date)}
+        className={`
+          h-8 w-8 rounded-full flex items-center justify-center text-sm transition-all
+          ${isSelected ? 'bg-primary text-[#090c19] font-bold shadow-lg shadow-primary/25' : 'text-gray-300 hover:bg-white/10 hover:text-white'}
+          ${isToday && !isSelected ? 'border border-primary/50 text-primary' : ''}
+        `}
+      >
+        {day}
+      </button>
+    );
+  }
+
+  const months = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ];
+
+  const handlePrevMonth = () => setViewDate(new Date(year, month - 1, 1));
+  const handleNextMonth = () => setViewDate(new Date(year, month + 1, 1));
+
+  return (
+    <div className="bg-[#0d1121] border border-white/5 rounded-xl p-4 select-none">
+      <div className="flex items-center justify-between mb-4">
+        <button onClick={handlePrevMonth} className="p-1 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors">
+          <ChevronLeft size={18} />
+        </button>
+        <span className="font-bold text-white capitalize">{months[month]} {year}</span>
+        <button onClick={handleNextMonth} className="p-1 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors">
+          <ChevronRight size={18} />
+        </button>
+      </div>
+      <div className="grid grid-cols-7 gap-1 mb-2 text-center">
+        {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => (
+          <span key={i} className="text-[10px] font-bold text-gray-500">{d}</span>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1 place-items-center">
+        {days}
+      </div>
+    </div>
+  );
+};
+
+export const SingleDatePickerModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  date: Date;
+  onSelect: (date: Date) => void;
+}> = ({ isOpen, onClose, date, onSelect }) => {
+  const [selectedDate, setSelectedDate] = useState(date);
+
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedDate(date);
+    }
+  }, [isOpen, date]);
+
+  const handleSave = () => {
+    onSelect(selectedDate);
+    onClose();
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Selecionar Data" zIndex={100000}>
+      <div className="space-y-4">
+        <Calendar selectedDate={selectedDate} onChange={setSelectedDate} />
+        <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-white/5">
+          <Button variant="neutral" onClick={onClose}>Cancelar</Button>
+          <Button onClick={handleSave}>Confirmar Data</Button>
+        </div>
+      </div>
+    </Modal>
   );
 };

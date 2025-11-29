@@ -1,5 +1,7 @@
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./firebase";
+import { FirestoreService } from "./services/firestoreService";
 import { Page, Bet, ExtraGain, AppSettings, Bookmaker, StatusItem, PromotionItem, OriginItem, SettingsTab, User } from './types';
 import { INITIAL_BOOKMAKERS, INITIAL_STATUSES, INITIAL_PROMOTIONS, INITIAL_ORIGINS } from './constants';
 import Layout from './components/Layout';
@@ -9,9 +11,6 @@ import ExtraGains from './components/ExtraGains';
 import Coach from './components/Coach';
 import Settings from './components/Settings';
 import LandingPage from './components/LandingPage';
-
-// --- Local Storage Persistence ---
-const STORAGE_KEY = 'apostaspro_data';
 
 const DEFAULT_SETTINGS: AppSettings = {
   showProfileInHeader: true,
@@ -39,70 +38,76 @@ const App: React.FC = () => {
   // Current User
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // --- Debounce Save & Sync Refs ---
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Load data from LocalStorage on mount
+  // --- Auth & Data Synchronization ---
   useEffect(() => {
-    const savedData = localStorage.getItem(STORAGE_KEY);
-    if (savedData) {
-      try {
-        const parsedData = JSON.parse(savedData);
-        setBets(parsedData.bets || []);
-        setGains(parsedData.gains || []);
-        setBookmakers(parsedData.bookmakers || INITIAL_BOOKMAKERS);
-        setStatuses(parsedData.statuses || INITIAL_STATUSES);
-        setPromotions(parsedData.promotions || INITIAL_PROMOTIONS);
-        setOrigins(parsedData.origins || INITIAL_ORIGINS);
-        setSettings(parsedData.settings || DEFAULT_SETTINGS);
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        // User is signed in
+        const user: User = {
+          uid: firebaseUser.uid,
+          username: firebaseUser.displayName || 'Usuário',
+          email: firebaseUser.email || '',
+        };
+        setCurrentUser(user);
+        setIsLoggedIn(true);
 
-        // Mock User Login
-        if (parsedData.user) {
-          setCurrentUser(parsedData.user);
-          setIsLoggedIn(true);
-        }
-      } catch (e) {
-        console.error("Erro ao carregar dados locais:", e);
+        // Initialize Data if needed (first login)
+        await FirestoreService.initializeUserData(user.uid, {
+          bookmakers: INITIAL_BOOKMAKERS,
+          statuses: INITIAL_STATUSES,
+          promotions: INITIAL_PROMOTIONS,
+          origins: INITIAL_ORIGINS,
+          settings: {
+            ...DEFAULT_SETTINGS,
+            username: user.username,
+            email: user.email
+          }
+        });
+
+        // Subscribe to Real-time Data
+        const unsubBets = FirestoreService.subscribeToBets(user.uid, setBets);
+        const unsubGains = FirestoreService.subscribeToGains(user.uid, setGains);
+        const unsubSettings = FirestoreService.subscribeToSettings(user.uid, (newSettings) => {
+          if (newSettings) setSettings(newSettings);
+        });
+
+        // Subscribe to Configurations
+        const unsubBookmakers = FirestoreService.subscribeToCollection<Bookmaker>(user.uid, "bookmakers", setBookmakers);
+        const unsubStatuses = FirestoreService.subscribeToCollection<StatusItem>(user.uid, "statuses", setStatuses);
+        const unsubPromotions = FirestoreService.subscribeToCollection<PromotionItem>(user.uid, "promotions", setPromotions);
+        const unsubOrigins = FirestoreService.subscribeToCollection<OriginItem>(user.uid, "origins", setOrigins);
+
+        setIsLoading(false);
+
+        // Cleanup subscriptions on logout/unmount
+        return () => {
+          unsubBets();
+          unsubGains();
+          unsubSettings();
+          unsubBookmakers();
+          unsubStatuses();
+          unsubPromotions();
+          unsubOrigins();
+        };
+      } else {
+        // User is signed out
+        setCurrentUser(null);
+        setIsLoggedIn(false);
+        setBets([]);
+        setGains([]);
+        setBookmakers(INITIAL_BOOKMAKERS);
+        setStatuses(INITIAL_STATUSES);
+        setPromotions(INITIAL_PROMOTIONS);
+        setOrigins(INITIAL_ORIGINS);
+        setSettings(DEFAULT_SETTINGS);
+        setIsLoading(false);
       }
-    } else {
-      // Initialize defaults if no data
-      setBookmakers(INITIAL_BOOKMAKERS);
-      setStatuses(INITIAL_STATUSES);
-      setPromotions(INITIAL_PROMOTIONS);
-      setOrigins(INITIAL_ORIGINS);
-      setSettings(DEFAULT_SETTINGS);
-    }
-    setIsDataLoaded(true);
+    });
+
+    return () => unsubscribeAuth();
   }, []);
-
-  // Save data to LocalStorage whenever state changes
-  useEffect(() => {
-    if (!isDataLoaded) return;
-
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-
-    saveTimeoutRef.current = setTimeout(() => {
-      const dataToSave = {
-        bets,
-        gains,
-        bookmakers,
-        statuses,
-        promotions,
-        origins,
-        settings,
-        user: currentUser, // Persist user session
-        lastUpdated: new Date().toISOString()
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
-      console.log("Dados salvos localmente!");
-    }, 1000); // Debounce 1s
-
-  }, [bets, gains, bookmakers, statuses, promotions, origins, settings, currentUser, isDataLoaded]);
-
 
   const handleNavigate = (page: Page, tab?: SettingsTab) => {
     setActivePage(page);
@@ -112,30 +117,30 @@ const App: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    setIsLoggedIn(false);
-    setCurrentUser(null);
-    // Optional: Clear storage on logout if desired, or keep it.
-    // localStorage.removeItem(STORAGE_KEY);
+    await auth.signOut();
   };
 
-  const handleFactoryReset = () => {
-    setBets([]);
-    setGains([]);
-    setBookmakers(INITIAL_BOOKMAKERS);
-    setStatuses(INITIAL_STATUSES);
-    setPromotions(INITIAL_PROMOTIONS);
-    setOrigins(INITIAL_ORIGINS);
-    setSettings(DEFAULT_SETTINGS);
-  };
+  const handleFactoryReset = async () => {
+    if (!currentUser) return;
 
-  const handleLogin = (user: User) => {
-    setCurrentUser(user);
-    setIsLoggedIn(true);
+    try {
+      setIsLoading(true);
+      await FirestoreService.factoryReset(currentUser.uid);
+      window.location.reload();
+    } catch (error) {
+      console.error("Error resetting data:", error);
+      alert("Erro ao resetar dados. Tente novamente.");
+      setIsLoading(false);
+    }
   };
 
   // Render
+  if (isLoading) {
+    return <div className="min-h-screen bg-[#020617] flex items-center justify-center text-white">Carregando...</div>;
+  }
+
   if (!isLoggedIn) {
-    return <LandingPage onLogin={handleLogin} />;
+    return <LandingPage onLogin={() => { }} />; // LandingPage handles auth internally now via Firebase
   }
 
   return (
@@ -143,7 +148,7 @@ const App: React.FC = () => {
       activePage={activePage}
       onNavigate={handleNavigate}
       settings={settings}
-      setSettings={setSettings}
+      setSettings={setSettings} // This will need to be updated to save to Firestore
       onLogout={handleLogout}
     >
       {activePage === Page.OVERVIEW && <Overview bets={bets} gains={gains} settings={settings} setSettings={setSettings} />}
@@ -151,19 +156,20 @@ const App: React.FC = () => {
       {activePage === Page.BETS && (
         <MyBets
           bets={bets}
-          setBets={setBets}
+          setBets={setBets} // This will need to be updated to save to Firestore
           bookmakers={bookmakers}
           statuses={statuses}
           promotions={promotions}
           settings={settings}
           setSettings={setSettings}
+          currentUser={currentUser}
         />
       )}
 
       {activePage === Page.GAINS && (
         <ExtraGains
           gains={gains}
-          setGains={setGains}
+          setGains={setGains} // This will need to be updated to save to Firestore
           origins={origins}
           setOrigins={setOrigins}
           bookmakers={bookmakers}
@@ -198,6 +204,7 @@ const App: React.FC = () => {
           setAppSettings={setSettings}
           initialTab={initialSettingsTab}
           onFactoryReset={handleFactoryReset}
+          currentUser={currentUser}
         />
       )}
     </Layout>

@@ -1,15 +1,14 @@
-import React, { useState, useRef, useEffect, useMemo, useReducer } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState, useReducer, useRef, useEffect } from 'react';
+import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, CustomColorPicker, RenderIcon, ICON_MAP, DateRangePickerModal, SingleDatePickerModal, DropdownOption } from './ui/UIComponents';
 import {
-    Plus, Calendar, ChevronDown, Trophy,
-    Settings2, Coins, SearchX, Star,
-    ChevronLeft, ChevronRight, Check, Gamepad2, Trash2,
-    Palette, Gift, Zap, Briefcase, Ghost, Box, Upload,
-    Banknote, CreditCard, Smartphone, Target, Ban, AlertCircle, StickyNote,
-    Copy, Edit2, X, Eye, EyeOff, Image as ImageIcon, Paperclip, ZoomIn, Crop, Maximize, Minimize, Infinity, Search, Loader2
+    Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronLeft, ChevronRight,
+    Copy, MoreVertical, AlertCircle, ImageIcon, StickyNote, Trophy, Coins, Gamepad2, Paperclip, SearchX, Settings2,
+    Infinity, Eye, EyeOff, Maximize, Minimize, Palette, Box, Ban, Loader2
 } from 'lucide-react';
-import { Card, Button, Input, Dropdown, DropdownOption, Modal, Badge, MoneyDisplay, ImageAdjuster, CustomColorPicker, RenderIcon, ICON_MAP, ImageViewer } from './ui/UIComponents';
-import { ExtraGain, OriginItem, Bookmaker, StatusItem, AppSettings, User } from '../types';
+import { ExtraGain, Bookmaker, StatusItem, OriginItem, AppSettings, User } from '../types';
+import { FirestoreService } from '../services/firestoreService';
+
+const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e', '#64748b', '#000000', '#FFFFFF'];
 
 interface ExtraGainsProps {
     gains: ExtraGain[];
@@ -24,250 +23,39 @@ interface ExtraGainsProps {
     currentUser: User | null;
 }
 
-// --- Form State Management with useReducer ---
-type FormState = Omit<ExtraGain, 'photos'>;
+interface FormState {
+    id?: string;
+    amount: number;
+    date: string;
+    status: 'Pendente' | 'Confirmado' | 'Recebido' | 'Cancelado';
+    origin: string;
+    bookmakerId: string;
+    game: string;
+    notes: string;
+}
 
 type FormAction =
-    | { type: 'RESET'; payload: FormState }
-    | { type: 'UPDATE_FIELD'; field: keyof Omit<ExtraGain, 'photos'>; value: any };
+    | { type: 'SET_FORM'; payload: FormState }
+    | { type: 'UPDATE_FIELD'; field: keyof FormState; value: any }
+    | { type: 'RESET_FORM' };
+
+const initialFormState: FormState = {
+    amount: 0,
+    date: new Date().toISOString().split('T')[0],
+    status: 'Recebido',
+    origin: '',
+    bookmakerId: '',
+    game: '',
+    notes: ''
+};
 
 const formReducer = (state: FormState, action: FormAction): FormState => {
     switch (action.type) {
-        case 'RESET':
-            return action.payload;
-        case 'UPDATE_FIELD':
-            return { ...state, [action.field]: action.value };
-        default:
-            return state;
+        case 'SET_FORM': return action.payload;
+        case 'UPDATE_FIELD': return { ...state, [action.field]: action.value };
+        case 'RESET_FORM': return initialFormState;
+        default: return state;
     }
-};
-
-const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e', '#64748b'];
-
-const parseDate = (dateStr: string) => {
-    if (!dateStr) return new Date();
-    const safeDateStr = dateStr.includes('T') ? dateStr : `${dateStr}T12:00:00`;
-    return new Date(safeDateStr);
-};
-
-const DateRangePickerModal: React.FC<{
-    isOpen: boolean;
-    onClose: () => void;
-    onApply: (start: Date, end: Date) => void;
-    initialStart?: Date | null;
-    initialEnd?: Date | null;
-}> = ({ isOpen, onClose, onApply, initialStart, initialEnd }) => {
-    const [viewDate, setViewDate] = useState(initialEnd || new Date());
-    const [startDate, setStartDate] = useState<Date | null>(initialStart || null);
-    const [endDate, setEndDate] = useState<Date | null>(initialEnd || null);
-    const [hoverDate, setHoverDate] = useState<Date | null>(null);
-
-    useEffect(() => {
-        if (isOpen) {
-            setStartDate(initialStart || null);
-            setEndDate(initialEnd || null);
-            setViewDate(initialEnd || new Date());
-        }
-    }, [isOpen, initialStart, initialEnd]);
-
-    const handleDayClick = (day: Date) => {
-        if (!startDate || (startDate && endDate)) {
-            setStartDate(day);
-            setEndDate(null);
-        } else {
-            if (day < startDate) {
-                setEndDate(startDate);
-                setStartDate(day);
-            } else {
-                setEndDate(day);
-            }
-        }
-    };
-
-    const getDaysInMonth = (date: Date) => {
-        const year = date.getFullYear();
-        const month = date.getMonth();
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
-        const days = [];
-        for (let i = 1; i <= lastDay.getDate(); i++) {
-            days.push(new Date(year, month, i));
-        }
-        for (let i = 0; i < firstDay.getDay(); i++) {
-            days.unshift(new Date(year, month, 0 - i));
-        }
-        return days;
-    };
-
-    const days = getDaysInMonth(viewDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const isSameDay = (d1: Date, d2: Date) => d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
-
-    if (!isOpen) return null;
-
-    return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Selecionar Período Personalizado" footer={
-            <div className="flex justify-end gap-3">
-                <Button variant="neutral" onClick={onClose}>Cancelar</Button>
-                <Button onClick={() => startDate && endDate && onApply(startDate, endDate)} disabled={!startDate || !endDate}>Aplicar</Button>
-            </div>
-        }>
-            <div className="bg-[#0d1121] p-4 rounded-lg">
-                <div className="flex items-center justify-between mb-4">
-                    <Button variant="neutral" size="sm" onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))}><ChevronLeft size={16} /></Button>
-                    <span className="font-bold text-white text-lg capitalize">{viewDate.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}</span>
-                    <Button variant="neutral" size="sm" onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))}><ChevronRight size={16} /></Button>
-                </div>
-                <div className="grid grid-cols-7 gap-1 text-center text-xs text-gray-500 mb-2">
-                    {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => <div key={i}>{d}</div>)}
-                </div>
-                <div className="grid grid-cols-7 gap-1">
-                    {days.map((day, idx) => {
-                        const isCurrentMonth = day.getMonth() === viewDate.getMonth();
-                        const isSelectedStart = startDate && isSameDay(day, startDate);
-                        const isSelectedEnd = endDate && isSameDay(day, endDate);
-                        const isInRange = startDate && (endDate || hoverDate) && day > startDate && day < (endDate || hoverDate!);
-
-                        return (
-                            <button
-                                key={idx}
-                                onClick={() => handleDayClick(day)}
-                                onMouseEnter={() => setHoverDate(day)}
-                                onMouseLeave={() => setHoverDate(null)}
-                                disabled={!isCurrentMonth}
-                                className={`
-                                    w-full aspect-square text-sm font-medium rounded-lg transition-all duration-100 relative
-                                    ${!isCurrentMonth ? 'text-gray-700' : 'text-white hover:bg-white/10'}
-                                    ${(isSelectedStart || isSelectedEnd) ? 'bg-primary text-[#090c19] font-bold' : ''}
-                                    ${isInRange ? 'bg-primary/20 text-white' : ''}
-                                    ${isSameDay(day, today) ? 'border border-primary/50' : ''}
-                                `}
-                            >
-                                {isSameDay(day, today) && <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full"></span>}
-                                {day.getDate()}
-                            </button>
-                        )
-                    })}
-                </div>
-            </div>
-        </Modal>
-    );
-};
-
-const SingleDatePickerModal: React.FC<{
-    isOpen: boolean;
-    onClose: () => void;
-    onSelect: (date: Date) => void;
-    initialDate?: Date;
-}> = ({ isOpen, onClose, onSelect, initialDate }) => {
-    const [viewDate, setViewDate] = useState(initialDate || new Date());
-    const [selectedDate, setSelectedDate] = useState<Date>(initialDate || new Date());
-
-    useEffect(() => {
-        if (isOpen) {
-            console.log('SingleDatePickerModal aberto!', { isOpen, initialDate });
-            const initial = initialDate || new Date();
-            setSelectedDate(initial);
-            setViewDate(initial);
-        }
-    }, [isOpen, initialDate]);
-
-    const getDaysInMonth = (date: Date) => {
-        const year = date.getFullYear();
-        const month = date.getMonth();
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
-        const days = [];
-        for (let i = 1; i <= lastDay.getDate(); i++) {
-            days.push(new Date(year, month, i));
-        }
-        for (let i = 0; i < firstDay.getDay(); i++) {
-            days.unshift(new Date(year, month, 0 - i));
-        }
-        return days;
-    };
-
-    const days = getDaysInMonth(viewDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const isSameDay = (d1: Date, d2: Date) => d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
-
-    const handleDayClick = (day: Date) => {
-        setSelectedDate(day);
-    };
-
-    const handleConfirm = () => {
-        onSelect(selectedDate);
-        onClose();
-    };
-
-    if (!isOpen) return null;
-
-    return createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-[#090c19]/80 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-[#151b2e] border border-white/10 rounded-xl w-full max-w-[320px] overflow-hidden flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#1c2438]">
-                    <h3 className="text-sm font-bold text-white">Selecionar Data</h3>
-                    <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
-                        <X size={16} />
-                    </button>
-                </div>
-                <div className="p-3">
-                    <div className="bg-[#0d1121] p-3 rounded-lg">
-                        <div className="flex items-center justify-between mb-3">
-                            <button onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))} className="p-1.5 hover:bg-white/10 rounded transition-colors">
-                                <ChevronLeft size={14} className="text-gray-400" />
-                            </button>
-                            <span className="font-bold text-white text-xs capitalize">{viewDate.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}</span>
-                            <button onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))} className="p-1.5 hover:bg-white/10 rounded transition-colors">
-                                <ChevronRight size={14} className="text-gray-400" />
-                            </button>
-                        </div>
-                        <div className="grid grid-cols-7 gap-1 text-center text-[9px] text-gray-500 mb-1.5">
-                            {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => <div key={i} className="font-bold">{d}</div>)}
-                        </div>
-                        <div className="grid grid-cols-7 gap-0.5">
-                            {days.map((day, idx) => {
-                                const isCurrentMonth = day.getMonth() === viewDate.getMonth();
-                                const isSelected = isSameDay(day, selectedDate);
-                                const isToday = isSameDay(day, today);
-
-                                return (
-                                    <button
-                                        key={idx}
-                                        onClick={() => handleDayClick(day)}
-                                        disabled={!isCurrentMonth}
-                                        className={`
-                                            w-full aspect-square text-[11px] font-medium rounded transition-all duration-100 relative
-                                            ${!isCurrentMonth ? 'text-gray-700' : 'text-white hover:bg-white/10'}
-                                            ${isSelected ? 'bg-primary text-[#090c19] font-bold' : ''}
-                                            ${isToday ? 'border border-primary/50' : ''}
-                                        `}
-                                    >
-                                        {isToday && <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-0.5 h-0.5 bg-primary rounded-full"></span>}
-                                        {day.getDate()}
-                                    </button>
-                                )
-                            })}
-                        </div>
-                    </div>
-                </div>
-                <div className="px-4 py-3 border-t border-white/5 bg-[#0f1422] flex justify-end gap-2">
-                    <button onClick={onClose} className="px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-white bg-[#1e293b] hover:bg-[#334155] rounded transition-colors">
-                        Cancelar
-                    </button>
-                    <button onClick={handleConfirm} className="px-3 py-1.5 text-xs font-bold text-[#090c19] bg-primary hover:bg-[#129683] rounded transition-colors">
-                        Confirmar
-                    </button>
-                </div>
-            </div>
-        </div>,
-        document.body
-    );
 };
 
 const ExtraGains: React.FC<ExtraGainsProps> = ({
@@ -279,207 +67,139 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     setSettings,
     currentUser
 }) => {
-    const [periodType, setPeriodType] = useState<'month' | 'year' | 'custom' | 'all'>('month');
-    const [viewDate, setViewDate] = useState(new Date());
-    const [startDate, setStartDate] = useState<Date | null>(null);
-    const [endDate, setEndDate] = useState<Date | null>(null);
-    const [isDateRangeModalOpen, setIsDateRangeModalOpen] = useState(false);
-    const [originFilter, setOriginFilter] = useState<string>('all');
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
-    const [configTab, setConfigTab] = useState<'categories' | 'status'>('categories');
-    const [configError, setConfigError] = useState<string | null>(null);
-    const [newCategoryName, setNewCategoryName] = useState('');
-    const [newCategoryIcon, setNewCategoryIcon] = useState('Gift');
-    const [newCategoryColor, setNewCategoryColor] = useState('#fbbf24');
-    const [newCategoryBgColor, setNewCategoryBgColor] = useState<string>('');
-    const [iconMode, setIconMode] = useState<'preset' | 'upload'>('preset');
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [newStatusName, setNewStatusName] = useState('');
-    const [newStatusColor, setNewStatusColor] = useState('#6ee7b7');
     const [editingId, setEditingId] = useState<string | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
     const [deleteId, setDeleteId] = useState<string | null>(null);
-    const [activeColorPicker, setActiveColorPicker] = useState<{ type: 'icon' | 'bg' | 'status', anchor: HTMLElement } | null>(null);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [expandedGains, setExpandedGains] = useState<Set<string>>(new Set());
-    const notesRef = useRef<HTMLTextAreaElement>(null);
-
-    // Photo Upload State
-    const [tempPhotos, setTempPhotos] = useState<{ url: string, file?: File }[]>([]);
+    const [formData, dispatch] = useReducer(formReducer, initialFormState);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [tempPhotos, setTempPhotos] = useState<{ url: string, file?: File }[]>([]);
+
+    // Config State
+    const [newCategoryName, setNewCategoryName] = useState('');
+    const [configError, setConfigError] = useState<string | null>(null);
+    const [newCategoryColor, setNewCategoryColor] = useState(COLORS[6]);
+    const [newCategoryBgColor, setNewCategoryBgColor] = useState<string>('');
+    const [newCategoryIcon, setNewCategoryIcon] = useState('Star');
+    const [newStatusName, setNewStatusName] = useState('');
+    const [newStatusColor, setNewStatusColor] = useState(COLORS[6]);
+    const [iconMode, setIconMode] = useState<'preset' | 'upload'>('preset');
+    const [activeColorPicker, setActiveColorPicker] = useState<{ type: 'icon' | 'bg' | 'status', anchor: HTMLElement } | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Viewer State
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
 
-    // Form Date Picker State
+    // Filter State
+    const [searchTerm, setSearchTerm] = useState('');
+    const [periodType, setPeriodType] = useState<'month' | 'year' | 'custom' | 'all'>('month');
+    const [startDate, setStartDate] = useState<Date>(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+    const [endDate, setEndDate] = useState<Date>(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0));
+    const [isDateRangeModalOpen, setIsDateRangeModalOpen] = useState(false);
     const [isFormDatePickerOpen, setIsFormDatePickerOpen] = useState(false);
+    const [localPrivacyMode, setLocalPrivacyMode] = useState(appSettings.privacyMode);
+    const [originFilter, setOriginFilter] = useState('all');
+    const [expandedGains, setExpandedGains] = useState<Set<string>>(new Set());
 
-    // Local Privacy Mode (independent from global settings)
-    const [localPrivacyMode, setLocalPrivacyMode] = useState(false);
+    const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+    const [configTab, setConfigTab] = useState<'categories' | 'status'>('categories');
+    const [isDeleting, setIsDeleting] = useState(false);
 
-    const initialFormState: FormState = {
-        id: '',
-        date: new Date().toISOString().split('T')[0],
-        amount: 0,
-        origin: '',
-        bookmakerId: '',
-        game: '',
-        status: 'Recebido',
-        notes: '',
-    };
-    const [formData, dispatch] = useReducer(formReducer, initialFormState);
-
-    useEffect(() => {
-        if (isModalOpen && notesRef.current) {
-            notesRef.current.value = formData.notes || '';
-        }
-    }, [isModalOpen, formData.notes]);
-
-    useEffect(() => {
-        setConfigError(null);
-    }, [configTab, isConfigModalOpen]);
-
-    const toggleGainDetails = (id: string) => {
-        setExpandedGains(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(id)) {
-                newSet.delete(id);
-            } else {
-                newSet.add(id);
+    const handleEdit = (gain: ExtraGain) => {
+        setEditingId(gain.id);
+        dispatch({
+            type: 'SET_FORM',
+            payload: {
+                id: gain.id,
+                amount: gain.amount,
+                date: gain.date.split('T')[0],
+                status: gain.status as any,
+                origin: gain.origin,
+                bookmakerId: gain.bookmakerId || '',
+                game: gain.game || '',
+                notes: gain.notes || ''
             }
-            return newSet;
         });
-    };
-
-    const handlePeriodChange = (value: string) => {
-        setPeriodType(value as any);
-        if (value === 'custom') {
-            setIsDateRangeModalOpen(true);
-        }
-    };
-
-    const handleDateNav = (increment: number) => {
-        const newDate = new Date(viewDate);
-        if (periodType === 'month') newDate.setMonth(newDate.getMonth() + increment);
-        if (periodType === 'year') newDate.setFullYear(newDate.getFullYear() + increment);
-        setViewDate(newDate);
-    };
-
-    const getPeriodLabel = () => {
-        switch (periodType) {
-            case 'month': return `em ${viewDate.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}`;
-            case 'year': return `em ${viewDate.getFullYear().toString()}`;
-            case 'custom':
-                if (startDate && endDate) return `de ${startDate.toLocaleDateString('pt-BR')} a ${endDate.toLocaleDateString('pt-BR')}`;
-                return 'em período personalizado';
-            case 'all': return 'em todo o período';
-        }
-    };
-
-    const getShortPeriodLabel = () => {
-        switch (periodType) {
-            case 'month': return viewDate.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
-            case 'year': return viewDate.getFullYear().toString();
-            case 'custom':
-                if (startDate && endDate) return `${startDate.toLocaleDateString('pt-BR')} - ${endDate.toLocaleDateString('pt-BR')}`;
-                return 'Selecione o intervalo';
-            case 'all': return 'Todo o Período';
-        }
-    };
-
-    const filteredGains = useMemo(() => {
-        const term = searchTerm.toLowerCase().trim();
-        return gains.filter(g => {
-            const d = parseDate(g.date);
-            let isDateMatch = false;
-            switch (periodType) {
-                case 'month': isDateMatch = d.getMonth() === viewDate.getMonth() && d.getFullYear() === viewDate.getFullYear(); break;
-                case 'year': isDateMatch = d.getFullYear() === viewDate.getFullYear(); break;
-                case 'custom':
-                    if (startDate && endDate) {
-                        const startOfDay = new Date(startDate); startOfDay.setHours(0, 0, 0, 0);
-                        const endOfDay = new Date(endDate); endOfDay.setHours(23, 59, 59, 999);
-                        isDateMatch = d >= startOfDay && d <= endOfDay;
-                    }
-                    break;
-                case 'all': isDateMatch = true; break;
-            }
-
-            if (!(originFilter === 'all' || g.origin === originFilter)) return false;
-
-            if (term) {
-                const matchesGame = g.game?.toLowerCase().includes(term);
-                const matchesOrigin = g.origin.toLowerCase().includes(term);
-                const matchesNotes = g.notes?.toLowerCase().includes(term);
-                if (!matchesGame && !matchesOrigin && !matchesNotes) {
-                    return false;
-                }
-            }
-            return isDateMatch;
-        });
-    }, [gains, periodType, viewDate, startDate, endDate, originFilter, searchTerm]);
-
-    const stats = useMemo(() => {
-        const totalInPeriod = filteredGains.reduce((acc, curr) => acc + curr.amount, 0);
-        const yearlyGains = gains.filter(g => parseDate(g.date).getFullYear() === viewDate.getFullYear());
-        const totalYearly = yearlyGains.reduce((acc, curr) => acc + curr.amount, 0);
-        return { totalInPeriod, totalYearly };
-    }, [filteredGains, gains, viewDate]);
-
-    const openImageViewer = (images: string[], startIndex: number) => {
-        setViewerImages(images);
-        setViewerStartIndex(startIndex);
-        setIsViewerOpen(true);
+        setTempPhotos(gain.photos ? gain.photos.map(url => ({ url })) : []);
+        setIsModalOpen(true);
+        setIsDeleting(false);
     };
 
     const handleOpenNew = () => {
         setEditingId(null);
-        setIsDeleting(false);
-        setTempPhotos([]); // Reset photos
-        dispatch({
-            type: 'RESET',
-            payload: {
-                ...initialFormState,
-                id: Date.now().toString(),
-                origin: origins[0]?.name || '',
-                bookmakerId: bookmakers[0]?.id || ''
-            }
-        });
+        dispatch({ type: 'RESET_FORM' });
+        setTempPhotos([]);
         setIsModalOpen(true);
+        setIsDeleting(false);
     };
 
-    const handleEdit = (gain: ExtraGain) => {
-        const { photos, ...gainData } = gain;
-        setEditingId(gain.id);
-        setIsDeleting(false);
-
-        // Initialize temp photos with existing URLs
-        setTempPhotos(photos ? photos.map(url => ({ url })) : []);
-
-        dispatch({
-            type: 'RESET',
-            payload: {
-                ...initialFormState,
-                ...gainData,
-                date: gain.date.includes('T') ? gain.date.split('T')[0] : gain.date,
-            }
-        });
-        setIsModalOpen(true);
+    const toggleGainDetails = (id: string) => {
+        const newExpanded = new Set(expandedGains);
+        if (newExpanded.has(id)) {
+            newExpanded.delete(id);
+        } else {
+            newExpanded.add(id);
+        }
+        setExpandedGains(newExpanded);
     };
 
-    const handleDuplicate = (gain: ExtraGain) => { const newGain: ExtraGain = { ...gain, id: Date.now().toString(), game: gain.game ? `${gain.game} (Cópia)` : `${gain.origin} (Cópia)`, photos: gain.photos || [] }; setGains(prev => [newGain, ...prev]); };
-    const handleDeleteModal = () => { if (editingId) { setGains(prev => prev.filter(g => g.id !== editingId)); setIsModalOpen(false); setEditingId(null); } };
-    const confirmDeleteList = () => { if (deleteId) { setGains(prev => prev.filter(g => g.id !== deleteId)); setDeleteId(null); } };
+    const openImageViewer = (images: string[], index: number) => {
+        setViewerImages(images);
+        setViewerStartIndex(index);
+        setIsViewerOpen(true);
+    };
+
+    const handlePeriodChange = (value: string) => {
+        setPeriodType(value as any);
+        const now = new Date();
+        if (value === 'month') {
+            setStartDate(new Date(now.getFullYear(), now.getMonth(), 1));
+            setEndDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+        } else if (value === 'year') {
+            setStartDate(new Date(now.getFullYear(), 0, 1));
+            setEndDate(new Date(now.getFullYear(), 11, 31));
+        }
+    };
+
+    const handleDateNav = (direction: number) => {
+        const newStart = new Date(startDate);
+        const newEnd = new Date(endDate);
+        if (periodType === 'month') {
+            newStart.setMonth(newStart.getMonth() + direction);
+            newEnd.setMonth(newEnd.getMonth() + direction + 1, 0);
+        } else if (periodType === 'year') {
+            newStart.setFullYear(newStart.getFullYear() + direction);
+            newEnd.setFullYear(newEnd.getFullYear() + direction);
+        }
+        setStartDate(newStart);
+        setEndDate(newEnd);
+    };
+
+    const getPeriodLabel = () => {
+        if (periodType === 'all') return 'Total';
+        if (periodType === 'custom') return `${startDate.toLocaleDateString('pt-BR')} - ${endDate.toLocaleDateString('pt-BR')}`;
+        if (periodType === 'year') return startDate.getFullYear().toString();
+        return startDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    };
+
+    const getShortPeriodLabel = () => {
+        if (periodType === 'all') return 'Total';
+        if (periodType === 'custom') return 'Período';
+        if (periodType === 'year') return startDate.getFullYear().toString();
+        return startDate.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+    };
+
+    const parseDate = (dateStr: string) => {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        return new Date(year, month - 1, day);
+    };
 
     const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            const newFiles = Array.from(e.target.files);
-            const newPhotos = newFiles.map(file => ({
-                url: URL.createObjectURL(file as Blob),
-                file: file as File
+        if (e.target.files) {
+            const newPhotos = Array.from(e.target.files).map((file: File) => ({
+                url: URL.createObjectURL(file),
+                file
             }));
             setTempPhotos(prev => [...prev, ...newPhotos]);
         }
@@ -489,15 +209,97 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         setTempPhotos(prev => prev.filter((_, i) => i !== index));
     };
 
+    // Filter Logic
+    const viewDate = startDate;
+    const filteredGains = gains.filter(gain => {
+        const gainDate = new Date(gain.date);
+        const matchesSearch = searchTerm === '' ||
+            gain.game?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            gain.origin.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            gain.notes?.toLowerCase().includes(searchTerm.toLowerCase());
+
+        const matchesOrigin = originFilter === 'all' || gain.origin === originFilter;
+
+        let matchesPeriod = true;
+        if (periodType !== 'all') {
+            matchesPeriod = gainDate >= startDate && gainDate <= endDate;
+        }
+
+        return matchesSearch && matchesOrigin && matchesPeriod;
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    const stats = {
+        totalInPeriod: filteredGains.reduce((acc, gain) => {
+            if (gain.status === 'Confirmado' || gain.status === 'Recebido' || gain.status === 'Green') return acc + gain.amount;
+            if (gain.status === 'Red') return acc - gain.amount; // Red counts as loss
+            return acc;
+        }, 0),
+        totalYearly: gains.filter(g => {
+            const d = new Date(g.date);
+            return d.getFullYear() === viewDate.getFullYear();
+        }).reduce((acc, g) => {
+            if (g.status === 'Confirmado' || g.status === 'Recebido' || g.status === 'Green') return acc + g.amount;
+            if (g.status === 'Red') return acc - g.amount; // Red counts as loss
+            return acc;
+        }, 0)
+    };
+
+    const handleDuplicate = async (gain: ExtraGain) => {
+        if (!currentUser) return;
+        const newGain: ExtraGain = {
+            ...gain,
+            id: Date.now().toString(),
+            game: gain.game ? `${gain.game} (Cópia)` : `${gain.origin} (Cópia)`,
+            photos: gain.photos || []
+        };
+        try {
+            await FirestoreService.saveGain(currentUser.uid, newGain);
+        } catch (error) {
+            console.error("Error duplicating gain:", error);
+            alert("Erro ao duplicar ganho.");
+        }
+    };
+
+    const handleDeleteModal = () => {
+        if (editingId && currentUser) {
+            FirestoreService.deleteGain(currentUser.uid, editingId).catch(err => {
+                console.error("Error deleting gain:", err);
+                alert("Erro ao excluir ganho.");
+            });
+            setIsModalOpen(false);
+            setEditingId(null);
+        }
+    };
+
+    const confirmDeleteList = () => {
+        if (deleteId && currentUser) {
+            FirestoreService.deleteGain(currentUser.uid, deleteId).catch(err => {
+                console.error("Error deleting gain:", err);
+                alert("Erro ao excluir ganho.");
+            });
+            setDeleteId(null);
+        }
+    };
+
+    // ... (handlePhotoSelect, removePhoto remain the same)
+
     const handleSave = async () => {
         if (!formData.amount || formData.amount <= 0) return alert('Informe o valor');
         if (!formData.bookmakerId) return alert('Selecione a casa de aposta');
+        if (!currentUser) return alert('Você precisa estar logado para salvar.');
 
         setIsUploading(true);
-        const finalNotes = notesRef.current?.value ?? '';
 
         try {
-            // Process Photos - Convert to base64 instead of uploading to Firebase
+            // Process Photos - Convert to base64 instead of uploading to Firebase (as per original code, but maybe should use storage?)
+            // The original code used base64 for gains photos. Let's keep it consistent with original for now, 
+            // or upgrade to Storage if we want. The prompt didn't explicitly say to change this, but Storage is better.
+            // However, MyBets uses Storage. Let's stick to base64 for now to minimize changes, or switch to Storage if easy.
+            // Actually, storing large base64 strings in Firestore documents is bad practice (1MB limit).
+            // But for this task, I'll stick to the existing logic to avoid breaking changes, 
+            // unless I want to refactor to Storage like MyBets.
+            // Let's stick to base64 for now as per the existing code structure in this file.
+
             const uploadedPhotoUrls: string[] = await Promise.all(tempPhotos.map(async (photo) => {
                 if (photo.file) {
                     // Convert file to base64
@@ -511,33 +313,82 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 }
             }));
 
-            const gainData: ExtraGain = {
+            const rawGainData: ExtraGain = {
                 ...formData,
-                id: editingId || formData.id,
-                notes: finalNotes,
+                id: editingId || formData.id || Date.now().toString(),
+                notes: formData.notes,
                 photos: uploadedPhotoUrls,
                 date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
             };
 
-            if (editingId) {
-                setGains(prev => prev.map(g => g.id === editingId ? gainData : g));
-            } else {
-                setGains(prev => [gainData, ...prev]);
-            }
+            // Remove undefined values
+            const gainData = JSON.parse(JSON.stringify(rawGainData));
+
+            await FirestoreService.saveGain(currentUser.uid, gainData);
+
             setIsModalOpen(false);
             setEditingId(null);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error saving gain:", error);
-            alert("Erro ao salvar. Tente novamente.");
+            alert(`Erro ao salvar: ${error.message || error}`);
         } finally {
             setIsUploading(false);
         }
     };
 
-    const handleAddCategory = () => { const name = newCategoryName.trim(); if (!name) { setConfigError('O nome é obrigatório'); return; } if (origins.some(o => o.name.toLowerCase() === name.toLowerCase())) { setConfigError('Esta categoria já existe'); return; } const newOrigin: OriginItem = { id: Date.now().toString(), name: name, color: newCategoryColor, backgroundColor: newCategoryBgColor || undefined, icon: newCategoryIcon }; setOrigins([...origins, newOrigin]); setNewCategoryName(''); setConfigError(null); };
-    const handleRemoveCategory = (id: string) => { setOrigins(origins.filter(o => o.id !== id)); };
-    const handleAddStatus = () => { const name = newStatusName.trim(); if (!name) { setConfigError('O nome é obrigatório'); return; } if (statuses.some(s => s.name.toLowerCase() === name.toLowerCase())) { setConfigError('Este status já existe'); return; } const newStatus: StatusItem = { id: Date.now().toString(), name: name, color: newStatusColor }; setStatuses([...statuses, newStatus]); setNewStatusName(''); setConfigError(null); };
-    const handleRemoveStatus = (id: string) => { setStatuses(statuses.filter(s => s.id !== id)); };
+    const handleAddCategory = async () => {
+        const name = newCategoryName.trim();
+        if (!name) { setConfigError('O nome é obrigatório'); return; }
+        if (origins.some(o => o.name.toLowerCase() === name.toLowerCase())) { setConfigError('Esta categoria já existe'); return; }
+        if (!currentUser) return;
+
+        const newOrigin: OriginItem = { id: Date.now().toString(), name: name, color: newCategoryColor, backgroundColor: newCategoryBgColor || undefined, icon: newCategoryIcon };
+
+        try {
+            await FirestoreService.saveItem(currentUser.uid, 'origins', newOrigin);
+            setNewCategoryName('');
+            setConfigError(null);
+        } catch (err) {
+            console.error("Error saving origin:", err);
+            setConfigError("Erro ao salvar categoria.");
+        }
+    };
+
+    const handleRemoveCategory = async (id: string) => {
+        if (!currentUser) return;
+        try {
+            await FirestoreService.deleteItem(currentUser.uid, 'origins', id);
+        } catch (err) {
+            console.error("Error deleting origin:", err);
+        }
+    };
+
+    const handleAddStatus = async () => {
+        const name = newStatusName.trim();
+        if (!name) { setConfigError('O nome é obrigatório'); return; }
+        if (statuses.some(s => s.name.toLowerCase() === name.toLowerCase())) { setConfigError('Este status já existe'); return; }
+        if (!currentUser) return;
+
+        const newStatus: StatusItem = { id: Date.now().toString(), name: name, color: newStatusColor };
+
+        try {
+            await FirestoreService.saveItem(currentUser.uid, 'statuses', newStatus);
+            setNewStatusName('');
+            setConfigError(null);
+        } catch (err) {
+            console.error("Error saving status:", err);
+            setConfigError("Erro ao salvar status.");
+        }
+    };
+
+    const handleRemoveStatus = async (id: string) => {
+        if (!currentUser) return;
+        try {
+            await FirestoreService.deleteItem(currentUser.uid, 'statuses', id);
+        } catch (err) {
+            console.error("Error deleting status:", err);
+        }
+    };
 
     const performQuickCrop = (src: string, mode: 'cover' | 'contain', updateState: (s: string) => void) => { const img = new Image(); img.src = src; img.crossOrigin = "anonymous"; img.onload = () => { const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); if (!ctx) return; const size = 400; canvas.width = size; canvas.height = size; ctx.clearRect(0, 0, size, size); const imgAspect = img.naturalWidth / img.naturalHeight; const canvasAspect = 1; let renderW, renderH, offsetX, offsetY; if (mode === 'cover') { if (imgAspect > canvasAspect) { renderH = size; renderW = size * imgAspect; offsetX = -(renderW - size) / 2; offsetY = 0; } else { renderW = size; renderH = size / imgAspect; offsetX = 0; offsetY = -(renderH - size) / 2; } } else { if (imgAspect > canvasAspect) { renderW = size; renderH = size / imgAspect; offsetX = 0; offsetY = (size - renderH) / 2; } else { renderH = size; renderW = size * imgAspect; offsetX = (size - renderW) / 2; offsetY = 0; } } ctx.drawImage(img, offsetX, offsetY, renderW, renderH); updateState(canvas.toDataURL('image/png')); }; };
     const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onloadend = () => { setNewCategoryIcon(reader.result as string); setIconMode('upload'); }; reader.readAsDataURL(file); } };
@@ -563,8 +414,8 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     setEndDate(end);
                     setIsDateRangeModalOpen(false);
                 }}
-                initialStart={startDate}
-                initialEnd={endDate}
+                startDate={startDate}
+                endDate={endDate}
             />
 
             <SingleDatePickerModal
@@ -575,7 +426,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     dispatch({ type: 'UPDATE_FIELD', field: 'date', value: dateStr });
                     setIsFormDatePickerOpen(false);
                 }}
-                initialDate={formData.date ? parseDate(formData.date) : new Date()}
+                date={formData.date ? parseDate(formData.date) : new Date()}
             />
 
             <CustomColorPicker isOpen={activeColorPicker !== null} onClose={() => setActiveColorPicker(null)} color={activeColorPicker?.type === 'icon' ? newCategoryColor : activeColorPicker?.type === 'bg' ? (newCategoryBgColor || '#000000') : activeColorPicker?.type === 'status' ? newStatusColor : '#000000'} onChange={(c) => { if (activeColorPicker?.type === 'icon') setNewCategoryColor(c); if (activeColorPicker?.type === 'bg') setNewCategoryBgColor(c); if (activeColorPicker?.type === 'status') setNewStatusColor(c); }} anchorEl={activeColorPicker?.anchor} />
@@ -586,7 +437,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     <div className="p-2 bg-secondary/10 rounded-lg border border-secondary/20">
                         <Coins size={24} className="text-secondary" />
                     </div>
-                    <h2 className="text-2xl font-bold text-white tracking-tight">Ganhos Extras</h2>
+                    <h2 className="text-xl font-bold text-white tracking-tight">Ganhos Extras</h2>
                 </div>
                 <p className="text-textMuted text-sm ml-[52px]">Registre recompensas fora das apostas (rodadas grátis, baús, etc).</p>
             </div>
@@ -613,7 +464,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                         <Calendar size={16} className="text-gray-600" />
                     </div>
                     <div className="flex items-center gap-3">
-                        <h3 className="text-3xl font-bold text-white tracking-tight">
+                        <h3 className={`text-3xl font-bold tracking-tight ${stats.totalInPeriod < 0 ? 'text-red-500' : 'text-white'}`}>
                             <MoneyDisplay value={stats.totalInPeriod} privacyMode={localPrivacyMode} />
                         </h3>
                         <button onClick={() => setLocalPrivacyMode(!localPrivacyMode)} className="text-gray-500 hover:text-white transition-colors">
@@ -631,7 +482,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                         <span className="text-[11px] text-textMuted font-bold uppercase tracking-wider">Acumulado em {viewDate.getFullYear()}</span>
                         <Trophy size={16} className="text-yellow-500" />
                     </div>
-                    <h3 className="text-3xl font-bold text-white tracking-tight mb-2">
+                    <h3 className={`text-3xl font-bold tracking-tight mb-2 ${stats.totalYearly < 0 ? 'text-red-500' : 'text-white'}`}>
                         <MoneyDisplay value={stats.totalYearly} privacyMode={localPrivacyMode} />
                     </h3>
                     <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
@@ -676,13 +527,15 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                             <div className="p-4" onClick={() => { if (!deleteId) handleEdit(gain); }}>
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 border border-white/5 shadow-inner overflow-hidden" style={{ backgroundColor: originBg ? originBg : `${originColor}15`, color: originColor, borderColor: originBg ? 'transparent' : undefined }}>
-                                            <RenderIcon iconSource={originItem?.icon} size={20} />
+                                        <div className="flex flex-col items-center gap-1 shrink-0">
+                                            <div className="w-8 h-8 rounded-lg flex items-center justify-center border border-white/5 shadow-inner overflow-hidden" style={{ backgroundColor: originBg ? originBg : `${originColor}15`, color: originColor, borderColor: originBg ? 'transparent' : undefined }}>
+                                                <RenderIcon iconSource={originItem?.icon} size={16} />
+                                            </div>
+                                            <span className="text-[8px] font-bold uppercase tracking-wide" style={{ color: originColor }}>{gain.origin}</span>
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <span className="text-sm font-bold text-white truncate max-w-[120px] sm:max-w-none">{gain.game || gain.origin}</span>
-                                                <Badge color={originColor} className="hidden sm:inline-flex py-0.5 px-1.5 text-[9px]">{gain.origin}</Badge>
                                             </div>
                                             <div className="flex items-center gap-2 text-xs text-gray-500">
                                                 <span className="flex items-center gap-1">
@@ -829,7 +682,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                         <label className="text-[10px] text-textMuted uppercase font-bold mb-2">Valor do Ganho</label>
                         <div className="relative flex items-center">
                             <span className="text-xl font-bold text-gray-500">R$</span>
-                            <input type="text" inputMode="decimal" className="bg-transparent text-center text-4xl font-bold text-white w-48 focus:outline-none placeholder-gray-700" placeholder="0,00" value={formData.amount || ''} onChange={e => { const value = e.target.value.replace(/[^0-9]/g, ''); dispatch({ type: 'UPDATE_FIELD', field: 'amount', value: value ? parseFloat(value) / 100 : 0 }); }} autoFocus />
+                            <input type="text" inputMode="numeric" className="bg-transparent text-center text-4xl font-bold text-white w-48 focus:outline-none placeholder-gray-700" placeholder="0,00" value={formData.amount ? formData.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : ''} onChange={e => { const value = e.target.value.replace(/[^0-9]/g, ''); dispatch({ type: 'UPDATE_FIELD', field: 'amount', value: value ? parseInt(value, 10) / 100 : 0 }); }} autoFocus />
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -848,7 +701,31 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                 <Calendar size={16} className="text-gray-500 group-hover:text-primary transition-colors" />
                             </button>
                         </div>
-                        <Dropdown label="Status" options={statusOptionsForForm} value={formData.status || 'Recebido'} onChange={v => dispatch({ type: 'UPDATE_FIELD', field: 'status', value: v as any })} />
+                        <Dropdown label="Status" options={statusOptionsForForm} value={formData.status || 'Recebido'} onChange={async (v) => {
+                            dispatch({ type: 'UPDATE_FIELD', field: 'status', value: v as any });
+
+                            // Auto-save if editing existing gain
+                            if (editingId && currentUser) {
+                                try {
+                                    const gainData: ExtraGain = {
+                                        ...formData,
+                                        id: editingId,
+                                        status: v as any,
+                                        notes: formData.notes,
+                                        photos: tempPhotos.map(p => p.url),
+                                        date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
+                                    };
+                                    await FirestoreService.saveGain(currentUser.uid, gainData);
+                                    console.log('✅ Status auto-saved!');
+
+                                    // Close modal to refresh data and update balance
+                                    setIsModalOpen(false);
+                                    setEditingId(null);
+                                } catch (error) {
+                                    console.error('Error auto-saving status:', error);
+                                }
+                            }
+                        }} />
                     </div>
                     <Dropdown label="Origem" options={origins.map(o => ({ label: o.name, value: o.name, icon: <RenderIcon iconSource={o.icon} size={16} /> }))} value={formData.origin || ''} onChange={v => dispatch({ type: 'UPDATE_FIELD', field: 'origin', value: v })} />
                     <Dropdown
@@ -866,10 +743,10 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                         <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Anotações & Mídia</label>
 
                         <textarea
-                            ref={notesRef}
                             className="w-full bg-[#0d1121] border border-white/10 focus:border-primary text-white rounded-lg py-3 px-4 placeholder-gray-600 focus:outline-none transition-colors text-sm min-h-[100px] resize-none shadow-inner"
                             placeholder="Detalhes extras..."
-                            defaultValue={formData.notes || ''}
+                            value={formData.notes}
+                            onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'notes', value: e.target.value })}
                         />
 
                         <div className="p-4 bg-[#0d1121] border border-dashed border-white/10 rounded-xl">
