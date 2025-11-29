@@ -321,7 +321,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
 
       {/* Main Content */}
       <div className="relative z-10 flex items-center justify-center min-h-[calc(100vh-73px)]">
-        <div className="w-full max-w-6xl px-4 flex flex-col items-center gap-12 pt-24 pb-4 sm:py-12">
+        <div className="w-full max-w-6xl px-4 flex flex-col items-center gap-12 pt-40 pb-4 sm:py-12">
           {view === 'landing' ? (
             // Welcome Screen
             <>
