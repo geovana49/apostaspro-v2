@@ -166,12 +166,22 @@ const Settings: React.FC<SettingsProps> = ({
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, folder?: string, setter?: (url: string) => void) => {
         const file = e.target.files?.[0];
         if (file) {
+            console.log('📷 Image selected:', file.name, file.size, 'bytes');
             const reader = new FileReader();
             reader.onloadend = () => {
-                if (setter) setter(reader.result as string);
-                else setSelectedLogo(reader.result as string);
+                const base64 = reader.result as string;
+                console.log('✅ Image converted to base64, length:', base64.length);
+                if (setter) {
+                    setter(base64);
+                    console.log('📝 Image set via setter');
+                } else {
+                    setSelectedLogo(base64);
+                    console.log('📝 Image set to selectedLogo');
+                }
             };
             reader.readAsDataURL(file);
+        } else {
+            console.log('❌ No file selected');
         }
     };
 
