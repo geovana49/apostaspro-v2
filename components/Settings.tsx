@@ -278,11 +278,23 @@ const Settings: React.FC<SettingsProps> = ({
                 await FirestoreService.saveItem(currentUser.uid, 'origins', item);
             } else if (type === 'bookmaker') {
                 console.log('🔍 DEBUG: selectedLogo at save time:', selectedLogo);
-                console.log('🔍 Is base64?', selectedLogo?.startsWith('data:'));
+                console.log('🔍 Type:', typeof selectedLogo);
                 let logoUrl = selectedLogo;
 
+                // Convert Blob to base64 if needed (from image adjuster)
+                if (selectedLogo && typeof selectedLogo !== 'string') {
+                    console.log('🔄 Converting Blob to base64...');
+                    const reader = new FileReader();
+                    const base64Promise = new Promise<string>((resolve) => {
+                        reader.onloadend = () => resolve(reader.result as string);
+                        reader.readAsDataURL(selectedLogo as any);
+                    });
+                    logoUrl = await base64Promise;
+                    console.log('✅ Blob converted to base64');
+                }
+
                 // If logo is base64, compress and save directly to Firestore
-                if (selectedLogo && selectedLogo.startsWith('data:')) {
+                if (logoUrl && typeof logoUrl === 'string' && logoUrl.startsWith('data:')) {
                     try {
                         setIsUploading(true);
                         console.log('🗜️ Compressing logo for Firestore storage...');
