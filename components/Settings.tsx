@@ -282,8 +282,10 @@ const Settings: React.FC<SettingsProps> = ({
                 let logoUrl = selectedLogo;
 
                 // Convert Blob to base64 if needed (from image adjuster)
+                let fromAdjuster = false;
                 if (selectedLogo && typeof selectedLogo !== 'string') {
                     console.log('🔄 Converting Blob to base64...');
+                    fromAdjuster = true;
                     const reader = new FileReader();
                     const base64Promise = new Promise<string>((resolve) => {
                         reader.onloadend = () => resolve(reader.result as string);
@@ -294,13 +296,14 @@ const Settings: React.FC<SettingsProps> = ({
                 }
 
                 // If logo is base64, compress and save directly to Firestore
-                if (logoUrl && typeof logoUrl === 'string' && logoUrl.startsWith('data:')) {
+                // Skip compression if image came from adjuster (already cropped/processed)
+                if (logoUrl && typeof logoUrl === 'string' && logoUrl.startsWith('data:') && !fromAdjuster) {
                     try {
                         setIsUploading(true);
                         console.log('🗜️ Compressing logo for Firestore storage...');
 
                         // Convert base64 to blob
-                        const res = await fetch(selectedLogo);
+                        const res = await fetch(logoUrl);
                         const blob = await res.blob();
                         const file = new File([blob], 'logo.png', { type: 'image/png' });
 
@@ -322,6 +325,8 @@ const Settings: React.FC<SettingsProps> = ({
                     } finally {
                         setIsUploading(false);
                     }
+                } else if (fromAdjuster) {
+                    console.log('⏭️ Skipping compression - image already processed by adjuster');
                 }
 
                 const item: Bookmaker = { id, name: trimmedName, color: selectedColor, logo: logoUrl, siteUrl: newItemUrl };
