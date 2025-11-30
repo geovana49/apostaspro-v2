@@ -612,30 +612,10 @@ const Settings: React.FC<SettingsProps> = ({
                                         </span>
                                         <div className="absolute inset-0 h-full w-full scale-0 rounded-lg transition-all duration-300 group-hover:scale-100 group-hover:bg-white/10" />
                                     </label>
-                                    {selectedLogo && <Button variant="neutral" className="w-full text-xs" onClick={() => handleOpenAdjuster(selectedLogo, 1, async (base64) => {
-                                        try {
-                                            setIsUploading(true);
-                                            console.log('✂️ Image cropped, compressing...');
-                                            const res = await fetch(base64);
-                                            const blob = await res.blob();
-                                            const file = new File([blob], 'logo.png', { type: 'image/png' });
-
-                                            // Compress to 200x200 max, 100KB
-                                            const compressedBase64 = await compressImage(file, {
-                                                maxWidth: 200,
-                                                maxHeight: 200,
-                                                quality: 0.8,
-                                                maxSizeMB: 0.1
-                                            });
-
-                                            setSelectedLogo(compressedBase64);
-                                            console.log('✅ Cropped image compressed and set');
-                                        } catch (e) {
-                                            console.error('❌ Error processing cropped image:', e);
-                                            setError("Erro ao processar imagem.");
-                                        } finally {
-                                            setIsUploading(false);
-                                        }
+                                    {selectedLogo && <Button variant="neutral" className="w-full text-xs" onClick={() => handleOpenAdjuster(selectedLogo, 1, (croppedBase64) => {
+                                        console.log('✂️ Image cropped, setting to state...');
+                                        setSelectedLogo(croppedBase64);
+                                        console.log('✅ Cropped image set, will be compressed on save');
                                     })} disabled={isUploading}><Crop size={14} /> Ajustar</Button>}
                                 </div>
                             </div>
