@@ -277,6 +277,8 @@ const Settings: React.FC<SettingsProps> = ({
                 const item: OriginItem = { id, name: trimmedName, color: selectedColor, icon: selectedIcon };
                 await FirestoreService.saveItem(currentUser.uid, 'origins', item);
             } else if (type === 'bookmaker') {
+                console.log('🔍 DEBUG: selectedLogo at save time:', selectedLogo);
+                console.log('🔍 Is base64?', selectedLogo?.startsWith('data:'));
                 let logoUrl = selectedLogo;
 
                 // If logo is base64, compress and save directly to Firestore
@@ -311,7 +313,8 @@ const Settings: React.FC<SettingsProps> = ({
                 }
 
                 const item: Bookmaker = { id, name: trimmedName, color: selectedColor, logo: logoUrl, siteUrl: newItemUrl };
-                console.log('💾 Saving bookmaker to Firestore:', item);
+                console.log(editingId ? '✏️ EDITANDO bookmaker:' : '➕ CRIANDO novo bookmaker:', item);
+                console.log('📷 Logo final sendo salvo:', logoUrl ? (logoUrl.startsWith('data:') ? 'Base64 (' + logoUrl.length + ' bytes)' : logoUrl) : 'Sem logo');
                 await FirestoreService.saveItem(currentUser.uid, 'bookmakers', item);
                 console.log('✅ Bookmaker saved successfully');
             }
