@@ -279,18 +279,30 @@ const Settings: React.FC<SettingsProps> = ({
             } else if (type === 'bookmaker') {
                 let logoUrl = selectedLogo;
 
-                // If logo is base64 (starts with data:), upload to Firebase Storage
+                // If logo is base64, compress and save directly to Firestore
                 if (selectedLogo && selectedLogo.startsWith('data:')) {
                     try {
                         setIsUploading(true);
-                        console.log('📤 Uploading logo to storage...');
+                        console.log('🗜️ Compressing logo for Firestore storage...');
+
+                        // Convert base64 to blob
                         const res = await fetch(selectedLogo);
                         const blob = await res.blob();
-                        logoUrl = await uploadFileToStorage(blob, 'logos');
-                        console.log('✅ Logo uploaded:', logoUrl);
+                        const file = new File([blob], 'logo.png', { type: 'image/png' });
+
+                        // Compress to max 100KB for faster loading
+                        const compressedBase64 = await compressImage(file, {
+                            maxWidth: 200,
+                            maxHeight: 200,
+                            quality: 0.8,
+                            maxSizeMB: 0.1 // 100KB
+                        });
+
+                        logoUrl = compressedBase64;
+                        console.log('✅ Logo compressed, new size:', compressedBase64.length, 'bytes');
                     } catch (uploadErr) {
-                        console.error('❌ Error uploading logo:', uploadErr);
-                        setError('Erro ao fazer upload do logo.');
+                        console.error('❌ Error compressing logo:', uploadErr);
+                        setError('Erro ao processar logo.');
                         setIsUploading(false);
                         return;
                     } finally {
