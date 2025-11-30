@@ -615,13 +615,24 @@ const Settings: React.FC<SettingsProps> = ({
                                     {selectedLogo && <Button variant="neutral" className="w-full text-xs" onClick={() => handleOpenAdjuster(selectedLogo, 1, async (base64) => {
                                         try {
                                             setIsUploading(true);
+                                            console.log('✂️ Image cropped, compressing...');
                                             const res = await fetch(base64);
                                             const blob = await res.blob();
-                                            const url = await uploadFileToStorage(blob, 'logos');
-                                            setSelectedLogo(url);
+                                            const file = new File([blob], 'logo.png', { type: 'image/png' });
+
+                                            // Compress to 200x200 max, 100KB
+                                            const compressedBase64 = await compressImage(file, {
+                                                maxWidth: 200,
+                                                maxHeight: 200,
+                                                quality: 0.8,
+                                                maxSizeMB: 0.1
+                                            });
+
+                                            setSelectedLogo(compressedBase64);
+                                            console.log('✅ Cropped image compressed and set');
                                         } catch (e) {
-                                            console.error(e);
-                                            setError("Erro ao fazer upload da imagem.");
+                                            console.error('❌ Error processing cropped image:', e);
+                                            setError("Erro ao processar imagem.");
                                         } finally {
                                             setIsUploading(false);
                                         }
