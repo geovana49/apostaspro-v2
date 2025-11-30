@@ -232,7 +232,10 @@ const Settings: React.FC<SettingsProps> = ({
     };
 
     const handleSaveItem = async (type: 'status' | 'origin' | 'bookmaker') => {
-        if (!currentUser) return;
+        if (!currentUser) {
+            console.log('❌ No current user');
+            return;
+        }
         setError(null);
         if (!newItemName.trim()) {
             setError('O nome é obrigatório.');
@@ -255,6 +258,7 @@ const Settings: React.FC<SettingsProps> = ({
 
         try {
             const id = editingId || Date.now().toString();
+            console.log(`💾 Salvando ${type}:`, trimmedName, 'ID:', id);
 
             if (type === 'status') {
                 const item: StatusItem = { id, name: trimmedName, color: selectedColor };
@@ -269,11 +273,13 @@ const Settings: React.FC<SettingsProps> = ({
                 if (selectedLogo && selectedLogo.startsWith('data:')) {
                     try {
                         setIsUploading(true);
+                        console.log('📤 Uploading logo to storage...');
                         const res = await fetch(selectedLogo);
                         const blob = await res.blob();
                         logoUrl = await uploadFileToStorage(blob, 'logos');
+                        console.log('✅ Logo uploaded:', logoUrl);
                     } catch (uploadErr) {
-                        console.error('Error uploading logo:', uploadErr);
+                        console.error('❌ Error uploading logo:', uploadErr);
                         setError('Erro ao fazer upload do logo.');
                         setIsUploading(false);
                         return;
@@ -283,7 +289,9 @@ const Settings: React.FC<SettingsProps> = ({
                 }
 
                 const item: Bookmaker = { id, name: trimmedName, color: selectedColor, logo: logoUrl, siteUrl: newItemUrl };
+                console.log('💾 Saving bookmaker to Firestore:', item);
                 await FirestoreService.saveItem(currentUser.uid, 'bookmakers', item);
+                console.log('✅ Bookmaker saved successfully');
             }
 
             setNewItemName('');
@@ -299,7 +307,7 @@ const Settings: React.FC<SettingsProps> = ({
                 setLastSavedId(id);
             }
         } catch (err) {
-            console.error(`Error saving ${type}:`, err);
+            console.error(`❌ Error saving ${type}:`, err);
             setError(`Erro ao salvar ${type}.`);
         }
     };
