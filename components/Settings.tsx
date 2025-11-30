@@ -86,12 +86,25 @@ const Settings: React.FC<SettingsProps> = ({
     const [emailInput, setEmailInput] = useState('');
     const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
     const [bookmakerSearchTerm, setBookmakerSearchTerm] = useState('');
+    const [lastSavedId, setLastSavedId] = useState<string | null>(null);
 
     const topOfPageRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         setActiveTab(initialTab);
     }, [initialTab]);
+
+    useEffect(() => {
+        if (lastSavedId) {
+            setTimeout(() => {
+                const element = document.getElementById(`bookmaker-${lastSavedId}`);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setLastSavedId(null);
+                }
+            }, 300); // Small delay to ensure DOM update
+        }
+    }, [lastSavedId]);
 
     const handleCroppedImage = async (base64: string) => {
         try {
@@ -280,6 +293,11 @@ const Settings: React.FC<SettingsProps> = ({
             setSelectedIcon('Star');
             setEditingId(null);
             setError(null);
+
+            // Scroll to newly created item if it's a bookmaker and not editing
+            if (type === 'bookmaker' && !editingId) {
+                setLastSavedId(id);
+            }
         } catch (err) {
             console.error(`Error saving ${type}:`, err);
             setError(`Erro ao salvar ${type}.`);
@@ -588,12 +606,22 @@ const Settings: React.FC<SettingsProps> = ({
                 </div>
                 {/* List */}
                 <div className="space-y-4">
+                    {/* Counter */}
+                    <div className="flex items-center justify-between bg-[#0d1121] border border-white/5 rounded-xl px-4 py-3">
+                        <span className="text-sm text-gray-400">Total de Casas</span>
+                        <div className="flex items-center gap-2">
+                            <div className="bg-primary/10 text-primary px-3 py-1 rounded-lg font-bold text-lg">
+                                {bookmakers.length}
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="relative">
                         <input type="text" placeholder="Pesquisar..." value={bookmakerSearchTerm} onChange={(e) => setBookmakerSearchTerm(e.target.value)} className="w-full bg-[#0d1121] border border-white/10 rounded-xl py-3 pl-10 text-sm text-white" />
                         <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
                     </div>
                     {filteredBookmakers.map(bookie => (
-                        <div key={bookie.id} className="group bg-[#0d1121] border border-white/5 rounded-xl p-4 flex items-center justify-between hover:border-white/10 transition-all gap-3">
+                        <div key={bookie.id} id={`bookmaker-${bookie.id}`} className="group bg-[#0d1121] border border-white/5 rounded-xl p-4 flex items-center justify-between hover:border-white/10 transition-all gap-3">
                             <div className="flex items-center gap-4 flex-1 min-w-0">
                                 <div className="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-[#090c19] text-xs shadow-sm overflow-hidden border border-white/5 shrink-0" style={{ backgroundColor: bookie.color || '#fff' }}>
                                     {bookie.logo ? <img src={bookie.logo} alt={bookie.name} className="w-full h-full object-cover" /> : bookie.name.substring(0, 2).toUpperCase()}

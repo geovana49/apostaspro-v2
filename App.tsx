@@ -10,6 +10,7 @@ import MyBets from './components/MyBets';
 import ExtraGains from './components/ExtraGains';
 import Coach from './components/Coach';
 import Settings from './components/Settings';
+import AIAssistant from './components/AIAssistant';
 import LandingPage from './components/LandingPage';
 
 const DEFAULT_SETTINGS: AppSettings = {

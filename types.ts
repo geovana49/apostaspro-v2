@@ -83,10 +83,20 @@ export interface User {
 
 export type SettingsTab = 'general' | 'status' | 'origins' | 'bookmakers';
 
+export interface AIAnalysisHistory {
+  id: string;
+  timestamp: Date;
+  imageUrl: string;
+  type: 'bet' | 'gain' | 'bookmaker' | 'unknown';
+  status: 'confirmed' | 'edited' | 'cancelled';
+  confidence: number;
+}
+
 export enum Page {
   OVERVIEW = 'overview',
   BETS = 'bets',
   GAINS = 'gains',
   COACH = 'coach',
   SETTINGS = 'settings',
+  AI_ASSISTANT = 'aiAssistant',
 }
