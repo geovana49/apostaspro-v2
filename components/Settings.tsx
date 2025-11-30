@@ -132,7 +132,17 @@ const Settings: React.FC<SettingsProps> = ({
     const handleAutoFillFromUrl = async () => {
         if (!newItemUrl) return;
         try {
-            const domain = new URL(newItemUrl).hostname;
+            const url = newItemUrl.startsWith('http') ? newItemUrl : `https://${newItemUrl}`;
+            const domain = new URL(url).hostname;
+
+            // Extract name from domain (remove www. and .com, .br, etc)
+            const name = domain.replace('www.', '').split('.')[0];
+            const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
+
+            if (!newItemName.trim()) {
+                setNewItemName(capitalizedName);
+            }
+
             const logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
             setSelectedLogo(logoUrl);
         } catch (e) {
@@ -240,7 +250,26 @@ const Settings: React.FC<SettingsProps> = ({
                 const item: OriginItem = { id, name: trimmedName, color: selectedColor, icon: selectedIcon };
                 await FirestoreService.saveItem(currentUser.uid, 'origins', item);
             } else if (type === 'bookmaker') {
-                const item: Bookmaker = { id, name: trimmedName, color: selectedColor, logo: selectedLogo, siteUrl: newItemUrl };
+                let logoUrl = selectedLogo;
+
+                // If logo is base64 (starts with data:), upload to Firebase Storage
+                if (selectedLogo && selectedLogo.startsWith('data:')) {
+                    try {
+                        setIsUploading(true);
+                        const res = await fetch(selectedLogo);
+                        const blob = await res.blob();
+                        logoUrl = await uploadFileToStorage(blob, 'logos');
+                    } catch (uploadErr) {
+                        console.error('Error uploading logo:', uploadErr);
+                        setError('Erro ao fazer upload do logo.');
+                        setIsUploading(false);
+                        return;
+                    } finally {
+                        setIsUploading(false);
+                    }
+                }
+
+                const item: Bookmaker = { id, name: trimmedName, color: selectedColor, logo: logoUrl, siteUrl: newItemUrl };
                 await FirestoreService.saveItem(currentUser.uid, 'bookmakers', item);
             }
 
@@ -522,9 +551,16 @@ const Settings: React.FC<SettingsProps> = ({
                                 </div>
                                 <div className="flex-1 space-y-2">
                                     <input type="file" className="hidden" id="logo-upload" accept="image/*" onChange={(e) => handleImageUpload(e, 'logos', setSelectedLogo)} />
-                                    <Button as="label" htmlFor="logo-upload" variant="neutral" className="w-full text-xs" disabled={isUploading}>
-                                        {isUploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />} {selectedLogo ? 'Alterar Imagem' : 'Carregar Imagem'}
-                                    </Button>
+                                    <label
+                                        htmlFor="logo-upload"
+                                        className={`relative overflow-hidden font-medium rounded-lg transition-all duration-300 flex items-center justify-center gap-2 ${isUploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} active:scale-95 tracking-wide group w-full text-xs px-5 py-2.5 text-sm bg-[#151b2e] text-white border border-white/10 hover:bg-white/5 shadow-[0_4px_14px_0_rgba(0,0,0,0.1)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.2)] hover:-translate-y-0.5`}
+                                    >
+                                        <span className="relative z-10 flex items-center gap-2">
+                                            {isUploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                                            {selectedLogo ? 'Alterar Imagem' : 'Carregar Imagem'}
+                                        </span>
+                                        <div className="absolute inset-0 h-full w-full scale-0 rounded-lg transition-all duration-300 group-hover:scale-100 group-hover:bg-white/10" />
+                                    </label>
                                     {selectedLogo && <Button variant="neutral" className="w-full text-xs" onClick={() => handleOpenAdjuster(selectedLogo, 1, async (base64) => {
                                         try {
                                             setIsUploading(true);
