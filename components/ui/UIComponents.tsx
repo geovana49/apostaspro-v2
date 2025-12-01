@@ -727,31 +727,31 @@ export const Dropdown: React.FC<DropdownProps> = ({
       {/* Portal for the Menu */}
       {isOpen && createPortal(
         <>
-            {isMobile && (
-                <div 
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999998] animate-in fade-in duration-200"
-                    onClick={() => setIsOpen(false)}
-                />
-            )}
+          {isMobile && (
             <div
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999998] animate-in fade-in duration-200"
+              onClick={() => setIsOpen(false)}
+            />
+          )}
+          <div
             ref={menuRef}
             style={!isMobile ? {
-                position: 'fixed',
-                left: coords.left,
-                width: coords.width,
-                zIndex: 999999,
-                ...(coords.placement === 'bottom'
+              position: 'fixed',
+              left: coords.left,
+              width: coords.width,
+              zIndex: 999999,
+              ...(coords.placement === 'bottom'
                 ? { top: coords.top }
                 : { bottom: coords.bottom }
-                ),
-                maxHeight: coords.maxHeight
+              ),
+              maxHeight: coords.maxHeight
             } : {
-                position: 'fixed',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                zIndex: 999999,
-                maxHeight: '80vh'
+              position: 'fixed',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 999999,
+              maxHeight: '80vh'
             }}
             className={!isMobile ? `
                         bg-[#151b2e] border border-white/10 rounded-xl shadow-[0_20px_50px_-12px_rgba(0,0,0,1)] 
@@ -763,58 +763,59 @@ export const Dropdown: React.FC<DropdownProps> = ({
                         overflow-hidden flex flex-col pb-safe
                         animate-in slide-in-from-bottom duration-300
                     `}
-            >
-            {isMobile && (
-                <div className="w-full flex justify-center pt-3 pb-1" onClick={() => setIsOpen(false)}>
-                    <div className="w-12 h-1.5 bg-white/10 rounded-full" />
-                </div>
-            )}
-          {isSearchable && (
-            <div className="p-2 border-b border-white/10 sticky top-0 bg-[#151b2e] z-10">
-              <Input
-                autoFocus
-                icon={<Search size={14} />}
-                className="w-full text-xs py-1.5 bg-[#0d1121]"
-                placeholder={searchPlaceholder}
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                onClick={e => e.stopPropagation()} // Prevent dropdown from closing
-              />
-            </div>
-          )}
-          <div
-            className="p-1 space-y-0.5 overflow-y-auto custom-scrollbar"
-            style={{ maxHeight: isSearchable ? coords.maxHeight - 50 : coords.maxHeight }}
           >
-            {filteredOptions.length > 0 ? (
-              filteredOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => {
-                    onChange(option.value);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full text-left px-3 py-2.5 text-sm flex items-center gap-3 rounded-lg transition-all group/option ${option.value === value
-                    ? 'bg-primary/10 text-primary font-semibold'
-                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                    }`}
-                >
-                  <div className={`${option.value === value ? 'text-primary' : 'text-gray-500'} group-hover/option:scale-110 transition-transform`}>
-                    {option.icon}
-                  </div>
-                  <span className="flex-1">{option.label}</span>
-                  {option.value === value && <Check size={14} strokeWidth={3} className="animate-in zoom-in duration-200" />}
-                </button>
-              ))
-            ) : (
-              <div className="text-center text-xs text-gray-500 py-4 px-2">Nenhum resultado encontrado.</div>
+            {isMobile && (
+              <div className="w-full flex justify-center pt-3 pb-1" onClick={() => setIsOpen(false)}>
+                <div className="w-12 h-1.5 bg-white/10 rounded-full" />
+              </div>
             )}
+            {isSearchable && (
+              <div className="p-2 border-b border-white/10 sticky top-0 bg-[#151b2e] z-10">
+                <Input
+                  autoFocus
+                  icon={<Search size={14} />}
+                  className="w-full text-xs py-1.5 bg-[#0d1121]"
+                  placeholder={searchPlaceholder}
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  onClick={e => e.stopPropagation()} // Prevent dropdown from closing
+                />
+              </div>
+            )}
+            <div
+              className="p-1 space-y-0.5 overflow-y-auto custom-scrollbar"
+              style={{ maxHeight: isSearchable ? coords.maxHeight - 50 : coords.maxHeight }}
+            >
+              {filteredOptions.length > 0 ? (
+                filteredOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      onChange(option.value);
+                      setIsOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2.5 text-sm flex items-center gap-3 rounded-lg transition-all group/option ${option.value === value
+                      ? 'bg-primary/10 text-primary font-semibold'
+                      : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                      }`}
+                  >
+                    <div className={`${option.value === value ? 'text-primary' : 'text-gray-500'} group-hover/option:scale-110 transition-transform`}>
+                      {option.icon}
+                    </div>
+                    <span className="flex-1">{option.label}</span>
+                    {option.value === value && <Check size={14} strokeWidth={3} className="animate-in zoom-in duration-200" />}
+                  </button>
+                ))
+              ) : (
+                <div className="text-center text-xs text-gray-500 py-4 px-2">Nenhum resultado encontrado.</div>
+              )}
+            </div>
           </div>
-        </div>
-      </>,
-      document.body
-    )}
+        </>,
+        document.body
+      )}
+    </>
   );
 };
 
