@@ -81,8 +81,9 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
-
+    const [longPressId, setLongPressId] = useState<string | null>(null);
     const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+    const touchStartPos = useRef<{ x: number; y: number } | null>(null);
 
     const handleEdit = (bet: Bet) => {
         setIsEditing(true);
@@ -121,14 +122,34 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         setIsViewerOpen(true);
     };
 
-    const handlePressStart = (id: string) => {
+    const handlePressStart = (id: string, e: React.MouseEvent | React.TouchEvent) => {
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+        touchStartPos.current = { x: clientX, y: clientY };
+
         longPressTimer.current = setTimeout(() => {
             setLongPressId(id);
             if (navigator.vibrate) navigator.vibrate(50);
         }, 500);
     };
 
+    const handlePressMove = (e: React.MouseEvent | React.TouchEvent) => {
+        if (!touchStartPos.current) return;
+
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
+        const deltaX = Math.abs(clientX - touchStartPos.current.x);
+        const deltaY = Math.abs(clientY - touchStartPos.current.y);
+
+        // If moved more than 10px, cancel long press
+        if (deltaX > 10 || deltaY > 10) {
+            handlePressEnd();
+        }
+    };
+
     const handlePressEnd = () => {
+        touchStartPos.current = null;
         if (longPressTimer.current) {
             clearTimeout(longPressTimer.current);
             longPressTimer.current = null;
@@ -621,6 +642,13 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                             ${isDraft ? 'border-dashed border-2 border-gray-600/50 opacity-90' : ''}
 `}
                                 onClick={() => { if (!longPressId) setExpandedId(isExpanded ? null : bet.id); }}
+                                onMouseDown={(e) => handlePressStart(bet.id, e)}
+                                onMouseMove={handlePressMove}
+                                onMouseUp={handlePressEnd}
+                                onMouseLeave={handlePressEnd}
+                                onTouchStart={(e) => handlePressStart(bet.id, e)}
+                                onTouchMove={handlePressMove}
+                                onTouchEnd={handlePressEnd}
                             >
                                 <div className="p-4">
                                     <div
