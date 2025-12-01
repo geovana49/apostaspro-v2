@@ -554,8 +554,12 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                             </div>
                                             <div className="flex items-center gap-2 text-xs text-gray-500">
                                                 <span className="flex items-center gap-1">
-                                                    <div className="w-3 h-3 rounded-sm flex items-center justify-center text-[6px] font-bold text-[#090c19]" style={{ backgroundColor: bookie?.color || '#fff' }}>
-                                                        {bookie?.name?.substring(0, 1)}
+                                                    <div className="w-3 h-3 rounded-sm flex items-center justify-center text-[6px] font-bold text-[#090c19] overflow-hidden" style={{ backgroundColor: bookie?.color || '#fff' }}>
+                                                        {bookie?.logo ? (
+                                                            <img src={bookie.logo} alt={bookie.name} className="w-full h-full object-contain p-[1px]" />
+                                                        ) : (
+                                                            bookie?.name?.substring(0, 1)
+                                                        )}
                                                     </div>
                                                     <span className="hidden sm:inline">{bookie?.name}</span>
                                                 </span>
