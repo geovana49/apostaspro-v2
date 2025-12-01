@@ -791,7 +791,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                     <div onClick={() => setIsDatePickerOpen(true)}>
                         <Input
                             label="Data"
-                            value={new Date(formData.date).toLocaleDateString('pt-BR')}
+                            value={new Date(formData.date + 'T12:00:00').toLocaleDateString('pt-BR')}
                             readOnly
                             className="cursor-pointer"
                             icon={<Calendar size={18} />}
