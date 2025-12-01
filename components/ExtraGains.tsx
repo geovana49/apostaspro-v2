@@ -602,7 +602,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                             </div>
 
                             <div className="px-4 pb-4">
-                                <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                                <div className="flex items-center justify-between pt-3 border-t border-white/5 cursor-pointer" onClick={() => toggleGainDetails(gain.id)}>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); toggleGainDetails(gain.id); }}
                                         className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-all active:scale-95"
