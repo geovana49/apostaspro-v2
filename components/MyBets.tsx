@@ -45,9 +45,16 @@ const initialFormState: FormState = {
 };
 
 const formReducer = (state: FormState, action: any): FormState => {
+    console.log('🔄 Reducer called with action:', action.type, action);
     switch (action.type) {
-        case 'SET_FORM': return action.payload;
-        case 'UPDATE_FIELD': return { ...state, [action.field]: action.value };
+        case 'SET_FORM': 
+            console.log('🔄 SET_FORM payload:', action.payload);
+            return action.payload;
+        case 'UPDATE_FIELD': 
+            console.log('🔄 UPDATE_FIELD - field:', action.field, 'value:', action.value);
+            const newState = { ...state, [action.field]: action.value };
+            console.log('🔄 New state after UPDATE_FIELD:', newState);
+            return newState;
         case 'ADD_COVERAGE': return { ...state, coverages: [...state.coverages, action.payload] };
         case 'REMOVE_COVERAGE': return { ...state, coverages: state.coverages.filter(c => c.id !== action.id) };
         case 'UPDATE_COVERAGE': return {
