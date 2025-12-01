@@ -682,7 +682,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                             <div className="text-left">
                                                 <p className="text-[10px] text-textMuted uppercase font-bold">Lucro</p>
                                                 <p className={`font-bold text-sm ${profit >= 0 && bet.status !== 'Pendente' && !isDraft ? 'text-[#6ee7b7]' : ((bet.status === 'Pendente' || isDraft) ? 'text-textMuted' : 'text-[#F87171]')}`}>
-                                                    {(bet.status === 'Pendente' || isDraft) ? '--' : <MoneyDisplay value={Math.abs(profit)} privacyMode={settings.privacyMode} prefix={profit >= 0 ? '+ R$' : '- R$'} />}
+                                                    {(bet.status === 'Pendente' || isDraft) ? '--' : <MoneyDisplay value={Math.abs(profit)} privacyMode={settings.privacyMode} />}
                                                 </p>
                                             </div>
 
