@@ -561,9 +561,9 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                                             bookie?.name?.substring(0, 1)
                                                         )}
                                                     </div>
-                                                    <span className="hidden sm:inline">{bookie?.name}</span>
+                                                    <span className="">{bookie?.name}</span>
                                                 </span>
-                                                <span className="hidden sm:inline">•</span>
+                                                <span className="">•</span>
                                                 <span>{new Date(gain.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
                                             </div>
                                         </div>
