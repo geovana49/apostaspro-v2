@@ -574,10 +574,10 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                         <div className="text-left w-full">
                                             <p className="text-[10px] text-textMuted uppercase font-bold">Valor</p>
                                             <div className="flex items-center justify-between gap-3 w-full">
-                                                <p className={`font-bold text-sm ${isConfirmed ? 'text-[#6ee7b7]' : 'text-textMuted'}`}>
+                                                <p className={`font-bold text-base ${isConfirmed ? 'text-[#6ee7b7]' : 'text-textMuted'}`}>
                                                     <MoneyDisplay value={gain.amount} />
                                                 </p>
-                                                <span style={{ backgroundColor: `${statusColor}1A`, color: statusColor, borderColor: `${statusColor}33` }} className="text-[9px] sm:text-[10px] font-medium px-2 py-0.5 rounded-full inline-block border">{gain.status}</span>
+                                                <span style={{ backgroundColor: `${statusColor}1A`, color: statusColor, borderColor: `${statusColor}33` }} className="text-[10px] sm:text-xs font-medium px-2.5 py-1 rounded-full inline-block border">{gain.status}</span>
                                             </div>
                                         </div>
                                     </div>
