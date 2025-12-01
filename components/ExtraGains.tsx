@@ -542,8 +542,11 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                             <div className="p-4">
                                 <div className="flex flex-col md:flex-row md:items-center gap-4 hover:bg-white/5 transition-colors -mx-4 -mt-4 p-4 rounded-t-xl">
                                     <div className="flex items-center gap-3 flex-1">
-                                        <div className="w-10 h-10 rounded-lg flex items-center justify-center border border-white/5 shadow-inner overflow-hidden shrink-0" style={{ backgroundColor: originBg ? originBg : `${originColor}15`, color: originColor, borderColor: originBg ? 'transparent' : undefined }}>
-                                            <RenderIcon iconSource={originItem?.icon} size={20} />
+                                        <div className="flex flex-col items-center gap-1 shrink-0">
+                                            <div className="w-10 h-10 rounded-lg flex items-center justify-center border border-white/5 shadow-inner overflow-hidden shrink-0" style={{ backgroundColor: originBg ? originBg : `${originColor}15`, color: originColor, borderColor: originBg ? 'transparent' : undefined }}>
+                                                <RenderIcon iconSource={originItem?.icon} size={20} />
+                                            </div>
+                                            <span className="text-[8px] font-bold uppercase tracking-wide text-center max-w-[60px] truncate" style={{ color: originColor }}>{gain.origin}</span>
                                         </div>
 
                                         <div>
@@ -570,16 +573,12 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                     <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto mt-2 md:mt-0">
                                         <div className="text-left">
                                             <p className="text-[10px] text-textMuted uppercase font-bold">Valor</p>
-                                            <p className={`font-bold text-sm ${isConfirmed ? 'text-[#6ee7b7]' : 'text-textMuted'}`}>
-                                                <MoneyDisplay value={gain.amount} />
-                                            </p>
-                                            <div className="mt-2">
-                                                <span className="text-[8px] font-bold uppercase tracking-wide" style={{ color: originColor }}>{gain.origin}</span>
+                                            <div className="flex items-center gap-3">
+                                                <p className={`font-bold text-sm ${isConfirmed ? 'text-[#6ee7b7]' : 'text-textMuted'}`}>
+                                                    <MoneyDisplay value={gain.amount} />
+                                                </p>
+                                                <span style={{ backgroundColor: `${statusColor}1A`, color: statusColor, borderColor: `${statusColor}33` }} className="text-[9px] sm:text-[10px] font-medium px-2 py-0.5 rounded-full inline-block border">{gain.status}</span>
                                             </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-                                            <span style={{ backgroundColor: `${statusColor}1A`, color: statusColor, borderColor: `${statusColor}33` }} className="text-[9px] sm:text-[10px] font-medium px-2 py-0.5 rounded-full inline-block border">{gain.status}</span>
                                         </div>
                                     </div>
                                 </div>
