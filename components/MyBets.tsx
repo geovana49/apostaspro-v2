@@ -445,6 +445,14 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     console.log("Total bets:", bets.length, "Filtered bets:", filteredBets.length, "Current month:", currentDate.getMonth(), "Current year:", currentDate.getFullYear());
 
     const renderStatusBadge = (statusName: string) => {
+        if (statusName === 'Rascunho') {
+            return (
+                <span className="px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border border-dashed border-gray-500 text-gray-400 bg-gray-500/10 shadow-sm min-w-[60px] text-center backdrop-blur-sm">
+                    Rascunho
+                </span>
+            );
+        }
+
         const statusItem = statuses.find(s => s.name === statusName);
         const color = statusItem ? statusItem.color : '#fbbf24';
 
@@ -624,7 +632,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                             <div>
                                                 <h4 className="font-semibold text-white text-base group-hover:text-primary transition-colors flex items-center gap-2">
                                                     {bet.event}
-                                                    {isDraft && <span className="text-[10px] bg-gray-600 text-white px-1.5 py-0.5 rounded">RASCUNHO</span>}
+                                                    {isDraft && <span className="text-[9px] bg-yellow-500/20 text-yellow-500 border border-yellow-500/30 px-1.5 py-0.5 rounded ml-2 font-bold tracking-wider">RASCUNHO</span>}
                                                 </h4>
                                                 <div className="flex items-center gap-2 mt-1">
                                                     <span className="text-xs text-textMuted">{new Date(bet.date).toLocaleDateString('pt-BR')}</span>
