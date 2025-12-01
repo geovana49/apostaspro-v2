@@ -1199,7 +1199,7 @@ const Calendar: React.FC<{
     days.push(<div key={`empty-${i}`} className="h-8" />);
   }
   for (let day = 1; day <= daysInMonth; day++) {
-    const date = new Date(year, month, day);
+    const date = new Date(year, month, day, 12, 0, 0);
     const isSelected = date.toDateString() === selectedDate.toDateString();
     const isToday = date.toDateString() === new Date().toDateString();
 
