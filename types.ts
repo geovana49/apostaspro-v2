@@ -36,6 +36,7 @@ export interface Coverage {
   odd: number;
   stake: number;
   status: Status;
+  manualReturn?: number;
 }
 
 export interface Bet {
