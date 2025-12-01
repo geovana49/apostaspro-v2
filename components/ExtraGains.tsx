@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { ExtraGain, Bookmaker, StatusItem, OriginItem, AppSettings, User } from '../types';
 import { FirestoreService } from '../services/firestoreService';
+import { compressImage } from '../utils/imageCompression';
 
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e', '#64748b', '#000000', '#FFFFFF'];
 
@@ -302,12 +303,26 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
 
             const uploadedPhotoUrls: string[] = await Promise.all(tempPhotos.map(async (photo) => {
                 if (photo.file) {
-                    // Convert file to base64
-                    return new Promise<string>((resolve) => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => resolve(reader.result as string);
-                        reader.readAsDataURL(photo.file!);
-                    });
+                    try {
+                        console.log('🗜️ Compressing image:', photo.file.name, photo.file.size);
+                        // Compress image before converting to base64
+                        const compressedBase64 = await compressImage(photo.file, {
+                            maxWidth: 800, // Reasonable size for viewing
+                            maxHeight: 800,
+                            quality: 0.7,
+                            maxSizeMB: 0.2 // Max 200KB per image
+                        });
+                        console.log('✅ Image compressed, new size:', compressedBase64.length);
+                        return compressedBase64;
+                    } catch (err) {
+                        console.error('Error compressing image:', err);
+                        // Fallback to original if compression fails (though likely to fail save if too big)
+                        return new Promise<string>((resolve) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => resolve(reader.result as string);
+                            reader.readAsDataURL(photo.file!);
+                        });
+                    }
                 } else {
                     return photo.url;
                 }
