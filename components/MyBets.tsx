@@ -47,10 +47,10 @@ const initialFormState: FormState = {
 const formReducer = (state: FormState, action: any): FormState => {
     console.log('🔄 Reducer called with action:', action.type, action);
     switch (action.type) {
-        case 'SET_FORM': 
+        case 'SET_FORM':
             console.log('🔄 SET_FORM payload:', action.payload);
             return action.payload;
-        case 'UPDATE_FIELD': 
+        case 'UPDATE_FIELD':
             console.log('🔄 UPDATE_FIELD - field:', action.field, 'value:', action.value);
             const newState = { ...state, [action.field]: action.value };
             console.log('🔄 New state after UPDATE_FIELD:', newState);
@@ -810,7 +810,11 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                         date={formData.date ? new Date(formData.date) : new Date()}
                         onSelect={(date) => {
                             console.log('📅 MyBets onSelect called with date:', date);
-                            const dateStr = date.toISOString().split('T')[0];
+                            // Format date as YYYY-MM-DD without timezone conversion
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            const dateStr = `${year}-${month}-${day}`;
                             console.log('📅 Dispatching UPDATE_FIELD with dateStr:', dateStr);
                             dispatch({ type: 'UPDATE_FIELD', field: 'date', value: dateStr });
                             console.log('📅 Dispatch completed, closing picker');
