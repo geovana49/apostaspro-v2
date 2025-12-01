@@ -538,22 +538,21 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     const isExpanded = expandedGains.has(gain.id);
 
                     return (
-                        <Card key={gain.id} className="group border-none bg-surface hover:bg-[#1a2133] transition-all relative p-0 overflow-hidden">
-                            <div className="p-4" onClick={() => { if (!deleteId) handleEdit(gain); }}>
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                                        <div className="flex flex-col items-center gap-1 shrink-0">
-                                            <div className="w-8 h-8 rounded-lg flex items-center justify-center border border-white/5 shadow-inner overflow-hidden" style={{ backgroundColor: originBg ? originBg : `${originColor}15`, color: originColor, borderColor: originBg ? 'transparent' : undefined }}>
-                                                <RenderIcon iconSource={originItem?.icon} size={16} />
-                                            </div>
-                                            <span className="text-[8px] font-bold uppercase tracking-wide" style={{ color: originColor }}>{gain.origin}</span>
+                        <Card key={gain.id} className="group border-none bg-surface hover:bg-[#1a2133] transition-all relative p-0 overflow-hidden cursor-pointer" onClick={() => { if (!deleteId) toggleGainDetails(gain.id); }}>
+                            <div className="p-4">
+                                <div className="flex flex-col md:flex-row md:items-center gap-4 hover:bg-white/5 transition-colors -mx-4 -mt-4 p-4 rounded-t-xl">
+                                    <div className="flex items-center gap-3 flex-1">
+                                        <div className="w-10 h-10 rounded-lg flex items-center justify-center border border-white/5 shadow-inner overflow-hidden shrink-0" style={{ backgroundColor: originBg ? originBg : `${originColor}15`, color: originColor, borderColor: originBg ? 'transparent' : undefined }}>
+                                            <RenderIcon iconSource={originItem?.icon} size={20} />
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-xs sm:text-sm font-bold text-white">{gain.game || gain.origin}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-xs text-gray-500">
-                                                <span className="flex items-center gap-1">
+
+                                        <div>
+                                            <h4 className="font-semibold text-white text-base flex items-center gap-2">
+                                                {gain.game || gain.origin}
+                                            </h4>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className="text-xs text-textMuted">{new Date(gain.date).toLocaleDateString('pt-BR')}</span>
+                                                <span className="flex items-center gap-1 text-xs text-textMuted">
                                                     <div className="w-3 h-3 rounded-sm flex items-center justify-center text-[6px] font-bold text-[#090c19] overflow-hidden" style={{ backgroundColor: bookie?.color || '#fff' }}>
                                                         {bookie?.logo ? (
                                                             <img src={bookie.logo} alt={bookie.name} className="w-full h-full object-contain p-[1px]" />
@@ -561,17 +560,21 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                                             bookie?.name?.substring(0, 1)
                                                         )}
                                                     </div>
-                                                    <span className="">{bookie?.name}</span>
+                                                    <span>{bookie?.name}</span>
                                                 </span>
-                                                <span className="">•</span>
-                                                <span>{new Date(gain.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="text-right shrink-0">
-                                        <p className={`font-bold text-sm ${isConfirmed ? 'text-[#6ee7b7]' : 'text-textMuted'}`}> <MoneyDisplay value={gain.amount} /> </p>
-                                        <div className="mt-1">
-                                            <span style={{ backgroundColor: `${statusColor}1A`, color: statusColor, borderColor: `${statusColor}33` }} className="text-[9px] sm:text-[10px] font-medium px-2 py-0.5 rounded-full inline-block border">{gain.status}</span>
+
+                                    <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto mt-2 md:mt-0">
+                                        <div className="text-left">
+                                            <p className="text-[10px] text-textMuted uppercase font-bold">Valor</p>
+                                            <p className={`font-bold text-sm ${isConfirmed ? 'text-[#6ee7b7]' : 'text-textMuted'}`}>
+                                                <MoneyDisplay value={gain.amount} />
+                                            </p>
+                                            <div className="mt-2">
+                                                <span style={{ backgroundColor: `${statusColor}1A`, color: statusColor, borderColor: `${statusColor}33` }} className="text-[9px] sm:text-[10px] font-medium px-2 py-0.5 rounded-full inline-block border">{gain.status}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
