@@ -551,7 +551,6 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                                 {gain.game || gain.origin}
                                             </h4>
                                             <div className="flex items-center gap-2 mt-1">
-                                                <span className="text-xs text-textMuted">{new Date(gain.date).toLocaleDateString('pt-BR')}</span>
                                                 <span className="flex items-center gap-1 text-xs text-textMuted">
                                                     <div className="w-3 h-3 rounded-sm flex items-center justify-center text-[6px] font-bold text-[#090c19] overflow-hidden" style={{ backgroundColor: bookie?.color || '#fff' }}>
                                                         {bookie?.logo ? (
@@ -562,6 +561,8 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                                     </div>
                                                     <span>{bookie?.name}</span>
                                                 </span>
+                                                <span className="text-xs text-textMuted">•</span>
+                                                <span className="text-xs text-textMuted">{new Date(gain.date).toLocaleDateString('pt-BR')}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -573,8 +574,12 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                                 <MoneyDisplay value={gain.amount} />
                                             </p>
                                             <div className="mt-2">
-                                                <span style={{ backgroundColor: `${statusColor}1A`, color: statusColor, borderColor: `${statusColor}33` }} className="text-[9px] sm:text-[10px] font-medium px-2 py-0.5 rounded-full inline-block border">{gain.status}</span>
+                                                <span className="text-[8px] font-bold uppercase tracking-wide" style={{ color: originColor }}>{gain.origin}</span>
                                             </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3">
+                                            <span style={{ backgroundColor: `${statusColor}1A`, color: statusColor, borderColor: `${statusColor}33` }} className="text-[9px] sm:text-[10px] font-medium px-2 py-0.5 rounded-full inline-block border">{gain.status}</span>
                                         </div>
                                     </div>
                                 </div>
