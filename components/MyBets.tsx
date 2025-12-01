@@ -86,6 +86,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
 
     // Viewer State
     const [isViewerOpen, setIsViewerOpen] = useState(false);
+    const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
 
     const longPressTimer = useRef<NodeJS.Timeout | null>(null);
