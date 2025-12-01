@@ -729,7 +729,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                 </div>
 
                                 {isExpanded && (
-                                    <div className="bg-black/20 p-4 border-t border-white/5 animate-in slide-in-from-top-2">
+                                    <div className="bg-black/20 p-4 border-t border-white/5 animate-in slide-in-from-top-2" onClick={(e) => e.stopPropagation()}>
                                         <h5 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-3 ml-1">Coberturas & Entradas</h5>
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                             {bet.coverages.map(cov => {
