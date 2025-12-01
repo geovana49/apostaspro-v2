@@ -86,14 +86,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
 
     // Viewer State
     const [isViewerOpen, setIsViewerOpen] = useState(false);
-    const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
-
-    // Parse date string to Date object without timezone issues
-    const parseDate = (dateStr: string) => {
-        const [year, month, day] = dateStr.split('-').map(Number);
-        return new Date(year, month - 1, day);
-    };
 
     const longPressTimer = useRef<NodeJS.Timeout | null>(null);
 
