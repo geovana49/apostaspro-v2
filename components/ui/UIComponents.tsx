@@ -585,6 +585,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
   const [coords, setCoords] = useState<{
     top: number;
     left: number;
@@ -594,11 +595,19 @@ export const Dropdown: React.FC<DropdownProps> = ({
     maxHeight: number;
   }>({ top: 0, left: 0, width: 0, placement: 'bottom', maxHeight: 300 });
 
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Update position with collision detection
   const updatePosition = () => {
+    if (isMobile) return; // Skip positioning on mobile
     if (dropdownRef.current) {
       const rect = dropdownRef.current.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
@@ -645,6 +654,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
     let lastWidth = window.innerWidth;
 
     const handleScrollOrResize = (e: Event) => {
+      if (isMobile) return; // Don't close on scroll/resize on mobile
+
       // Fix: Do not close if scrolling inside the dropdown menu itself
       if (menuRef.current && menuRef.current.contains(e.target as Node)) {
         return;
@@ -713,27 +724,51 @@ export const Dropdown: React.FC<DropdownProps> = ({
       </div>
 
       {/* Portal for the Menu */}
+      {/* Portal for the Menu */}
       {isOpen && createPortal(
-        <div
-          ref={menuRef}
-          style={{
-            position: 'fixed',
-            left: coords.left,
-            width: coords.width,
-            zIndex: 999999,
-            ...(coords.placement === 'bottom'
-              ? { top: coords.top }
-              : { bottom: coords.bottom }
-            ),
-            maxHeight: coords.maxHeight
-          }}
-          className={`
-                    bg-[#151b2e] border border-white/10 rounded-xl shadow-[0_20px_50px_-12px_rgba(0,0,0,1)] 
-                    overflow-hidden flex flex-col
-                    animate-in fade-in zoom-in-95 duration-200 ring-1 ring-white/5
-                    ${coords.placement === 'top' ? 'origin-bottom' : 'origin-top'}
-                `}
-        >
+        <>
+            {isMobile && (
+                <div 
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999998] animate-in fade-in duration-200"
+                    onClick={() => setIsOpen(false)}
+                />
+            )}
+            <div
+            ref={menuRef}
+            style={!isMobile ? {
+                position: 'fixed',
+                left: coords.left,
+                width: coords.width,
+                zIndex: 999999,
+                ...(coords.placement === 'bottom'
+                ? { top: coords.top }
+                : { bottom: coords.bottom }
+                ),
+                maxHeight: coords.maxHeight
+            } : {
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                zIndex: 999999,
+                maxHeight: '80vh'
+            }}
+            className={!isMobile ? `
+                        bg-[#151b2e] border border-white/10 rounded-xl shadow-[0_20px_50px_-12px_rgba(0,0,0,1)] 
+                        overflow-hidden flex flex-col
+                        animate-in fade-in zoom-in-95 duration-200 ring-1 ring-white/5
+                        ${coords.placement === 'top' ? 'origin-bottom' : 'origin-top'}
+                    ` : `
+                        bg-[#151b2e] border-t border-white/10 rounded-t-2xl shadow-[0_-10px_40px_-10px_rgba(0,0,0,1)]
+                        overflow-hidden flex flex-col pb-safe
+                        animate-in slide-in-from-bottom duration-300
+                    `}
+            >
+            {isMobile && (
+                <div className="w-full flex justify-center pt-3 pb-1" onClick={() => setIsOpen(false)}>
+                    <div className="w-12 h-1.5 bg-white/10 rounded-full" />
+                </div>
+            )}
           {isSearchable && (
             <div className="p-2 border-b border-white/10 sticky top-0 bg-[#151b2e] z-10">
               <Input
