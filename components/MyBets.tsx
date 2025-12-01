@@ -81,7 +81,6 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
-    const [longPressId, setLongPressId] = useState<string | null>(null);
     const longPressTimer = useRef<NodeJS.Timeout | null>(null);
     const touchStartPos = useRef<{ x: number; y: number } | null>(null);
 
@@ -630,11 +629,6 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                         <div
                             key={bet.id}
                             className="relative"
-                            onMouseDown={() => handlePressStart(bet.id)}
-                            onMouseUp={handlePressEnd}
-                            onMouseLeave={handlePressEnd}
-                            onTouchStart={() => handlePressStart(bet.id)}
-                            onTouchEnd={handlePressEnd}
                         >
                             <Card
                                 className={`
