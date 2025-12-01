@@ -981,10 +981,27 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                             />
 
                                             <div className="col-span-2">
-                                                <label className="text-[10px] text-textMuted uppercase font-bold block mb-2">Retorno Estimado</label>
-                                                <div className="w-full bg-[#151b2e] border border-white/5 rounded-lg py-2.5 px-4 text-sm text-gray-400 cursor-not-allowed shadow-inner">
-                                                    {cov.stake && cov.odd ? `R$ ${(cov.stake * cov.odd).toFixed(2)} ` : 'Auto-calc...'}
-                                                </div>
+                                                <Input
+                                                    label="Retorno Estimado"
+                                                    type="tel"
+                                                    inputMode="numeric"
+                                                    className="text-xs py-1.5"
+                                                    placeholder="Auto-calc..."
+                                                    value={
+                                                        cov.manualReturn !== undefined
+                                                            ? cov.manualReturn.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+                                                            : (cov.stake && cov.odd ? (cov.stake * cov.odd).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '')
+                                                    }
+                                                    onChange={e => {
+                                                        const value = e.target.value.replace(/\D/g, '');
+                                                        if (value === '') {
+                                                            updateCoverage(cov.id, 'manualReturn', undefined);
+                                                        } else {
+                                                            const numberValue = parseInt(value, 10) / 100;
+                                                            updateCoverage(cov.id, 'manualReturn', numberValue);
+                                                        }
+                                                    }}
+                                                />
                                             </div>
 
                                             <div className="col-span-2 mt-1">
