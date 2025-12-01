@@ -662,11 +662,6 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                                 <p className={`font-bold text-sm ${profit >= 0 && bet.status !== 'Pendente' && !isDraft ? 'text-[#6ee7b7]' : ((bet.status === 'Pendente' || isDraft) ? 'text-textMuted' : 'text-[#F87171]')}`}>
                                                     {(bet.status === 'Pendente' || isDraft) ? '--' : <MoneyDisplay value={Math.abs(profit)} privacyMode={settings.privacyMode} prefix={profit >= 0 ? '+ R$' : '- R$'} />}
                                                 </p>
-                                                <div className="mt-2">
-                                                    <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
-                                                        <ChevronDown size={20} className="text-textMuted" />
-                                                    </div>
-                                                </div>
                                             </div>
 
                                             <div className="flex items-center gap-3">
@@ -676,55 +671,60 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                     </div>
 
                                     <div
-                                        className="flex items-center justify-end gap-2 pt-3 mt-1 border-t border-white/5"
+                                        className="flex items-center justify-between gap-2 pt-3 mt-1 border-t border-white/5"
                                         onClick={(e) => e.stopPropagation()}
                                     >
-                                        {deleteId === bet.id ? (
-                                            <div className="flex items-center gap-2 animate-in slide-in-from-right-2 duration-200">
-                                                <span className="text-[10px] text-danger font-bold uppercase mr-1">Confirmar Exclusão?</span>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); confirmDelete(); }}
-                                                    className="p-1.5 px-3 bg-danger text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm flex items-center gap-1 text-xs font-bold"
-                                                    title="Confirmar"
-                                                >
-                                                    <Check size={14} /> Sim
-                                                </button>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); cancelDelete(); }}
-                                                    className="p-1.5 px-3 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors shadow-sm flex items-center gap-1 text-xs font-bold"
-                                                    title="Cancelar"
-                                                >
-                                                    <X size={14} /> Não
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleDuplicate(bet); }}
-                                                    className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5 group/btn"
-                                                    title="Duplicar"
-                                                >
-                                                    <Copy size={16} />
-                                                    <span className="text-[10px] font-medium group-hover/btn:text-white hidden sm:inline">Duplicar</span>
-                                                </button>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleEdit(bet); }}
-                                                    className="p-2 text-gray-500 hover:text-primary hover:bg-white/5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5 group/btn"
-                                                    title="Editar"
-                                                >
-                                                    <Edit2 size={16} />
-                                                    <span className="text-[10px] font-medium group-hover/btn:text-primary hidden sm:inline">Editar</span>
-                                                </button>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); requestDelete(bet.id); }}
-                                                    className="p-2 text-gray-500 hover:text-danger hover:bg-white/5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5 group/btn"
-                                                    title="Excluir"
-                                                >
-                                                    <Trash2 size={16} />
-                                                    <span className="text-[10px] font-medium group-hover/btn:text-danger hidden sm:inline">Excluir</span>
-                                                </button>
-                                            </>
-                                        )}
+                                        <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                                            <ChevronDown size={20} className="text-textMuted" />
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {deleteId === bet.id ? (
+                                                <div className="flex items-center gap-2 animate-in slide-in-from-right-2 duration-200">
+                                                    <span className="text-[10px] text-danger font-bold uppercase mr-1">Confirmar Exclusão?</span>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); confirmDelete(); }}
+                                                        className="p-1.5 px-3 bg-danger text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm flex items-center gap-1 text-xs font-bold"
+                                                        title="Confirmar"
+                                                    >
+                                                        <Check size={14} /> Sim
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); cancelDelete(); }}
+                                                        className="p-1.5 px-3 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors shadow-sm flex items-center gap-1 text-xs font-bold"
+                                                        title="Cancelar"
+                                                    >
+                                                        <X size={14} /> Não
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleDuplicate(bet); }}
+                                                        className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5 group/btn"
+                                                        title="Duplicar"
+                                                    >
+                                                        <Copy size={16} />
+                                                        <span className="text-[10px] font-medium group-hover/btn:text-white hidden sm:inline">Duplicar</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleEdit(bet); }}
+                                                        className="p-2 text-gray-500 hover:text-primary hover:bg-white/5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5 group/btn"
+                                                        title="Editar"
+                                                    >
+                                                        <Edit2 size={16} />
+                                                        <span className="text-[10px] font-medium group-hover/btn:text-primary hidden sm:inline">Editar</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); requestDelete(bet.id); }}
+                                                        className="p-2 text-gray-500 hover:text-danger hover:bg-white/5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5 group/btn"
+                                                        title="Excluir"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                        <span className="text-[10px] font-medium group-hover/btn:text-danger hidden sm:inline">Excluir</span>
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
