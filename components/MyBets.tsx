@@ -985,7 +985,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                                     label="Retorno Estimado"
                                                     type="tel"
                                                     inputMode="numeric"
-                                                    className="text-xs py-1.5"
+                                                    className={`text-xs py-1.5 ${cov.manualReturn !== undefined ? 'text-white font-bold' : 'text-gray-400'}`}
                                                     placeholder="Auto-calc..."
                                                     value={
                                                         cov.manualReturn !== undefined
