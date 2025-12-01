@@ -617,14 +617,14 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                         >
                             <Card
                                 className={`
-overflow-hidden border-none bg-surface transition-all duration-300 hover:border-white/10 hover:-translate-y-0.5 hover:shadow-lg select-none
+overflow-hidden border-none bg-surface transition-all duration-300 hover:border-white/10 hover:-translate-y-0.5 hover:shadow-lg select-none cursor-pointer
                             ${isDraft ? 'border-dashed border-2 border-gray-600/50 opacity-90' : ''}
 `}
+                                onClick={() => { if (!longPressId) setExpandedId(isExpanded ? null : bet.id); }}
                             >
                                 <div className="p-4">
                                     <div
-                                        className="flex flex-col md:flex-row md:items-center gap-4 cursor-pointer hover:bg-white/5 transition-colors -mx-4 -mt-4 p-4 rounded-t-xl"
-                                        onClick={() => { if (!longPressId) setExpandedId(isExpanded ? null : bet.id); }}
+                                        className="flex flex-col md:flex-row md:items-center gap-4 hover:bg-white/5 transition-colors -mx-4 -mt-4 p-4 rounded-t-xl"
                                     >
                                         <div className="flex items-center gap-3 flex-1">
                                             {renderBookmakerLogo(bet.mainBookmakerId, 'md')}
@@ -659,8 +659,8 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                             </div>
                                             <div className="text-left">
                                                 <p className="text-[10px] text-textMuted uppercase font-bold">Lucro</p>
-                                                <p className={`font - bold text - sm ${profit >= 0 && bet.status !== 'Pendente' && !isDraft ? 'text-[#6ee7b7]' : ((bet.status === 'Pendente' || isDraft) ? 'text-textMuted' : 'text-[#F87171]')} `}>
-                                                    {(bet.status === 'Pendente' || isDraft) ? '--' : <MoneyDisplay value={profit} privacyMode={settings.privacyMode} prefix={profit >= 0 ? '+ R$' : '- R$'} />}
+                                                <p className={`font-bold text-sm ${profit >= 0 && bet.status !== 'Pendente' && !isDraft ? 'text-[#6ee7b7]' : ((bet.status === 'Pendente' || isDraft) ? 'text-textMuted' : 'text-[#F87171]')}`}>
+                                                    {(bet.status === 'Pendente' || isDraft) ? '--' : <MoneyDisplay value={Math.abs(profit)} privacyMode={settings.privacyMode} prefix={profit >= 0 ? '+ R$' : '- R$'} />}
                                                 </p>
                                             </div>
 
