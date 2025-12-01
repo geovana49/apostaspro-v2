@@ -571,9 +571,9 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                     </div>
 
                                     <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto mt-2 md:mt-0">
-                                        <div className="text-left">
+                                        <div className="text-left w-full">
                                             <p className="text-[10px] text-textMuted uppercase font-bold">Valor</p>
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center justify-between gap-3 w-full">
                                                 <p className={`font-bold text-sm ${isConfirmed ? 'text-[#6ee7b7]' : 'text-textMuted'}`}>
                                                     <MoneyDisplay value={gain.amount} />
                                                 </p>
