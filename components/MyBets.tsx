@@ -630,7 +630,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                             {renderBookmakerLogo(bet.mainBookmakerId, 'md')}
 
                                             <div>
-                                                <h4 className="font-semibold text-white text-base group-hover:text-primary transition-colors flex items-center gap-2">
+                                                <h4 className="font-semibold text-white text-base flex items-center gap-2">
                                                     {bet.event}
                                                     {isDraft && <span className="text-[9px] bg-yellow-500/20 text-yellow-500 border border-yellow-500/30 px-1.5 py-0.5 rounded ml-2 font-bold tracking-wider">RASCUNHO</span>}
                                                 </h4>
@@ -662,11 +662,13 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                                 <p className={`font-bold text-sm ${profit >= 0 && bet.status !== 'Pendente' && !isDraft ? 'text-[#6ee7b7]' : ((bet.status === 'Pendente' || isDraft) ? 'text-textMuted' : 'text-[#F87171]')}`}>
                                                     {(bet.status === 'Pendente' || isDraft) ? '--' : <MoneyDisplay value={Math.abs(profit)} privacyMode={settings.privacyMode} prefix={profit >= 0 ? '+ R$' : '- R$'} />}
                                                 </p>
+                                                <div className="mt-2">
+                                                    {renderStatusBadge(bet.status)}
+                                                </div>
                                             </div>
 
                                             <div className="flex items-center gap-3">
-                                                {renderStatusBadge(bet.status)}
-                                                <div className={`transition - transform duration - 300 ${isExpanded ? 'rotate-180' : ''} `}>
+                                                <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
                                                     <ChevronDown size={20} className="text-textMuted" />
                                                 </div>
                                             </div>
