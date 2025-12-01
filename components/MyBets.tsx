@@ -282,6 +282,52 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         }
     };
 
+    const saveAsDraft = async () => {
+        if (!currentUser) return;
+
+        setIsUploading(true);
+        try {
+            const draftBet: Bet = {
+                ...formData,
+                id: formData.id || Date.now().toString(),
+                status: 'Rascunho',
+                event: formData.event || `Rascunho - ${new Date().toLocaleDateString('pt-BR')}`,
+                photos: tempPhotos.map(p => p.url),
+                date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
+            };
+
+            const betToSave = JSON.parse(JSON.stringify(draftBet));
+            await FirestoreService.saveBet(currentUser.uid, betToSave);
+
+            // Navigate to the month of the saved bet
+            const betDate = parseDate(formData.date);
+            setCurrentDate(betDate);
+            setPickerYear(betDate.getFullYear());
+
+            setIsModalOpen(false);
+        } catch (error) {
+            console.error("Error saving draft:", error);
+            alert("Erro ao salvar rascunho.");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleCloseModal = () => {
+        // Check if there are unsaved changes
+        const hasContent = formData.event || formData.notes || formData.coverages.length > 0 || tempPhotos.length > 0;
+
+        if (hasContent && !isUploading) {
+            if (window.confirm('Você tem alterações não salvas. Deseja salvar como rascunho para terminar depois?')) {
+                saveAsDraft();
+            } else {
+                setIsModalOpen(false);
+            }
+        } else {
+            setIsModalOpen(false);
+        }
+    };
+
     // ... (openImageViewer, handlePressStart, handlePressEnd remain the same)
 
     const handleDuplicate = async (originalBet: Bet) => {
@@ -769,11 +815,11 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
 
             <Modal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={handleCloseModal}
                 title={isEditing ? "Editar Aposta" : "Nova Aposta"}
                 footer={
                     <div className="flex justify-end gap-3 w-full">
-                        <Button variant="neutral" onClick={() => setIsModalOpen(false)} disabled={isUploading}>Cancelar</Button>
+                        <Button variant="neutral" onClick={handleCloseModal} disabled={isUploading}>Cancelar</Button>
                         <Button onClick={handleSave} disabled={isUploading}>
                             {isUploading ? (
                                 <>
