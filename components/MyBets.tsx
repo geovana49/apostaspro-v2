@@ -802,7 +802,11 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                         onClose={() => setIsDatePickerOpen(false)}
                         date={formData.date ? new Date(formData.date) : new Date()}
                         onSelect={(date) => {
-                            dispatch({ type: 'UPDATE_FIELD', field: 'date', value: date.toISOString().split('T')[0] });
+                            console.log('📅 MyBets onSelect called with date:', date);
+                            const dateStr = date.toISOString().split('T')[0];
+                            console.log('📅 Dispatching UPDATE_FIELD with dateStr:', dateStr);
+                            dispatch({ type: 'UPDATE_FIELD', field: 'date', value: dateStr });
+                            console.log('📅 Dispatch completed, closing picker');
                             setIsDatePickerOpen(false);
                         }}
                     />

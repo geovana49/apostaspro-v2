@@ -1264,7 +1264,9 @@ export const SingleDatePickerModal: React.FC<{
   }, [isOpen, date]);
 
   const handleSave = () => {
+    console.log('📅 Date picker handleSave called, selectedDate:', selectedDate);
     onSelect(selectedDate);
+    console.log('📅 onSelect callback finished');
     onClose();
   };
 
