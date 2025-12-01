@@ -797,7 +797,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
 
   return createPortal(
     <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex }}>
-      <div className="absolute inset-0 bg-[#090c19]/80 backdrop-blur-md transition-opacity" onClick={onClose} />
+      <div className="absolute inset-0 bg-[#090c19]/80 backdrop-blur-md transition-opacity" />
       <div className="relative bg-[#151b2e] border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-300">
         <div className="flex items-center justify-between p-5 border-b border-white/5 bg-[#1c2438]">
           <h2 className="text-lg font-bold text-white tracking-tight">{title}</h2>
