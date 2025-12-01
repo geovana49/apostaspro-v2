@@ -569,8 +569,10 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                         </div>
                                     </div>
                                     <div className="text-right shrink-0">
-                                        <p className={`font-bold text-sm ${isConfirmed ? 'text-[#6ee7b7]' : 'text-textMuted'}`}> <MoneyDisplay value={gain.amount} prefix="+ R$" /> </p>
-                                        <span style={{ backgroundColor: `${statusColor}1A`, color: statusColor, borderColor: `${statusColor}33` }} className="text-[9px] sm:text-[10px] font-medium px-2 py-0.5 rounded-full inline-block mt-0.5 border">{gain.status}</span>
+                                        <p className={`font-bold text-sm ${isConfirmed ? 'text-[#6ee7b7]' : 'text-textMuted'}`}> <MoneyDisplay value={gain.amount} /> </p>
+                                        <div className="mt-1">
+                                            <span style={{ backgroundColor: `${statusColor}1A`, color: statusColor, borderColor: `${statusColor}33` }} className="text-[9px] sm:text-[10px] font-medium px-2 py-0.5 rounded-full inline-block border">{gain.status}</span>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -602,15 +604,10 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                             </div>
 
                             <div className="px-4 pb-4">
-                                <div className="flex items-center justify-between pt-3 border-t border-white/5 cursor-pointer" onClick={() => toggleGainDetails(gain.id)}>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); toggleGainDetails(gain.id); }}
-                                        className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-all active:scale-95"
-                                        title={isExpanded ? "Ocultar detalhes" : "Mostrar detalhes"}
-                                    >
-                                        <ChevronDown size={20} className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
-                                    </button>
-
+                                <div className="flex items-center justify-between pt-3 border-t border-white/5" onClick={(e) => e.stopPropagation()}>
+                                    <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                                        <ChevronDown size={20} className="text-textMuted" />
+                                    </div>
                                     <div className="flex items-center gap-2">
                                         {deleteId === gain.id ? (<div className="flex items-center gap-2 animate-in slide-in-from-right-2 duration-200"> <span className="text-[10px] text-danger font-bold uppercase mr-1">Excluir este ganho?</span> <button onClick={(e) => { e.stopPropagation(); confirmDeleteList(); }} className="p-1.5 px-3 bg-danger text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm flex items-center gap-1 text-xs font-bold" title="Confirmar"> <Check size={14} /> Sim </button> <button onClick={(e) => { e.stopPropagation(); setDeleteId(null); }} className="p-1.5 px-3 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors shadow-sm flex items-center gap-1 text-xs font-bold" title="Cancelar"> <X size={14} /> Não </button> </div>) : (<> <button onClick={(e) => { e.stopPropagation(); handleDuplicate(gain); }} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5 group/btn" title="Duplicar"> <Copy size={16} /> <span className="text-[10px] font-medium group-hover/btn:text-white hidden sm:inline">Duplicar</span> </button> <button onClick={(e) => { e.stopPropagation(); handleEdit(gain); }} className="p-2 text-gray-500 hover:text-primary hover:bg-white/5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5 group/btn" title="Editar"> <Edit2 size={16} /> <span className="text-[10px] font-medium group-hover/btn:text-primary hidden sm:inline">Editar</span> </button> <button onClick={(e) => { e.stopPropagation(); setDeleteId(gain.id); }} className="p-2 text-gray-500 hover:text-danger hover:bg-white/5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5 group/btn" title="Excluir"> <Trash2 size={16} /> <span className="text-[10px] font-medium group-hover/btn:text-danger hidden sm:inline">Excluir</span> </button> </>)}
                                     </div>
