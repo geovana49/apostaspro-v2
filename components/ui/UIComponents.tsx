@@ -640,15 +640,28 @@ export const Dropdown: React.FC<DropdownProps> = ({
     setIsOpen(!isOpen);
   };
 
-  // Close on resize or scroll to keep position correct
+  // Close on resize (width only) or scroll to keep position correct
   useEffect(() => {
+    let lastWidth = window.innerWidth;
+
     const handleScrollOrResize = (e: Event) => {
       // Fix: Do not close if scrolling inside the dropdown menu itself
       if (menuRef.current && menuRef.current.contains(e.target as Node)) {
         return;
       }
+
+      // On mobile, opening keyboard triggers resize. Only close if WIDTH changes.
+      if (e.type === 'resize') {
+        const currentWidth = window.innerWidth;
+        if (Math.abs(currentWidth - lastWidth) < 10) {
+          return; // Ignore height changes (keyboard)
+        }
+        lastWidth = currentWidth;
+      }
+
       if (isOpen) setIsOpen(false);
     };
+
     window.addEventListener('resize', handleScrollOrResize);
     window.addEventListener('scroll', handleScrollOrResize, true); // Capture scroll on any element
     return () => {
