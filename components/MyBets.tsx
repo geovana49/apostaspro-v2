@@ -89,6 +89,12 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
 
+    // Parse date string to Date object without timezone issues
+    const parseDate = (dateStr: string) => {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        return new Date(year, month - 1, day);
+    };
+
     const longPressTimer = useRef<NodeJS.Timeout | null>(null);
 
     const handleEdit = (bet: Bet) => {
@@ -807,7 +813,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                     <SingleDatePickerModal
                         isOpen={isDatePickerOpen}
                         onClose={() => setIsDatePickerOpen(false)}
-                        date={formData.date ? new Date(formData.date) : new Date()}
+                        date={formData.date ? parseDate(formData.date) : new Date()}
                         onSelect={(date) => {
                             console.log('📅 MyBets onSelect called with date:', date);
                             // Format date as YYYY-MM-DD without timezone conversion
