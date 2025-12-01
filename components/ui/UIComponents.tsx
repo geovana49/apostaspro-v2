@@ -811,10 +811,10 @@ export const Dropdown: React.FC<DropdownProps> = ({
               <div className="text-center text-xs text-gray-500 py-4 px-2">Nenhum resultado encontrado.</div>
             )}
           </div>
-        </div>,
-        document.body
-      )}
-    </>
+        </div>
+      </>,
+      document.body
+    )}
   );
 };
 
