@@ -663,14 +663,14 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                                     {(bet.status === 'Pendente' || isDraft) ? '--' : <MoneyDisplay value={Math.abs(profit)} privacyMode={settings.privacyMode} prefix={profit >= 0 ? '+ R$' : '- R$'} />}
                                                 </p>
                                                 <div className="mt-2">
-                                                    {renderStatusBadge(bet.status)}
+                                                    <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                                                        <ChevronDown size={20} className="text-textMuted" />
+                                                    </div>
                                                 </div>
                                             </div>
 
                                             <div className="flex items-center gap-3">
-                                                <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
-                                                    <ChevronDown size={20} className="text-textMuted" />
-                                                </div>
+                                                {renderStatusBadge(bet.status)}
                                             </div>
                                         </div>
                                     </div>
