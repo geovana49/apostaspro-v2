@@ -550,7 +550,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-sm font-bold text-white truncate max-w-[120px] sm:max-w-none">{gain.game || gain.origin}</span>
+                                                <span className="text-sm font-bold text-white">{gain.game || gain.origin}</span>
                                             </div>
                                             <div className="flex items-center gap-2 text-xs text-gray-500">
                                                 <span className="flex items-center gap-1">
