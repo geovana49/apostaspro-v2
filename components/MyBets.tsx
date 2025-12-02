@@ -620,16 +620,24 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                         return sum + Number(c.stake);
                     }, 0);
                     let totalReturn = 0;
-                    bet.coverages.forEach(c => {
+                    bet.coverages.forEach((c, index) => {
                         if (c.status === 'Red') {
                             totalReturn += 0;
                         } else if (c.manualReturn !== undefined && c.manualReturn !== null) {
                             totalReturn += Number(c.manualReturn);
                         } else {
-                            if (c.status === 'Green') totalReturn += (c.stake * c.odd);
-                            else if (c.status === 'Anulada' || c.status === 'Cashout') totalReturn += c.stake;
-                            else if (c.status === 'Meio Green') totalReturn += (c.stake * c.odd) / 2 + (c.stake / 2);
-                            else if (c.status === 'Meio Red') totalReturn += (c.stake / 2);
+                            let returnValue = 0;
+                            if (c.status === 'Green') returnValue = (c.stake * c.odd);
+                            else if (c.status === 'Anulada' || c.status === 'Cashout') returnValue = c.stake;
+                            else if (c.status === 'Meio Green') returnValue = (c.stake * c.odd) / 2 + (c.stake / 2);
+                            else if (c.status === 'Meio Red') returnValue = (c.stake / 2);
+
+                            // For freebet conversions, subtract stake from first coverage return (you don't get the stake back)
+                            if (isFreebetConversion && index === 0 && returnValue > 0) {
+                                returnValue -= c.stake;
+                            }
+
+                            totalReturn += returnValue;
                         }
                     });
                     const profit = totalReturn - totalStake;
