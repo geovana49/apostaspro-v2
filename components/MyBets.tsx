@@ -613,7 +613,12 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
 
                     const isExpanded = expandedId === bet.id;
                     const isDraft = bet.status === 'Rascunho';
-                    const totalStake = bet.coverages.reduce((sum, c) => sum + Number(c.stake), 0);
+                    const isFreebetConversion = bet.promotionType?.toLowerCase().includes('freebet');
+                    const totalStake = bet.coverages.reduce((sum, c, index) => {
+                        // For freebet conversions, skip the first coverage stake (bonus balance)
+                        if (isFreebetConversion && index === 0) return sum;
+                        return sum + Number(c.stake);
+                    }, 0);
                     let totalReturn = 0;
                     bet.coverages.forEach(c => {
                         if (c.status === 'Red') {
