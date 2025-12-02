@@ -616,7 +616,9 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                     const totalStake = bet.coverages.reduce((sum, c) => sum + Number(c.stake), 0);
                     let totalReturn = 0;
                     bet.coverages.forEach(c => {
-                        if (c.manualReturn !== undefined && c.manualReturn !== null) {
+                        if (c.status === 'Red') {
+                            totalReturn += 0;
+                        } else if (c.manualReturn !== undefined && c.manualReturn !== null) {
                             totalReturn += Number(c.manualReturn);
                         } else {
                             if (c.status === 'Green') totalReturn += (c.stake * c.odd);
