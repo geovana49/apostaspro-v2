@@ -778,7 +778,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                                             {renderStatusBadge(cov.status)}
                                                         </div>
 
-                                                        <p className="text-sm text-gray-400 truncate mb-3 pl-1">{cov.market}</p>
+                                                        <p className="text-sm text-gray-400 mb-3 pl-1 break-words">{cov.market}</p>
 
                                                         <div className="flex justify-between items-end border-t border-white/5 pt-2">
                                                             <div>
