@@ -1045,8 +1045,11 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                                             })() : '')
                                                     }
                                                     onChange={e => {
-                                                        const value = e.target.value.replace(/\D/g, '');
-                                                        if (value === '') {
+                                                        const rawValue = e.target.value;
+                                                        const value = rawValue.replace(/\D/g, '');
+
+                                                        // If field is completely empty, reset to auto-calc
+                                                        if (rawValue === '' || value === '' || value === '0') {
                                                             updateCoverage(cov.id, 'manualReturn', undefined);
                                                         } else {
                                                             const numberValue = parseInt(value, 10) / 100;
