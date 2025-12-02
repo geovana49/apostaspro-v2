@@ -616,10 +616,14 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                     const totalStake = bet.coverages.reduce((sum, c) => sum + Number(c.stake), 0);
                     let totalReturn = 0;
                     bet.coverages.forEach(c => {
-                        if (c.status === 'Green') totalReturn += (c.stake * c.odd);
-                        else if (c.status === 'Anulada' || c.status === 'Cashout') totalReturn += c.stake;
-                        else if (c.status === 'Meio Green') totalReturn += (c.stake * c.odd) / 2 + (c.stake / 2);
-                        else if (c.status === 'Meio Red') totalReturn += (c.stake / 2);
+                        if (c.manualReturn !== undefined && c.manualReturn !== null) {
+                            totalReturn += Number(c.manualReturn);
+                        } else {
+                            if (c.status === 'Green') totalReturn += (c.stake * c.odd);
+                            else if (c.status === 'Anulada' || c.status === 'Cashout') totalReturn += c.stake;
+                            else if (c.status === 'Meio Green') totalReturn += (c.stake * c.odd) / 2 + (c.stake / 2);
+                            else if (c.status === 'Meio Red') totalReturn += (c.stake / 2);
+                        }
                     });
                     const profit = totalReturn - totalStake;
 
