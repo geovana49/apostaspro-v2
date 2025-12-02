@@ -241,7 +241,7 @@ const Settings: React.FC<SettingsProps> = ({
         }
     };
 
-    const handleSaveItem = async (type: 'status' | 'origin' | 'bookmaker') => {
+    const handleSaveItem = async (type: 'status' | 'origin' | 'bookmaker' | 'promotion') => {
         if (!currentUser) {
             console.log('❌ No current user');
             return;
@@ -256,6 +256,7 @@ const Settings: React.FC<SettingsProps> = ({
         if (type === 'status') currentList = statuses;
         else if (type === 'origin') currentList = origins;
         else if (type === 'bookmaker') currentList = bookmakers;
+        else if (type === 'promotion') currentList = promotions;
 
         const exists = currentList.some(item =>
             item.name.toLowerCase() === trimmedName.toLowerCase() &&
@@ -273,6 +274,9 @@ const Settings: React.FC<SettingsProps> = ({
             if (type === 'status') {
                 const item: StatusItem = { id, name: trimmedName, color: selectedColor };
                 await FirestoreService.saveItem(currentUser.uid, 'statuses', item);
+            } else if (type === 'promotion') {
+                const item: PromotionItem = { id, name: trimmedName, color: selectedColor };
+                await FirestoreService.saveItem(currentUser.uid, 'promotions', item);
             } else if (type === 'origin') {
                 const item: OriginItem = { id, name: trimmedName, color: selectedColor, icon: selectedIcon };
                 await FirestoreService.saveItem(currentUser.uid, 'origins', item);
@@ -387,6 +391,7 @@ const Settings: React.FC<SettingsProps> = ({
         let itemToDelete;
         if (activeTab === 'bookmakers') itemToDelete = bookmakers.find(i => i.id === itemToDeleteId);
         if (activeTab === 'origins') itemToDelete = origins.find(i => i.id === itemToDeleteId);
+        if (activeTab === 'promotions') itemToDelete = promotions.find(i => i.id === itemToDeleteId);
 
         const imageUrl = (itemToDelete as any)?.logo || (itemToDelete as any)?.icon;
         if (imageUrl && imageUrl.startsWith('https')) {
@@ -404,6 +409,7 @@ const Settings: React.FC<SettingsProps> = ({
             if (activeTab === 'status') await FirestoreService.deleteItem(currentUser.uid, 'statuses', itemToDeleteId);
             if (activeTab === 'origins') await FirestoreService.deleteItem(currentUser.uid, 'origins', itemToDeleteId);
             if (activeTab === 'bookmakers') await FirestoreService.deleteItem(currentUser.uid, 'bookmakers', itemToDeleteId);
+            if (activeTab === 'promotions') await FirestoreService.deleteItem(currentUser.uid, 'promotions', itemToDeleteId);
         } catch (err) {
             console.error("Error deleting item:", err);
             // Optionally show error to user
@@ -746,6 +752,46 @@ const Settings: React.FC<SettingsProps> = ({
         </div>
     );
 
+    const renderPromotionsSettings = () => (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-[#0d1121] rounded-xl border border-primary/20 p-6 shadow-lg">
+                <h3 className="text-lg font-bold text-white mb-4">{editingId ? 'Editar Promoção' : 'Criar Nova Promoção'}</h3>
+                <div className="space-y-4">
+                    <Input placeholder="Nome da Promoção" value={newItemName} onChange={(e) => setNewItemName(e.target.value)} />
+                    {renderColorSelection()}
+                    <div className="flex gap-2 pt-2">
+                        {editingId && <Button variant="neutral" onClick={handleCancelEdit} className="flex-1">Cancelar</Button>}
+                        <Button onClick={() => handleSaveItem('promotion')} className="flex-1">{editingId ? 'Salvar' : 'Adicionar'}</Button>
+                    </div>
+                </div>
+            </div>
+            <div className="space-y-3">
+                {promotions.map(promo => (
+                    <div key={promo.id} className="group bg-[#0d1121] border border-white/5 rounded-xl p-4 flex items-center justify-between hover:border-white/10 transition-all">
+                        <div className="flex items-center gap-4">
+                            <div className="w-4 h-4 rounded-full shadow-[0_0_10px_currentColor]" style={{ backgroundColor: promo.color, color: promo.color }} />
+                            <span className="font-bold text-white">{promo.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {itemToDeleteId === promo.id ? (
+                                <div className="flex items-center gap-2 animate-in slide-in-from-right-2 duration-200">
+                                    <span className="text-[10px] text-danger font-bold uppercase">Excluir?</span>
+                                    <button onClick={confirmDelete} className="p-1 text-primary"><Check size={16} /></button>
+                                    <button onClick={cancelDelete} className="p-1 text-gray-500"><X size={16} /></button>
+                                </div>
+                            ) : (
+                                <>
+                                    <button onClick={() => handleEditItem(promo)} className="p-2 text-gray-500 hover:text-primary"><Edit2 size={16} /></button>
+                                    <button onClick={() => requestDelete(promo.id)} className="p-2 text-gray-500 hover:text-danger"><Trash2 size={16} /></button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+
     const renderOriginsSettings = () => (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="bg-[#0d1121] rounded-xl border border-primary/20 p-6 shadow-lg">
@@ -844,6 +890,7 @@ const Settings: React.FC<SettingsProps> = ({
                 {[
                     { id: 'general', label: 'Geral', icon: <Layout size={16} /> },
                     { id: 'bookmakers', label: 'Casas', icon: <Smartphone size={16} /> },
+                    { id: 'promotions', label: 'Promoções', icon: <Gift size={16} /> },
                     { id: 'status', label: 'Status', icon: <Target size={16} /> },
                     { id: 'origins', label: 'Origens', icon: <Coins size={16} /> },
                 ].map(tab => {
@@ -858,6 +905,7 @@ const Settings: React.FC<SettingsProps> = ({
             <div className="min-h-[400px]">
                 {activeTab === 'general' && renderGeneralSettings()}
                 {activeTab === 'bookmakers' && renderBookmakersSettings()}
+                {activeTab === 'promotions' && renderPromotionsSettings()}
                 {activeTab === 'origins' && renderOriginsSettings()}
                 {activeTab === 'status' && renderStatusSettings()}
             </div>
