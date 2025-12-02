@@ -1032,7 +1032,17 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                                     value={
                                                         cov.manualReturn !== undefined
                                                             ? cov.manualReturn.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
-                                                            : (cov.stake && cov.odd ? (cov.stake * cov.odd).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '')
+                                                            : (cov.stake && cov.odd ? (() => {
+                                                                const isFirstCoverage = index === 0;
+                                                                const isFreebetConversion = formData.promotionType?.toLowerCase().includes('freebet');
+                                                                let calculatedReturn = cov.stake * cov.odd;
+
+                                                                if (isFreebetConversion && isFirstCoverage) {
+                                                                    calculatedReturn -= cov.stake;
+                                                                }
+
+                                                                return calculatedReturn.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                                                            })() : '')
                                                     }
                                                     onChange={e => {
                                                         const value = e.target.value.replace(/\D/g, '');
