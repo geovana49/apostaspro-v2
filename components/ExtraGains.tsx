@@ -611,7 +611,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                             </div>
 
                             <div className="px-4 pb-4">
-                                <div className="flex items-center justify-between pt-3 border-t border-white/5" onClick={(e) => e.stopPropagation()}>
+                                <div className="flex items-center justify-between pt-3 border-t border-white/5">
                                     <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
                                         <ChevronDown size={20} className="text-textMuted" />
                                     </div>

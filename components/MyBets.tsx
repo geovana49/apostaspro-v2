@@ -700,7 +700,6 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
 
                                     <div
                                         className="flex items-center justify-between gap-2 pt-3 mt-1 border-t border-white/5"
-                                        onClick={(e) => e.stopPropagation()}
                                     >
                                         <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
                                             <ChevronDown size={20} className="text-textMuted" />
