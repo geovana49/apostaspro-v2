@@ -100,19 +100,36 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
 
     // Scroll listener for floating button - appears when near bottom of viewport but hides when scroll-to-top appears
     useEffect(() => {
-        const handleScroll = () => {
-            const scrollTop = window.scrollY;
-            const windowHeight = window.innerHeight;
-            const documentHeight = document.documentElement.scrollHeight;
+        const handleScroll = (e: Event) => {
+            const scrollContainer = e.target as HTMLElement;
+            if (!scrollContainer) return;
+
+            const scrollTop = scrollContainer.scrollTop;
+            const windowHeight = scrollContainer.clientHeight;
+            const documentHeight = scrollContainer.scrollHeight;
 
             // Show button when user has scrolled past 60% of the page BUT hide when scroll-to-top button appears (scrollTop > 300)
             const scrollPercentage = (scrollTop + windowHeight) / documentHeight;
             setShowFloatingButton(scrollPercentage > 0.6 && scrollTop <= 300);
         };
 
-        window.addEventListener('scroll', handleScroll);
-        handleScroll(); // Check initial state
-        return () => window.removeEventListener('scroll', handleScroll);
+        // Find the main scroll container
+        const scrollContainer = document.querySelector('.flex-1.overflow-y-auto.p-4');
+        if (scrollContainer) {
+            scrollContainer.addEventListener('scroll', handleScroll as EventListener);
+            // Check initial state
+            const scrollTop = scrollContainer.scrollTop;
+            const windowHeight = scrollContainer.clientHeight;
+            const documentHeight = scrollContainer.scrollHeight;
+            const scrollPercentage = (scrollTop + windowHeight) / documentHeight;
+            setShowFloatingButton(scrollPercentage > 0.6 && scrollTop <= 300);
+        }
+
+        return () => {
+            if (scrollContainer) {
+                scrollContainer.removeEventListener('scroll', handleScroll as EventListener);
+            }
+        };
     }, []);
 
     // Filter State
@@ -885,7 +902,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             {showFloatingButton && (
                 <button
                     onClick={handleOpenNew}
-                    className="fixed bottom-24 right-6 z-40 p-4 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 transition-all active:scale-95 shadow-lg"
+                    className="fixed bottom-24 right-6 z-30 p-4 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 transition-all active:scale-95 shadow-lg"
                     title="Novo Ganho"
                 >
                     <Plus size={28} strokeWidth={3} />
