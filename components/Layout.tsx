@@ -15,7 +15,7 @@ interface LayoutProps {
   onLogout: () => void;
 }
 
-export const ScrollContext = React.createContext({ showTopBtn: false });
+export const ScrollContext = React.createContext({ showTopBtn: false, showFloatingActionBtn: false });
 
 const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate, settings, setSettings, onLogout }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -29,6 +29,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate, setti
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showTopBtn, setShowTopBtn] = useState(false);
   const [showBottomBtn, setShowBottomBtn] = useState(false);
+  const [showFloatingActionBtn, setShowFloatingActionBtn] = useState(false);
 
   // Click outside for profile menu
   useEffect(() => {
@@ -59,6 +60,10 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate, setti
 
     // Show Bottom button if there is more than 100px of content below
     setShowBottomBtn(scrollHeight - scrollTop - clientHeight > 100);
+
+    // Show Floating Action Button (Nova Aposta/Novo Ganho) when scrolled past 60%
+    const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
+    setShowFloatingActionBtn(scrollPercentage > 0.6);
   };
 
   const scrollToTop = () => {
@@ -315,7 +320,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate, setti
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto p-4 lg:p-8 scroll-smooth relative"
         >
-          <ScrollContext.Provider value={{ showTopBtn }}>
+          <ScrollContext.Provider value={{ showTopBtn, showFloatingActionBtn }}>
             <div className="max-w-6xl mx-auto pb-20 space-y-8">
               {children}
             </div>

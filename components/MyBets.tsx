@@ -83,8 +83,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
-    const [showFloatingButton, setShowFloatingButton] = useState(false);
-    const { showTopBtn } = useContext(ScrollContext);
+    const { showTopBtn, showFloatingActionBtn } = useContext(ScrollContext);
     const [buttonBottomPosition, setButtonBottomPosition] = useState('bottom-24');
     const longPressTimer = useRef<NodeJS.Timeout | null>(null);
     const touchStartPos = useRef<{ x: number; y: number } | null>(null);
@@ -95,40 +94,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     }, [showTopBtn]);
 
     // Scroll listener for floating button visibility only
-    useEffect(() => {
-        const handleScroll = (e: Event) => {
-            const scrollContainer = e.target as HTMLElement;
-            if (!scrollContainer) return;
 
-            const scrollTop = scrollContainer.scrollTop;
-            const windowHeight = scrollContainer.clientHeight;
-            const documentHeight = scrollContainer.scrollHeight;
-
-            // Show button when user has scrolled past 60% of the page
-            const scrollPercentage = (scrollTop + windowHeight) / documentHeight;
-            const shouldShow = scrollPercentage > 0.6;
-            setShowFloatingButton(shouldShow);
-        };
-
-        // Find the main scroll container
-        const scrollContainer = document.querySelector('.flex-1.overflow-y-auto.p-4');
-        if (scrollContainer) {
-            scrollContainer.addEventListener('scroll', handleScroll as EventListener);
-            // Check initial state
-            const scrollTop = scrollContainer.scrollTop;
-            const windowHeight = scrollContainer.clientHeight;
-            const documentHeight = scrollContainer.scrollHeight;
-            const scrollPercentage = (scrollTop + windowHeight) / documentHeight;
-            const shouldShow = scrollPercentage > 0.6;
-            setShowFloatingButton(shouldShow);
-        }
-
-        return () => {
-            if (scrollContainer) {
-                scrollContainer.removeEventListener('scroll', handleScroll as EventListener);
-            }
-        };
-    }, []);
 
     const handleEdit = (bet: Bet) => {
         setIsEditing(true);
@@ -1147,7 +1113,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
             </Modal>
 
             {/* Floating Nova Aposta Button */}
-            {showFloatingButton && (
+            {showFloatingActionBtn && (
                 <button
                     onClick={handleOpenNew}
                     className={`fixed ${buttonBottomPosition} right-6 z-30 p-4 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 transition-all active:scale-95 shadow-lg`}

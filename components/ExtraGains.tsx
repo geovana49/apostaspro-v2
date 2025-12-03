@@ -97,8 +97,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
-    const [showFloatingButton, setShowFloatingButton] = useState(false);
-    const { showTopBtn } = useContext(ScrollContext);
+    const { showTopBtn, showFloatingActionBtn } = useContext(ScrollContext);
     const [buttonBottomPosition, setButtonBottomPosition] = useState('bottom-24');
 
     // Update button position based on showTopBtn from context
@@ -107,41 +106,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     }, [showTopBtn]);
 
     // Scroll listener for floating button visibility only
-    useEffect(() => {
-        const handleScroll = (e: Event) => {
-            const scrollContainer = e.target as HTMLElement;
-            if (!scrollContainer) return;
 
-            const scrollTop = scrollContainer.scrollTop;
-            const windowHeight = scrollContainer.clientHeight;
-            const documentHeight = scrollContainer.scrollHeight;
-
-            // Show button when user has scrolled past 60% of the page
-            const scrollPercentage = (scrollTop + windowHeight) / documentHeight;
-            const shouldShow = scrollPercentage > 0.6;
-            setShowFloatingButton(shouldShow);
-        };
-
-        // Find the main scroll container
-        const scrollContainer = document.querySelector('.flex-1.overflow-y-auto.p-4');
-        if (scrollContainer) {
-            scrollContainer.addEventListener('scroll', handleScroll as EventListener);
-            // Check initial state
-            const scrollTop = scrollContainer.scrollTop;
-            const windowHeight = scrollContainer.clientHeight;
-            const documentHeight = scrollContainer.scrollHeight;
-            const scrollPercentage = (scrollTop + windowHeight) / documentHeight;
-            const shouldShow = scrollPercentage > 0.6;
-            setShowFloatingButton(shouldShow);
-            setButtonBottomPosition(scrollTop > 300 ? 'bottom-48' : 'bottom-24');
-        }
-
-        return () => {
-            if (scrollContainer) {
-                scrollContainer.removeEventListener('scroll', handleScroll as EventListener);
-            }
-        };
-    }, []);
 
     // Filter State
     const [searchTerm, setSearchTerm] = useState('');
@@ -910,7 +875,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             </Modal>
 
             {/* Floating Novo Ganho Button */}
-            {showFloatingButton && (
+            {showFloatingActionBtn && (
                 <button
                     onClick={handleOpenNew}
                     className={`fixed ${buttonBottomPosition} right-6 z-30 p-4 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 transition-all active:scale-95 shadow-lg`}
