@@ -490,6 +490,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                     <span>Adicionar Fotos</span>
                                     <input
                                         type="file"
+                                        multiple
                                         accept="image/*"
                                         className="hidden"
                                         onChange={handlePhotoSelect}

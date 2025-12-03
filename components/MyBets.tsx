@@ -1090,6 +1090,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                     <span>Adicionar Fotos</span>
                                     <input
                                         type="file"
+                                        multiple
                                         accept="image/*"
                                         className="hidden"
                                         onChange={handlePhotoSelect}
