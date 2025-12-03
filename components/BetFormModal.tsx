@@ -488,7 +488,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                     <input
                                         type="file"
                                         multiple
-                                        accept="image/*"
+                                        accept="image/png, image/jpeg, image/jpg, image/webp"
                                         className="hidden"
                                         onChange={handlePhotoSelect}
                                     />

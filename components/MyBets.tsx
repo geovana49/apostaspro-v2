@@ -1,5 +1,4 @@
-import React, { useState, useReducer, useRef, useEffect, useContext } from 'react';
-import { ScrollContext } from './Layout';
+import React, { useState, useReducer, useRef, useEffect } from 'react';
 import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, SingleDatePickerModal } from './ui/UIComponents';
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronLeft, ChevronRight,
@@ -83,18 +82,30 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
-    const { showTopBtn, showFloatingActionBtn } = useContext(ScrollContext);
-    const [buttonBottomPosition, setButtonBottomPosition] = useState('bottom-24');
+    const [showFloatingButton, setShowFloatingButton] = useState(false);
+    const betsListRef = useRef<HTMLDivElement>(null);
     const longPressTimer = useRef<NodeJS.Timeout | null>(null);
     const touchStartPos = useRef<{ x: number; y: number } | null>(null);
 
-    // Update button position based on showTopBtn from context
+    // IntersectionObserver for floating button
     useEffect(() => {
-        setButtonBottomPosition(showTopBtn ? 'bottom-48' : 'bottom-24');
-    }, [showTopBtn]);
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                setShowFloatingButton(entry.isIntersecting);
+            },
+            { threshold: 0.1 }
+        );
 
-    // Scroll listener for floating button visibility only
+        if (betsListRef.current) {
+            observer.observe(betsListRef.current);
+        }
 
+        return () => {
+            if (betsListRef.current) {
+                observer.unobserve(betsListRef.current);
+            }
+        };
+    }, []);
 
     const handleEdit = (bet: Bet) => {
         setIsEditing(true);
@@ -612,7 +623,7 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                 </button>
             </div>
 
-            <div className="space-y-3">
+            <div ref={betsListRef} className="space-y-3">
                 {console.log("🎨 RENDERING filteredBets.length:", filteredBets.length)}
                 {filteredBets.map(bet => {
                     console.log("Rendering bet:", bet.event, "coverages:", bet.coverages);
@@ -685,7 +696,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                             </div>
                                             <div className="text-left">
                                                 <p className="text-[10px] text-textMuted uppercase font-bold">Lucro/Prejuízo</p>
-                                                <p className={`font-bold text-sm ${profit >= 0 && bet.status !== 'Pendente' && !isDraft ? 'text-[#6ee7b7]' : ((bet.status === 'Pendente' || isDraft) ? 'text-textMuted' : 'text-[#F87171]')}`}>
+                                                <p className={`font-bold text-sm ${profit >= 0 && bet.status !== 'Pendente' && !isDraft ? 'text-[#6ee7b7]' : ((bet.status === 'Pendente' || isDraft) ? 'text-textMuted' : 'text-[#ff0100]')}`}>
                                                     {(bet.status === 'Pendente' || isDraft) ? '--' : <MoneyDisplay value={Math.abs(profit)} privacyMode={settings.privacyMode} />}
                                                 </p>
                                             </div>
@@ -1077,7 +1088,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                     <input
                                         type="file"
                                         multiple
-                                        accept="image/*"
+                                        accept="image/png, image/jpeg, image/jpg, image/webp"
                                         className="hidden"
                                         onChange={handlePhotoSelect}
                                     />
@@ -1113,13 +1124,13 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
             </Modal>
 
             {/* Floating Nova Aposta Button */}
-            {showFloatingActionBtn && (
+            {showFloatingButton && (
                 <button
                     onClick={handleOpenNew}
-                    className={`fixed ${buttonBottomPosition} right-6 z-30 p-4 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 transition-all active:scale-95 shadow-lg`}
+                    className="fixed bottom-36 right-6 z-40 p-3 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 transition-all active:scale-95 shadow-lg"
                     title="Nova Aposta"
                 >
-                    <Plus size={28} strokeWidth={3} />
+                    <Plus size={24} strokeWidth={3} />
                 </button>
             )}
         </div>

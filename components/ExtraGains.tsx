@@ -1,5 +1,4 @@
-import React, { useState, useReducer, useRef, useEffect, useContext } from 'react';
-import { ScrollContext } from './Layout';
+import React, { useState, useReducer, useRef, useEffect } from 'react';
 import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, CustomColorPicker, RenderIcon, ICON_MAP, DateRangePickerModal, SingleDatePickerModal, DropdownOption } from './ui/UIComponents';
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronLeft, ChevronRight,
@@ -97,16 +96,28 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
-    const { showTopBtn, showFloatingActionBtn } = useContext(ScrollContext);
-    const [buttonBottomPosition, setButtonBottomPosition] = useState('bottom-24');
+    const [showFloatingButton, setShowFloatingButton] = useState(false);
+    const gainsListRef = useRef<HTMLDivElement>(null);
 
-    // Update button position based on showTopBtn from context
+    // IntersectionObserver for floating button
     useEffect(() => {
-        setButtonBottomPosition(showTopBtn ? 'bottom-48' : 'bottom-24');
-    }, [showTopBtn]);
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                setShowFloatingButton(entry.isIntersecting);
+            },
+            { threshold: 0.1 }
+        );
 
-    // Scroll listener for floating button visibility only
+        if (gainsListRef.current) {
+            observer.observe(gainsListRef.current);
+        }
 
+        return () => {
+            if (gainsListRef.current) {
+                observer.unobserve(gainsListRef.current);
+            }
+        };
+    }, []);
 
     // Filter State
     const [searchTerm, setSearchTerm] = useState('');
@@ -583,7 +594,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 </div>
             </div>
 
-            <div className="space-y-3 relative min-h-[300px]">
+            <div ref={gainsListRef} className="space-y-3 relative min-h-[300px]">
                 {filteredGains.length > 0 ? filteredGains.map(gain => {
                     const bookie = bookmakers.find(b => b.id === gain.bookmakerId);
                     const originItem = origins.find(o => o.name === gain.origin);
@@ -839,7 +850,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                     <input
                                         type="file"
                                         multiple
-                                        accept="image/*"
+                                        accept="image/png, image/jpeg, image/jpg, image/webp"
                                         className="hidden"
                                         onChange={handlePhotoSelect}
                                     />
@@ -875,13 +886,13 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             </Modal>
 
             {/* Floating Novo Ganho Button */}
-            {showFloatingActionBtn && (
+            {showFloatingButton && (
                 <button
                     onClick={handleOpenNew}
-                    className={`fixed ${buttonBottomPosition} right-6 z-30 p-4 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 transition-all active:scale-95 shadow-lg`}
+                    className="fixed bottom-36 right-6 z-40 p-3 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 transition-all active:scale-95 shadow-lg"
                     title="Novo Ganho"
                 >
-                    <Plus size={28} strokeWidth={3} />
+                    <Plus size={24} strokeWidth={3} />
                 </button>
             )}
         </div>

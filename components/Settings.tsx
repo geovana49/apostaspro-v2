@@ -6,13 +6,12 @@ import {
     Layout, User, ToggleLeft, ToggleRight, Monitor, LayoutTemplate, Camera, AlertTriangle, Ban, Lock, Mail, Save,
     Cloud, Crop, Maximize, Minimize, Wand2, Search, Link, Loader2
 } from 'lucide-react';
-import { Bookmaker, AppSettings, StatusItem, PromotionItem, OriginItem, SettingsTab, User as UserType, ThemePreset } from '../types';
+import { Bookmaker, AppSettings, StatusItem, PromotionItem, OriginItem, SettingsTab, User as UserType } from '../types';
 import { FirestoreService } from '../services/firestoreService';
 import { compressImage } from '../utils/imageCompression';
 import { auth, storage } from '../firebase';
 import { updatePassword } from 'firebase/auth';
 import { ref, deleteObject, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { THEME_PRESETS } from '../constants';
 
 interface SettingsProps {
     bookmakers: Bookmaker[];
@@ -86,7 +85,6 @@ const Settings: React.FC<SettingsProps> = ({
     const [isUploading, setIsUploading] = useState(false);
     const [emailInput, setEmailInput] = useState('');
     const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
-    const [themeColorPickerAnchor, setThemeColorPickerAnchor] = useState<{ anchor: HTMLElement, colorKey: string } | null>(null);
     const [bookmakerSearchTerm, setBookmakerSearchTerm] = useState('');
     const [lastSavedId, setLastSavedId] = useState<string | null>(null);
 
@@ -446,165 +444,6 @@ const Settings: React.FC<SettingsProps> = ({
 
 
 
-    const handleThemeChange = async (themeId: string) => {
-        if (!currentUser) return;
-        const newSettings = { ...appSettings, activeThemeId: themeId, customTheme: undefined };
-        setAppSettings(newSettings); // Optimistic update
-        await FirestoreService.saveSettings(currentUser.uid, newSettings);
-    };
-
-    const renderThemeSettings = () => (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-[#0d1121] rounded-xl border border-primary/20 p-6 flex flex-col md:flex-row items-start md:items-center gap-4 relative overflow-hidden">
-                <div className="absolute right-0 top-0 bottom-0 w-1 bg-primary/20" />
-                <div className="p-3 bg-primary/10 rounded-xl">
-                    <Palette size={28} className="text-primary" />
-                </div>
-                <div>
-                    <h4 className="text-lg font-bold text-white">Temas e Cores</h4>
-                    <p className="text-sm text-textMuted">Escolha um tema ou personalize as cores do app.</p>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {THEME_PRESETS.map(theme => (
-                    <button
-                        key={theme.id}
-                        onClick={() => handleThemeChange(theme.id)}
-                        className={`relative group p-0 rounded-xl border transition-all duration-300 overflow-hidden text-left ${appSettings.activeThemeId === theme.id && !appSettings.customTheme ? 'border-primary ring-2 ring-primary/50 scale-[1.02]' : 'border-white/10 hover:border-primary/30 hover:scale-[1.01]'}`}
-                    >
-                        {/* Mini App Preview */}
-                        <div className="relative h-32 p-3 flex flex-col gap-2" style={{ backgroundColor: theme.colors.background }}>
-                            {/* Mini Header */}
-                            <div className="flex items-center justify-between">
-                                <div className="h-2 w-16 rounded-full" style={{ backgroundColor: theme.colors.primary }} />
-                                <div className="h-2 w-2 rounded-full" style={{ backgroundColor: theme.colors.textMuted }} />
-                            </div>
-
-                            {/* Mini Cards */}
-                            <div className="flex gap-2">
-                                <div className="flex-1 h-12 rounded-lg p-2 flex flex-col justify-between" style={{ backgroundColor: theme.colors.surface }}>
-                                    <div className="h-1 w-8 rounded" style={{ backgroundColor: theme.colors.textMuted }} />
-                                    <div className="h-1.5 w-12 rounded" style={{ backgroundColor: theme.colors.primary }} />
-                                </div>
-                                <div className="flex-1 h-12 rounded-lg p-2 flex flex-col justify-between" style={{ backgroundColor: theme.colors.surface }}>
-                                    <div className="h-1 w-8 rounded" style={{ backgroundColor: theme.colors.textMuted }} />
-                                    <div className="h-1.5 w-12 rounded" style={{ backgroundColor: theme.colors.secondary }} />
-                                </div>
-                            </div>
-
-                            {/* Mini Chart */}
-                            <div className="h-8 rounded-lg flex items-end gap-1 px-2" style={{ backgroundColor: theme.colors.surface }}>
-                                <div className="w-1 rounded-t" style={{ height: '40%', backgroundColor: theme.colors.primary }} />
-                                <div className="w-1 rounded-t" style={{ height: '60%', backgroundColor: theme.colors.primary }} />
-                                <div className="w-1 rounded-t" style={{ height: '30%', backgroundColor: theme.colors.primary }} />
-                                <div className="w-1 rounded-t" style={{ height: '70%', backgroundColor: theme.colors.primary }} />
-                                <div className="w-1 rounded-t" style={{ height: '50%', backgroundColor: theme.colors.primary }} />
-                            </div>
-
-                            {/* Active Indicator */}
-                            {appSettings.activeThemeId === theme.id && !appSettings.customTheme && (
-                                <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg">
-                                    <Check size={14} className="text-[#090c19]" strokeWidth={3} />
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Theme Name */}
-                        <div className="px-4 py-3 bg-white/5 border-t border-white/10">
-                            <span className="font-bold text-white text-sm">{theme.name}</span>
-                        </div>
-                    </button>
-                ))}
-            </div>
-
-            {/* Custom Theme Section */}
-            <div className="bg-[#0d1121] rounded-xl border border-white/5 p-6 mt-6">
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h5 className="text-sm font-bold text-white">Personalizado</h5>
-                        <p className="text-xs text-gray-500">Crie seu próprio esquema de cores.</p>
-                    </div>
-                    {appSettings.customTheme && (
-                        <Button
-                            variant="neutral"
-                            onClick={async () => {
-                                if (!currentUser) return;
-                                const newSettings = { ...appSettings, customTheme: undefined };
-                                setAppSettings(newSettings);
-                                await FirestoreService.saveSettings(currentUser.uid, newSettings);
-                            }}
-                            className="text-xs"
-                        >
-                            <RefreshCcw size={14} /> Restaurar Padrão
-                        </Button>
-                    )}
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {[
-                        { label: 'Fundo', key: 'background' },
-                        { label: 'Superfície', key: 'surface' },
-                        { label: 'Primária', key: 'primary' },
-                        { label: 'Secundária', key: 'secondary' },
-                        { label: 'Texto Principal', key: 'textMain' },
-                        { label: 'Texto Secundário', key: 'textMuted' },
-                        { label: 'Destaque/Promo', key: 'promotion' },
-                        { label: 'Perigo/Erro', key: 'danger' },
-                    ].map((item) => {
-                        const currentColors = appSettings.customTheme || (THEME_PRESETS.find(t => t.id === appSettings.activeThemeId)?.colors || THEME_PRESETS[0].colors);
-                        const colorValue = (currentColors as any)[item.key];
-
-                        return (
-                            <div key={item.key} className="space-y-2">
-                                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">{item.label}</label>
-                                <button
-                                    onClick={(e) => {
-                                        setThemeColorPickerAnchor({ anchor: e.currentTarget, colorKey: item.key });
-                                    }}
-                                    className="w-full h-10 rounded-lg border border-white/10 flex items-center gap-3 px-3 hover:bg-white/5 transition-colors"
-                                >
-                                    <div className="w-6 h-6 rounded-full border border-white/10 shadow-sm" style={{ backgroundColor: colorValue }} />
-                                    <span className="text-xs font-mono text-gray-300">{colorValue}</span>
-                                </button>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* Color Picker for Custom Theme */}
-            <CustomColorPicker
-                isOpen={Boolean(themeColorPickerAnchor)}
-                onClose={() => setThemeColorPickerAnchor(null)}
-                color="#ffffff" // Default, will be ignored by onChange logic below
-                onChange={async (newColor) => {
-                    if (!currentUser || !themeColorPickerAnchor) return;
-                    const colorKey = themeColorPickerAnchor.colorKey;
-
-                    const currentColors = appSettings.customTheme || (THEME_PRESETS.find(t => t.id === appSettings.activeThemeId)?.colors || THEME_PRESETS[0].colors);
-
-                    const newCustomTheme = {
-                        ...currentColors,
-                        [colorKey]: newColor
-                    };
-
-                    // Auto-generate dark variant for primary
-                    if (colorKey === 'primary') {
-                        // Simple darkening logic could go here, for now just use same or slightly dimmed
-                        newCustomTheme.primaryDark = newColor;
-                    }
-
-                    const newSettings = { ...appSettings, customTheme: newCustomTheme };
-                    setAppSettings(newSettings);
-                    // Debounce save in real app, here direct save for simplicity
-                    await FirestoreService.saveSettings(currentUser.uid, newSettings);
-                }}
-                anchorEl={themeColorPickerAnchor?.anchor || null}
-            />
-        </div>
-    );
-
     const renderGeneralSettings = () => (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
@@ -795,23 +634,7 @@ const Settings: React.FC<SettingsProps> = ({
                             <label className="text-xs font-bold text-textMuted uppercase tracking-wider block">Logo</label>
                             <div className="flex items-center gap-4">
                                 <div className="w-16 h-16 rounded-xl bg-[#151b2e] flex items-center justify-center border border-white/10 overflow-hidden shadow-inner">
-                                    {selectedLogo ? (
-                                        <img
-                                            src={selectedLogo}
-                                            alt="Logo"
-                                            className="w-full h-full object-cover"
-                                            onError={(e) => {
-                                                e.currentTarget.style.display = 'none';
-                                                // Create a text node for the fallback
-                                                const fallback = document.createElement('div');
-                                                fallback.className = "text-xs text-gray-600 font-bold";
-                                                fallback.innerText = newItemName.substring(0, 2).toUpperCase() || 'LOGO';
-                                                e.currentTarget.parentElement!.appendChild(fallback);
-                                            }}
-                                        />
-                                    ) : (
-                                        <div className="text-xs text-gray-600 font-bold">{newItemName.substring(0, 2).toUpperCase() || 'LOGO'}</div>
-                                    )}
+                                    {selectedLogo ? <img src={selectedLogo} alt="Logo" className="w-full h-full object-cover" /> : <div className="text-xs text-gray-600 font-bold">{newItemName.substring(0, 2).toUpperCase() || 'LOGO'}</div>}
                                 </div>
                                 <div className="flex-1 space-y-2">
                                     <input type="file" className="hidden" id="logo-upload" accept="image/*" onChange={(e) => handleImageUpload(e, 'logos', setSelectedLogo)} />
@@ -861,19 +684,7 @@ const Settings: React.FC<SettingsProps> = ({
                         <div key={bookie.id} id={`bookmaker-${bookie.id}`} className="group bg-[#0d1121] border border-white/5 rounded-xl p-4 flex items-center justify-between hover:border-white/10 transition-all gap-3">
                             <div className="flex items-center gap-4 flex-1 min-w-0">
                                 <div className="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-[#090c19] text-xs shadow-sm overflow-hidden border border-white/5 shrink-0" style={{ backgroundColor: bookie.color || '#fff' }}>
-                                    {bookie.logo ? (
-                                        <img
-                                            src={bookie.logo}
-                                            alt={bookie.name}
-                                            className="w-full h-full object-cover"
-                                            onError={(e) => {
-                                                e.currentTarget.style.display = 'none';
-                                                e.currentTarget.parentElement!.innerText = bookie.name.substring(0, 2).toUpperCase();
-                                            }}
-                                        />
-                                    ) : (
-                                        bookie.name.substring(0, 2).toUpperCase()
-                                    )}
+                                    {bookie.logo ? <img src={bookie.logo} alt={bookie.name} className="w-full h-full object-cover" /> : bookie.name.substring(0, 2).toUpperCase()}
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <span className="font-bold text-white block truncate">{bookie.name}</span>
@@ -1078,7 +889,6 @@ const Settings: React.FC<SettingsProps> = ({
             <div className="flex gap-1 bg-[#0d1121] p-1 rounded-xl overflow-x-auto custom-scrollbar border border-white/5">
                 {[
                     { id: 'general', label: 'Geral', icon: <Layout size={16} /> },
-                    { id: 'themes', label: 'Temas', icon: <Palette size={16} /> },
                     { id: 'bookmakers', label: 'Casas', icon: <Smartphone size={16} /> },
                     { id: 'promotions', label: 'Promoções', icon: <Gift size={16} /> },
                     { id: 'status', label: 'Status', icon: <Target size={16} /> },
@@ -1094,7 +904,6 @@ const Settings: React.FC<SettingsProps> = ({
             </div>
             <div className="min-h-[400px]">
                 {activeTab === 'general' && renderGeneralSettings()}
-                {activeTab === 'themes' && renderThemeSettings()}
                 {activeTab === 'bookmakers' && renderBookmakersSettings()}
                 {activeTab === 'promotions' && renderPromotionsSettings()}
                 {activeTab === 'origins' && renderOriginsSettings()}

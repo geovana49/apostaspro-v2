@@ -63,24 +63,6 @@ export interface ExtraGain {
   photos?: string[]; // Array of base64 image strings
 }
 
-export interface ThemeColors {
-  background: string;
-  surface: string;
-  primary: string;
-  primaryDark: string;
-  secondary: string;
-  danger: string;
-  promotion: string;
-  textMain: string;
-  textMuted: string;
-}
-
-export interface ThemePreset {
-  id: string;
-  name: string;
-  colors: ThemeColors;
-}
-
 export interface AppSettings {
   showProfileInHeader: boolean;
   showUsername: boolean;
@@ -88,10 +70,8 @@ export interface AppSettings {
   profileImage?: string;
   username?: string;
   email?: string;
-  extraGainsFilterPosition: 'below_toolbar' | 'within_toolbar';
-  privacyMode: boolean;
-  activeThemeId?: string;
-  customTheme?: ThemeColors;
+  extraGainsFilterPosition: 'below_toolbar' | 'within_toolbar'; // New setting for filter position
+  privacyMode: boolean; // New setting for hiding balances
 }
 
 // Updated User interface for Firebase
@@ -102,7 +82,7 @@ export interface User {
   // password removed as it's handled by Firebase Auth
 }
 
-export type SettingsTab = 'general' | 'themes' | 'status' | 'origins' | 'bookmakers' | 'promotions';
+export type SettingsTab = 'general' | 'status' | 'origins' | 'bookmakers';
 
 export interface AIAnalysisHistory {
   id: string;

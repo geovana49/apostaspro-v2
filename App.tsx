@@ -12,7 +12,6 @@ import Coach from './components/Coach';
 import Settings from './components/Settings';
 import AIAssistant from './components/AIAssistant';
 import LandingPage from './components/LandingPage';
-import { THEME_PRESETS } from './constants';
 
 const DEFAULT_SETTINGS: AppSettings = {
   showProfileInHeader: true,
@@ -41,33 +40,6 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Apply Theme
-  useEffect(() => {
-    const applyTheme = () => {
-      let colors;
-
-      if (settings.customTheme) {
-        colors = settings.customTheme;
-      } else {
-        const activeTheme = THEME_PRESETS.find(t => t.id === settings.activeThemeId) || THEME_PRESETS[0];
-        colors = activeTheme.colors;
-      }
-
-      const root = document.documentElement;
-      root.style.setProperty('--background', colors.background);
-      root.style.setProperty('--surface', colors.surface);
-      root.style.setProperty('--primary', colors.primary);
-      root.style.setProperty('--primary-dark', colors.primaryDark);
-      root.style.setProperty('--secondary', colors.secondary);
-      root.style.setProperty('--danger', colors.danger);
-      root.style.setProperty('--promotion', colors.promotion);
-      root.style.setProperty('--text-main', colors.textMain);
-      root.style.setProperty('--text-muted', colors.textMuted);
-    };
-
-    applyTheme();
-  }, [settings.activeThemeId, settings.customTheme]);
 
   // --- Auth & Data Synchronization ---
   useEffect(() => {

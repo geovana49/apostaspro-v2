@@ -14,15 +14,15 @@
       theme: {
         extend: {
           colors: {
-            background: 'var(--background)',
-            surface: 'var(--surface)',
-            primary: 'var(--primary)',
-            primaryDark: 'var(--primary-dark)',
-            secondary: 'var(--secondary)',
-            danger: 'var(--danger)',
-            promotion: 'var(--promotion)',
-            textMain: 'var(--text-main)',
-            textMuted: 'var(--text-muted)',
+            background: '#090c19', // New Deep Midnight Blue
+            surface: '#151b2e',    // Harmonized Dark Navy Surface
+            primary: '#17baa4',    // New Teal
+            primaryDark: '#129683', // Darker shade for gradients
+            secondary: '#FFAB00',  // Golden Amber
+            danger: '#FF5252',     // Coral Red
+            promotion: '#8B5CF6',  // Violet
+            textMain: '#FFFFFF',
+            textMuted: '#94a3b8',  // Slate-400 (Blue-ish gray)
           },
           fontFamily: {
             sans: ['Inter', 'sans-serif'],
@@ -70,21 +70,9 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-    :root {
-      --background: #090c19;
-      --surface: #151b2e;
-      --primary: #17baa4;
-      --primary-dark: #129683;
-      --secondary: #FFAB00;
-      --danger: #FF5252;
-      --promotion: #8B5CF6;
-      --text-main: #FFFFFF;
-      --text-muted: #94a3b8;
-    }
-
     body {
-      background-color: var(--background);
-      color: var(--text-main);
+      background-color: #090c19;
+      color: white;
     }
 
     /* Custom Scrollbar */
