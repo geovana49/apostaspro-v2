@@ -16,6 +16,7 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
     const [period, setPeriod] = useState('month');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
 
     // Period Options with Icons
     const periodOptions = [
@@ -23,6 +24,7 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
         { label: 'Esta Semana', value: 'week', icon: <Calendar size={16} /> },
         { label: 'Este Mês', value: 'month', icon: <Calendar size={16} /> },
         { label: 'Mês Passado', value: 'last-month', icon: <Calendar size={16} /> },
+        { label: 'Selecionar Mês', value: 'specific-month', icon: <Calendar size={16} /> },
         { label: 'Personalizado', value: 'custom', icon: <Calendar size={16} /> },
         { label: 'Todo o Período', value: 'all', icon: <Infinity size={16} /> },
     ];
@@ -48,6 +50,10 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
                 case 'last-month':
                     const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
                     return betDate.getMonth() === lastMonthDate.getMonth() && betDate.getFullYear() === lastMonthDate.getFullYear();
+                case 'specific-month':
+                    if (!selectedMonth) return true;
+                    const [year, month] = selectedMonth.split('-').map(Number);
+                    return betDate.getMonth() === month - 1 && betDate.getFullYear() === year;
                 case 'custom':
                     if (!startDate && !endDate) return true;
                     const start = startDate ? new Date(startDate) : new Date('2000-01-01');
@@ -82,6 +88,10 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
                 case 'last-month':
                     const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
                     return gainDate.getMonth() === lastMonthDate.getMonth() && gainDate.getFullYear() === lastMonthDate.getFullYear();
+                case 'specific-month':
+                    if (!selectedMonth) return true;
+                    const [year, month] = selectedMonth.split('-').map(Number);
+                    return gainDate.getMonth() === month - 1 && gainDate.getFullYear() === year;
                 case 'custom':
                     if (!startDate && !endDate) return true;
                     const start = startDate ? new Date(startDate) : new Date('2000-01-01');
@@ -174,6 +184,19 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
                                     type="date"
                                     value={endDate}
                                     onChange={(e) => setEndDate(e.target.value)}
+                                    className="py-1.5 text-xs bg-transparent border-none"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {period === 'specific-month' && (
+                        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-4 w-full sm:w-auto bg-[#151b2e] p-1.5 rounded-lg border border-white/10">
+                            <div className="w-full sm:w-40">
+                                <Input
+                                    type="month"
+                                    value={selectedMonth}
+                                    onChange={(e) => setSelectedMonth(e.target.value)}
                                     className="py-1.5 text-xs bg-transparent border-none"
                                 />
                             </div>
