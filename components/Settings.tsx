@@ -6,12 +6,13 @@ import {
     Layout, User, ToggleLeft, ToggleRight, Monitor, LayoutTemplate, Camera, AlertTriangle, Ban, Lock, Mail, Save,
     Cloud, Crop, Maximize, Minimize, Wand2, Search, Link, Loader2
 } from 'lucide-react';
-import { Bookmaker, AppSettings, StatusItem, PromotionItem, OriginItem, SettingsTab, User as UserType } from '../types';
+import { Bookmaker, AppSettings, StatusItem, PromotionItem, OriginItem, SettingsTab, User as UserType, ThemePreset } from '../types';
 import { FirestoreService } from '../services/firestoreService';
 import { compressImage } from '../utils/imageCompression';
 import { auth, storage } from '../firebase';
 import { updatePassword } from 'firebase/auth';
 import { ref, deleteObject, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { THEME_PRESETS } from '../constants';
 
 interface SettingsProps {
     bookmakers: Bookmaker[];
@@ -85,6 +86,7 @@ const Settings: React.FC<SettingsProps> = ({
     const [isUploading, setIsUploading] = useState(false);
     const [emailInput, setEmailInput] = useState('');
     const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
+    const [themeColorPickerAnchor, setThemeColorPickerAnchor] = useState<{ anchor: HTMLElement, colorKey: string } | null>(null);
     const [bookmakerSearchTerm, setBookmakerSearchTerm] = useState('');
     const [lastSavedId, setLastSavedId] = useState<string | null>(null);
 
@@ -443,6 +445,134 @@ const Settings: React.FC<SettingsProps> = ({
     };
 
 
+
+    const handleThemeChange = async (themeId: string) => {
+        if (!currentUser) return;
+        const newSettings = { ...appSettings, activeThemeId: themeId, customTheme: undefined };
+        setAppSettings(newSettings); // Optimistic update
+        await FirestoreService.saveSettings(currentUser.uid, newSettings);
+    };
+
+    const renderThemeSettings = () => (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-[#0d1121] rounded-xl border border-primary/20 p-6 flex flex-col md:flex-row items-start md:items-center gap-4 relative overflow-hidden">
+                <div className="absolute right-0 top-0 bottom-0 w-1 bg-primary/20" />
+                <div className="p-3 bg-primary/10 rounded-xl">
+                    <Palette size={28} className="text-primary" />
+                </div>
+                <div>
+                    <h4 className="text-lg font-bold text-white">Temas e Cores</h4>
+                    <p className="text-sm text-textMuted">Escolha um tema ou personalize as cores do app.</p>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {THEME_PRESETS.map(theme => (
+                    <button
+                        key={theme.id}
+                        onClick={() => handleThemeChange(theme.id)}
+                        className={`relative group p-4 rounded-xl border transition-all duration-300 overflow-hidden text-left ${appSettings.activeThemeId === theme.id && !appSettings.customTheme ? 'border-primary ring-1 ring-primary/50 bg-white/5' : 'border-white/5 hover:border-white/10 hover:bg-white/5'}`}
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="font-bold text-white">{theme.name}</span>
+                            {appSettings.activeThemeId === theme.id && !appSettings.customTheme && <Check size={16} className="text-primary" />}
+                        </div>
+                        <div className="flex gap-2">
+                            <div className="w-6 h-6 rounded-full border border-white/10" style={{ backgroundColor: theme.colors.background }} title="Fundo" />
+                            <div className="w-6 h-6 rounded-full border border-white/10" style={{ backgroundColor: theme.colors.surface }} title="Superfície" />
+                            <div className="w-6 h-6 rounded-full border border-white/10" style={{ backgroundColor: theme.colors.primary }} title="Primária" />
+                            <div className="w-6 h-6 rounded-full border border-white/10" style={{ backgroundColor: theme.colors.secondary }} title="Secundária" />
+                        </div>
+                    </button>
+                ))}
+            </div>
+
+            {/* Custom Theme Section */}
+            <div className="bg-[#0d1121] rounded-xl border border-white/5 p-6 mt-6">
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h5 className="text-sm font-bold text-white">Personalizado</h5>
+                        <p className="text-xs text-gray-500">Crie seu próprio esquema de cores.</p>
+                    </div>
+                    {appSettings.customTheme && (
+                        <Button
+                            variant="neutral"
+                            onClick={async () => {
+                                if (!currentUser) return;
+                                const newSettings = { ...appSettings, customTheme: undefined };
+                                setAppSettings(newSettings);
+                                await FirestoreService.saveSettings(currentUser.uid, newSettings);
+                            }}
+                            className="text-xs"
+                        >
+                            <RefreshCcw size={14} /> Restaurar Padrão
+                        </Button>
+                    )}
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {[
+                        { label: 'Fundo', key: 'background' },
+                        { label: 'Superfície', key: 'surface' },
+                        { label: 'Primária', key: 'primary' },
+                        { label: 'Secundária', key: 'secondary' },
+                        { label: 'Texto Principal', key: 'textMain' },
+                        { label: 'Texto Secundário', key: 'textMuted' },
+                        { label: 'Destaque/Promo', key: 'promotion' },
+                        { label: 'Perigo/Erro', key: 'danger' },
+                    ].map((item) => {
+                        const currentColors = appSettings.customTheme || (THEME_PRESETS.find(t => t.id === appSettings.activeThemeId)?.colors || THEME_PRESETS[0].colors);
+                        const colorValue = (currentColors as any)[item.key];
+
+                        return (
+                            <div key={item.key} className="space-y-2">
+                                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">{item.label}</label>
+                                <button
+                                    onClick={(e) => {
+                                        setThemeColorPickerAnchor({ anchor: e.currentTarget, colorKey: item.key });
+                                    }}
+                                    className="w-full h-10 rounded-lg border border-white/10 flex items-center gap-3 px-3 hover:bg-white/5 transition-colors"
+                                >
+                                    <div className="w-6 h-6 rounded-full border border-white/10 shadow-sm" style={{ backgroundColor: colorValue }} />
+                                    <span className="text-xs font-mono text-gray-300">{colorValue}</span>
+                                </button>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Color Picker for Custom Theme */}
+            <CustomColorPicker
+                isOpen={Boolean(themeColorPickerAnchor)}
+                onClose={() => setThemeColorPickerAnchor(null)}
+                color="#ffffff" // Default, will be ignored by onChange logic below
+                onChange={async (newColor) => {
+                    if (!currentUser || !themeColorPickerAnchor) return;
+                    const colorKey = themeColorPickerAnchor.colorKey;
+
+                    const currentColors = appSettings.customTheme || (THEME_PRESETS.find(t => t.id === appSettings.activeThemeId)?.colors || THEME_PRESETS[0].colors);
+
+                    const newCustomTheme = {
+                        ...currentColors,
+                        [colorKey]: newColor
+                    };
+
+                    // Auto-generate dark variant for primary
+                    if (colorKey === 'primary') {
+                        // Simple darkening logic could go here, for now just use same or slightly dimmed
+                        newCustomTheme.primaryDark = newColor;
+                    }
+
+                    const newSettings = { ...appSettings, customTheme: newCustomTheme };
+                    setAppSettings(newSettings);
+                    // Debounce save in real app, here direct save for simplicity
+                    await FirestoreService.saveSettings(currentUser.uid, newSettings);
+                }}
+                anchorEl={themeColorPickerAnchor?.anchor || null}
+            />
+        </div>
+    );
 
     const renderGeneralSettings = () => (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -932,6 +1062,7 @@ const Settings: React.FC<SettingsProps> = ({
             </div>
             <div className="min-h-[400px]">
                 {activeTab === 'general' && renderGeneralSettings()}
+                {activeTab === 'themes' && renderThemeSettings()}
                 {activeTab === 'bookmakers' && renderBookmakersSettings()}
                 {activeTab === 'promotions' && renderPromotionsSettings()}
                 {activeTab === 'origins' && renderOriginsSettings()}
