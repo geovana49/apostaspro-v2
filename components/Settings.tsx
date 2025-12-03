@@ -471,17 +471,48 @@ const Settings: React.FC<SettingsProps> = ({
                     <button
                         key={theme.id}
                         onClick={() => handleThemeChange(theme.id)}
-                        className={`relative group p-4 rounded-xl border transition-all duration-300 overflow-hidden text-left ${appSettings.activeThemeId === theme.id && !appSettings.customTheme ? 'border-primary ring-1 ring-primary/50 bg-white/5' : 'border-white/5 hover:border-white/10 hover:bg-white/5'}`}
+                        className={`relative group p-0 rounded-xl border transition-all duration-300 overflow-hidden text-left ${appSettings.activeThemeId === theme.id && !appSettings.customTheme ? 'border-primary ring-2 ring-primary/50 scale-[1.02]' : 'border-white/10 hover:border-primary/30 hover:scale-[1.01]'}`}
                     >
-                        <div className="flex items-center justify-between mb-3">
-                            <span className="font-bold text-white">{theme.name}</span>
-                            {appSettings.activeThemeId === theme.id && !appSettings.customTheme && <Check size={16} className="text-primary" />}
+                        {/* Mini App Preview */}
+                        <div className="relative h-32 p-3 flex flex-col gap-2" style={{ backgroundColor: theme.colors.background }}>
+                            {/* Mini Header */}
+                            <div className="flex items-center justify-between">
+                                <div className="h-2 w-16 rounded-full" style={{ backgroundColor: theme.colors.primary }} />
+                                <div className="h-2 w-2 rounded-full" style={{ backgroundColor: theme.colors.textMuted }} />
+                            </div>
+
+                            {/* Mini Cards */}
+                            <div className="flex gap-2">
+                                <div className="flex-1 h-12 rounded-lg p-2 flex flex-col justify-between" style={{ backgroundColor: theme.colors.surface }}>
+                                    <div className="h-1 w-8 rounded" style={{ backgroundColor: theme.colors.textMuted }} />
+                                    <div className="h-1.5 w-12 rounded" style={{ backgroundColor: theme.colors.primary }} />
+                                </div>
+                                <div className="flex-1 h-12 rounded-lg p-2 flex flex-col justify-between" style={{ backgroundColor: theme.colors.surface }}>
+                                    <div className="h-1 w-8 rounded" style={{ backgroundColor: theme.colors.textMuted }} />
+                                    <div className="h-1.5 w-12 rounded" style={{ backgroundColor: theme.colors.secondary }} />
+                                </div>
+                            </div>
+
+                            {/* Mini Chart */}
+                            <div className="h-8 rounded-lg flex items-end gap-1 px-2" style={{ backgroundColor: theme.colors.surface }}>
+                                <div className="w-1 rounded-t" style={{ height: '40%', backgroundColor: theme.colors.primary }} />
+                                <div className="w-1 rounded-t" style={{ height: '60%', backgroundColor: theme.colors.primary }} />
+                                <div className="w-1 rounded-t" style={{ height: '30%', backgroundColor: theme.colors.primary }} />
+                                <div className="w-1 rounded-t" style={{ height: '70%', backgroundColor: theme.colors.primary }} />
+                                <div className="w-1 rounded-t" style={{ height: '50%', backgroundColor: theme.colors.primary }} />
+                            </div>
+
+                            {/* Active Indicator */}
+                            {appSettings.activeThemeId === theme.id && !appSettings.customTheme && (
+                                <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg">
+                                    <Check size={14} className="text-[#090c19]" strokeWidth={3} />
+                                </div>
+                            )}
                         </div>
-                        <div className="flex gap-2">
-                            <div className="w-6 h-6 rounded-full border border-white/10" style={{ backgroundColor: theme.colors.background }} title="Fundo" />
-                            <div className="w-6 h-6 rounded-full border border-white/10" style={{ backgroundColor: theme.colors.surface }} title="Superfície" />
-                            <div className="w-6 h-6 rounded-full border border-white/10" style={{ backgroundColor: theme.colors.primary }} title="Primária" />
-                            <div className="w-6 h-6 rounded-full border border-white/10" style={{ backgroundColor: theme.colors.secondary }} title="Secundária" />
+
+                        {/* Theme Name */}
+                        <div className="px-4 py-3 bg-white/5 border-t border-white/10">
+                            <span className="font-bold text-white text-sm">{theme.name}</span>
                         </div>
                     </button>
                 ))}
