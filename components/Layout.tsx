@@ -15,6 +15,8 @@ interface LayoutProps {
   onLogout: () => void;
 }
 
+export const ScrollContext = React.createContext({ showTopBtn: false });
+
 const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate, settings, setSettings, onLogout }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -313,9 +315,11 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate, setti
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto p-4 lg:p-8 scroll-smooth relative"
         >
-          <div className="max-w-6xl mx-auto pb-20 space-y-8">
-            {children}
-          </div>
+          <ScrollContext.Provider value={{ showTopBtn }}>
+            <div className="max-w-6xl mx-auto pb-20 space-y-8">
+              {children}
+            </div>
+          </ScrollContext.Provider>
 
           {/* Floating Scroll Buttons */}
           <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none">

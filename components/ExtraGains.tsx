@@ -1,4 +1,5 @@
-import React, { useState, useReducer, useRef, useEffect } from 'react';
+import React, { useState, useReducer, useRef, useEffect, useContext } from 'react';
+import { ScrollContext } from './Layout';
 import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, CustomColorPicker, RenderIcon, ICON_MAP, DateRangePickerModal, SingleDatePickerModal, DropdownOption } from './ui/UIComponents';
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronLeft, ChevronRight,
@@ -97,8 +98,15 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
     const [showFloatingButton, setShowFloatingButton] = useState(false);
+    const { showTopBtn } = useContext(ScrollContext);
+    const [buttonBottomPosition, setButtonBottomPosition] = useState('bottom-24');
 
-    // Scroll listener for floating button - appears when near bottom of viewport but hides when scroll-to-top appears
+    // Update button position based on showTopBtn from context
+    useEffect(() => {
+        setButtonBottomPosition(showTopBtn ? 'bottom-48' : 'bottom-24');
+    }, [showTopBtn]);
+
+    // Scroll listener for floating button visibility only
     useEffect(() => {
         const handleScroll = (e: Event) => {
             const scrollContainer = e.target as HTMLElement;
@@ -108,9 +116,10 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             const windowHeight = scrollContainer.clientHeight;
             const documentHeight = scrollContainer.scrollHeight;
 
-            // Show button when user has scrolled past 60% of the page BUT hide when scroll-to-top button appears (scrollTop > 300)
+            // Show button when user has scrolled past 60% of the page
             const scrollPercentage = (scrollTop + windowHeight) / documentHeight;
-            setShowFloatingButton(scrollPercentage > 0.6 && scrollTop <= 300);
+            const shouldShow = scrollPercentage > 0.6;
+            setShowFloatingButton(shouldShow);
         };
 
         // Find the main scroll container
@@ -122,7 +131,9 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             const windowHeight = scrollContainer.clientHeight;
             const documentHeight = scrollContainer.scrollHeight;
             const scrollPercentage = (scrollTop + windowHeight) / documentHeight;
-            setShowFloatingButton(scrollPercentage > 0.6 && scrollTop <= 300);
+            const shouldShow = scrollPercentage > 0.6;
+            setShowFloatingButton(shouldShow);
+            setButtonBottomPosition(scrollTop > 300 ? 'bottom-48' : 'bottom-24');
         }
 
         return () => {
@@ -902,7 +913,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             {showFloatingButton && (
                 <button
                     onClick={handleOpenNew}
-                    className="fixed bottom-24 right-6 z-30 p-4 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 transition-all active:scale-95 shadow-lg"
+                    className={`fixed ${buttonBottomPosition} right-6 z-30 p-4 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 transition-all active:scale-95 shadow-lg`}
                     title="Novo Ganho"
                 >
                     <Plus size={28} strokeWidth={3} />
