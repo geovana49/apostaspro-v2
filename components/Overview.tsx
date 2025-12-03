@@ -96,7 +96,11 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
     const calculateMetrics = () => {
         // Total staked in the period, including pending bets. For the "Total Apostado" card.
         const totalStakedInPeriod = filteredBets.reduce((acc, bet) => {
-            return acc + bet.coverages.reduce((sum, c) => sum + c.stake, 0);
+            const isFreebetConversion = bet.promotionType?.toLowerCase().includes('conversão freebet');
+            return acc + bet.coverages.reduce((sum, c, index) => {
+                if (isFreebetConversion && index === 0) return sum;
+                return sum + c.stake;
+            }, 0);
         }, 0);
 
         const resolvedBets = filteredBets
@@ -110,15 +114,32 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
         const chartData = resolvedBets.map(bet => {
             let betStake = 0;
             let betReturn = 0;
+            const isFreebetConversion = bet.promotionType?.toLowerCase().includes('conversão freebet');
 
-            bet.coverages.forEach(cov => {
-                betStake += cov.stake;
-                // The return logic
-                if (cov.status === 'Green') betReturn += (cov.stake * cov.odd);
-                else if (cov.status === 'Meio Green') betReturn += (cov.stake * cov.odd) / 2 + (cov.stake / 2);
-                else if (cov.status === 'Anulada' || cov.status === 'Cashout') betReturn += cov.stake;
-                else if (cov.status === 'Meio Red') betReturn += cov.stake / 2;
-                // For Red, return is 0, which is correct implicitly.
+            bet.coverages.forEach((cov, index) => {
+                // Stake logic
+                if (!(isFreebetConversion && index === 0)) {
+                    betStake += cov.stake;
+                }
+
+                // Return logic
+                let covReturn = 0;
+                if (cov.manualReturn !== undefined && cov.manualReturn !== null) {
+                    covReturn = Number(cov.manualReturn);
+                } else {
+                    if (cov.status === 'Green') covReturn = (cov.stake * cov.odd);
+                    else if (cov.status === 'Meio Green') covReturn = (cov.stake * cov.odd) / 2 + (cov.stake / 2);
+                    else if (cov.status === 'Anulada' || cov.status === 'Cashout') covReturn = cov.stake;
+                    else if (cov.status === 'Meio Red') covReturn = cov.stake / 2;
+                    // For Red, return is 0
+                }
+
+                // For freebet conversions, subtract stake from first coverage return
+                if (isFreebetConversion && index === 0 && covReturn > 0) {
+                    covReturn -= cov.stake;
+                }
+
+                betReturn += covReturn;
             });
 
             resolvedStaked += betStake;
