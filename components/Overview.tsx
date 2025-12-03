@@ -22,6 +22,7 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
         { label: 'Hoje', value: 'today', icon: <Calendar size={16} /> },
         { label: 'Esta Semana', value: 'week', icon: <Calendar size={16} /> },
         { label: 'Este Mês', value: 'month', icon: <Calendar size={16} /> },
+        { label: 'Mês Passado', value: 'last-month', icon: <Calendar size={16} /> },
         { label: 'Personalizado', value: 'custom', icon: <Calendar size={16} /> },
         { label: 'Todo o Período', value: 'all', icon: <Infinity size={16} /> },
     ];
@@ -44,6 +45,9 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
                     return betDay >= oneWeekAgo && betDay <= currentDay;
                 case 'month':
                     return betDate.getMonth() === now.getMonth() && betDate.getFullYear() === now.getFullYear();
+                case 'last-month':
+                    const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                    return betDate.getMonth() === lastMonthDate.getMonth() && betDate.getFullYear() === lastMonthDate.getFullYear();
                 case 'custom':
                     if (!startDate && !endDate) return true;
                     const start = startDate ? new Date(startDate) : new Date('2000-01-01');
@@ -75,6 +79,9 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
                     return gainDay >= oneWeekAgo && gainDay <= currentDay;
                 case 'month':
                     return gainDate.getMonth() === now.getMonth() && gainDate.getFullYear() === now.getFullYear();
+                case 'last-month':
+                    const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                    return gainDate.getMonth() === lastMonthDate.getMonth() && gainDate.getFullYear() === lastMonthDate.getFullYear();
                 case 'custom':
                     if (!startDate && !endDate) return true;
                     const start = startDate ? new Date(startDate) : new Date('2000-01-01');
