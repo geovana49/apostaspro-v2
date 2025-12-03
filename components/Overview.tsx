@@ -3,6 +3,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { TrendingUp, Trophy, Wallet, Activity, Calendar, Infinity, Filter, DollarSign, Target, Eye, EyeOff, StickyNote } from 'lucide-react';
 import { Card, Dropdown, Input, MoneyDisplay } from './ui/UIComponents';
 import { Bet, ExtraGain, AppSettings } from '../types';
+import { calculateBetStats } from '../utils/betCalculations';
 
 interface OverviewProps {
     bets: Bet[];
@@ -93,14 +94,12 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
     const filteredGains = getFilteredGains();
 
     // --- Calculations ---
+    // --- Calculations ---
     const calculateMetrics = () => {
         // Total staked in the period, including pending bets. For the "Total Apostado" card.
         const totalStakedInPeriod = filteredBets.reduce((acc, bet) => {
-            const isFreebetConversion = bet.promotionType?.toLowerCase().includes('conversão freebet');
-            return acc + bet.coverages.reduce((sum, c, index) => {
-                if (isFreebetConversion && index === 0) return sum;
-                return sum + c.stake;
-            }, 0);
+            const { totalStake } = calculateBetStats(bet);
+            return acc + totalStake;
         }, 0);
 
         const resolvedBets = filteredBets
@@ -112,46 +111,16 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
         let resolvedReturned = 0;
 
         const chartData = resolvedBets.map(bet => {
-            let betStake = 0;
-            let betReturn = 0;
-            const isFreebetConversion = bet.promotionType?.toLowerCase().includes('conversão freebet');
+            const { totalStake, totalReturn, profit } = calculateBetStats(bet);
 
-            bet.coverages.forEach((cov, index) => {
-                // Stake logic
-                if (!(isFreebetConversion && index === 0)) {
-                    betStake += cov.stake;
-                }
-
-                // Return logic
-                let covReturn = 0;
-                if (cov.manualReturn !== undefined && cov.manualReturn !== null) {
-                    covReturn = Number(cov.manualReturn);
-                } else {
-                    if (cov.status === 'Green') covReturn = (cov.stake * cov.odd);
-                    else if (cov.status === 'Meio Green') covReturn = (cov.stake * cov.odd) / 2 + (cov.stake / 2);
-                    else if (cov.status === 'Anulada' || cov.status === 'Cashout') covReturn = cov.stake;
-                    else if (cov.status === 'Meio Red') covReturn = cov.stake / 2;
-                    // For Red, return is 0
-
-                    // For freebet conversions, subtract stake from first coverage return (only for auto-calc)
-                    if (isFreebetConversion && index === 0 && covReturn > 0) {
-                        covReturn -= cov.stake;
-                    }
-                }
-
-                betReturn += covReturn;
-            });
-
-            resolvedStaked += betStake;
-            resolvedReturned += betReturn;
-
-            const betProfit = betReturn - betStake;
-            cumulativeProfit += betProfit;
+            resolvedStaked += totalStake;
+            resolvedReturned += totalReturn;
+            cumulativeProfit += profit;
 
             return {
                 date: new Date(bet.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
                 profit: cumulativeProfit,
-                value: betProfit
+                value: profit
             };
         });
 
