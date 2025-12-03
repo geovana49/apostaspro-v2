@@ -1047,6 +1047,7 @@ const Settings: React.FC<SettingsProps> = ({
             <div className="flex gap-1 bg-[#0d1121] p-1 rounded-xl overflow-x-auto custom-scrollbar border border-white/5">
                 {[
                     { id: 'general', label: 'Geral', icon: <Layout size={16} /> },
+                    { id: 'themes', label: 'Temas', icon: <Palette size={16} /> },
                     { id: 'bookmakers', label: 'Casas', icon: <Smartphone size={16} /> },
                     { id: 'promotions', label: 'Promoções', icon: <Gift size={16} /> },
                     { id: 'status', label: 'Status', icon: <Target size={16} /> },
