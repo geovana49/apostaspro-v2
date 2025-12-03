@@ -82,8 +82,26 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
+    const [showFloatingButton, setShowFloatingButton] = useState(false);
     const longPressTimer = useRef<NodeJS.Timeout | null>(null);
     const touchStartPos = useRef<{ x: number; y: number } | null>(null);
+
+    // Scroll listener for floating button - appears when near bottom of viewport
+    useEffect(() => {
+        const handleScroll = () => {
+            const scrollTop = window.scrollY;
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight;
+
+            // Show button when user has scrolled past 60% of the page
+            const scrollPercentage = (scrollTop + windowHeight) / documentHeight;
+            setShowFloatingButton(scrollPercentage > 0.6);
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        handleScroll(); // Check initial state
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const handleEdit = (bet: Bet) => {
         setIsEditing(true);
@@ -1100,6 +1118,17 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                     </div>
                 </div>
             </Modal>
+
+            {/* Floating Nova Aposta Button */}
+            {showFloatingButton && (
+                <button
+                    onClick={handleOpenNew}
+                    className="fixed bottom-24 right-6 z-40 p-4 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 transition-all active:scale-95 shadow-lg"
+                    title="Nova Aposta"
+                >
+                    <Plus size={28} strokeWidth={3} />
+                </button>
+            )}
         </div>
     );
 };

@@ -176,6 +176,7 @@ const App: React.FC = () => {
           bookmakers={bookmakers}
           statuses={statuses}
           setStatuses={setStatuses}
+          promotions={promotions}
           appSettings={settings}
           setSettings={setSettings}
           currentUser={currentUser}

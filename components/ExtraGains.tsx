@@ -5,7 +5,8 @@ import {
     Copy, MoreVertical, AlertCircle, ImageIcon, StickyNote, Trophy, Coins, Gamepad2, Paperclip, SearchX, Settings2,
     Infinity, Eye, EyeOff, Maximize, Minimize, Palette, Box, Ban, Loader2
 } from 'lucide-react';
-import { ExtraGain, Bookmaker, StatusItem, OriginItem, AppSettings, User } from '../types';
+import { ExtraGain, Bookmaker, StatusItem, OriginItem, AppSettings, User, PromotionItem } from '../types';
+import BetFormModal from './BetFormModal';
 import { FirestoreService } from '../services/firestoreService';
 import { compressImage } from '../utils/imageCompression';
 
@@ -19,6 +20,7 @@ interface ExtraGainsProps {
     bookmakers: Bookmaker[];
     statuses: StatusItem[];
     setStatuses: React.Dispatch<React.SetStateAction<StatusItem[]>>;
+    promotions: PromotionItem[];
     appSettings: AppSettings;
     setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
     currentUser: User | null;
@@ -64,6 +66,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     origins, setOrigins,
     bookmakers,
     statuses, setStatuses,
+    promotions,
     appSettings,
     setSettings,
     currentUser
@@ -72,6 +75,8 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [formData, dispatch] = useReducer(formReducer, initialFormState);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isBetModalOpen, setIsBetModalOpen] = useState(false);
+    const [isChoiceModalOpen, setIsChoiceModalOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [tempPhotos, setTempPhotos] = useState<{ url: string, file?: File }[]>([]);
 
@@ -91,6 +96,24 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
+    const [showFloatingButton, setShowFloatingButton] = useState(false);
+
+    // Scroll listener for floating button - appears when near bottom of viewport
+    useEffect(() => {
+        const handleScroll = () => {
+            const scrollTop = window.scrollY;
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight;
+
+            // Show button when user has scrolled past 60% of the page
+            const scrollPercentage = (scrollTop + windowHeight) / documentHeight;
+            setShowFloatingButton(scrollPercentage > 0.6);
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        handleScroll(); // Check initial state
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     // Filter State
     const [searchTerm, setSearchTerm] = useState('');
@@ -128,11 +151,20 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     };
 
     const handleOpenNew = () => {
-        setEditingId(null);
-        dispatch({ type: 'RESET_FORM' });
-        setTempPhotos([]);
-        setIsModalOpen(true);
-        setIsDeleting(false);
+        setIsChoiceModalOpen(true);
+    };
+
+    const handleChoice = (type: 'gain' | 'bet') => {
+        setIsChoiceModalOpen(false);
+        if (type === 'gain') {
+            setEditingId(null);
+            dispatch({ type: 'RESET_FORM' });
+            setTempPhotos([]);
+            setIsModalOpen(true);
+            setIsDeleting(false);
+        } else {
+            setIsBetModalOpen(true);
+        }
     };
 
     const toggleGainDetails = (id: string) => {
@@ -433,6 +465,46 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 endDate={endDate}
             />
 
+            <Modal
+                isOpen={isChoiceModalOpen}
+                onClose={() => setIsChoiceModalOpen(false)}
+                title="Novo Registro"
+                footer={null}
+            >
+                <div className="grid grid-cols-2 gap-4">
+                    <button
+                        onClick={() => handleChoice('gain')}
+                        className="flex flex-col items-center justify-center gap-3 p-6 bg-[#0d1121] border border-white/5 rounded-xl hover:border-primary/50 hover:bg-white/5 transition-all group"
+                    >
+                        <div className="p-4 bg-secondary/10 rounded-full group-hover:scale-110 transition-transform">
+                            <Coins size={32} className="text-secondary" />
+                        </div>
+                        <span className="font-bold text-white text-sm uppercase">Ganho Extra</span>
+                    </button>
+
+                    <button
+                        onClick={() => handleChoice('bet')}
+                        className="flex flex-col items-center justify-center gap-3 p-6 bg-[#0d1121] border border-white/5 rounded-xl hover:border-primary/50 hover:bg-white/5 transition-all group"
+                    >
+                        <div className="p-4 bg-primary/10 rounded-full group-hover:scale-110 transition-transform">
+                            <Gamepad2 size={32} className="text-primary" />
+                        </div>
+                        <span className="font-bold text-white text-sm uppercase">Aposta Esportiva</span>
+                    </button>
+                </div>
+            </Modal>
+
+            <BetFormModal
+                isOpen={isBetModalOpen}
+                onClose={() => setIsBetModalOpen(false)}
+                initialData={null}
+                currentUser={currentUser}
+                bookmakers={bookmakers}
+                statuses={statuses}
+                promotions={promotions}
+                onSaveSuccess={() => { }}
+            />
+
             <SingleDatePickerModal
                 isOpen={isFormDatePickerOpen}
                 onClose={() => setIsFormDatePickerOpen(false)}
@@ -464,12 +536,6 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
-            </div>
-
-            <div>
-                <Button onClick={handleOpenNew} className="shadow-lg shadow-primary/10 w-full sm:w-auto">
-                    <Plus size={18} /> Novo Ganho
-                </Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -524,7 +590,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 relative min-h-[300px]">
                 {filteredGains.length > 0 ? filteredGains.map(gain => {
                     const bookie = bookmakers.find(b => b.id === gain.bookmakerId);
                     const originItem = origins.find(o => o.name === gain.origin);
@@ -814,6 +880,17 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     </div>
                 </div>
             </Modal>
+
+            {/* Floating Novo Ganho Button */}
+            {showFloatingButton && (
+                <button
+                    onClick={handleOpenNew}
+                    className="fixed bottom-24 right-6 z-40 p-4 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 transition-all active:scale-95 shadow-lg"
+                    title="Novo Ganho"
+                >
+                    <Plus size={28} strokeWidth={3} />
+                </button>
+            )}
         </div>
     );
 };
