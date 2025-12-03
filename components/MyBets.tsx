@@ -227,19 +227,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         value: b.id,
         icon: (
             <div className="w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold text-[#090c19] overflow-hidden" style={{ backgroundColor: b.color || '#FFFFFF' }}>
-                {b.logo ? (
-                    <img
-                        src={b.logo}
-                        alt={b.name}
-                        className="w-full h-full object-contain p-[1px]"
-                        onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            e.currentTarget.parentElement!.innerText = b.name.substring(0, 2).toUpperCase();
-                        }}
-                    />
-                ) : (
-                    b.name.substring(0, 2).toUpperCase()
-                )}
+                {b.logo ? <img src={b.logo} alt={b.name} className="w-full h-full object-contain p-[1px]" /> : b.name.substring(0, 2).toUpperCase()}
             </div>
         )
     }));
