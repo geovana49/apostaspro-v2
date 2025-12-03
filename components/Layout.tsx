@@ -61,9 +61,9 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate, setti
     // Show Bottom button if there is more than 100px of content below
     setShowBottomBtn(scrollHeight - scrollTop - clientHeight > 100);
 
-    // Show Floating Action Button (Nova Aposta/Novo Ganho) when scrolled past 60%
+    // Show Floating Action Button (Nova Aposta/Novo Ganho) when scrolled past 60% OR when Top Button is visible
     const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
-    setShowFloatingActionBtn(scrollPercentage > 0.6);
+    setShowFloatingActionBtn(scrollPercentage > 0.6 || scrollTop > 300);
   };
 
   const scrollToTop = () => {
