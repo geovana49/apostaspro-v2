@@ -98,16 +98,16 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
     const [showFloatingButton, setShowFloatingButton] = useState(false);
 
-    // Scroll listener for floating button - appears when near bottom of viewport
+    // Scroll listener for floating button - appears when near bottom of viewport but hides when scroll-to-top appears
     useEffect(() => {
         const handleScroll = () => {
             const scrollTop = window.scrollY;
             const windowHeight = window.innerHeight;
             const documentHeight = document.documentElement.scrollHeight;
 
-            // Show button when user has scrolled past 60% of the page
+            // Show button when user has scrolled past 60% of the page BUT hide when scroll-to-top button appears (scrollTop > 300)
             const scrollPercentage = (scrollTop + windowHeight) / documentHeight;
-            setShowFloatingButton(scrollPercentage > 0.6);
+            setShowFloatingButton(scrollPercentage > 0.6 && scrollTop <= 300);
         };
 
         window.addEventListener('scroll', handleScroll);

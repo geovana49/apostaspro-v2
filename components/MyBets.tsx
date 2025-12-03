@@ -93,9 +93,9 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             const windowHeight = window.innerHeight;
             const documentHeight = document.documentElement.scrollHeight;
 
-            // Show button when user has scrolled past 60% of the page
+            // Show button when user has scrolled past 60% of the page BUT hide when scroll-to-top button appears (scrollTop > 300)
             const scrollPercentage = (scrollTop + windowHeight) / documentHeight;
-            setShowFloatingButton(scrollPercentage > 0.6);
+            setShowFloatingButton(scrollPercentage > 0.6 && scrollTop <= 300);
         };
 
         window.addEventListener('scroll', handleScroll);
