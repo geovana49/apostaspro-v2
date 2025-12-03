@@ -852,7 +852,6 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                     <span>Adicionar Fotos</span>
                                     <input
                                         type="file"
-                                        multiple
                                         accept="image/*"
                                         className="hidden"
                                         onChange={handlePhotoSelect}
