@@ -106,6 +106,9 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
             const MAX_PHOTOS = 8;
             const files = Array.from(e.target.files) as File[];
 
+            // Sort files by date (oldest to newest)
+            files.sort((a, b) => a.lastModified - b.lastModified);
+
             if (tempPhotos.length + files.length > MAX_PHOTOS) {
                 alert(`Máximo de ${MAX_PHOTOS} fotos por aposta.`);
                 return;
@@ -488,7 +491,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                     <input
                                         type="file"
                                         multiple
-                                        accept="image/png, image/jpeg, image/jpg, image/webp"
+                                        accept="image/*"
                                         className="hidden"
                                         onChange={handlePhotoSelect}
                                     />

@@ -234,7 +234,10 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
 
     const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            const newPhotos = Array.from(e.target.files).map((file: File) => ({
+            const files = Array.from(e.target.files) as File[];
+            files.sort((a, b) => a.lastModified - b.lastModified);
+
+            const newPhotos = files.map((file: File) => ({
                 url: URL.createObjectURL(file),
                 file
             }));
@@ -850,7 +853,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                     <input
                                         type="file"
                                         multiple
-                                        accept="image/png, image/jpeg, image/jpg, image/webp"
+                                        accept="image/*"
                                         className="hidden"
                                         onChange={handlePhotoSelect}
                                     />

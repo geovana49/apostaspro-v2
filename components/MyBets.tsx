@@ -203,6 +203,9 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             const MAX_PHOTOS = 8;
             const files = Array.from(e.target.files) as File[];
 
+            // Sort files by date (oldest to newest)
+            files.sort((a, b) => a.lastModified - b.lastModified);
+
             if (tempPhotos.length + files.length > MAX_PHOTOS) {
                 alert(`Máximo de ${MAX_PHOTOS} fotos por aposta.`);
                 return;
@@ -1088,7 +1091,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                     <input
                                         type="file"
                                         multiple
-                                        accept="image/png, image/jpeg, image/jpg, image/webp"
+                                        accept="image/*"
                                         className="hidden"
                                         onChange={handlePhotoSelect}
                                     />
