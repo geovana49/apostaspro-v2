@@ -634,7 +634,23 @@ const Settings: React.FC<SettingsProps> = ({
                             <label className="text-xs font-bold text-textMuted uppercase tracking-wider block">Logo</label>
                             <div className="flex items-center gap-4">
                                 <div className="w-16 h-16 rounded-xl bg-[#151b2e] flex items-center justify-center border border-white/10 overflow-hidden shadow-inner">
-                                    {selectedLogo ? <img src={selectedLogo} alt="Logo" className="w-full h-full object-cover" /> : <div className="text-xs text-gray-600 font-bold">{newItemName.substring(0, 2).toUpperCase() || 'LOGO'}</div>}
+                                    {selectedLogo ? (
+                                        <img
+                                            src={selectedLogo}
+                                            alt="Logo"
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                                // Create a text node for the fallback
+                                                const fallback = document.createElement('div');
+                                                fallback.className = "text-xs text-gray-600 font-bold";
+                                                fallback.innerText = newItemName.substring(0, 2).toUpperCase() || 'LOGO';
+                                                e.currentTarget.parentElement!.appendChild(fallback);
+                                            }}
+                                        />
+                                    ) : (
+                                        <div className="text-xs text-gray-600 font-bold">{newItemName.substring(0, 2).toUpperCase() || 'LOGO'}</div>
+                                    )}
                                 </div>
                                 <div className="flex-1 space-y-2">
                                     <input type="file" className="hidden" id="logo-upload" accept="image/*" onChange={(e) => handleImageUpload(e, 'logos', setSelectedLogo)} />
@@ -684,7 +700,19 @@ const Settings: React.FC<SettingsProps> = ({
                         <div key={bookie.id} id={`bookmaker-${bookie.id}`} className="group bg-[#0d1121] border border-white/5 rounded-xl p-4 flex items-center justify-between hover:border-white/10 transition-all gap-3">
                             <div className="flex items-center gap-4 flex-1 min-w-0">
                                 <div className="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-[#090c19] text-xs shadow-sm overflow-hidden border border-white/5 shrink-0" style={{ backgroundColor: bookie.color || '#fff' }}>
-                                    {bookie.logo ? <img src={bookie.logo} alt={bookie.name} className="w-full h-full object-cover" /> : bookie.name.substring(0, 2).toUpperCase()}
+                                    {bookie.logo ? (
+                                        <img
+                                            src={bookie.logo}
+                                            alt={bookie.name}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                                e.currentTarget.parentElement!.innerText = bookie.name.substring(0, 2).toUpperCase();
+                                            }}
+                                        />
+                                    ) : (
+                                        bookie.name.substring(0, 2).toUpperCase()
+                                    )}
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <span className="font-bold text-white block truncate">{bookie.name}</span>
