@@ -224,7 +224,7 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
                                     <Wallet size={18} className="animate-pulse-scale" />
                                     <span className="font-bold text-xs uppercase tracking-wider text-[#090c19]">Lucro Líquido</span>
                                 </div>
-                                <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+                                <div className="flex items-center gap-2 sm:gap-4">
                                     <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter py-1 sm:py-2 text-[#090c19] drop-shadow-sm whitespace-nowrap">
                                         <MoneyDisplay
                                             value={Math.abs(netProfit)}
@@ -235,14 +235,14 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
                                     {/* Privacy Toggle - Moved near the number */}
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setSettings(prev => ({ ...prev, privacyMode: !prev.privacyMode })); }}
-                                        className="p-1.5 sm:p-2 rounded-full hover:bg-[#090c19]/10 text-[#090c19] transition-all cursor-pointer z-20 relative"
+                                        className="p-1.5 sm:p-2 rounded-full hover:bg-[#090c19]/10 text-[#090c19] transition-all cursor-pointer z-20 relative shrink-0"
                                         title={settings.privacyMode ? "Mostrar Valores" : "Ocultar Valores"}
                                     >
                                         {settings.privacyMode ? <EyeOff size={20} className="sm:w-6 sm:h-6" /> : <Eye size={20} className="sm:w-6 sm:h-6" />}
                                     </button>
                                 </div>
                             </div>
-                            <div className="bg-[#090c19]/10 px-3 py-1 rounded-full backdrop-blur-sm border border-[#090c19]/5 shadow-sm hover:bg-[#090c19]/20 transition-colors">
+                            <div className="bg-[#090c19]/10 px-3 py-1 rounded-full backdrop-blur-sm border border-[#090c19]/5 shadow-sm hover:bg-[#090c19]/20 transition-colors whitespace-nowrap">
                                 <p className="text-xs font-bold opacity-80 flex items-center gap-1">
                                     <Calendar size={10} />
                                     {periodOptions.find(o => o.value === period)?.label}
