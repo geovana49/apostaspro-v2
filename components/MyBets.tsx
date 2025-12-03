@@ -613,7 +613,7 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
 
                     const isExpanded = expandedId === bet.id;
                     const isDraft = bet.status === 'Rascunho';
-                    const isFreebetConversion = bet.promotionType?.toLowerCase().includes('freebet');
+                    const isFreebetConversion = bet.promotionType?.toLowerCase().includes('conversão freebet');
                     const totalStake = bet.coverages.reduce((sum, c, index) => {
                         // For freebet conversions, skip the first coverage stake (bonus balance)
                         if (isFreebetConversion && index === 0) return sum;
@@ -1034,7 +1034,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                                             ? cov.manualReturn.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
                                                             : (cov.stake && cov.odd ? (() => {
                                                                 const isFirstCoverage = index === 0;
-                                                                const isFreebetConversion = formData.promotionType?.toLowerCase().includes('freebet');
+                                                                const isFreebetConversion = formData.promotionType?.toLowerCase().includes('conversão freebet');
                                                                 let calculatedReturn = cov.stake * cov.odd;
 
                                                                 if (isFreebetConversion && isFirstCoverage) {
