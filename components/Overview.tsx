@@ -132,11 +132,11 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
                     else if (cov.status === 'Anulada' || cov.status === 'Cashout') covReturn = cov.stake;
                     else if (cov.status === 'Meio Red') covReturn = cov.stake / 2;
                     // For Red, return is 0
-                }
 
-                // For freebet conversions, subtract stake from first coverage return
-                if (isFreebetConversion && index === 0 && covReturn > 0) {
-                    covReturn -= cov.stake;
+                    // For freebet conversions, subtract stake from first coverage return (only for auto-calc)
+                    if (isFreebetConversion && index === 0 && covReturn > 0) {
+                        covReturn -= cov.stake;
+                    }
                 }
 
                 betReturn += covReturn;
