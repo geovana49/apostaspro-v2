@@ -27,6 +27,47 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate, setti
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showTopBtn, setShowTopBtn] = useState(false);
   const [showBottomBtn, setShowBottomBtn] = useState(false);
+  const [isFabVisible, setIsFabVisible] = useState(true);
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Handle inactivity to hide FABs
+  useEffect(() => {
+    const handleActivity = () => {
+      setIsFabVisible(true);
+
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+
+      inactivityTimerRef.current = setTimeout(() => {
+        setIsFabVisible(false);
+      }, 14000); // 14 seconds
+    };
+
+    // Events to detect activity
+    const events = ['scroll', 'wheel', 'touchmove', 'mousemove', 'mousedown', 'keydown', 'click'];
+
+    // Attach listeners
+    events.forEach(event => {
+      // Use capture for scroll to detect scrolling in nested elements
+      const options = event === 'scroll' ? { capture: true } : undefined;
+      window.addEventListener(event, handleActivity, options);
+    });
+
+    // Initial timer
+    handleActivity();
+
+    return () => {
+      events.forEach(event => {
+        const options = event === 'scroll' ? { capture: true } : undefined;
+        window.removeEventListener(event, handleActivity, options);
+      });
+
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+    };
+  }, []);
 
   // Click outside for profile menu
   useEffect(() => {
@@ -318,7 +359,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate, setti
           </div>
 
           {/* Floating Scroll Buttons */}
-          <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none">
+          <div className={`fixed bottom-6 right-6 z-50 flex flex-col gap-3 transition-all duration-500 ${isFabVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
             {/* Scroll Top Button */}
             {showTopBtn && (
               <button
