@@ -23,10 +23,11 @@ export const INITIAL_STATUSES: StatusItem[] = [
 
 export const INITIAL_PROMOTIONS: PromotionItem[] = [
   { id: '1', name: 'Nenhuma', color: '#94a3b8' },
-  { id: '2', name: 'Freebet', color: '#a855f7' },
-  { id: '3', name: 'Odds Boost', color: '#f97316' },
-  { id: '4', name: 'Reembolso', color: '#3b82f6' },
-  { id: '5', name: 'Missão', color: '#f43f5e' },
+  { id: '2', name: 'Conversão Freebet', color: '#4ade80' },
+  { id: '3', name: 'Freebet', color: '#a855f7' },
+  { id: '4', name: 'Super Odds', color: '#f97316' },
+  { id: '5', name: 'Reembolso', color: '#3b82f6' },
+  { id: '6', name: 'Missão', color: '#f43f5e' },
 ];
 
 export const INITIAL_ORIGINS: OriginItem[] = [
