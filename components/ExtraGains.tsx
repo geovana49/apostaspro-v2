@@ -10,33 +10,7 @@ import BetFormModal from './BetFormModal';
 import { FirestoreService } from '../services/firestoreService';
 import { compressImage } from '../utils/imageCompression';
 
-const COLORS = [
-    '#ef4444', // Red
-    '#f97316', // Orange
-    '#f59e0b', // Amber
-    '#eab308', // Yellow
-    '#84cc16', // Lime
-    '#22c55e', // Green
-    '#10b981', // Emerald
-    '#14b8a6', // Teal
-    '#06b6d4', // Cyan
-    '#0ea5e9', // Sky
-    '#3b82f6', // Blue
-    '#6366f1', // Indigo
-    '#8b5cf6', // Violet
-    '#a855f7', // Purple
-    '#d946ef', // Fuchsia
-    '#ec4899', // Pink
-    '#f43f5e', // Rose
-    '#64748b', // Slate
-    '#78716c', // Stone
-    '#dc2626', // Dark Red
-    '#ea580c', // Dark Orange
-    '#16a34a', // Dark Green
-    '#0891b2', // Dark Cyan
-    '#1d4ed8', // Dark Blue
-    '#7c3aed', // Dark Purple
-];
+const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e', '#64748b', '#000000', '#FFFFFF'];
 
 interface ExtraGainsProps {
     gains: ExtraGain[];
@@ -792,15 +766,15 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                                                 <div className="grid grid-cols-3 gap-3 text-xs">
                                                                     <div>
                                                                         <span className="text-textMuted text-[10px]">Odd</span>
-                                                                        <p className="font-bold text-white">{coverage.odd.toFixed(2)}</p>
+                                                                        <p className="font-bold text-[#22d3ee]">{coverage.odd.toFixed(2)}</p>
                                                                     </div>
                                                                     <div>
                                                                         <span className="text-textMuted text-[10px]">Stake</span>
-                                                                        <p className="font-bold text-white">R$ {coverage.stake.toFixed(2)}</p>
+                                                                        <p className="font-bold text-[#fbbf24]">R$ {coverage.stake.toFixed(2)}</p>
                                                                     </div>
                                                                     <div>
                                                                         <span className="text-textMuted text-[10px]">Retorno</span>
-                                                                        <p className="font-bold text-white">R$ {(coverage.stake * coverage.odd).toFixed(2)}</p>
+                                                                        <p className="font-bold text-[#acff7a]">R$ {(coverage.stake * coverage.odd).toFixed(2)}</p>
                                                                     </div>
                                                                 </div>
                                                             </div>
