@@ -88,6 +88,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                         event: initialData.event,
                         promotionType: initialData.promotionType || 'Nenhuma',
                         status: initialData.status as any,
+                        generalStatus: (initialData as any).generalStatus || 'Concluído',
                         coverages: initialData.coverages,
                         notes: initialData.notes || ''
                     }
