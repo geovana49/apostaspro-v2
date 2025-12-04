@@ -160,15 +160,12 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
 
     const handleChoice = (type: 'gain' | 'bet') => {
         setIsChoiceModalOpen(false);
-        if (type === 'gain') {
-            setEditingId(null);
-            dispatch({ type: 'RESET_FORM' });
-            setTempPhotos([]);
-            setIsModalOpen(true);
-            setIsDeleting(false);
-        } else {
-            setIsBetModalOpen(true);
-        }
+        // Both options now save to Extra Gains
+        setEditingId(null);
+        dispatch({ type: 'RESET_FORM' });
+        setTempPhotos([]);
+        setIsModalOpen(true);
+        setIsDeleting(false);
     };
 
     const toggleGainDetails = (id: string) => {
