@@ -83,6 +83,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
     const [showFloatingButton, setShowFloatingButton] = useState(false);
+    const [photoFilterDate, setPhotoFilterDate] = useState<string>('');
     const betsListRef = useRef<HTMLDivElement>(null);
     const longPressTimer = useRef<NodeJS.Timeout | null>(null);
     const touchStartPos = useRef<{ x: number; y: number } | null>(null);
@@ -1084,10 +1085,19 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                         />
 
                         <div className="p-4 bg-[#0d1121] border border-dashed border-white/10 rounded-xl">
+                            <div className="mb-3">
+                                <label className="block text-xs text-gray-500 mb-1">Filtrar fotos por data (opcional)</label>
+                                <input
+                                    type="date"
+                                    value={photoFilterDate}
+                                    onChange={(e) => setPhotoFilterDate(e.target.value)}
+                                    className="w-full bg-[#151b2e] border border-white/10 focus:border-primary text-white rounded-lg py-2 px-3 text-sm focus:outline-none transition-colors"
+                                />
+                            </div>
                             <div className="flex justify-between items-center mb-3">
                                 <label className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase cursor-pointer hover:text-white transition-colors">
                                     <div className="p-2 bg-white/5 rounded-full"><Paperclip size={14} /></div>
-                                    <span>Adicionar Fotos</span>
+                                    <span>Adicionar Fotos{photoFilterDate ? ` (${new Date(photoFilterDate + 'T00:00:00').toLocaleDateString('pt-BR')})` : ''}</span>
                                     <input
                                         type="file"
                                         multiple
