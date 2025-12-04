@@ -6,6 +6,7 @@ import {
 import { Bet, Bookmaker, StatusItem, PromotionItem, Coverage, User } from '../types';
 import { FirestoreService } from '../services/firestoreService';
 import { compressImages, validateFirestoreSize } from '../utils/imageCompression';
+import { calculateBetStats } from '../utils/betCalculations';
 
 interface BetFormModalProps {
     isOpen: boolean;
@@ -175,15 +176,18 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                 return;
             }
 
+
             if (saveAsGain) {
                 // Save as Extra Gain instead of Bet
-                const totalReturn = formData.coverages.reduce((sum, c) => {
-                    if (c.status === 'Green') return sum + (c.stake * c.odd);
-                    if (c.status === 'Meio Green') return sum + (c.stake * c.odd) / 2;
-                    return sum;
-                }, 0);
-                const totalStake = formData.coverages.reduce((sum, c) => sum + c.stake, 0);
-                const profit = totalReturn - totalStake;
+                // Use the same calculation logic as My Bets (handles FreeBet, Conversion, all statuses)
+                const tempBet: Bet = {
+                    ...formData,
+                    id: formData.id || Date.now().toString(),
+                    date: formData.date,
+                    notes: formData.notes || '',
+                    photos: []
+                };
+                const { profit } = calculateBetStats(tempBet);
 
                 const gainData = {
                     id: formData.id || Date.now().toString(),
