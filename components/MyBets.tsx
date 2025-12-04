@@ -1172,7 +1172,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
             {showFloatingButton && (
                 <button
                     onClick={handleOpenNew}
-                    className={`fixed bottom-36 right-6 z-40 p-3 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 transition-all duration-500 active:scale-95 shadow-lg ${isFabVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
+                    className={`fixed bottom-36 right-6 z-40 p-3 bg-[#acff7a] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-[#acff7a]/40 transition-all duration-500 active:scale-95 shadow-lg ${isFabVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
                     title="Nova Aposta"
                 >
                     <Plus size={24} strokeWidth={3} />
