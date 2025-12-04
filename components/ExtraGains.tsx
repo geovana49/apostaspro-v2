@@ -649,7 +649,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     let statusColor = statusItem ? statusItem.color : '#94a3b8';
 
                     if (gain.status === 'Recebido' || gain.status === 'Confirmado') {
-                        statusColor = '#6ee7b7'; // Green color
+                        statusColor = '#acff7a'; // Neon Green
                     }
 
                     const isExpanded = expandedGains.has(gain.id);
@@ -691,7 +691,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                         <div className="text-left w-full">
                                             <p className="text-[10px] text-textMuted uppercase font-bold">Valor</p>
                                             <div className="flex items-center justify-between gap-3 w-full">
-                                                <p className={`font-bold text-base ${gain.amount < 0 ? 'text-red-500' : (isConfirmed ? 'text-[#10b981]' : 'text-textMuted')}`}>
+                                                <p className={`font-bold text-base ${gain.amount < 0 ? 'text-red-500' : (isConfirmed ? 'text-[#acff7a]' : 'text-textMuted')}`}>
                                                     <MoneyDisplay value={gain.amount} />
                                                 </p>
                                                 <span style={{ backgroundColor: `${statusColor}1A`, color: statusColor, borderColor: `${statusColor}33` }} className="text-[10px] sm:text-xs font-medium px-2.5 py-1 rounded-full inline-block border">{gain.status}</span>
