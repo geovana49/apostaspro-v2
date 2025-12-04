@@ -12,7 +12,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'robots.txt'],
       manifest: {
-        name: 'ApostasPro',
+        name: 'ApostasPro v2',
         short_name: 'ApostasPro',
         description: 'Gerencie suas apostas e ganhos com facilidade.',
         theme_color: '#090c19',
