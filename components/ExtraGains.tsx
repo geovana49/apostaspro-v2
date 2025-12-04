@@ -76,6 +76,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const [formData, dispatch] = useReducer(formReducer, initialFormState);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isBetModalOpen, setIsBetModalOpen] = useState(false);
+    const [editingBet, setEditingBet] = useState<any>(null);
     const [isChoiceModalOpen, setIsChoiceModalOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [tempPhotos, setTempPhotos] = useState<{ url: string, file?: File }[]>([]);
@@ -135,23 +136,42 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const [isDeleting, setIsDeleting] = useState(false);
 
     const handleEdit = (gain: ExtraGain) => {
-        setEditingId(gain.id);
-        dispatch({
-            type: 'SET_FORM',
-            payload: {
+        // If gain has coverages, it's a sports bet - open BetFormModal
+        if (gain.coverages && gain.coverages.length > 0) {
+            // Convert ExtraGain to Bet format for editing
+            const betData: any = {
                 id: gain.id,
-                amount: gain.amount,
                 date: gain.date.split('T')[0],
-                status: gain.status as any,
-                origin: gain.origin,
-                bookmakerId: gain.bookmakerId || '',
-                game: gain.game || '',
-                notes: gain.notes || ''
-            }
-        });
-        setTempPhotos(gain.photos ? gain.photos.map(url => ({ url })) : []);
-        setIsModalOpen(true);
-        setIsDeleting(false);
+                event: gain.game || gain.origin,
+                mainBookmakerId: gain.bookmakerId,
+                promotionType: gain.origin,
+                status: 'Pendente', // Default status for editing
+                coverages: gain.coverages,
+                notes: gain.notes || '',
+                photos: gain.photos || []
+            };
+            setEditingBet(betData);
+            setIsBetModalOpen(true);
+        } else {
+            // Regular gain - open simple gain modal
+            setEditingId(gain.id);
+            dispatch({
+                type: 'SET_FORM',
+                payload: {
+                    id: gain.id,
+                    amount: gain.amount,
+                    date: gain.date.split('T')[0],
+                    status: gain.status as any,
+                    origin: gain.origin,
+                    bookmakerId: gain.bookmakerId || '',
+                    game: gain.game || '',
+                    notes: gain.notes || ''
+                }
+            });
+            setTempPhotos(gain.photos ? gain.photos.map(url => ({ url })) : []);
+            setIsModalOpen(true);
+            setIsDeleting(false);
+        }
     };
 
     const handleOpenNew = () => {
@@ -513,13 +533,13 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             {isBetModalOpen && (
                 <BetFormModal
                     isOpen={isBetModalOpen}
-                    onClose={() => setIsBetModalOpen(false)}
-                    initialData={null}
+                    onClose={() => { setIsBetModalOpen(false); setEditingBet(null); }}
+                    initialData={editingBet}
                     currentUser={currentUser}
                     bookmakers={bookmakers}
                     statuses={statuses}
                     promotions={promotions}
-                    onSaveSuccess={() => { }}
+                    onSaveSuccess={() => { setEditingBet(null); }}
                     saveAsGain={true}
                 />
             )}
