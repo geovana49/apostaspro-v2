@@ -730,47 +730,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                                 </div>
                                             </div>
                                         )}
-                                        {gain.coverages && gain.coverages.length > 0 && (
-                                            <div className="mt-4">
-                                                <label className="text-xs font-bold text-textMuted uppercase tracking-wider flex items-center gap-2 mb-3"><Ticket size={12} /> Coberturas</label>
-                                                <div className="space-y-2">
-                                                    {gain.coverages.map((coverage, idx) => {
-                                                        const bookie = bookmakers.find(b => b.id === coverage.bookmakerId);
-                                                        const statusColor = statuses.find(s => s.name === coverage.status)?.color || '#6b7280';
-                                                        return (
-                                                            <div key={idx} className="bg-[#0d1121] border border-white/5 rounded-lg p-3">
-                                                                <div className="flex items-center justify-between mb-2">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="w-6 h-6 rounded flex items-center justify-center text-[8px] font-bold text-[#090c19]" style={{ backgroundColor: bookie?.color || '#FFFFFF' }}>
-                                                                            {bookie?.logo ? <img src={bookie.logo} alt={bookie.name} className="w-full h-full object-contain p-[1px]" /> : bookie?.name.substring(0, 2).toUpperCase()}
-                                                                        </div>
-                                                                        <span className="text-xs font-medium text-white">{coverage.market}</span>
-                                                                    </div>
-                                                                    <span style={{ backgroundColor: `${statusColor}1A`, color: statusColor, borderColor: `${statusColor}33` }} className="text-[9px] font-medium px-2 py-0.5 rounded-full border">
-                                                                        {coverage.status}
-                                                                    </span>
-                                                                </div>
-                                                                <div className="grid grid-cols-3 gap-2 text-xs">
-                                                                    <div>
-                                                                        <span className="text-textMuted text-[10px]">Odd</span>
-                                                                        <p className="font-bold text-white">{coverage.odd.toFixed(2)}</p>
-                                                                    </div>
-                                                                    <div>
-                                                                        <span className="text-textMuted text-[10px]">Stake</span>
-                                                                        <p className="font-bold text-white">R$ {coverage.stake.toFixed(2)}</p>
-                                                                    </div>
-                                                                    <div>
-                                                                        <span className="text-textMuted text-[10px]">Retorno</span>
-                                                                        <p className="font-bold text-white">R$ {(coverage.stake * coverage.odd).toFixed(2)}</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                        )}
-                                        {(!gain.notes || gain.notes.trim() === '') && (!gain.photos || gain.photos.length === 0) && (!gain.coverages || gain.coverages.length === 0) && (
+                                        {(!gain.notes || gain.notes.trim() === '') && (!gain.photos || gain.photos.length === 0) && (
                                             <p className="text-sm text-gray-500 text-center py-4">Sem detalhes adicionais.</p>
                                         )}
                                     </div>
