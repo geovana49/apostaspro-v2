@@ -507,6 +507,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 </div>
             </Modal>
 
+            {console.log('Rendering BetFormModal, isBetModalOpen:', isBetModalOpen)}
             <BetFormModal
                 isOpen={isBetModalOpen}
                 onClose={() => setIsBetModalOpen(false)}
