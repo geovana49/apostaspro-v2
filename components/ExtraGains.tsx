@@ -98,7 +98,9 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
     const [showFloatingButton, setShowFloatingButton] = useState(false);
+    const [isFabVisible, setIsFabVisible] = useState(true);
     const gainsListRef = useRef<HTMLDivElement>(null);
+    const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // IntersectionObserver for floating button
     useEffect(() => {
@@ -116,6 +118,45 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         return () => {
             if (gainsListRef.current) {
                 observer.unobserve(gainsListRef.current);
+            }
+        };
+    }, []);
+
+    // Handle scroll inactivity to hide FABs
+    useEffect(() => {
+        const handleActivity = () => {
+            setIsFabVisible(true);
+
+            if (inactivityTimerRef.current) {
+                clearTimeout(inactivityTimerRef.current);
+            }
+
+            inactivityTimerRef.current = setTimeout(() => {
+                setIsFabVisible(false);
+            }, 6000); // 6 seconds
+        };
+
+        // Events to detect activity
+        const events = ['scroll', 'wheel', 'touchmove', 'mousemove', 'mousedown', 'keydown', 'click'];
+
+        // Attach listeners
+        events.forEach(event => {
+            // Use capture for scroll to detect scrolling in nested elements
+            const options = event === 'scroll' ? { capture: true } : undefined;
+            window.addEventListener(event, handleActivity, options);
+        });
+
+        // Initial timer
+        handleActivity();
+
+        return () => {
+            events.forEach(event => {
+                const options = event === 'scroll' ? { capture: true } : undefined;
+                window.removeEventListener(event, handleActivity, options);
+            });
+
+            if (inactivityTimerRef.current) {
+                clearTimeout(inactivityTimerRef.current);
             }
         };
     }, []);
@@ -978,7 +1019,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             {showFloatingButton && (
                 <button
                     onClick={handleOpenNew}
-                    className="fixed bottom-36 right-6 z-40 p-3 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 transition-all active:scale-95 shadow-lg"
+                    className={`fixed bottom-36 right-6 z-40 p-3 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 transition-all duration-500 active:scale-95 shadow-lg ${isFabVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
                     title="Novo Ganho"
                 >
                     <Plus size={24} strokeWidth={3} />
