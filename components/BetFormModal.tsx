@@ -194,7 +194,8 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                     bookmakerId: formData.mainBookmakerId,
                     game: formData.event,
                     notes: formData.notes || '',
-                    photos: photoBase64
+                    photos: photoBase64,
+                    coverages: formData.coverages // Include coverages
                 };
 
                 await FirestoreService.saveGain(currentUser.uid, gainData);

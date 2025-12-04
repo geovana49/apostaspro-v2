@@ -61,6 +61,7 @@ export interface ExtraGain {
   status: 'Recebido' | 'Pendente' | 'Confirmado' | 'Cancelado';
   notes?: string;
   photos?: string[]; // Array of base64 image strings
+  coverages?: Coverage[]; // Optional coverages for sports bets
 }
 
 export interface AppSettings {
