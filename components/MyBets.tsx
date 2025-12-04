@@ -109,33 +109,43 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     }, []);
 
     // Handle scroll inactivity to hide FABs
-    useEffect(() => {
-        let inactivityTimer: NodeJS.Timeout;
+    const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-        const handleScrollActivity = () => {
+    useEffect(() => {
+        const handleActivity = () => {
             setIsFabVisible(true);
-            clearTimeout(inactivityTimer);
-            inactivityTimer = setTimeout(() => {
+
+            if (inactivityTimerRef.current) {
+                clearTimeout(inactivityTimerRef.current);
+            }
+
+            inactivityTimerRef.current = setTimeout(() => {
                 setIsFabVisible(false);
             }, 14000); // 14 seconds
         };
 
-        window.addEventListener('scroll', handleScrollActivity, { capture: true }); // Capture scroll events from children
-        window.addEventListener('touchmove', handleScrollActivity);
-        window.addEventListener('click', handleScrollActivity);
-        window.addEventListener('mousemove', handleScrollActivity); // Also listen for mouse movement
+        // Events to detect activity
+        const events = ['scroll', 'wheel', 'touchmove', 'mousemove', 'mousedown', 'keydown', 'click'];
+
+        // Attach listeners
+        events.forEach(event => {
+            // Use capture for scroll to detect scrolling in nested elements
+            const options = event === 'scroll' ? { capture: true } : undefined;
+            window.addEventListener(event, handleActivity, options);
+        });
 
         // Initial timer
-        inactivityTimer = setTimeout(() => {
-            setIsFabVisible(false);
-        }, 14000);
+        handleActivity();
 
         return () => {
-            window.removeEventListener('scroll', handleScrollActivity, { capture: true });
-            window.removeEventListener('touchmove', handleScrollActivity);
-            window.removeEventListener('click', handleScrollActivity);
-            window.removeEventListener('mousemove', handleScrollActivity);
-            clearTimeout(inactivityTimer);
+            events.forEach(event => {
+                const options = event === 'scroll' ? { capture: true } : undefined;
+                window.removeEventListener(event, handleActivity, options);
+            });
+
+            if (inactivityTimerRef.current) {
+                clearTimeout(inactivityTimerRef.current);
+            }
         };
     }, []);
 
