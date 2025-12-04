@@ -164,11 +164,11 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
         });
         const totalNotesCount = betNotesCount;
 
-        return { totalStaked: resolvedStaked, totalReturned: resolvedReturned, netProfit: totalProfit, roi, chartData, totalNotesCount };
+        return { totalStaked: resolvedStaked, totalReturned: resolvedReturned, netProfit: totalProfit, roi, chartData, totalPromotionsCount };
     };
 
 
-    const { totalStaked, totalReturned, netProfit, roi, chartData, totalNotesCount } = calculateMetrics();
+    const { totalStaked, totalReturned, netProfit, roi, chartData, totalPromotionsCount } = calculateMetrics();
 
     const isProfitPositive = netProfit >= 0;
 
@@ -335,13 +335,13 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
                     </div>
                 </Card>
 
-                {/* Notes */}
+                {/* Promotions */}
                 <Card className="p-6 flex flex-col justify-between min-h-[120px] group bg-[#151b2e]">
                     <div>
-                        <p className="text-textMuted text-[11px] font-bold uppercase tracking-wider mb-2 group-hover:text-white transition-colors">Anotações de Apostas</p>
+                        <p className="text-textMuted text-[11px] font-bold uppercase tracking-wider mb-2 group-hover:text-white transition-colors">Apostas com Promoções</p>
                         <div className="flex items-center justify-between">
                             <h4 className="text-2xl font-bold text-white tracking-tight">
-                                {settings.privacyMode ? '••' : totalNotesCount}
+                                {settings.privacyMode ? '••' : totalPromotionsCount}
                             </h4>
                             <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-textMuted group-hover:text-secondary transition-all duration-500 group-hover:bg-secondary/10 group-hover:rotate-[-6deg] group-hover:scale-110 shadow-inner">
                                 <StickyNote size={20} />
