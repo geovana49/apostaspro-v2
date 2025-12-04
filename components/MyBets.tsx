@@ -116,20 +116,22 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             clearTimeout(inactivityTimer);
             inactivityTimer = setTimeout(() => {
                 setIsFabVisible(false);
-            }, 20000); // 20 seconds
+            }, 14000); // 14 seconds
         };
 
         window.addEventListener('scroll', handleScrollActivity);
         window.addEventListener('touchmove', handleScrollActivity); // Also listen for touch moves
+        window.addEventListener('click', handleScrollActivity); // Also listen for clicks
 
         // Initial timer
         inactivityTimer = setTimeout(() => {
             setIsFabVisible(false);
-        }, 20000);
+        }, 14000);
 
         return () => {
             window.removeEventListener('scroll', handleScrollActivity);
             window.removeEventListener('touchmove', handleScrollActivity);
+            window.removeEventListener('click', handleScrollActivity);
             clearTimeout(inactivityTimer);
         };
     }, []);
