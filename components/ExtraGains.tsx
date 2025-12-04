@@ -784,121 +784,123 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     </div>
                 </div>
             </Modal>
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Editar Ganho" : "Novo Ganho Extra"} footer={<div className="flex justify-between gap-3 w-full"> {editingId && (<button onClick={() => setIsDeleting(true)} className="p-3 text-gray-500 hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"> <Trash2 size={20} /> </button>)} <div className="flex gap-3 ml-auto"> <Button variant="neutral" onClick={() => setIsModalOpen(false)} disabled={isUploading}>Cancelar</Button> {isDeleting ? (<Button variant="danger" onClick={handleDeleteModal}>Confirmar Exclusão</Button>) : (<Button onClick={handleSave} disabled={isUploading}> {isUploading ? (<> <Loader2 size={16} className="animate-spin" /> <span>Salvando...</span> </>) : ("Salvar")} </Button>)} </div> </div>}>
-                <div className="space-y-5">
-                    <div className="bg-[#0d1121] p-4 rounded-xl border border-white/5 flex flex-col items-center justify-center mb-2">
-                        <label className="text-[10px] text-textMuted uppercase font-bold mb-2">Valor do Ganho</label>
-                        <div className="relative flex items-center">
-                            <span className="text-xl font-bold text-gray-500">R$</span>
-                            <input type="text" inputMode="numeric" className="bg-transparent text-center text-4xl font-bold text-white w-48 focus:outline-none placeholder-gray-700" placeholder="0,00" value={formData.amount ? formData.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : ''} onChange={e => { const value = e.target.value.replace(/[^0-9]/g, ''); dispatch({ type: 'UPDATE_FIELD', field: 'amount', value: value ? parseInt(value, 10) / 100 : 0 }); }} autoFocus />
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Data</label>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    console.log('Botão de data clicado!');
-                                    setIsFormDatePickerOpen(true);
-                                    console.log('isFormDatePickerOpen definido como true');
-                                }}
-                                className="w-full bg-[#0d1121] border border-white/10 focus:border-primary text-white rounded-lg py-3 px-4 text-left hover:bg-[#151b2e] transition-colors flex items-center justify-between group"
-                            >
-                                <span className="text-sm">{formData.date ? new Date(formData.date + 'T12:00:00').toLocaleDateString('pt-BR') : 'Selecione a data'}</span>
-                                <Calendar size={16} className="text-gray-500 group-hover:text-primary transition-colors" />
-                            </button>
-                        </div>
-                        <Dropdown label="Status" options={statusOptionsForForm} value={formData.status || 'Recebido'} onChange={async (v) => {
-                            dispatch({ type: 'UPDATE_FIELD', field: 'status', value: v as any });
-
-                            // Auto-save if editing existing gain
-                            if (editingId && currentUser) {
-                                try {
-                                    const gainData: ExtraGain = {
-                                        ...formData,
-                                        id: editingId,
-                                        status: v as any,
-                                        notes: formData.notes,
-                                        photos: tempPhotos.map(p => p.url),
-                                        date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
-                                    };
-                                    await FirestoreService.saveGain(currentUser.uid, gainData);
-                                    console.log('✅ Status auto-saved!');
-
-                                    // Close modal to refresh data and update balance
-                                    setIsModalOpen(false);
-                                    setEditingId(null);
-                                } catch (error) {
-                                    console.error('Error auto-saving status:', error);
-                                }
-                            }
-                        }} />
-                    </div>
-                    <Dropdown label="Origem" options={origins.map(o => ({ label: o.name, value: o.name, icon: <RenderIcon iconSource={o.icon} size={16} /> }))} value={formData.origin || ''} onChange={v => dispatch({ type: 'UPDATE_FIELD', field: 'origin', value: v })} />
-                    <Dropdown
-                        label="Casa de Aposta"
-                        options={bookmakerOptions}
-                        value={formData.bookmakerId || ''}
-                        onChange={v => dispatch({ type: 'UPDATE_FIELD', field: 'bookmakerId', value: v })}
-                        placeholder="Selecione a Casa"
-                        isSearchable={true}
-                        searchPlaceholder="Buscar casa..."
-                    />
-                    <Input label="Jogo / Detalhe (Opcional)" placeholder="Ex: Gates of Olympus, Roda da Sorte..." value={formData.game || ''} onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'game', value: e.target.value })} icon={<Gamepad2 size={16} />} />
-
-                    <div className="space-y-3">
-                        <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Anotações & Mídia</label>
-
-                        <textarea
-                            className="w-full bg-[#0d1121] border border-white/10 focus:border-primary text-white rounded-lg py-3 px-4 placeholder-gray-600 focus:outline-none transition-colors text-sm min-h-[100px] resize-none shadow-inner"
-                            placeholder="Detalhes extras..."
-                            value={formData.notes}
-                            onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'notes', value: e.target.value })}
-                        />
-
-                        <div className="p-4 bg-[#0d1121] border border-dashed border-white/10 rounded-xl">
-                            <div className="flex justify-between items-center mb-3">
-                                <label className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase cursor-pointer hover:text-white transition-colors">
-                                    <div className="p-2 bg-white/5 rounded-full"><Paperclip size={14} /></div>
-                                    <span>Adicionar Fotos</span>
-                                    <input
-                                        type="file"
-                                        multiple
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={handlePhotoSelect}
-                                    />
-                                </label>
-                                <span className="text-[10px] text-gray-600">Sem limite de tamanho</span>
+            {isModalOpen && (
+                <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Editar Ganho" : "Novo Ganho Extra"} footer={<div className="flex justify-between gap-3 w-full"> {editingId && (<button onClick={() => setIsDeleting(true)} className="p-3 text-gray-500 hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"> <Trash2 size={20} /> </button>)} <div className="flex gap-3 ml-auto"> <Button variant="neutral" onClick={() => setIsModalOpen(false)} disabled={isUploading}>Cancelar</Button> {isDeleting ? (<Button variant="danger" onClick={handleDeleteModal}>Confirmar Exclusão</Button>) : (<Button onClick={handleSave} disabled={isUploading}> {isUploading ? (<> <Loader2 size={16} className="animate-spin" /> <span>Salvando...</span> </>) : ("Salvar")} </Button>)} </div> </div>}>
+                    <div className="space-y-5">
+                        <div className="bg-[#0d1121] p-4 rounded-xl border border-white/5 flex flex-col items-center justify-center mb-2">
+                            <label className="text-[10px] text-textMuted uppercase font-bold mb-2">Valor do Ganho</label>
+                            <div className="relative flex items-center">
+                                <span className="text-xl font-bold text-gray-500">R$</span>
+                                <input type="text" inputMode="numeric" className="bg-transparent text-center text-4xl font-bold text-white w-48 focus:outline-none placeholder-gray-700" placeholder="0,00" value={formData.amount ? formData.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : ''} onChange={e => { const value = e.target.value.replace(/[^0-9]/g, ''); dispatch({ type: 'UPDATE_FIELD', field: 'amount', value: value ? parseInt(value, 10) / 100 : 0 }); }} autoFocus />
                             </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Data</label>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        console.log('Botão de data clicado!');
+                                        setIsFormDatePickerOpen(true);
+                                        console.log('isFormDatePickerOpen definido como true');
+                                    }}
+                                    className="w-full bg-[#0d1121] border border-white/10 focus:border-primary text-white rounded-lg py-3 px-4 text-left hover:bg-[#151b2e] transition-colors flex items-center justify-between group"
+                                >
+                                    <span className="text-sm">{formData.date ? new Date(formData.date + 'T12:00:00').toLocaleDateString('pt-BR') : 'Selecione a data'}</span>
+                                    <Calendar size={16} className="text-gray-500 group-hover:text-primary transition-colors" />
+                                </button>
+                            </div>
+                            <Dropdown label="Status" options={statusOptionsForForm} value={formData.status || 'Recebido'} onChange={async (v) => {
+                                dispatch({ type: 'UPDATE_FIELD', field: 'status', value: v as any });
 
-                            {tempPhotos.length > 0 && (
-                                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 mt-2">
-                                    {tempPhotos.map((photo, index) => (
-                                        <div
-                                            key={index}
-                                            onClick={() => openImageViewer(tempPhotos.map(p => p.url), index)}
-                                            className="relative aspect-square rounded-lg overflow-hidden border border-white/10 group bg-black/40 cursor-pointer"
-                                        >
-                                            <img src={photo.url} alt="Preview" className="w-full h-full object-cover" />
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    removePhoto(index);
-                                                }}
-                                                className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full hover:bg-danger transition-colors opacity-0 group-hover:opacity-100"
-                                            >
-                                                <X size={10} />
-                                            </button>
-                                        </div>
-                                    ))}
+                                // Auto-save if editing existing gain
+                                if (editingId && currentUser) {
+                                    try {
+                                        const gainData: ExtraGain = {
+                                            ...formData,
+                                            id: editingId,
+                                            status: v as any,
+                                            notes: formData.notes,
+                                            photos: tempPhotos.map(p => p.url),
+                                            date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
+                                        };
+                                        await FirestoreService.saveGain(currentUser.uid, gainData);
+                                        console.log('✅ Status auto-saved!');
+
+                                        // Close modal to refresh data and update balance
+                                        setIsModalOpen(false);
+                                        setEditingId(null);
+                                    } catch (error) {
+                                        console.error('Error auto-saving status:', error);
+                                    }
+                                }
+                            }} />
+                        </div>
+                        <Dropdown label="Origem" options={origins.map(o => ({ label: o.name, value: o.name, icon: <RenderIcon iconSource={o.icon} size={16} /> }))} value={formData.origin || ''} onChange={v => dispatch({ type: 'UPDATE_FIELD', field: 'origin', value: v })} />
+                        <Dropdown
+                            label="Casa de Aposta"
+                            options={bookmakerOptions}
+                            value={formData.bookmakerId || ''}
+                            onChange={v => dispatch({ type: 'UPDATE_FIELD', field: 'bookmakerId', value: v })}
+                            placeholder="Selecione a Casa"
+                            isSearchable={true}
+                            searchPlaceholder="Buscar casa..."
+                        />
+                        <Input label="Jogo / Detalhe (Opcional)" placeholder="Ex: Gates of Olympus, Roda da Sorte..." value={formData.game || ''} onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'game', value: e.target.value })} icon={<Gamepad2 size={16} />} />
+
+                        <div className="space-y-3">
+                            <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Anotações & Mídia</label>
+
+                            <textarea
+                                className="w-full bg-[#0d1121] border border-white/10 focus:border-primary text-white rounded-lg py-3 px-4 placeholder-gray-600 focus:outline-none transition-colors text-sm min-h-[100px] resize-none shadow-inner"
+                                placeholder="Detalhes extras..."
+                                value={formData.notes}
+                                onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'notes', value: e.target.value })}
+                            />
+
+                            <div className="p-4 bg-[#0d1121] border border-dashed border-white/10 rounded-xl">
+                                <div className="flex justify-between items-center mb-3">
+                                    <label className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase cursor-pointer hover:text-white transition-colors">
+                                        <div className="p-2 bg-white/5 rounded-full"><Paperclip size={14} /></div>
+                                        <span>Adicionar Fotos</span>
+                                        <input
+                                            type="file"
+                                            multiple
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={handlePhotoSelect}
+                                        />
+                                    </label>
+                                    <span className="text-[10px] text-gray-600">Sem limite de tamanho</span>
                                 </div>
-                            )}
+
+                                {tempPhotos.length > 0 && (
+                                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 mt-2">
+                                        {tempPhotos.map((photo, index) => (
+                                            <div
+                                                key={index}
+                                                onClick={() => openImageViewer(tempPhotos.map(p => p.url), index)}
+                                                className="relative aspect-square rounded-lg overflow-hidden border border-white/10 group bg-black/40 cursor-pointer"
+                                            >
+                                                <img src={photo.url} alt="Preview" className="w-full h-full object-cover" />
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        removePhoto(index);
+                                                    }}
+                                                    className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full hover:bg-danger transition-colors opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <X size={10} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
-            </Modal>
+                </Modal>
+            )}
 
             {/* Floating Novo Ganho Button */}
             {showFloatingButton && (
