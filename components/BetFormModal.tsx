@@ -430,13 +430,21 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                                     searchPlaceholder="Buscar casa..."
                                                 />
                                             </div>
-                                            <Input
-                                                label="Mercado"
-                                                className="text-xs py-1.5"
-                                                placeholder="Mercado"
-                                                value={cov.market}
-                                                onChange={e => updateCoverage(cov.id, 'market', e.target.value)}
-                                            />
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] text-textMuted uppercase font-bold">Mercado</label>
+                                                <textarea
+                                                    className="w-full bg-[#0d1121] border border-white/10 focus:border-primary text-white rounded-lg py-1.5 px-3 placeholder-gray-600 focus:outline-none transition-colors text-xs resize-none min-h-[38px]"
+                                                    placeholder="Mercado"
+                                                    value={cov.market}
+                                                    onChange={e => updateCoverage(cov.id, 'market', e.target.value)}
+                                                    rows={1}
+                                                    onInput={(e: React.FormEvent<HTMLTextAreaElement>) => {
+                                                        const target = e.currentTarget;
+                                                        target.style.height = 'auto';
+                                                        target.style.height = target.scrollHeight + 'px';
+                                                    }}
+                                                />
+                                            </div>
                                             <Input
                                                 label="ODD"
                                                 type="tel"
