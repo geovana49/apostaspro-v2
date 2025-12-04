@@ -159,14 +159,17 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     };
 
     const handleChoice = (type: 'gain' | 'bet') => {
+        console.log('handleChoice called with type:', type);
         setIsChoiceModalOpen(false);
         if (type === 'gain') {
+            console.log('Opening gain modal');
             setEditingId(null);
             dispatch({ type: 'RESET_FORM' });
             setTempPhotos([]);
             setIsModalOpen(true);
             setIsDeleting(false);
         } else {
+            console.log('Opening bet modal');
             // Open bet modal but it should save to gains
             setIsBetModalOpen(true);
         }
