@@ -508,17 +508,19 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             </Modal>
 
             {console.log('Rendering BetFormModal, isBetModalOpen:', isBetModalOpen)}
-            <BetFormModal
-                isOpen={isBetModalOpen}
-                onClose={() => setIsBetModalOpen(false)}
-                initialData={null}
-                currentUser={currentUser}
-                bookmakers={bookmakers}
-                statuses={statuses}
-                promotions={promotions}
-                onSaveSuccess={() => { }}
-                saveAsGain={true}
-            />
+            {isBetModalOpen && (
+                <BetFormModal
+                    isOpen={isBetModalOpen}
+                    onClose={() => setIsBetModalOpen(false)}
+                    initialData={null}
+                    currentUser={currentUser}
+                    bookmakers={bookmakers}
+                    statuses={statuses}
+                    promotions={promotions}
+                    onSaveSuccess={() => { }}
+                    saveAsGain={true}
+                />
+            )}
 
             <SingleDatePickerModal
                 isOpen={isFormDatePickerOpen}
