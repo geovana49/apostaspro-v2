@@ -649,7 +649,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     let statusColor = statusItem ? statusItem.color : '#94a3b8';
 
                     if (gain.status === 'Recebido' || gain.status === 'Confirmado') {
-                        statusColor = '#acff7a'; // Neon Green
+                        statusColor = '#6ee7b7'; // Standard Green
                     }
 
                     const isExpanded = expandedGains.has(gain.id);
