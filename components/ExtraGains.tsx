@@ -145,7 +145,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 event: gain.game || gain.origin,
                 mainBookmakerId: gain.bookmakerId,
                 promotionType: gain.origin,
-                status: 'Pendente', // Default status for editing
+                generalStatus: 'Concluído', // Since it's already in gains, it's concluded
                 coverages: gain.coverages,
                 notes: gain.notes || '',
                 photos: gain.photos || []
