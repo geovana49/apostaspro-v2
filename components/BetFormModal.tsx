@@ -212,6 +212,9 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                     coverages: formData.coverages // Include coverages
                 };
 
+                console.log('Saving gain with data:', gainData);
+                console.log('formData.promotionType:', formData.promotionType);
+
                 await FirestoreService.saveGain(currentUser.uid, gainData);
             } else {
                 // Save as Bet (original behavior)
