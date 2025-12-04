@@ -120,9 +120,10 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             }, 14000); // 14 seconds
         };
 
-        window.addEventListener('scroll', handleScrollActivity);
-        window.addEventListener('touchmove', handleScrollActivity); // Also listen for touch moves
-        window.addEventListener('click', handleScrollActivity); // Also listen for clicks
+        window.addEventListener('scroll', handleScrollActivity, { capture: true }); // Capture scroll events from children
+        window.addEventListener('touchmove', handleScrollActivity);
+        window.addEventListener('click', handleScrollActivity);
+        window.addEventListener('mousemove', handleScrollActivity); // Also listen for mouse movement
 
         // Initial timer
         inactivityTimer = setTimeout(() => {
@@ -130,9 +131,10 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         }, 14000);
 
         return () => {
-            window.removeEventListener('scroll', handleScrollActivity);
+            window.removeEventListener('scroll', handleScrollActivity, { capture: true });
             window.removeEventListener('touchmove', handleScrollActivity);
             window.removeEventListener('click', handleScrollActivity);
+            window.removeEventListener('mousemove', handleScrollActivity);
             clearTimeout(inactivityTimer);
         };
     }, []);
