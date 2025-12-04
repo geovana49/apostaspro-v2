@@ -381,8 +381,8 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                     <Dropdown
                         label="Status Geral"
                         options={statusOptions}
-                        value={formData.status}
-                        onChange={value => dispatch({ type: 'UPDATE_FIELD', field: 'status', value })}
+                        value={formData.generalStatus || 'Concluído'}
+                        onChange={value => dispatch({ type: 'UPDATE_FIELD', field: 'generalStatus', value })}
                     />
 
                     <div className="h-px bg-white/5 my-2" />
