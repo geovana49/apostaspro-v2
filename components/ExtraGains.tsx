@@ -3,7 +3,7 @@ import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer,
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronLeft, ChevronRight,
     Copy, MoreVertical, AlertCircle, ImageIcon, StickyNote, Trophy, Coins, Gamepad2, Paperclip, SearchX, Settings2,
-    Infinity, Eye, EyeOff, Maximize, Minimize, Palette, Box, Ban, Loader2
+    Infinity, Eye, EyeOff, Maximize, Minimize, Palette, Box, Ban, Loader2, Ticket
 } from 'lucide-react';
 import { ExtraGain, Bookmaker, StatusItem, OriginItem, AppSettings, User, PromotionItem } from '../types';
 import BetFormModal from './BetFormModal';
