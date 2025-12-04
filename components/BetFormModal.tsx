@@ -27,6 +27,7 @@ interface FormState {
     event: string;
     promotionType: string;
     status: 'Pendente' | 'Green' | 'Red' | 'Anulada' | 'Meio Green' | 'Meio Red' | 'Cashout' | 'Rascunho';
+    generalStatus?: 'Pendente' | 'Concluído' | 'Cancelado';
     coverages: Coverage[];
     notes: string;
 }
@@ -189,11 +190,19 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                 };
                 const { profit } = calculateBetStats(tempBet);
 
+                // Map generalStatus to gain status
+                let gainStatus: 'Recebido' | 'Pendente' | 'Confirmado' | 'Cancelado' = 'Recebido';
+                if (formData.generalStatus === 'Pendente') {
+                    gainStatus = 'Pendente';
+                } else if (formData.generalStatus === 'Cancelado') {
+                    gainStatus = 'Cancelado';
+                }
+
                 const gainData = {
                     id: formData.id || Date.now().toString(),
                     amount: profit,
                     date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
-                    status: 'Recebido' as const,
+                    status: gainStatus,
                     origin: formData.promotionType || 'Aposta Esportiva',
                     bookmakerId: formData.mainBookmakerId,
                     game: formData.event,

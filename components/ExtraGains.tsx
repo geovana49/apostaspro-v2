@@ -139,13 +139,21 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         // If gain has coverages, it's a sports bet - open BetFormModal
         if (gain.coverages && gain.coverages.length > 0) {
             // Convert ExtraGain to Bet format for editing
+            // Map gain status to bet generalStatus
+            let generalStatus: 'Pendente' | 'Concluído' | 'Cancelado' = 'Concluído';
+            if (gain.status === 'Pendente' || gain.status === 'Confirmado') {
+                generalStatus = 'Pendente';
+            } else if (gain.status === 'Cancelado') {
+                generalStatus = 'Cancelado';
+            }
+
             const betData: any = {
                 id: gain.id,
                 date: gain.date.split('T')[0],
                 event: gain.game || gain.origin,
                 mainBookmakerId: gain.bookmakerId,
                 promotionType: gain.origin,
-                generalStatus: 'Concluído', // Since it's already in gains, it's concluded
+                generalStatus: generalStatus,
                 coverages: gain.coverages,
                 notes: gain.notes || '',
                 photos: gain.photos || []
