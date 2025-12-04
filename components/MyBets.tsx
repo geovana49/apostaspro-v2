@@ -121,7 +121,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
 
             inactivityTimerRef.current = setTimeout(() => {
                 setIsFabVisible(false);
-            }, 10000); // 10 seconds
+            }, 6000); // 6 seconds
         };
 
         // Events to detect activity

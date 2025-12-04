@@ -41,7 +41,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate, setti
 
       inactivityTimerRef.current = setTimeout(() => {
         setIsFabVisible(false);
-      }, 10000); // 10 seconds
+      }, 6000); // 6 seconds
     };
 
     // Events to detect activity
