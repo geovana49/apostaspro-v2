@@ -364,7 +364,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate, setti
             {showTopBtn && (
               <button
                 onClick={scrollToTop}
-                className="pointer-events-auto p-3 rounded-full bg-[#acff7a] text-[#090c19] shadow-lg shadow-[#acff7a]/20 hover:scale-110 hover:shadow-[#acff7a]/40 transition-all duration-300 animate-in fade-in slide-in-from-bottom-4"
+                className="pointer-events-auto p-3 rounded-full bg-primary text-[#090c19] shadow-lg shadow-primary/20 hover:scale-110 hover:shadow-primary/40 transition-all duration-300 animate-in fade-in slide-in-from-bottom-4"
                 title="Voltar ao topo"
               >
                 <ArrowUp size={20} strokeWidth={3} />
