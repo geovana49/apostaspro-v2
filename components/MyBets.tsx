@@ -87,6 +87,8 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const betsListRef = useRef<HTMLDivElement>(null);
     const longPressTimer = useRef<NodeJS.Timeout | null>(null);
     const touchStartPos = useRef<{ x: number; y: number } | null>(null);
+    const [editingMarketId, setEditingMarketId] = useState<string | null>(null);
+    const [editingMarketValue, setEditingMarketValue] = useState('');
 
     // IntersectionObserver for floating button
     useEffect(() => {
@@ -398,6 +400,28 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             alert("Erro ao salvar rascunho.");
         } finally {
             setIsUploading(false);
+        }
+    };
+
+    const saveMarketEdit = async (betId: string, coverageId: string, newMarket: string) => {
+        if (!currentUser) return;
+
+        const bet = bets.find(b => b.id === betId);
+        if (!bet) return;
+
+        const updatedBet = {
+            ...bet,
+            coverages: bet.coverages.map(c =>
+                c.id === coverageId ? { ...c, market: newMarket } : c
+            )
+        };
+
+        try {
+            await FirestoreService.saveBet(currentUser.uid, updatedBet);
+            setEditingMarketId(null);
+        } catch (error) {
+            console.error("Error saving market edit:", error);
+            alert("Erro ao salvar edição.");
         }
     };
 
@@ -832,7 +856,34 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                                             {renderStatusBadge(cov.status)}
                                                         </div>
 
-                                                        <p className="text-sm text-gray-400 mb-3 pl-1 break-words">{cov.market}</p>
+                                                        {editingMarketId === `${bet.id}-${cov.id}` ? (
+                                                            <textarea
+                                                                className="w-full bg-[#0d1121] border border-primary text-white rounded-lg py-2 px-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 mb-3"
+                                                                value={editingMarketValue}
+                                                                onChange={(e) => setEditingMarketValue(e.target.value)}
+                                                                onBlur={() => saveMarketEdit(bet.id, cov.id, editingMarketValue)}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Escape') {
+                                                                        setEditingMarketId(null);
+                                                                    }
+                                                                }}
+                                                                autoFocus
+                                                                rows={3}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            />
+                                                        ) : (
+                                                            <p
+                                                                className="text-sm text-gray-400 mb-3 pl-1 break-words whitespace-pre-wrap cursor-pointer hover:text-gray-300 transition-colors"
+                                                                onDoubleClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setEditingMarketId(`${bet.id}-${cov.id}`);
+                                                                    setEditingMarketValue(cov.market);
+                                                                }}
+                                                                title="Duplo clique para editar"
+                                                            >
+                                                                {cov.market}
+                                                            </p>
+                                                        )}
 
                                                         <div className="flex justify-between items-end border-t border-white/5 pt-2">
                                                             <div>
