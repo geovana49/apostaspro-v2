@@ -74,6 +74,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
 
     useEffect(() => {
+        console.log('BetFormModal isOpen changed:', isOpen, 'saveAsGain:', saveAsGain);
         if (isOpen) {
             if (initialData) {
                 dispatch({
