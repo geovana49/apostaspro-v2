@@ -668,6 +668,48 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                     </div>
                                 </div>
 
+                                {/* Show coverages in main view if they exist (sports bets) */}
+                                {gain.coverages && gain.coverages.length > 0 && (
+                                    <div className="mt-4 space-y-2">
+                                        <label className="text-xs font-bold text-textMuted uppercase tracking-wider flex items-center gap-2 mb-2">
+                                            <Ticket size={12} /> Coberturas
+                                        </label>
+                                        {gain.coverages.map((coverage, idx) => {
+                                            const bookie = bookmakers.find(b => b.id === coverage.bookmakerId);
+                                            const coverageStatusColor = statuses.find(s => s.name === coverage.status)?.color || '#6b7280';
+                                            return (
+                                                <div key={idx} className="bg-[#0d1121] border border-white/5 rounded-lg p-3">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 rounded flex items-center justify-center text-[8px] font-bold text-[#090c19]" style={{ backgroundColor: bookie?.color || '#FFFFFF' }}>
+                                                                {bookie?.logo ? <img src={bookie.logo} alt={bookie.name} className="w-full h-full object-contain p-[1px]" /> : bookie?.name.substring(0, 2).toUpperCase()}
+                                                            </div>
+                                                            <span className="text-sm font-medium text-white">{coverage.market}</span>
+                                                        </div>
+                                                        <span style={{ backgroundColor: `${coverageStatusColor}1A`, color: coverageStatusColor, borderColor: `${coverageStatusColor}33` }} className="text-[10px] font-medium px-2 py-0.5 rounded-full border">
+                                                            {coverage.status}
+                                                        </span>
+                                                    </div>
+                                                    <div className="grid grid-cols-3 gap-3 text-xs">
+                                                        <div>
+                                                            <span className="text-textMuted text-[10px]">Odd</span>
+                                                            <p className="font-bold text-white">{coverage.odd.toFixed(2)}</p>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-textMuted text-[10px]">Stake</span>
+                                                            <p className="font-bold text-white">R$ {coverage.stake.toFixed(2)}</p>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-textMuted text-[10px]">Retorno</span>
+                                                            <p className="font-bold text-white">R$ {(coverage.stake * coverage.odd).toFixed(2)}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+
                                 {isExpanded && (
                                     <div className="mt-4 pt-4 border-t border-white/10 animate-in fade-in duration-300">
                                         {gain.notes && (
