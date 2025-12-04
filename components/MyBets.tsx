@@ -83,6 +83,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
     const [showFloatingButton, setShowFloatingButton] = useState(false);
+    const [isFabVisible, setIsFabVisible] = useState(true);
     const betsListRef = useRef<HTMLDivElement>(null);
     const longPressTimer = useRef<NodeJS.Timeout | null>(null);
     const touchStartPos = useRef<{ x: number; y: number } | null>(null);
