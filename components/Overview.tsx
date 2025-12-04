@@ -145,6 +145,12 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
         const roi = resolvedStaked > 0 ? (totalProfit / resolvedStaked) * 100 : 0;
 
         const betNotesCount = filteredBets.filter(b => b.notes && b.notes.trim()).length;
+        console.log('🔍 Debug Notes Counter:', {
+            period,
+            totalFilteredBets: filteredBets.length,
+            betsWithNotes: betNotesCount,
+            sampleBets: filteredBets.slice(0, 3).map(b => ({ date: b.date, hasNotes: !!(b.notes && b.notes.trim()), notes: b.notes }))
+        });
         const totalNotesCount = betNotesCount;
 
         return { totalStaked: resolvedStaked, totalReturned: resolvedReturned, netProfit: totalProfit, roi, chartData, totalNotesCount };
