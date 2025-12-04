@@ -13,7 +13,7 @@ export const calculateBetStats = (bet: Bet) => {
     bet.coverages.forEach((c, index) => {
         if (c.status === 'Red') {
             totalReturn += 0;
-        } else if (c.manualReturn !== undefined && c.manualReturn !== null) {
+        } else if (c.manualReturn !== undefined && c.manualReturn !== null && c.manualReturn !== 0) {
             totalReturn += Number(c.manualReturn);
         } else {
             let returnValue = 0;
