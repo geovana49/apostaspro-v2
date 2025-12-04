@@ -171,9 +171,11 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             setIsDeleting(false);
         } else {
             console.log('Opening bet modal');
-            // Open bet modal but it should save to gains
-            setIsModalOpen(false); // Ensure gain modal is closed
-            setIsBetModalOpen(true);
+            // Close gain modal first, then open bet modal after a short delay
+            setIsModalOpen(false);
+            setTimeout(() => {
+                setIsBetModalOpen(true);
+            }, 100);
         }
     };
 
