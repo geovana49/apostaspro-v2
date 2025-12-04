@@ -741,7 +741,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                             </div>
                                             <div className="text-left">
                                                 <p className="text-[10px] text-textMuted uppercase font-bold">Lucro/Prejuízo</p>
-                                                <p className={`font-bold text-sm ${profit >= 0 && bet.status !== 'Pendente' && !isDraft ? 'text-[#acff7a]' : ((bet.status === 'Pendente' || isDraft) ? 'text-textMuted' : 'text-[#ff0100]')}`}>
+                                                <p className={`font-bold text-sm ${profit >= 0 && bet.status !== 'Pendente' && !isDraft ? 'text-[#6ee7b7]' : ((bet.status === 'Pendente' || isDraft) ? 'text-textMuted' : 'text-[#ff0100]')}`}>
                                                     {(bet.status === 'Pendente' || isDraft) ? '--' : <MoneyDisplay value={Math.abs(profit)} privacyMode={settings.privacyMode} />}
                                                 </p>
                                             </div>
