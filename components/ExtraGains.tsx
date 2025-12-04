@@ -166,11 +166,13 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             setEditingId(null);
             dispatch({ type: 'RESET_FORM' });
             setTempPhotos([]);
+            setIsBetModalOpen(false); // Ensure bet modal is closed
             setIsModalOpen(true);
             setIsDeleting(false);
         } else {
             console.log('Opening bet modal');
             // Open bet modal but it should save to gains
+            setIsModalOpen(false); // Ensure gain modal is closed
             setIsBetModalOpen(true);
         }
     };
