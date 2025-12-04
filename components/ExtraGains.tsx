@@ -160,12 +160,16 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
 
     const handleChoice = (type: 'gain' | 'bet') => {
         setIsChoiceModalOpen(false);
-        // Both options now save to Extra Gains
-        setEditingId(null);
-        dispatch({ type: 'RESET_FORM' });
-        setTempPhotos([]);
-        setIsModalOpen(true);
-        setIsDeleting(false);
+        if (type === 'gain') {
+            setEditingId(null);
+            dispatch({ type: 'RESET_FORM' });
+            setTempPhotos([]);
+            setIsModalOpen(true);
+            setIsDeleting(false);
+        } else {
+            // Open bet modal but it should save to gains
+            setIsBetModalOpen(true);
+        }
     };
 
     const toggleGainDetails = (id: string) => {
@@ -507,6 +511,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 statuses={statuses}
                 promotions={promotions}
                 onSaveSuccess={() => { }}
+                saveAsGain={true}
             />
 
             <SingleDatePickerModal

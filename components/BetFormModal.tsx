@@ -16,6 +16,7 @@ interface BetFormModalProps {
     statuses: StatusItem[];
     promotions: PromotionItem[];
     onSaveSuccess: (date: Date) => void;
+    saveAsGain?: boolean; // If true, save to Extra Gains instead of My Bets
 }
 
 interface FormState {
@@ -62,7 +63,8 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
     bookmakers,
     statuses,
     promotions,
-    onSaveSuccess
+    onSaveSuccess,
+    saveAsGain = false
 }) => {
     const [formData, dispatch] = useReducer(formReducer, initialFormState);
     const [isUploading, setIsUploading] = useState(false);
@@ -172,23 +174,49 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                 return;
             }
 
-            const rawBet: Bet = {
-                ...formData,
-                id: formData.id || Date.now().toString(),
-                notes: formData.notes,
-                photos: photoBase64,
-                date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
-            };
+            if (saveAsGain) {
+                // Save as Extra Gain instead of Bet
+                const totalReturn = formData.coverages.reduce((sum, c) => {
+                    if (c.status === 'Green') return sum + (c.stake * c.odd);
+                    if (c.status === 'Meio Green') return sum + (c.stake * c.odd) / 2;
+                    return sum;
+                }, 0);
+                const totalStake = formData.coverages.reduce((sum, c) => sum + c.stake, 0);
+                const profit = totalReturn - totalStake;
 
-            const betToSave = JSON.parse(JSON.stringify(rawBet));
-            await FirestoreService.saveBet(currentUser.uid, betToSave);
+                const gainData = {
+                    id: formData.id || Date.now().toString(),
+                    amount: profit,
+                    date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
+                    status: 'Recebido' as const,
+                    origin: formData.promotionType || 'Aposta Esportiva',
+                    bookmakerId: formData.mainBookmakerId,
+                    game: formData.event,
+                    notes: formData.notes || '',
+                    photos: photoBase64
+                };
+
+                await FirestoreService.saveGain(currentUser.uid, gainData);
+            } else {
+                // Save as Bet (original behavior)
+                const rawBet: Bet = {
+                    ...formData,
+                    id: formData.id || Date.now().toString(),
+                    notes: formData.notes,
+                    photos: photoBase64,
+                    date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
+                };
+
+                const betToSave = JSON.parse(JSON.stringify(rawBet));
+                await FirestoreService.saveBet(currentUser.uid, betToSave);
+            }
 
             const betDate = parseDate(formData.date);
             onSaveSuccess(betDate);
             onClose();
         } catch (error: any) {
-            console.error("Error saving bet:", error);
-            alert(`Erro ao salvar a aposta: ${error.message || error}`);
+            console.error("Error saving:", error);
+            alert(`Erro ao salvar: ${error.message || error}`);
         } finally {
             setIsUploading(false);
         }
