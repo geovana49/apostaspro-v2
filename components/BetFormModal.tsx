@@ -75,6 +75,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         console.log('BetFormModal isOpen changed:', isOpen, 'saveAsGain:', saveAsGain);
@@ -118,6 +119,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
             if (tempPhotos.length + files.length > MAX_PHOTOS) {
                 alert(`Máximo de ${MAX_PHOTOS} fotos por aposta.`);
+                e.target.value = ''; // Reset input
                 return;
             }
 
@@ -134,6 +136,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                 alert('Erro ao processar imagens. Tente novamente.');
             } finally {
                 setIsUploading(false);
+                e.target.value = ''; // Reset input to allow selecting same files again
             }
         }
     };
@@ -556,17 +559,22 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
                         <div className="p-4 bg-[#0d1121] border border-dashed border-white/10 rounded-xl">
                             <div className="flex justify-between items-center mb-3">
-                                <label className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase cursor-pointer hover:text-white transition-colors">
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase cursor-pointer hover:text-white transition-colors"
+                                >
                                     <div className="p-2 bg-white/5 rounded-full"><Paperclip size={14} /></div>
                                     <span>Adicionar Fotos</span>
-                                    <input
-                                        type="file"
-                                        multiple
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={handlePhotoSelect}
-                                    />
-                                </label>
+                                </button>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    multiple
+                                    accept="image/*"
+                                    style={{ display: 'none' }}
+                                    onChange={handlePhotoSelect}
+                                />
                                 <span className="text-[10px] text-gray-600">Sem limite de tamanho</span>
                             </div>
 

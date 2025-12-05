@@ -90,6 +90,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const touchStartPos = useRef<{ x: number; y: number } | null>(null);
     const [editingMarketId, setEditingMarketId] = useState<string | null>(null);
     const [editingMarketValue, setEditingMarketValue] = useState('');
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // IntersectionObserver for floating button
     useEffect(() => {
@@ -253,6 +254,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
 
             if (tempPhotos.length + files.length > MAX_PHOTOS) {
                 alert(`Máximo de ${MAX_PHOTOS} fotos por aposta.`);
+                e.target.value = ''; // Reset input
                 return;
             }
 
@@ -273,6 +275,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                 alert('Erro ao processar imagens. Tente novamente.');
             } finally {
                 setIsUploading(false);
+                e.target.value = ''; // Reset input to allow selecting same files again
             }
         }
     };
@@ -1207,17 +1210,22 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
 
                         <div className="p-4 bg-[#0d1121] border border-dashed border-white/10 rounded-xl">
                             <div className="flex justify-between items-center mb-3">
-                                <label className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase cursor-pointer hover:text-white transition-colors">
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase cursor-pointer hover:text-white transition-colors"
+                                >
                                     <div className="p-2 bg-white/5 rounded-full"><Paperclip size={14} /></div>
                                     <span>Adicionar Fotos</span>
-                                    <input
-                                        type="file"
-                                        multiple
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={handlePhotoSelect}
-                                    />
-                                </label>
+                                </button>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    multiple
+                                    accept="image/*"
+                                    style={{ display: 'none' }}
+                                    onChange={handlePhotoSelect}
+                                />
                                 <span className="text-[10px] text-gray-600">Sem limite de tamanho</span>
                             </div>
 
