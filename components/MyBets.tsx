@@ -769,6 +769,11 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                                 <p className={`font-bold text-sm ${profit >= 0 && bet.status !== 'Pendente' && !isDraft ? 'text-[#6ee7b7]' : ((bet.status === 'Pendente' || isDraft) ? 'text-textMuted' : 'text-[#ff0100]')}`}>
                                                     {(bet.status === 'Pendente' || isDraft) ? '--' : <MoneyDisplay value={Math.abs(profit)} privacyMode={settings.privacyMode} />}
                                                 </p>
+                                                {bet.extraGain !== undefined && bet.extraGain !== 0 && (
+                                                    <p className={`text-[10px] font-medium mt-0.5 ${bet.extraGain > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                        {bet.extraGain > 0 ? '+' : ''}<MoneyDisplay value={bet.extraGain} privacyMode={settings.privacyMode} /> (Extra)
+                                                    </p>
+                                                )}
                                             </div>
 
                                             <div className="flex items-center gap-3">
@@ -1174,7 +1179,8 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                         <Input
                             type="tel"
                             inputMode="decimal"
-                            placeholder="R$ 0,00"
+                            prefix="R$"
+                            placeholder="0,00"
                             value={formData.extraGain !== undefined && formData.extraGain !== 0 ? (formData.extraGain >= 0 ? formData.extraGain.toFixed(2) : formData.extraGain.toFixed(2)) : ''}
                             onChange={e => {
                                 const value = e.target.value.replace(/[^\d-]/g, '');

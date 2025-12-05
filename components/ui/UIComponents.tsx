@@ -518,15 +518,17 @@ export const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', s
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   icon?: React.ReactNode;
+  prefix?: string;
 }
 
-export const Input: React.FC<InputProps> = ({ label, icon, className = '', ...props }) => (
+export const Input: React.FC<InputProps> = ({ label, icon, prefix, className = '', ...props }) => (
   <div className="w-full">
     {label && <label className="block text-textMuted text-[11px] font-bold uppercase tracking-wider mb-2">{label}</label>}
     <div className="relative group">
       {icon && <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary transition-all duration-300 group-focus-within:scale-110 group-focus-within:-rotate-6">{icon}</div>}
+      {prefix && <div className={`absolute ${icon ? 'left-10' : 'left-3.5'} top-1/2 -translate-y-1/2 text-gray-500 font-medium pointer-events-none`}>{prefix}</div>}
       <input
-        className={`w-full bg-[#0d1121] border border-white/10 focus:border-primary/50 text-white rounded-lg py-2.5 ${icon ? 'pl-10' : 'px-4'} placeholder-gray-600 focus:outline-none transition-all duration-200 text-sm focus:ring-1 focus:ring-primary/50 hover:border-white/20 shadow-inner ${className}`}
+        className={`w-full bg-[#0d1121] border border-white/10 focus:border-primary/50 text-white rounded-lg py-2.5 ${icon ? (prefix ? 'pl-16' : 'pl-10') : (prefix ? 'pl-10' : 'px-4')} placeholder-gray-600 focus:outline-none transition-all duration-200 text-sm focus:ring-1 focus:ring-primary/50 hover:border-white/20 shadow-inner ${className}`}
         {...props}
       />
     </div>

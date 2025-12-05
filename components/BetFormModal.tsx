@@ -528,7 +528,8 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                         <Input
                             type="tel"
                             inputMode="decimal"
-                            placeholder="R$ 0,00"
+                            prefix="R$"
+                            placeholder="0,00"
                             value={formData.extraGain !== undefined && formData.extraGain !== 0 ? (formData.extraGain >= 0 ? formData.extraGain.toFixed(2) : formData.extraGain.toFixed(2)) : ''}
                             onChange={e => {
                                 const value = e.target.value.replace(/[^\d-]/g, '');
