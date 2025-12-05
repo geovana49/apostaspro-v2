@@ -49,6 +49,7 @@ export interface Bet {
   coverages: Coverage[];
   notes?: string;
   photos?: string[]; // Array of base64 image strings
+  extraGain?: number; // Optional extra gain/loss to add to profit calculation
 }
 
 export interface ExtraGain {

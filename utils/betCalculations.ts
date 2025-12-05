@@ -32,7 +32,12 @@ export const calculateBetStats = (bet: Bet) => {
         }
     });
 
-    const profit = totalReturn - totalStake;
+    let profit = totalReturn - totalStake;
+
+    // Add extra gain/loss if specified
+    if (bet.extraGain !== undefined && bet.extraGain !== null) {
+        profit += bet.extraGain;
+    }
 
     // Debug: Log multi-green bets
     if (bet.coverages.filter(c => c.status === 'Green').length > 1) {
@@ -47,6 +52,7 @@ export const calculateBetStats = (bet: Bet) => {
             })),
             totalStake,
             totalReturn,
+            extraGain: bet.extraGain,
             profit
         });
     }

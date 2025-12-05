@@ -30,6 +30,7 @@ interface FormState {
     generalStatus?: 'Pendente' | 'Concluído' | 'Cancelado';
     coverages: Coverage[];
     notes: string;
+    extraGain?: number;
 }
 
 const initialFormState: FormState = {
@@ -518,6 +519,28 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                 );
                             })}
                         </div>
+                    </div>
+
+                    <div className="h-px bg-white/5 my-2" />
+
+                    <div className="space-y-3">
+                        <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Ganho Extra (Opcional)</label>
+                        <Input
+                            type="tel"
+                            inputMode="decimal"
+                            placeholder="R$ 0,00"
+                            value={formData.extraGain !== undefined && formData.extraGain !== 0 ? (formData.extraGain >= 0 ? formData.extraGain.toFixed(2) : formData.extraGain.toFixed(2)) : ''}
+                            onChange={e => {
+                                const value = e.target.value.replace(/[^\d-]/g, '');
+                                if (value === '' || value === '-') {
+                                    dispatch({ type: 'UPDATE_FIELD', field: 'extraGain', value: undefined });
+                                } else {
+                                    const numberValue = parseInt(value, 10) / 100;
+                                    dispatch({ type: 'UPDATE_FIELD', field: 'extraGain', value: numberValue });
+                                }
+                            }}
+                        />
+                        <p className="text-[10px] text-gray-500">Adicione um valor extra ao lucro/prejuízo (ex: bônus, cashback). Use valores negativos para descontos.</p>
                     </div>
 
                     <div className="space-y-3">
