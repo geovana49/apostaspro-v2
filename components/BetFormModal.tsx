@@ -1,4 +1,4 @@
-import React, { useState, useReducer, useEffect } from 'react';
+import React, { useState, useReducer, useEffect, useRef } from 'react';
 import { Button, Input, Dropdown, Modal, SingleDatePickerModal, ImageViewer } from './ui/UIComponents';
 import {
     Plus, Trash2, X, Calendar, Paperclip, Minus, Loader2
