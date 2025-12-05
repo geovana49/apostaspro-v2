@@ -524,7 +524,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                     <div className="h-px bg-white/5 my-2" />
 
                     <div className="space-y-3">
-                        <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">🎯 TESTE - GANHO EXTRA (OPCIONAL) 🎯</label>
+                        <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Ganho Extra (Opcional)</label>
                         <Input
                             type="tel"
                             inputMode="decimal"
