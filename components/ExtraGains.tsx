@@ -189,8 +189,14 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             }
 
             // Calculate if there was any extra gain/loss added manually
-            const stats = calculateBetStats(gain.coverages, gain.origin);
-            const calculatedProfit = stats.totalProfit;
+            // We need to construct a temporary Bet object because calculateBetStats expects a Bet
+            const tempBetForStats: any = {
+                coverages: gain.coverages,
+                promotionType: gain.origin,
+                extraGain: undefined // We want to calculate PURE coverage profit
+            };
+            const stats = calculateBetStats(tempBetForStats);
+            const calculatedProfit = stats.profit; // Use .profit, not .totalProfit (it returns { profit, totalReturn, totalStake })
             const difference = gain.amount - calculatedProfit;
             // Round to 2 decimal places to avoid floating point errors
             const extraGainValue = Math.round(difference * 100) / 100;
