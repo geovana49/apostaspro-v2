@@ -1,7 +1,7 @@
 import React, { useState, useReducer, useRef, useEffect } from 'react';
 import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, SingleDatePickerModal } from './ui/UIComponents';
 import {
-    Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronLeft, ChevronRight,
+    Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
     Copy, MoreVertical, AlertCircle, ImageIcon, Ticket, ArrowUpRight, ArrowDownRight, Minus, DollarSign, Percent,
     Loader2, Paperclip, StickyNote
 } from 'lucide-react';
@@ -56,6 +56,26 @@ const formReducer = (state: FormState, action: any): FormState => {
             ...state,
             coverages: state.coverages.map(c => c.id === action.id ? { ...c, [action.field]: action.value } : c)
         };
+        case 'DUPLICATE_COVERAGE': {
+            const index = state.coverages.findIndex(c => c.id === action.id);
+            if (index === -1) return state;
+            const coverage = state.coverages[index];
+            const newCoverage = { ...coverage, id: Date.now().toString() };
+            const newCoverages = [...state.coverages];
+            newCoverages.splice(index + 1, 0, newCoverage);
+            return { ...state, coverages: newCoverages };
+        }
+        case 'MOVE_COVERAGE': {
+            const index = state.coverages.findIndex(c => c.id === action.id);
+            if (index === -1) return state;
+            const newCoverages = [...state.coverages];
+            if (action.direction === 'up' && index > 0) {
+                [newCoverages[index], newCoverages[index - 1]] = [newCoverages[index - 1], newCoverages[index]];
+            } else if (action.direction === 'down' && index < newCoverages.length - 1) {
+                [newCoverages[index], newCoverages[index + 1]] = [newCoverages[index + 1], newCoverages[index]];
+            }
+            return { ...state, coverages: newCoverages };
+        }
         case 'RESET_FORM': return initialFormState;
         default: return state;
     }
@@ -487,6 +507,14 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
 
     const removeCoverage = (id: string) => {
         dispatch({ type: 'REMOVE_COVERAGE', id });
+    };
+
+    const duplicateCoverage = (id: string) => {
+        dispatch({ type: 'DUPLICATE_COVERAGE', id });
+    };
+
+    const moveCoverage = (id: string, direction: 'up' | 'down') => {
+        dispatch({ type: 'MOVE_COVERAGE', id, direction });
     };
 
     const updateCoverage = (id: string, field: keyof Coverage, value: any) => {
@@ -1064,12 +1092,39 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
 
                                         <div className="flex justify-between items-start mb-4 pl-2">
                                             <span className="text-[10px] font-bold text-textMuted uppercase tracking-wider">COBERTURA {index + 1}</span>
-                                            <button
-                                                onClick={() => removeCoverage(cov.id)}
-                                                className="text-gray-600 hover:text-danger transition-colors"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    onClick={() => moveCoverage(cov.id, 'up')}
+                                                    disabled={index === 0}
+                                                    className="text-gray-600 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed p-1"
+                                                    title="Mover para cima"
+                                                >
+                                                    <ChevronUp size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => moveCoverage(cov.id, 'down')}
+                                                    disabled={index === formData.coverages.length - 1}
+                                                    className="text-gray-600 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed p-1"
+                                                    title="Mover para baixo"
+                                                >
+                                                    <ChevronDown size={16} />
+                                                </button>
+                                                <div className="w-px h-3 bg-white/10 mx-1" />
+                                                <button
+                                                    onClick={() => duplicateCoverage(cov.id)}
+                                                    className="text-gray-600 hover:text-white transition-colors p-1"
+                                                    title="Duplicar"
+                                                >
+                                                    <Copy size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => removeCoverage(cov.id)}
+                                                    className="text-gray-600 hover:text-danger transition-colors p-1"
+                                                    title="Excluir"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-3 pl-2">
