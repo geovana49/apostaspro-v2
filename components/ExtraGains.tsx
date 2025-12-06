@@ -188,6 +188,13 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 generalStatus = 'Cancelado';
             }
 
+            // Calculate if there was any extra gain/loss added manually
+            const stats = calculateBetStats(gain.coverages, gain.origin);
+            const calculatedProfit = stats.totalProfit;
+            const difference = gain.amount - calculatedProfit;
+            // Round to 2 decimal places to avoid floating point errors
+            const extraGainValue = Math.round(difference * 100) / 100;
+
             const betData: any = {
                 id: gain.id,
                 date: gain.date.split('T')[0],
@@ -197,7 +204,8 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 generalStatus: generalStatus,
                 coverages: gain.coverages,
                 notes: gain.notes || '',
-                photos: gain.photos || []
+                photos: gain.photos || [],
+                extraGain: extraGainValue !== 0 ? extraGainValue : undefined
             };
             setEditingBet(betData);
             setIsBetModalOpen(true);
