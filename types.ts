@@ -59,7 +59,7 @@ export interface ExtraGain {
   origin: string; // 'Free Spins', 'Cashback', etc.
   bookmakerId: string;
   game?: string;
-  status: 'Recebido' | 'Pendente' | 'Confirmado' | 'Cancelado' | 'Green' | 'Red' | 'Meio Green' | 'Meio Red' | 'Cashout' | 'Anulada';
+  status: 'Recebido' | 'Pendente' | 'Confirmado' | 'Cancelado' | 'Green' | 'Red' | 'Meio Green' | 'Meio Red' | 'Cashout' | 'Anulada' | 'Concluido' | 'Concluído';
   notes?: string;
   photos?: string[]; // Array of base64 image strings
   coverages?: Coverage[]; // Optional coverages for sports bets

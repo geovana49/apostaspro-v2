@@ -366,7 +366,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         return matchesSearch && matchesOrigin && matchesPeriod;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    const validStatuses = ['Confirmado', 'Recebido', 'Green', 'Red', 'Meio Green', 'Meio Red', 'Cashout', 'Anulada'];
+    const validStatuses = ['Confirmado', 'Recebido', 'Green', 'Red', 'Meio Green', 'Meio Red', 'Cashout', 'Anulada', 'Concluido', 'Concluído'];
 
     const calculateTotal = (items: ExtraGain[]) => {
         console.log('📊 Calculating total for', items.length, 'items');
