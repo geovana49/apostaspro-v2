@@ -196,12 +196,8 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                 const { profit } = calculateBetStats(tempBet);
 
                 // Map generalStatus to gain status
-                let gainStatus: 'Recebido' | 'Pendente' | 'Confirmado' | 'Cancelado' = 'Recebido';
-                if (formData.generalStatus === 'Pendente') {
-                    gainStatus = 'Pendente';
-                } else if (formData.generalStatus === 'Cancelado') {
-                    gainStatus = 'Cancelado';
-                }
+                let gainStatus = formData.generalStatus || 'Confirmado';
+                if (gainStatus === 'Concluído') gainStatus = 'Confirmado';
 
                 const gainData = {
                     id: formData.id || Date.now().toString(),
