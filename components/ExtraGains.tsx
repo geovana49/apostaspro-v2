@@ -713,8 +713,14 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     const statusItem = statuses.find(s => s.name === gain.status);
                     let statusColor = statusItem ? statusItem.color : '#94a3b8';
 
-                    if (gain.status === 'Recebido' || gain.status === 'Confirmado') {
+                    if (gain.status === 'Recebido' || gain.status === 'Confirmado' || gain.status === 'Green' || gain.status === 'Meio Green') {
                         statusColor = '#6ee7b7'; // Standard Green
+                    } else if (gain.status === 'Red' || gain.status === 'Meio Red') {
+                        statusColor = '#ef4444'; // Red
+                    } else if (gain.status === 'Cashout') {
+                        statusColor = '#f59e0b'; // Amber
+                    } else if (gain.status === 'Anulada') {
+                        statusColor = '#94a3b8'; // Gray
                     }
 
                     const isExpanded = expandedGains.has(gain.id);
