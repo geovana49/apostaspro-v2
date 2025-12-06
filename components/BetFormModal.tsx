@@ -197,7 +197,6 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
                 // Map generalStatus to gain status
                 let gainStatus = formData.generalStatus || 'Confirmado';
-                if (gainStatus === 'Concluído') gainStatus = 'Confirmado';
 
                 const gainData = {
                     id: formData.id || Date.now().toString(),
