@@ -8,7 +8,7 @@ import {
 import { ExtraGain, Bookmaker, StatusItem, OriginItem, AppSettings, User, PromotionItem } from '../types';
 import BetFormModal from './BetFormModal';
 import { FirestoreService } from '../services/firestoreService';
-import { compressImage } from '../utils/imageCompression';
+import { compressImages } from '../utils/imageCompression';
 
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e', '#64748b', '#000000', '#FFFFFF'];
 
