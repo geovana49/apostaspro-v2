@@ -309,16 +309,37 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         return new Date(year, month - 1, day);
     };
 
-    const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
+            const MAX_PHOTOS = 8;
             const files = Array.from(e.target.files) as File[];
             files.sort((a, b) => a.lastModified - b.lastModified);
 
-            const newPhotos = files.map((file: File) => ({
-                url: URL.createObjectURL(file),
-                file
-            }));
-            setTempPhotos(prev => [...prev, ...newPhotos]);
+            if (tempPhotos.length + files.length > MAX_PHOTOS) {
+                alert(`Máximo de ${MAX_PHOTOS} fotos por ganho.`);
+                e.target.value = '';
+                return;
+            }
+
+            setIsUploading(true);
+            try {
+                // Comprimir imagens com a mesma qualidade de MyBets
+                const compressedBase64 = await compressImages(files);
+
+                // Criar objetos com preview
+                const newPhotos = compressedBase64.map((base64) => ({
+                    url: base64,
+                    file: undefined // Já está em base64
+                }));
+
+                setTempPhotos(prev => [...prev, ...newPhotos]);
+            } catch (error) {
+                console.error('Erro ao comprimir imagens:', error);
+                alert('Erro ao processar imagens. Tente novamente.');
+            } finally {
+                setIsUploading(false);
+                e.target.value = ''; // Reset input
+            }
         }
     };
 
