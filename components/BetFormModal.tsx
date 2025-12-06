@@ -112,7 +112,8 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                         status: initialData.status as any,
                         generalStatus: (initialData as any).generalStatus || 'Concluído',
                         coverages: initialData.coverages,
-                        notes: initialData.notes || ''
+                        notes: initialData.notes || '',
+                        extraGain: (initialData as any).extraGain
                     }
                 });
                 setTempPhotos(initialData.photos ? initialData.photos.map(url => ({ url })) : []);
