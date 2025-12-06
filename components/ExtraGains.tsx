@@ -369,7 +369,9 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const validStatuses = ['Confirmado', 'Recebido', 'Green', 'Red', 'Meio Green', 'Meio Red', 'Cashout', 'Anulada'];
 
     const calculateTotal = (items: ExtraGain[]) => {
+        console.log('📊 Calculating total for', items.length, 'items');
         return items.reduce((acc, gain) => {
+            console.log(`Item: ${gain.origin} | Status: ${gain.status} | Amount: ${gain.amount} | Valid? ${validStatuses.includes(gain.status)}`);
             if (validStatuses.includes(gain.status)) {
                 return acc + gain.amount;
             }
