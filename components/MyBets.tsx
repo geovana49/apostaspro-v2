@@ -108,8 +108,8 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const betsListRef = useRef<HTMLDivElement>(null);
     const longPressTimer = useRef<NodeJS.Timeout | null>(null);
     const touchStartPos = useRef<{ x: number; y: number } | null>(null);
-    const [editingMarketId, setEditingMarketId] = useState<string | null>(null);
-    const [editingMarketValue, setEditingMarketValue] = useState('');
+    const [editingId, setEditingId] = useState<string | null>(null); // Format: `${betId}-${coverageId}-${field}`
+    const [editingValue, setEditingValue] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // IntersectionObserver for floating button
@@ -427,7 +427,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         }
     };
 
-    const saveMarketEdit = async (betId: string, coverageId: string, newMarket: string) => {
+    const saveEdit = async (betId: string, coverageId: string, field: keyof Coverage, newValue: any) => {
         if (!currentUser) return;
 
         const bet = bets.find(b => b.id === betId);
@@ -436,15 +436,16 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         const updatedBet = {
             ...bet,
             coverages: bet.coverages.map(c =>
-                c.id === coverageId ? { ...c, market: newMarket } : c
+                c.id === coverageId ? { ...c, [field]: newValue } : c
             )
         };
 
         try {
             await FirestoreService.saveBet(currentUser.uid, updatedBet);
-            setEditingMarketId(null);
+            setEditingId(null);
+            setEditingValue(null);
         } catch (error) {
-            console.error("Error saving market edit:", error);
+            console.error("Error saving edit:", error);
             alert("Erro ao salvar edição.");
         }
     };
@@ -890,18 +891,39 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                                                 {renderBookmakerLogo(cov.bookmakerId, 'sm')}
                                                                 <span className="text-xs font-bold text-white">{getBookmaker(cov.bookmakerId)?.name}</span>
                                                             </div>
-                                                            {renderStatusBadge(cov.status)}
+                                                            {editingId === `${bet.id}-${cov.id}-status` ? (
+                                                                <div onClick={(e) => e.stopPropagation()}>
+                                                                    <Dropdown
+                                                                        options={statusOptions}
+                                                                        value={editingValue}
+                                                                        onChange={(value) => saveEdit(bet.id, cov.id, 'status', value)}
+                                                                        className="min-w-[120px]"
+                                                                    />
+                                                                </div>
+                                                            ) : (
+                                                                <div
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setEditingId(`${bet.id}-${cov.id}-status`);
+                                                                        setEditingValue(cov.status);
+                                                                    }}
+                                                                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                                                                    title="Clique para alterar status"
+                                                                >
+                                                                    {renderStatusBadge(cov.status)}
+                                                                </div>
+                                                            )}
                                                         </div>
 
-                                                        {editingMarketId === `${bet.id}-${cov.id}` ? (
+                                                        {editingId === `${bet.id}-${cov.id}-market` ? (
                                                             <textarea
                                                                 className="w-full bg-[#0d1121] border border-primary text-white rounded-lg py-2 px-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 mb-3"
-                                                                value={editingMarketValue}
-                                                                onChange={(e) => setEditingMarketValue(e.target.value)}
-                                                                onBlur={() => saveMarketEdit(bet.id, cov.id, editingMarketValue)}
+                                                                value={editingValue}
+                                                                onChange={(e) => setEditingValue(e.target.value)}
+                                                                onBlur={() => saveEdit(bet.id, cov.id, 'market', editingValue)}
                                                                 onKeyDown={(e) => {
                                                                     if (e.key === 'Escape') {
-                                                                        setEditingMarketId(null);
+                                                                        setEditingId(null);
                                                                     }
                                                                 }}
                                                                 autoFocus
@@ -913,8 +935,8 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                                                 className="text-sm text-gray-400 mb-3 pl-1 break-words whitespace-pre-wrap cursor-pointer hover:text-gray-300 transition-colors"
                                                                 onDoubleClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    setEditingMarketId(`${bet.id}-${cov.id}`);
-                                                                    setEditingMarketValue(cov.market);
+                                                                    setEditingId(`${bet.id}-${cov.id}-market`);
+                                                                    setEditingValue(cov.market);
                                                                 }}
                                                                 title="Duplo clique para editar"
                                                             >
@@ -925,13 +947,77 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                                         <div className="flex justify-between items-end border-t border-white/5 pt-2">
                                                             <div>
                                                                 <span className="text-[10px] text-textMuted uppercase font-bold block">ODD</span>
-                                                                <span className="font-bold text-blue-400 text-lg">{cov.odd.toFixed(2)}</span>
+                                                                {editingId === `${bet.id}-${cov.id}-odd` ? (
+                                                                    <input
+                                                                        type="tel"
+                                                                        className="bg-[#0d1121] border border-primary text-white rounded px-2 py-1 text-lg font-bold w-20 focus:outline-none"
+                                                                        value={editingValue}
+                                                                        onChange={(e) => setEditingValue(e.target.value)}
+                                                                        onBlur={() => {
+                                                                            const val = parseFloat(editingValue);
+                                                                            saveEdit(bet.id, cov.id, 'odd', isNaN(val) ? 0 : val);
+                                                                        }}
+                                                                        onKeyDown={(e) => {
+                                                                            if (e.key === 'Enter') {
+                                                                                const val = parseFloat(editingValue);
+                                                                                saveEdit(bet.id, cov.id, 'odd', isNaN(val) ? 0 : val);
+                                                                            } else if (e.key === 'Escape') {
+                                                                                setEditingId(null);
+                                                                            }
+                                                                        }}
+                                                                        autoFocus
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                    />
+                                                                ) : (
+                                                                    <span
+                                                                        className="font-bold text-blue-400 text-lg cursor-pointer hover:text-blue-300 transition-colors"
+                                                                        onDoubleClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setEditingId(`${bet.id}-${cov.id}-odd`);
+                                                                            setEditingValue(cov.odd);
+                                                                        }}
+                                                                        title="Duplo clique para editar"
+                                                                    >
+                                                                        {cov.odd.toFixed(2)}
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                             <div className="text-right">
                                                                 <span className="text-[10px] text-textMuted uppercase font-bold block">Stake</span>
-                                                                <span className="font-bold text-white">
-                                                                    <MoneyDisplay value={cov.stake} privacyMode={settings.privacyMode} />
-                                                                </span>
+                                                                {editingId === `${bet.id}-${cov.id}-stake` ? (
+                                                                    <input
+                                                                        type="tel"
+                                                                        className="bg-[#0d1121] border border-primary text-white rounded px-2 py-1 text-lg font-bold w-24 text-right focus:outline-none"
+                                                                        value={editingValue}
+                                                                        onChange={(e) => setEditingValue(e.target.value)}
+                                                                        onBlur={() => {
+                                                                            const val = parseFloat(editingValue);
+                                                                            saveEdit(bet.id, cov.id, 'stake', isNaN(val) ? 0 : val);
+                                                                        }}
+                                                                        onKeyDown={(e) => {
+                                                                            if (e.key === 'Enter') {
+                                                                                const val = parseFloat(editingValue);
+                                                                                saveEdit(bet.id, cov.id, 'stake', isNaN(val) ? 0 : val);
+                                                                            } else if (e.key === 'Escape') {
+                                                                                setEditingId(null);
+                                                                            }
+                                                                        }}
+                                                                        autoFocus
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                    />
+                                                                ) : (
+                                                                    <span
+                                                                        className="font-bold text-white cursor-pointer hover:text-gray-300 transition-colors"
+                                                                        onDoubleClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setEditingId(`${bet.id}-${cov.id}-stake`);
+                                                                            setEditingValue(cov.stake);
+                                                                        }}
+                                                                        title="Duplo clique para editar"
+                                                                    >
+                                                                        <MoneyDisplay value={cov.stake} privacyMode={settings.privacyMode} />
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>
