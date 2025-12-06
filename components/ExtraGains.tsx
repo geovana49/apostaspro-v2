@@ -30,7 +30,7 @@ interface FormState {
     id?: string;
     amount: number;
     date: string;
-    status: 'Pendente' | 'Confirmado' | 'Recebido' | 'Cancelado';
+    status: 'Pendente' | 'Confirmado' | 'Recebido' | 'Cancelado' | 'Green' | 'Red' | 'Meio Green' | 'Meio Red' | 'Cashout' | 'Anulada';
     origin: string;
     bookmakerId: string;
     game: string;
@@ -366,20 +366,23 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         return matchesSearch && matchesOrigin && matchesPeriod;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    const stats = {
-        totalInPeriod: filteredGains.reduce((acc, gain) => {
-            if (gain.status === 'Confirmado' || gain.status === 'Recebido' || gain.status === 'Green') return acc + gain.amount;
-            if (gain.status === 'Red') return acc - gain.amount; // Red counts as loss
+    const validStatuses = ['Confirmado', 'Recebido', 'Green', 'Red', 'Meio Green', 'Meio Red', 'Cashout', 'Anulada'];
+
+    const calculateTotal = (items: ExtraGain[]) => {
+        return items.reduce((acc, gain) => {
+            if (validStatuses.includes(gain.status)) {
+                return acc + gain.amount;
+            }
             return acc;
-        }, 0),
-        totalYearly: gains.filter(g => {
+        }, 0);
+    };
+
+    const stats = {
+        totalInPeriod: calculateTotal(filteredGains),
+        totalYearly: calculateTotal(gains.filter(g => {
             const d = new Date(g.date);
             return d.getFullYear() === viewDate.getFullYear();
-        }).reduce((acc, g) => {
-            if (g.status === 'Confirmado' || g.status === 'Recebido' || g.status === 'Green') return acc + g.amount;
-            if (g.status === 'Red') return acc - g.amount; // Red counts as loss
-            return acc;
-        }, 0)
+        }))
     };
 
     const handleDuplicate = async (gain: ExtraGain) => {
