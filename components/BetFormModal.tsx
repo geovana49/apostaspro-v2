@@ -602,21 +602,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                         <p className="text-[10px] text-gray-500">Adicione um valor extra ao lucro/prejuízo (ex: bônus, cashback). Use valores negativos para descontos.</p>
                     </div>
 
-                    <div className="mt-6 p-4 bg-[#0d1121] rounded-xl border border-white/10 flex justify-between items-center shadow-lg">
-                        <div className="flex flex-col">
-                            <span className="text-xs font-bold text-textMuted uppercase tracking-wider">Lucro Total Estimado</span>
-                            <span className="text-[10px] text-gray-500">Soma de todas as coberturas + ganho extra</span>
-                        </div>
-                        <div className={`text-2xl font-bold ${(() => {
-                            const { profit } = calculateBetStats({ ...formData, id: 'temp' } as Bet);
-                            return profit >= 0 ? 'text-emerald-400' : 'text-red-400';
-                        })()}`}>
-                            <MoneyDisplay value={(() => {
-                                const { profit } = calculateBetStats({ ...formData, id: 'temp' } as Bet);
-                                return profit;
-                            })()} />
-                        </div>
-                    </div>
+
 
                     <div className="space-y-3">
                         <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Anotações & Mídia</label>

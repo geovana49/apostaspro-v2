@@ -11,10 +11,10 @@ export const calculateBetStats = (bet: Bet) => {
 
     let totalReturn = 0;
     bet.coverages.forEach((c, index) => {
-        if (c.status === 'Red') {
-            totalReturn += 0;
-        } else if (c.manualReturn !== undefined && c.manualReturn !== null && c.manualReturn !== 0) {
+        if (c.manualReturn !== undefined && c.manualReturn !== null && c.manualReturn !== 0) {
             totalReturn += Number(c.manualReturn);
+        } else if (c.status === 'Red') {
+            totalReturn += 0;
         } else {
             let returnValue = 0;
             if (c.status === 'Green') returnValue = (c.stake * c.odd);
