@@ -243,7 +243,8 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                 console.log('Saving gain with data:', gainData);
                 console.log('formData.promotionType:', formData.promotionType);
 
-                await FirestoreService.saveGain(currentUser.uid, gainData);
+                const gainToSave = JSON.parse(JSON.stringify(gainData));
+                await FirestoreService.saveGain(currentUser.uid, gainToSave);
             } else {
                 // Save as Bet (original behavior)
                 const rawBet: Bet = {
