@@ -821,7 +821,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                                                     </div>
                                                                     <div>
                                                                         <span className="text-textMuted text-[10px]">Retorno</span>
-                                                                        <p className="font-bold text-[#acff7a]">R$ {(coverage.stake * coverage.odd).toFixed(2)}</p>
+                                                                        <p className="font-bold text-[#acff7a]">R$ {(coverage.manualReturn !== undefined && coverage.manualReturn > 0 ? coverage.manualReturn : coverage.stake * coverage.odd).toFixed(2)}</p>
                                                                     </div>
                                                                 </div>
                                                             </div>

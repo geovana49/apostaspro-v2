@@ -507,6 +507,8 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                                         const val = parseInt(digits) / 100;
                                                         updateCoverage(cov.id, 'odd', val);
                                                     }
+                                                    // Reset manual return when odd changes to ensure auto-calc is used
+                                                    updateCoverage(cov.id, 'manualReturn', undefined);
                                                 }}
                                             />
                                             <Input
@@ -520,6 +522,8 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                                     const value = e.target.value.replace(/\D/g, '');
                                                     const numberValue = parseInt(value, 10) / 100;
                                                     updateCoverage(cov.id, 'stake', isNaN(numberValue) ? 0 : numberValue);
+                                                    // Reset manual return when stake changes to ensure auto-calc is used
+                                                    updateCoverage(cov.id, 'manualReturn', undefined);
                                                 }}
                                             />
 
@@ -596,6 +600,22 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                             }}
                         />
                         <p className="text-[10px] text-gray-500">Adicione um valor extra ao lucro/prejuízo (ex: bônus, cashback). Use valores negativos para descontos.</p>
+                    </div>
+
+                    <div className="mt-6 p-4 bg-[#0d1121] rounded-xl border border-white/10 flex justify-between items-center shadow-lg">
+                        <div className="flex flex-col">
+                            <span className="text-xs font-bold text-textMuted uppercase tracking-wider">Lucro Total Estimado</span>
+                            <span className="text-[10px] text-gray-500">Soma de todas as coberturas + ganho extra</span>
+                        </div>
+                        <div className={`text-2xl font-bold ${(() => {
+                            const { profit } = calculateBetStats({ ...formData, id: 'temp' } as Bet);
+                            return profit >= 0 ? 'text-emerald-400' : 'text-red-400';
+                        })()}`}>
+                            <MoneyDisplay value={(() => {
+                                const { profit } = calculateBetStats({ ...formData, id: 'temp' } as Bet);
+                                return profit;
+                            })()} />
+                        </div>
                     </div>
 
                     <div className="space-y-3">
