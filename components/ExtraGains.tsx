@@ -366,10 +366,15 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const viewDate = startDate;
     const filteredGains = gains.filter(gain => {
         const gainDate = new Date(gain.date);
+        const bookmakerName = bookmakers.find(b => b.id === gain.bookmakerId)?.name || '';
+        const coverageBookmakers = gain.coverages?.map(c => bookmakers.find(b => b.id === c.bookmakerId)?.name || '').join(' ') || '';
+
         const matchesSearch = searchTerm === '' ||
             gain.game?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             gain.origin.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            gain.notes?.toLowerCase().includes(searchTerm.toLowerCase());
+            gain.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            bookmakerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            coverageBookmakers.toLowerCase().includes(searchTerm.toLowerCase());
 
         const matchesOrigin = originFilter === 'all' || gain.origin === originFilter;
 
@@ -661,7 +666,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             <div>
                 <Input
                     icon={<Search size={18} />}
-                    placeholder="Buscar ganhos por jogo, origem, notas..."
+                    placeholder="Buscar ganhos por jogo, casa, origem, notas..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
