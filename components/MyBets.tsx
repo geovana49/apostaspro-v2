@@ -94,6 +94,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     // Filter State
     const [currentDate, setCurrentDate] = useState(new Date());
     const [searchTerm, setSearchTerm] = useState('');
+    const [promotionFilter, setPromotionFilter] = useState('all');
     const [showOnlyPending, setShowOnlyPending] = useState(false);
     const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
     const [pickerYear, setPickerYear] = useState(new Date().getFullYear());
@@ -568,6 +569,10 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             return false;
         }
 
+        if (promotionFilter !== 'all' && bet.promotionType !== promotionFilter) {
+            return false;
+        }
+
         const term = searchTerm.toLowerCase();
         const matchesEvent = bet.event.toLowerCase().includes(term);
         const bookmakerForFilter = getBookmaker(bet.mainBookmakerId);
@@ -643,6 +648,20 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                             icon={<Search size={18} />}
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <div className="w-full sm:w-auto min-w-[180px]">
+                        <Dropdown
+                            options={[
+                                { label: 'Todas Promoções', value: 'all', icon: <Ticket size={16} /> },
+                                ...promotions.map(p => ({
+                                    label: p.name,
+                                    value: p.name,
+                                    icon: <div className="w-3 h-3 rounded-full" style={{ backgroundColor: p.color }} />
+                                }))
+                            ]}
+                            value={promotionFilter}
+                            onChange={setPromotionFilter}
                         />
                     </div>
                     <Button
