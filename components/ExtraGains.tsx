@@ -380,8 +380,15 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         const matchesOrigin = originFilter === 'all' || gain.origin === originFilter;
 
         let matchesPeriod = true;
-        if (periodType !== 'all') {
-            matchesPeriod = gainDate >= startDate && gainDate <= endDate;
+        if (periodType === 'month') {
+            // Robust check for month view: match month and year directly
+            matchesPeriod = gainDate.getMonth() === startDate.getMonth() &&
+                gainDate.getFullYear() === startDate.getFullYear();
+        } else if (periodType !== 'all') {
+            // For year or custom ranges, use the date range comparison
+            const isAfterStart = gainDate >= startDate;
+            const isBeforeEnd = gainDate <= endDate;
+            matchesPeriod = isAfterStart && isBeforeEnd;
         }
 
         return matchesSearch && matchesOrigin && matchesPeriod;
