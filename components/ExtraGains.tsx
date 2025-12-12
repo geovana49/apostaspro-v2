@@ -166,7 +166,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const [searchTerm, setSearchTerm] = useState('');
     const [periodType, setPeriodType] = useState<'month' | 'year' | 'custom' | 'all'>('month');
     const [startDate, setStartDate] = useState<Date>(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-    const [endDate, setEndDate] = useState<Date>(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0));
+    const [endDate, setEndDate] = useState<Date>(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0, 23, 59, 59, 999));
     const [isDateRangeModalOpen, setIsDateRangeModalOpen] = useState(false);
     const [isFormDatePickerOpen, setIsFormDatePickerOpen] = useState(false);
     const [localPrivacyMode, setLocalPrivacyMode] = useState(appSettings.privacyMode);
@@ -284,10 +284,10 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         const now = new Date();
         if (value === 'month') {
             setStartDate(new Date(now.getFullYear(), now.getMonth(), 1));
-            setEndDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+            setEndDate(new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999));
         } else if (value === 'year') {
             setStartDate(new Date(now.getFullYear(), 0, 1));
-            setEndDate(new Date(now.getFullYear(), 11, 31));
+            setEndDate(new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999));
         }
     };
 
@@ -297,6 +297,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         if (periodType === 'month') {
             newStart.setMonth(newStart.getMonth() + direction);
             newEnd.setMonth(newEnd.getMonth() + direction + 1, 0);
+            newEnd.setHours(23, 59, 59, 999);
         } else if (periodType === 'year') {
             newStart.setFullYear(newStart.getFullYear() + direction);
             newEnd.setFullYear(newEnd.getFullYear() + direction);
@@ -776,6 +777,14 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                                 </span>
                                                 <span className="text-xs text-textMuted">•</span>
                                                 <span className="text-xs text-textMuted">{new Date(gain.date).toLocaleDateString('pt-BR')}</span>
+                                                {gain.notes && (
+                                                    <>
+                                                        <span className="text-xs text-textMuted">•</span>
+                                                        <div className="flex items-center gap-1 text-xs text-textMuted" title="Tem anotações">
+                                                            <StickyNote size={12} />
+                                                        </div>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
