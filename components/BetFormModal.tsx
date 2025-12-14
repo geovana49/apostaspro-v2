@@ -1,4 +1,4 @@
-import React, { useState, useReducer, useEffect, useRef } from 'react';
+import React, { useState, useReducer, useEffect, useRef, useCallback } from 'react';
 import { Button, Input, Dropdown, Modal, SingleDatePickerModal, ImageViewer, MoneyDisplay } from './ui/UIComponents';
 import {
     Plus, Trash2, X, Calendar, Paperclip, Minus, Loader2, Copy, ChevronUp, ChevronDown
@@ -132,44 +132,9 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
         return new Date(year, month - 1, day);
     };
 
-    // Global Safety Net: Prevent browser from opening dropped files anywhere while modal is open
-    useEffect(() => {
-        const preventDefault = (e: any) => {
-            e.preventDefault();
-        };
-
-        const onDrop = (e: any) => {
-            e.preventDefault();
-        };
-
-        if (isOpen) {
-            window.addEventListener('dragover', preventDefault);
-            window.addEventListener('drop', onDrop);
-        }
-
-        return () => {
-            window.removeEventListener('dragover', preventDefault);
-            window.removeEventListener('drop', onDrop);
-        };
-    }, [isOpen]);
-
-    const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent<HTMLDivElement>) => {
-        let files: File[] = [];
-        const MAX_PHOTOS = 8;
-
-        if (e.type === 'drop') {
-            e.preventDefault();
-            e.stopPropagation();
-            files = Array.from((e as React.DragEvent<HTMLDivElement>).dataTransfer.files);
-            setIsDragging(false);
-        } else {
-            files = Array.from((e as React.ChangeEvent<HTMLInputElement>).target.files || []);
-            if ((e as React.ChangeEvent<HTMLInputElement>).target) {
-                (e as React.ChangeEvent<HTMLInputElement>).target.value = ''; // Reset input
-            }
-        }
-
+    const processFiles = useCallback(async (files: File[]) => {
         if (files.length === 0) return;
+        const MAX_PHOTOS = 8;
 
         // Sort files by date (oldest to newest)
         files.sort((a, b) => a.lastModified - b.lastModified);
@@ -184,7 +149,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
             const compressedBase64 = await compressImages(files);
             const newPhotos = compressedBase64.map((base64) => ({
                 url: base64,
-                file: undefined // file is not needed after compression to base64
+                file: undefined
             }));
             setTempPhotos(prev => [...prev, ...newPhotos]);
         } catch (error) {
@@ -193,6 +158,49 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
         } finally {
             setIsUploading(false);
         }
+    }, [tempPhotos]);
+
+    // Global Safety Net & Drop Zone: Handle drops anywhere on the modal
+    useEffect(() => {
+        const preventDefault = (e: any) => {
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        const onDrop = (e: any) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                processFiles(Array.from(e.dataTransfer.files));
+            }
+        };
+
+        if (isOpen) {
+            window.addEventListener('dragover', preventDefault);
+            window.addEventListener('drop', onDrop);
+        }
+
+        return () => {
+            window.removeEventListener('dragover', preventDefault);
+            window.removeEventListener('drop', onDrop);
+        };
+    }, [isOpen, processFiles]);
+
+    const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent<HTMLDivElement>) => {
+        let files: File[] = [];
+
+        if (e.type === 'drop') {
+            e.preventDefault();
+            e.stopPropagation();
+            files = Array.from((e as React.DragEvent<HTMLDivElement>).dataTransfer.files);
+            setIsDragging(false);
+        } else {
+            files = Array.from((e as React.ChangeEvent<HTMLInputElement>).target.files || []);
+            if ((e as React.ChangeEvent<HTMLInputElement>).target) {
+                (e as React.ChangeEvent<HTMLInputElement>).target.value = ''; // Reset input
+            }
+        }
+        processFiles(files);
     };
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
