@@ -259,14 +259,15 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
             const ex = document.getElementById(overlayId);
             if (ex) ex.remove();
 
-            document.addEventListener('dragenter', onDragEnterGlobal, true);
-            document.addEventListener('dragover', preventDefault, true);
-            document.addEventListener('drop', preventDefault, true);
+            // AGGRESSIVE SHIELD: Capture on Window level
+            window.addEventListener('dragenter', onDragEnterGlobal, { capture: true, passive: false });
+            window.addEventListener('dragover', preventDefault, { capture: true, passive: false });
+            window.addEventListener('drop', preventDefault, { capture: true, passive: false });
 
             return () => {
-                document.removeEventListener('dragenter', onDragEnterGlobal, true);
-                document.removeEventListener('dragover', preventDefault, true);
-                document.removeEventListener('drop', preventDefault, true);
+                window.removeEventListener('dragenter', onDragEnterGlobal, { capture: true } as any);
+                window.removeEventListener('dragover', preventDefault, { capture: true } as any);
+                window.removeEventListener('drop', preventDefault, { capture: true } as any);
                 const ex = document.getElementById(overlayId);
                 if (ex) ex.remove();
             };
