@@ -95,8 +95,10 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Initial Data Loading
     useEffect(() => {
         console.log('BetFormModal isOpen changed:', isOpen, 'saveAsGain:', saveAsGain);
         if (isOpen) {
@@ -130,36 +132,55 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
         return new Date(year, month - 1, day);
     };
 
-    const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-            const MAX_PHOTOS = 8;
-            const files = Array.from(e.target.files) as File[];
+    const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent<HTMLDivElement>) => {
+        let files: File[] = [];
+        const MAX_PHOTOS = 8;
 
-            // Sort files by date (oldest to newest)
-            files.sort((a, b) => a.lastModified - b.lastModified);
-
-            if (tempPhotos.length + files.length > MAX_PHOTOS) {
-                alert(`Máximo de ${MAX_PHOTOS} fotos por aposta.`);
-                e.target.value = ''; // Reset input
-                return;
-            }
-
-            setIsUploading(true);
-            try {
-                const compressedBase64 = await compressImages(files);
-                const newPhotos = compressedBase64.map((base64) => ({
-                    url: base64,
-                    file: undefined
-                }));
-                setTempPhotos(prev => [...prev, ...newPhotos]);
-            } catch (error) {
-                console.error('Erro ao comprimir imagens:', error);
-                alert('Erro ao processar imagens. Tente novamente.');
-            } finally {
-                setIsUploading(false);
-                e.target.value = ''; // Reset input to allow selecting same files again
+        if (e.type === 'drop') {
+            e.preventDefault();
+            files = Array.from((e as React.DragEvent<HTMLDivElement>).dataTransfer.files);
+            setIsDragging(false);
+        } else {
+            files = Array.from((e as React.ChangeEvent<HTMLInputElement>).target.files || []);
+            if ((e as React.ChangeEvent<HTMLInputElement>).target) {
+                (e as React.ChangeEvent<HTMLInputElement>).target.value = ''; // Reset input
             }
         }
+
+        if (files.length === 0) return;
+
+        // Sort files by date (oldest to newest)
+        files.sort((a, b) => a.lastModified - b.lastModified);
+
+        if (tempPhotos.length + files.length > MAX_PHOTOS) {
+            alert(`Máximo de ${MAX_PHOTOS} fotos por aposta.`);
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            const compressedBase64 = await compressImages(files);
+            const newPhotos = compressedBase64.map((base64) => ({
+                url: base64,
+                file: undefined // file is not needed after compression to base64
+            }));
+            setTempPhotos(prev => [...prev, ...newPhotos]);
+        } catch (error) {
+            console.error('Erro ao comprimir imagens:', error);
+            alert('Erro ao processar imagens. Tente novamente.');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDragging(false);
     };
 
     const removePhoto = (index: number) => {
@@ -617,23 +638,34 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
                         <div className="p-4 bg-[#0d1121] border border-dashed border-white/10 rounded-xl">
                             <div className="flex justify-between items-center mb-3">
-                                <button
-                                    type="button"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase cursor-pointer hover:text-white transition-colors"
+                                <label className="text-[10px] text-textMuted uppercase font-bold block mb-2">Fotos</label>
+                                <div
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handlePhotoSelect}
+                                    className={`
+                                        border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center gap-2 transition-all
+                                        ${isDragging ? 'border-primary bg-primary/10 scale-[1.02]' : 'border-white/10 bg-black/20 hover:border-white/20'}
+                                    `}
                                 >
-                                    <div className="p-2 bg-white/5 rounded-full"><Paperclip size={14} /></div>
-                                    <span>Adicionar Fotos</span>
-                                </button>
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    multiple
-                                    accept="image/*"
-                                    style={{ display: 'none' }}
-                                    onChange={handlePhotoSelect}
-                                />
-                                <span className="text-[10px] text-gray-600">Sem limite de tamanho</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase cursor-pointer hover:text-white transition-colors"
+                                    >
+                                        <div className="p-2 bg-white/5 rounded-full"><Paperclip size={14} /></div>
+                                        <span>{isDragging ? 'Solte as fotos aqui' : 'Adicionar Fotos (ou arraste aqui)'}</span>
+                                    </button>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        multiple
+                                        accept="image/*"
+                                        style={{ display: 'none' }}
+                                        onChange={handlePhotoSelect}
+                                    />
+                                    <span className="text-[10px] text-gray-600">Sem limite de tamanho</span>
+                                </div>
                             </div>
 
                             {tempPhotos.length > 0 && (

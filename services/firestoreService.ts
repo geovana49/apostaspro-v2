@@ -125,39 +125,52 @@ export const FirestoreService = {
     }) => {
         const batch = writeBatch(db);
 
-        // Check if user already has data to avoid overwriting
+        // 1. Settings (Check if exists first)
         const settingsRef = doc(db, "users", userId, "settings", "preferences");
         const settingsSnap = await getDocs(query(collection(db, "users", userId, "settings")));
+        if (settingsSnap.empty) {
+            batch.set(settingsRef, initialData.settings, { merge: true });
+        }
 
-        if (!settingsSnap.empty) return; // User already initialized
+        // 2. Bookmakers (Check if ANY bookmaker exists)
+        const bookmakersSnap = await getDocs(query(collection(db, "users", userId, "bookmakers")));
+        if (bookmakersSnap.empty) {
+            initialData.bookmakers.forEach(b => {
+                const ref = doc(db, "users", userId, "bookmakers", b.id);
+                // Use merge: true to be extra safe, though emptiness check should catch it
+                batch.set(ref, b, { merge: true });
+            });
+        }
 
-        // Settings
-        batch.set(settingsRef, initialData.settings);
+        // 3. Statuses
+        const statusesSnap = await getDocs(query(collection(db, "users", userId, "statuses")));
+        if (statusesSnap.empty) {
+            initialData.statuses.forEach(s => {
+                const ref = doc(db, "users", userId, "statuses", s.id);
+                batch.set(ref, s, { merge: true });
+            });
+        }
 
-        // Bookmakers
-        initialData.bookmakers.forEach(b => {
-            const ref = doc(db, "users", userId, "bookmakers", b.id);
-            batch.set(ref, b);
-        });
+        // 4. Promotions
+        const promotionsSnap = await getDocs(query(collection(db, "users", userId, "promotions")));
+        if (promotionsSnap.empty) {
+            initialData.promotions.forEach(p => {
+                const ref = doc(db, "users", userId, "promotions", p.id);
+                batch.set(ref, p, { merge: true });
+            });
+        }
 
-        // Statuses
-        initialData.statuses.forEach(s => {
-            const ref = doc(db, "users", userId, "statuses", s.id);
-            batch.set(ref, s);
-        });
+        // 5. Origins
+        const originsSnap = await getDocs(query(collection(db, "users", userId, "origins")));
+        if (originsSnap.empty) {
+            initialData.origins.forEach(o => {
+                const ref = doc(db, "users", userId, "origins", o.id);
+                batch.set(ref, o, { merge: true });
+            });
+        }
 
-        // Promotions
-        initialData.promotions.forEach(p => {
-            const ref = doc(db, "users", userId, "promotions", p.id);
-            batch.set(ref, p);
-        });
-
-        // Origins
-        initialData.origins.forEach(o => {
-            const ref = doc(db, "users", userId, "origins", o.id);
-            batch.set(ref, o);
-        });
-
+        // Commit only if there are operations in the batch
+        // (Batch can be empty if all collections exist, commit() handles empty batch gracefully or we can check)
         await batch.commit();
     },
 
