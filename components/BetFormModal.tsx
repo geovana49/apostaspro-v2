@@ -1,4 +1,5 @@
 import React, { useState, useReducer, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Button, Input, Dropdown, Modal, SingleDatePickerModal, ImageViewer, MoneyDisplay } from './ui/UIComponents';
 import {
     Plus, Trash2, X, Calendar, Paperclip, Minus, Loader2, Copy, ChevronUp, ChevronDown, UploadCloud
@@ -778,26 +779,28 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                         </div>
                     </div>
                 </div>
-
-                {isGlobalDragging && (
-                    <div
-                        className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center border-4 border-dashed border-primary m-4 rounded-3xl animate-in fade-in duration-200"
-                        onDragOver={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            e.dataTransfer.dropEffect = 'copy';
-                        }}
-                        onDrop={handleOverlayDrop}
-                        onDragLeave={handleOverlayDragLeave}
-                    >
-                        <div className="bg-[#151b2e] p-8 rounded-full mb-6 shadow-[0_0_50px_rgba(23,186,164,0.3)] animate-bounce">
-                            <UploadCloud size={64} className="text-primary" />
-                        </div>
-                        <h3 className="text-3xl font-bold text-white mb-2">Solte a imagem agora!</h3>
-                        <p className="text-lg text-gray-400">Adicionar à aposta automaticamente</p>
-                    </div>
-                )}
             </Modal>
+
+            {isGlobalDragging && createPortal(
+                <div
+                    className="fixed inset-0 z-[999999] bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center border-4 border-dashed border-primary m-0 animate-in fade-in duration-200"
+                    onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.dataTransfer.dropEffect = 'copy';
+                    }}
+                    onDrop={handleOverlayDrop}
+                    onDragLeave={handleOverlayDragLeave}
+                >
+                    <div className="bg-[#151b2e] p-8 rounded-full mb-6 shadow-[0_0_50px_rgba(23,186,164,0.3)] animate-bounce pointer-events-none">
+                        <UploadCloud size={64} className="text-primary" />
+                    </div>
+                    <h3 className="text-3xl font-bold text-white mb-2 pointer-events-none">Solte a imagem agora!</h3>
+                    <p className="text-lg text-gray-400 pointer-events-none">Adicionar à aposta automaticamente</p>
+                </div>,
+                document.body
+            )
+            }
             <ImageViewer
                 isOpen={isViewerOpen}
                 onClose={() => setIsViewerOpen(false)}
