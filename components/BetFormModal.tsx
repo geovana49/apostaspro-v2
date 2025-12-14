@@ -174,6 +174,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
     // Native DOM Overlay Logic - The "Nuclear Option"
     useEffect(() => {
         if (isOpen) {
+            console.log("=== DRAG DEBUGGER INITIALIZED ===");
             const overlayId = 'global-drop-overlay';
 
             const createOverlay = () => {
@@ -217,10 +218,13 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
             };
 
             const onDragEnterGlobal = (e: DragEvent) => {
+                console.log("=== DRAG ENTER DETECTED ===", e);
                 e.preventDefault();
                 e.stopPropagation();
 
-                if (e.dataTransfer && e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
+                // REMOVED CHECK: Trigger on EVERYTHING for debug
+                // if (e.dataTransfer && e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
+                if (true) {
                     const existing = document.getElementById(overlayId);
                     if (!existing) {
                         const overlay = createOverlay();
@@ -489,7 +493,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
             <Modal
                 isOpen={isOpen}
                 onClose={handleClose}
-                title={initialData ? "Editar Aposta" : "Nova Aposta"}
+                title={initialData ? "Editar Aposta (DEBUG MODE)" : "Nova Aposta (DEBUG MODE)"}
                 footer={
                     <div className="flex justify-end gap-3 w-full">
                         <Button variant="neutral" onClick={handleClose} disabled={isUploading}>Cancelar</Button>
