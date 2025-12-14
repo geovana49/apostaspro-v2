@@ -165,6 +165,9 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
         const preventDefault = (e: any) => {
             e.preventDefault();
             e.stopPropagation();
+            if (e.dataTransfer) {
+                e.dataTransfer.dropEffect = 'copy';
+            }
         };
 
         const onDrop = (e: any) => {
@@ -176,13 +179,16 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
         };
 
         if (isOpen) {
-            window.addEventListener('dragover', preventDefault);
-            window.addEventListener('drop', onDrop);
+            // Use capture: true to intercept events BEFORE they reach other elements or browser defaults
+            window.addEventListener('dragenter', preventDefault, true);
+            window.addEventListener('dragover', preventDefault, true);
+            window.addEventListener('drop', onDrop, true);
         }
 
         return () => {
-            window.removeEventListener('dragover', preventDefault);
-            window.removeEventListener('drop', onDrop);
+            window.removeEventListener('dragenter', preventDefault, true);
+            window.removeEventListener('dragover', preventDefault, true);
+            window.removeEventListener('drop', onDrop, true);
         };
     }, [isOpen, processFiles]);
 
