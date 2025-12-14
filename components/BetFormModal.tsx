@@ -493,7 +493,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
             <Modal
                 isOpen={isOpen}
                 onClose={handleClose}
-                title={initialData ? "Editar Aposta (DEBUG MODE)" : "Nova Aposta (DEBUG MODE)"}
+                title={initialData ? "Editar Aposta" : "Nova Aposta"}
                 footer={
                     <div className="flex justify-end gap-3 w-full">
                         <Button variant="neutral" onClick={handleClose} disabled={isUploading}>Cancelar</Button>

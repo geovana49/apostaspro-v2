@@ -12,6 +12,20 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
+    // --- GLOBAL DRAG & DROP SHIELD ---
+    // This script runs immediately to prevent the browser from opening files dropped on the page.
+    window.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }, false);
+
+    window.addEventListener('drop', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }, false);
+    // ---------------------------------
+  </script>
+  <script>
     tailwind.config = {
       theme: {
         extend: {
