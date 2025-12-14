@@ -97,7 +97,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
-    const [isGlobalDragging, setIsGlobalDragging] = useState(false);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
     const tempPhotosRef = useRef(tempPhotos);
 
@@ -170,66 +170,110 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
     }, []); // No dependencies needed now
 
     // Global Safety Net & Drop Zone: Handle drops anywhere on the modal
+    // Global Safety Net & Drop Zone: Handle drops anywhere on the modal
+    // Native DOM Overlay Logic - The "Nuclear Option"
     useEffect(() => {
-        const preventDefault = (e: any) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (e.dataTransfer) {
-                e.dataTransfer.dropEffect = 'copy';
-            }
-        };
-
-        const onDragEnterGlobal = (e: any) => {
-            e.preventDefault();
-            e.stopPropagation();
-            // Relaxed check: Trigger on any drag event to ensure visibility
-            if (e.dataTransfer) {
-                setIsGlobalDragging(true);
-            }
-        };
-
-        const onDropGlobal = (e: any) => {
-            console.log('Global drop captured via Overlay!');
-            e.preventDefault();
-            e.stopPropagation();
-            setIsGlobalDragging(false);
-            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                processFiles(Array.from(e.dataTransfer.files));
-            }
-        };
-
         if (isOpen) {
-            // Document listeners to detect drag start and prevent browser defaults
+            const overlayId = 'global-drop-overlay';
+
+            const createOverlay = () => {
+                const el = document.createElement('div');
+                el.id = overlayId;
+                el.style.position = 'fixed';
+                el.style.top = '0';
+                el.style.left = '0';
+                el.style.width = '100vw';
+                el.style.height = '100vh';
+                el.style.zIndex = '9999999'; // Super high z-index
+                el.style.backgroundColor = 'rgba(0, 0, 0, 0.85)';
+                el.style.backdropFilter = 'blur(6px)';
+                el.style.display = 'flex';
+                el.style.flexDirection = 'column';
+                el.style.alignItems = 'center';
+                el.style.justifyContent = 'center';
+                el.style.border = '4px dashed #17baa4';
+                el.style.animation = 'fadeIn 0.2s ease-out';
+                // Using exact style from previous overlay
+                el.innerHTML = `
+                    <div style="background: #151b2e; padding: 2rem; border-radius: 9999px; margin-bottom: 1.5rem; pointer-events: none; box-shadow: 0 0 50px rgba(23,186,164,0.3);">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#17baa4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 14.899l6-6"></path>
+                            <path d="M15 14.899l6-6"></path>
+                            <path d="M12 11.9V2"></path>
+                            <path d="M12 22a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"></path>
+                            <path d="M9 22v-3"></path>
+                            <path d="M15 22v-3"></path>
+                        </svg>
+                    </div>
+                    <h3 style="color: white; font-size: 1.875rem; font-weight: 700; margin-bottom: 0.5rem; pointer-events: none; font-family: sans-serif;">Solte a imagem agora!</h3>
+                    <p style="color: #9ca3af; font-size: 1.125rem; pointer-events: none; font-family: sans-serif;">Adicionar à aposta automaticamente</p>
+                `;
+                return el;
+            };
+
+            const preventDefault = (e: Event) => {
+                e.preventDefault();
+                e.stopPropagation();
+            };
+
+            const onDragEnterGlobal = (e: DragEvent) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (e.dataTransfer && e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
+                    const existing = document.getElementById(overlayId);
+                    if (!existing) {
+                        const overlay = createOverlay();
+
+                        // Add events to the overlay itself
+                        overlay.addEventListener('dragover', (ev) => {
+                            ev.preventDefault();
+                            ev.stopPropagation();
+                            if (ev.dataTransfer) ev.dataTransfer.dropEffect = 'copy';
+                        });
+
+                        overlay.addEventListener('dragleave', (ev) => {
+                            ev.preventDefault();
+                            ev.stopPropagation();
+                            // Only remove if actually leaving the overlay (not entering a child)
+                            if (ev.relatedTarget === null || (ev.target === overlay && !overlay.contains(ev.relatedTarget as Node))) {
+                                overlay.remove();
+                            }
+                        });
+
+                        overlay.addEventListener('drop', (ev) => {
+                            ev.preventDefault();
+                            ev.stopPropagation();
+                            overlay.remove(); // Close overlay
+                            if (ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files.length > 0) {
+                                processFiles(Array.from(ev.dataTransfer.files));
+                            }
+                        });
+
+                        document.body.appendChild(overlay);
+                    }
+                }
+            };
+
+            // Clean up any stray overlays on mount just in case
+            const ex = document.getElementById(overlayId);
+            if (ex) ex.remove();
+
             document.addEventListener('dragenter', onDragEnterGlobal, true);
             document.addEventListener('dragover', preventDefault, true);
-            document.addEventListener('drop', onDropGlobal, true); // Fallback if overlay fails to catch it
-        }
+            document.addEventListener('drop', preventDefault, true);
 
-        return () => {
-            document.removeEventListener('dragenter', onDragEnterGlobal, true);
-            document.removeEventListener('dragover', preventDefault, true);
-            document.removeEventListener('drop', onDropGlobal, true);
-        };
+            return () => {
+                document.removeEventListener('dragenter', onDragEnterGlobal, true);
+                document.removeEventListener('dragover', preventDefault, true);
+                document.removeEventListener('drop', preventDefault, true);
+                const ex = document.getElementById(overlayId);
+                if (ex) ex.remove();
+            };
+        }
     }, [isOpen, processFiles]);
 
-    // Overlay handlers
-    const handleOverlayDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsGlobalDragging(false);
-        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            processFiles(Array.from(e.dataTransfer.files));
-        }
-    };
 
-    const handleOverlayDragLeave = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        // Only close if we are leaving the window or the overlay itself (not entering a child)
-        if (e.relatedTarget === null) {
-            setIsGlobalDragging(false);
-        }
-    }; // processFiles is now stable
 
     const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent<HTMLDivElement>) => {
         let files: File[] = [];
@@ -781,26 +825,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                 </div>
             </Modal>
 
-            {isGlobalDragging && createPortal(
-                <div
-                    className="fixed inset-0 z-[999999] bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center border-4 border-dashed border-primary m-0 animate-in fade-in duration-200"
-                    onDragOver={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.dataTransfer.dropEffect = 'copy';
-                    }}
-                    onDrop={handleOverlayDrop}
-                    onDragLeave={handleOverlayDragLeave}
-                >
-                    <div className="bg-[#151b2e] p-8 rounded-full mb-6 shadow-[0_0_50px_rgba(23,186,164,0.3)] animate-bounce pointer-events-none">
-                        <UploadCloud size={64} className="text-primary" />
-                    </div>
-                    <h3 className="text-3xl font-bold text-white mb-2 pointer-events-none">Solte a imagem agora!</h3>
-                    <p className="text-lg text-gray-400 pointer-events-none">Adicionar à aposta automaticamente</p>
-                </div>,
-                document.body
-            )
-            }
+
             <ImageViewer
                 isOpen={isViewerOpen}
                 onClose={() => setIsViewerOpen(false)}
