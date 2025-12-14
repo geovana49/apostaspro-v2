@@ -175,11 +175,13 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
+        e.stopPropagation();
         setIsDragging(true);
     };
 
     const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
+        e.stopPropagation();
         setIsDragging(false);
     };
 
@@ -641,6 +643,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                 <label className="text-[10px] text-textMuted uppercase font-bold block mb-2">Fotos</label>
                                 <div
                                     onDragOver={handleDragOver}
+                                    onDragEnter={handleDragOver}
                                     onDragLeave={handleDragLeave}
                                     onDrop={handlePhotoSelect}
                                     className={`
