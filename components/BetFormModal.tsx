@@ -97,6 +97,12 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const tempPhotosRef = useRef(tempPhotos);
+
+    // Keep ref synced with state
+    useEffect(() => {
+        tempPhotosRef.current = tempPhotos;
+    }, [tempPhotos]);
 
     // Initial Data Loading
     useEffect(() => {
@@ -139,7 +145,8 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
         // Sort files by date (oldest to newest)
         files.sort((a, b) => a.lastModified - b.lastModified);
 
-        if (tempPhotos.length + files.length > MAX_PHOTOS) {
+        // Check using Ref to avoid dependency loop
+        if (tempPhotosRef.current.length + files.length > MAX_PHOTOS) {
             alert(`Máximo de ${MAX_PHOTOS} fotos por aposta.`);
             return;
         }
@@ -158,7 +165,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
         } finally {
             setIsUploading(false);
         }
-    }, [tempPhotos]);
+    }, []); // No dependencies needed now
 
     // Global Safety Net & Drop Zone: Handle drops anywhere on the modal
     useEffect(() => {
@@ -171,6 +178,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
         };
 
         const onDrop = (e: any) => {
+            console.log('Global drop captured!'); // Debug
             e.preventDefault();
             e.stopPropagation();
             if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
@@ -179,18 +187,18 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
         };
 
         if (isOpen) {
-            // Use capture: true to intercept events BEFORE they reach other elements or browser defaults
-            window.addEventListener('dragenter', preventDefault, true);
-            window.addEventListener('dragover', preventDefault, true);
-            window.addEventListener('drop', onDrop, true);
+            // Attach to document with capture to be absolutely sure we catch it first
+            document.addEventListener('dragenter', preventDefault, true);
+            document.addEventListener('dragover', preventDefault, true);
+            document.addEventListener('drop', onDrop, true);
         }
 
         return () => {
-            window.removeEventListener('dragenter', preventDefault, true);
-            window.removeEventListener('dragover', preventDefault, true);
-            window.removeEventListener('drop', onDrop, true);
+            document.removeEventListener('dragenter', preventDefault, true);
+            document.removeEventListener('dragover', preventDefault, true);
+            document.removeEventListener('drop', onDrop, true);
         };
-    }, [isOpen, processFiles]);
+    }, [isOpen, processFiles]); // processFiles is now stable
 
     const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent<HTMLDivElement>) => {
         let files: File[] = [];
