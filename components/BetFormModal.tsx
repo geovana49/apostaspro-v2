@@ -126,615 +126,615 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
         }
     }, [isOpen, initialData]);
 
-    const datePart = dateStr.split('T')[0];
-    const [year, month, day] = datePart.split('-').map(Number);
-    return new Date(year, month - 1, day);
-};
-
-// Global Safety Net: Prevent browser from opening dropped files anywhere while modal is open
-useEffect(() => {
-    const preventDefault = (e: DragEvent) => {
-        e.preventDefault();
+    const parseDate = (dateStr: string): Date => {
+        const datePart = dateStr.split('T')[0];
+        const [year, month, day] = datePart.split('-').map(Number);
+        return new Date(year, month - 1, day);
     };
 
-    const onDrop = (e: DragEvent) => {
-        e.preventDefault(); // Stop browser from opening file
-        // Note: We don't stop propagation here to ensure React's onDrop can still receive it if it was defined on an element
-    };
+    // Global Safety Net: Prevent browser from opening dropped files anywhere while modal is open
+    useEffect(() => {
+        const preventDefault = (e: any) => {
+            e.preventDefault();
+        };
 
-    if (isOpen) {
-        window.addEventListener('dragover', preventDefault);
-        window.addEventListener('drop', onDrop);
-    }
+        const onDrop = (e: any) => {
+            e.preventDefault();
+        };
 
-    return () => {
-        window.removeEventListener('dragover', preventDefault);
-        window.removeEventListener('drop', onDrop);
-    };
-}, [isOpen]);
-
-const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent<HTMLDivElement>) => {
-    let files: File[] = [];
-    const MAX_PHOTOS = 8;
-
-    if (e.type === 'drop') {
-        e.preventDefault();
-        e.stopPropagation();
-        files = Array.from((e as React.DragEvent<HTMLDivElement>).dataTransfer.files);
-        setIsDragging(false);
-    } else {
-        files = Array.from((e as React.ChangeEvent<HTMLInputElement>).target.files || []);
-        if ((e as React.ChangeEvent<HTMLInputElement>).target) {
-            (e as React.ChangeEvent<HTMLInputElement>).target.value = ''; // Reset input
+        if (isOpen) {
+            window.addEventListener('dragover', preventDefault);
+            window.addEventListener('drop', onDrop);
         }
-    }
 
-    if (files.length === 0) return;
+        return () => {
+            window.removeEventListener('dragover', preventDefault);
+            window.removeEventListener('drop', onDrop);
+        };
+    }, [isOpen]);
 
-    // Sort files by date (oldest to newest)
-    files.sort((a, b) => a.lastModified - b.lastModified);
+    const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent<HTMLDivElement>) => {
+        let files: File[] = [];
+        const MAX_PHOTOS = 8;
 
-    if (tempPhotos.length + files.length > MAX_PHOTOS) {
-        alert(`Máximo de ${MAX_PHOTOS} fotos por aposta.`);
-        return;
-    }
-
-    setIsUploading(true);
-    try {
-        const compressedBase64 = await compressImages(files);
-        const newPhotos = compressedBase64.map((base64) => ({
-            url: base64,
-            file: undefined // file is not needed after compression to base64
-        }));
-        setTempPhotos(prev => [...prev, ...newPhotos]);
-    } catch (error) {
-        console.error('Erro ao comprimir imagens:', error);
-        alert('Erro ao processar imagens. Tente novamente.');
-    } finally {
-        setIsUploading(false);
-    }
-};
-
-const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    e.dataTransfer.dropEffect = 'copy';
-    setIsDragging(true);
-};
-
-const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Prevent flickering when dragging over child elements
-    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
-
-    setIsDragging(false);
-};
-
-const removePhoto = (index: number) => {
-    setTempPhotos(prev => prev.filter((_, i) => i !== index));
-};
-
-const addCoverage = () => {
-    dispatch({
-        type: 'ADD_COVERAGE',
-        payload: {
-            id: Date.now().toString(),
-            bookmakerId: bookmakers[0]?.id || '',
-            market: '',
-            odd: 0,
-            stake: 0,
-            status: 'Pendente'
+        if (e.type === 'drop') {
+            e.preventDefault();
+            e.stopPropagation();
+            files = Array.from((e as React.DragEvent<HTMLDivElement>).dataTransfer.files);
+            setIsDragging(false);
+        } else {
+            files = Array.from((e as React.ChangeEvent<HTMLInputElement>).target.files || []);
+            if ((e as React.ChangeEvent<HTMLInputElement>).target) {
+                (e as React.ChangeEvent<HTMLInputElement>).target.value = ''; // Reset input
+            }
         }
-    });
-};
 
-const removeCoverage = (id: string) => {
-    dispatch({ type: 'REMOVE_COVERAGE', id });
-};
+        if (files.length === 0) return;
 
-const updateCoverage = (id: string, field: keyof Coverage, value: any) => {
-    dispatch({ type: 'UPDATE_COVERAGE', id, field, value });
-};
+        // Sort files by date (oldest to newest)
+        files.sort((a, b) => a.lastModified - b.lastModified);
 
-const duplicateCoverage = (id: string) => {
-    dispatch({ type: 'DUPLICATE_COVERAGE', id });
-};
-
-const moveCoverage = (id: string, direction: 'up' | 'down') => {
-    dispatch({ type: 'MOVE_COVERAGE', id, direction });
-};
-
-const handleSave = async () => {
-    if (!formData.event) return alert('Informe o evento');
-    if (!currentUser) return alert('Você precisa estar logado para salvar.');
-
-    setIsUploading(true);
-
-    try {
-        const photoBase64 = tempPhotos.map(photo => photo.url);
-        const validation = validateFirestoreSize(photoBase64);
-        if (!validation.valid) {
-            alert(`As fotos ultrapassam o limite permitido (${validation.totalMB.toFixed(2)}MB de ${validation.limitMB}MB). Remova algumas fotos.`);
-            setIsUploading(false);
+        if (tempPhotos.length + files.length > MAX_PHOTOS) {
+            alert(`Máximo de ${MAX_PHOTOS} fotos por aposta.`);
             return;
         }
 
-
-        if (saveAsGain) {
-            // Save as Extra Gain instead of Bet
-            // Use the same calculation logic as My Bets (handles FreeBet, Conversion, all statuses)
-            const tempBet: Bet = {
-                ...formData,
-                id: formData.id || Date.now().toString(),
-                date: formData.date,
-                notes: formData.notes || '',
-                photos: []
-            };
-            const { profit } = calculateBetStats(tempBet);
-
-            // Map generalStatus to gain status
-            let gainStatus = formData.generalStatus || 'Confirmado';
-
-            const gainData = {
-                id: formData.id || Date.now().toString(),
-                amount: profit,
-                date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
-                status: gainStatus,
-                origin: formData.promotionType || 'Aposta Esportiva',
-                bookmakerId: formData.mainBookmakerId,
-                game: formData.event,
-                notes: formData.notes || '',
-                photos: photoBase64,
-                coverages: formData.coverages // Include coverages
-            };
-
-            console.log('Saving gain with data:', gainData);
-            console.log('formData.promotionType:', formData.promotionType);
-
-            const gainToSave = JSON.parse(JSON.stringify(gainData));
-            await FirestoreService.saveGain(currentUser.uid, gainToSave);
-        } else {
-            // Save as Bet (original behavior)
-            const rawBet: Bet = {
-                ...formData,
-                id: formData.id || Date.now().toString(),
-                notes: formData.notes,
-                photos: photoBase64,
-                date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
-            };
-
-            const betToSave = JSON.parse(JSON.stringify(rawBet));
-            await FirestoreService.saveBet(currentUser.uid, betToSave);
+        setIsUploading(true);
+        try {
+            const compressedBase64 = await compressImages(files);
+            const newPhotos = compressedBase64.map((base64) => ({
+                url: base64,
+                file: undefined // file is not needed after compression to base64
+            }));
+            setTempPhotos(prev => [...prev, ...newPhotos]);
+        } catch (error) {
+            console.error('Erro ao comprimir imagens:', error);
+            alert('Erro ao processar imagens. Tente novamente.');
+        } finally {
+            setIsUploading(false);
         }
+    };
 
-        const betDate = parseDate(formData.date);
-        onSaveSuccess(betDate);
-        onClose();
-    } catch (error: any) {
-        console.error("Error saving:", error);
-        alert(`Erro ao salvar: ${error.message || error}`);
-    } finally {
-        setIsUploading(false);
-    }
-};
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'copy';
+        setIsDragging(true);
+    };
 
-const saveAsDraft = async () => {
-    if (!currentUser) return;
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
 
-    setIsUploading(true);
-    try {
-        const draftBet: Bet = {
-            ...formData,
-            id: formData.id || Date.now().toString(),
-            status: 'Rascunho',
-            event: formData.event || `Rascunho - ${new Date().toLocaleDateString('pt-BR')}`,
-            photos: tempPhotos.map(p => p.url),
-            date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
-        };
+        // Prevent flickering when dragging over child elements
+        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
 
-        const betToSave = JSON.parse(JSON.stringify(draftBet));
-        await FirestoreService.saveBet(currentUser.uid, betToSave);
+        setIsDragging(false);
+    };
 
-        const betDate = parseDate(formData.date);
-        onSaveSuccess(betDate);
-        onClose();
-    } catch (error) {
-        console.error("Error saving draft:", error);
-        alert("Erro ao salvar rascunho.");
-    } finally {
-        setIsUploading(false);
-    }
-};
+    const removePhoto = (index: number) => {
+        setTempPhotos(prev => prev.filter((_, i) => i !== index));
+    };
 
-const handleClose = () => {
-    const hasContent = formData.event || formData.notes || formData.coverages.length > 0 || tempPhotos.length > 0;
-    if (hasContent && !isUploading && !initialData) {
-        if (window.confirm('Você tem alterações não salvas. Deseja salvar como rascunho para terminar depois?')) {
-            saveAsDraft();
+    const addCoverage = () => {
+        dispatch({
+            type: 'ADD_COVERAGE',
+            payload: {
+                id: Date.now().toString(),
+                bookmakerId: bookmakers[0]?.id || '',
+                market: '',
+                odd: 0,
+                stake: 0,
+                status: 'Pendente'
+            }
+        });
+    };
+
+    const removeCoverage = (id: string) => {
+        dispatch({ type: 'REMOVE_COVERAGE', id });
+    };
+
+    const updateCoverage = (id: string, field: keyof Coverage, value: any) => {
+        dispatch({ type: 'UPDATE_COVERAGE', id, field, value });
+    };
+
+    const duplicateCoverage = (id: string) => {
+        dispatch({ type: 'DUPLICATE_COVERAGE', id });
+    };
+
+    const moveCoverage = (id: string, direction: 'up' | 'down') => {
+        dispatch({ type: 'MOVE_COVERAGE', id, direction });
+    };
+
+    const handleSave = async () => {
+        if (!formData.event) return alert('Informe o evento');
+        if (!currentUser) return alert('Você precisa estar logado para salvar.');
+
+        setIsUploading(true);
+
+        try {
+            const photoBase64 = tempPhotos.map(photo => photo.url);
+            const validation = validateFirestoreSize(photoBase64);
+            if (!validation.valid) {
+                alert(`As fotos ultrapassam o limite permitido (${validation.totalMB.toFixed(2)}MB de ${validation.limitMB}MB). Remova algumas fotos.`);
+                setIsUploading(false);
+                return;
+            }
+
+
+            if (saveAsGain) {
+                // Save as Extra Gain instead of Bet
+                // Use the same calculation logic as My Bets (handles FreeBet, Conversion, all statuses)
+                const tempBet: Bet = {
+                    ...formData,
+                    id: formData.id || Date.now().toString(),
+                    date: formData.date,
+                    notes: formData.notes || '',
+                    photos: []
+                };
+                const { profit } = calculateBetStats(tempBet);
+
+                // Map generalStatus to gain status
+                let gainStatus = formData.generalStatus || 'Confirmado';
+
+                const gainData = {
+                    id: formData.id || Date.now().toString(),
+                    amount: profit,
+                    date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
+                    status: gainStatus,
+                    origin: formData.promotionType || 'Aposta Esportiva',
+                    bookmakerId: formData.mainBookmakerId,
+                    game: formData.event,
+                    notes: formData.notes || '',
+                    photos: photoBase64,
+                    coverages: formData.coverages // Include coverages
+                };
+
+                console.log('Saving gain with data:', gainData);
+                console.log('formData.promotionType:', formData.promotionType);
+
+                const gainToSave = JSON.parse(JSON.stringify(gainData));
+                await FirestoreService.saveGain(currentUser.uid, gainToSave);
+            } else {
+                // Save as Bet (original behavior)
+                const rawBet: Bet = {
+                    ...formData,
+                    id: formData.id || Date.now().toString(),
+                    notes: formData.notes,
+                    photos: photoBase64,
+                    date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
+                };
+
+                const betToSave = JSON.parse(JSON.stringify(rawBet));
+                await FirestoreService.saveBet(currentUser.uid, betToSave);
+            }
+
+            const betDate = parseDate(formData.date);
+            onSaveSuccess(betDate);
+            onClose();
+        } catch (error: any) {
+            console.error("Error saving:", error);
+            alert(`Erro ao salvar: ${error.message || error}`);
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const saveAsDraft = async () => {
+        if (!currentUser) return;
+
+        setIsUploading(true);
+        try {
+            const draftBet: Bet = {
+                ...formData,
+                id: formData.id || Date.now().toString(),
+                status: 'Rascunho',
+                event: formData.event || `Rascunho - ${new Date().toLocaleDateString('pt-BR')}`,
+                photos: tempPhotos.map(p => p.url),
+                date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
+            };
+
+            const betToSave = JSON.parse(JSON.stringify(draftBet));
+            await FirestoreService.saveBet(currentUser.uid, betToSave);
+
+            const betDate = parseDate(formData.date);
+            onSaveSuccess(betDate);
+            onClose();
+        } catch (error) {
+            console.error("Error saving draft:", error);
+            alert("Erro ao salvar rascunho.");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleClose = () => {
+        const hasContent = formData.event || formData.notes || formData.coverages.length > 0 || tempPhotos.length > 0;
+        if (hasContent && !isUploading && !initialData) {
+            if (window.confirm('Você tem alterações não salvas. Deseja salvar como rascunho para terminar depois?')) {
+                saveAsDraft();
+            } else {
+                onClose();
+            }
         } else {
             onClose();
         }
-    } else {
-        onClose();
-    }
-};
+    };
 
-const bookmakerOptions = bookmakers.map(b => ({
-    label: b.name,
-    value: b.id,
-    icon: (
-        <div className="w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold text-[#090c19] overflow-hidden" style={{ backgroundColor: b.color || '#FFFFFF' }}>
-            {b.logo ? <img src={b.logo} alt={b.name} className="w-full h-full object-contain p-[1px]" /> : b.name.substring(0, 2).toUpperCase()}
-        </div>
-    )
-}));
+    const bookmakerOptions = bookmakers.map(b => ({
+        label: b.name,
+        value: b.id,
+        icon: (
+            <div className="w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold text-[#090c19] overflow-hidden" style={{ backgroundColor: b.color || '#FFFFFF' }}>
+                {b.logo ? <img src={b.logo} alt={b.name} className="w-full h-full object-contain p-[1px]" /> : b.name.substring(0, 2).toUpperCase()}
+            </div>
+        )
+    }));
 
-const statusOptions = statuses.map(s => ({
-    label: s.name,
-    value: s.name,
-    icon: <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
-}));
+    const statusOptions = statuses.map(s => ({
+        label: s.name,
+        value: s.name,
+        icon: <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
+    }));
 
-const promotionOptions = [
-    { label: 'Nenhuma', value: 'Nenhuma', icon: <Minus size={14} /> },
-    ...promotions.map(p => ({
-        label: p.name,
-        value: p.name,
-        icon: <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
-    }))
-];
+    const promotionOptions = [
+        { label: 'Nenhuma', value: 'Nenhuma', icon: <Minus size={14} /> },
+        ...promotions.map(p => ({
+            label: p.name,
+            value: p.name,
+            icon: <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
+        }))
+    ];
 
-return (
-    <>
-        <Modal
-            isOpen={isOpen}
-            onClose={handleClose}
-            title={initialData ? "Editar Aposta" : "Nova Aposta"}
-            footer={
-                <div className="flex justify-end gap-3 w-full">
-                    <Button variant="neutral" onClick={handleClose} disabled={isUploading}>Cancelar</Button>
-                    <Button onClick={handleSave} disabled={isUploading}>
-                        {isUploading ? (
-                            <>
-                                <Loader2 size={16} className="animate-spin" />
-                                <span>Salvando...</span>
-                            </>
-                        ) : (
-                            initialData ? "Salvar Alterações" : "Adicionar Aposta"
-                        )}
-                    </Button>
-                </div>
-            }
-        >
-            <div className="space-y-5">
-                <div onClick={() => setIsDatePickerOpen(true)}>
-                    <Input
-                        label="Data"
-                        value={new Date(formData.date + 'T12:00:00').toLocaleDateString('pt-BR')}
-                        readOnly
-                        className="cursor-pointer"
-                        icon={<Calendar size={18} />}
-                    />
-                </div>
-                <SingleDatePickerModal
-                    isOpen={isDatePickerOpen}
-                    onClose={() => setIsDatePickerOpen(false)}
-                    date={formData.date ? parseDate(formData.date) : new Date()}
-                    onSelect={(date) => {
-                        const year = date.getFullYear();
-                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                        const day = String(date.getDate()).padStart(2, '0');
-                        const dateStr = `${year}-${month}-${day}`;
-                        dispatch({ type: 'UPDATE_FIELD', field: 'date', value: dateStr });
-                        setIsDatePickerOpen(false);
-                    }}
-                />
-
-                <Dropdown
-                    label="Casa Principal"
-                    placeholder="Ex: Bet365"
-                    options={bookmakerOptions}
-                    value={formData.mainBookmakerId}
-                    onChange={value => dispatch({ type: 'UPDATE_FIELD', field: 'mainBookmakerId', value })}
-                    isSearchable={true}
-                    searchPlaceholder="Buscar casa..."
-                />
-
-                <Input
-                    label="Procedimento / Evento"
-                    placeholder="Ex: Múltipla Brasileirão"
-                    value={formData.event}
-                    onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'event', value: e.target.value })}
-                />
-
-                <Dropdown
-                    label="Promoção (Opcional)"
-                    placeholder="Nenhuma"
-                    options={promotionOptions}
-                    value={formData.promotionType || 'Nenhuma'}
-                    onChange={value => dispatch({ type: 'UPDATE_FIELD', field: 'promotionType', value })}
-                />
-
-                <Dropdown
-                    label="Status Geral"
-                    options={statusOptions}
-                    value={formData.generalStatus || 'Concluído'}
-                    onChange={value => dispatch({ type: 'UPDATE_FIELD', field: 'generalStatus', value })}
-                />
-
-                <div className="h-px bg-white/5 my-2" />
-
-                <div>
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-bold text-primary uppercase tracking-wider">Coberturas</h3>
-                        <Button size="sm" variant="neutral" onClick={addCoverage} className="text-xs h-8 px-3">
-                            <Plus size={14} /> Adicionar
+    return (
+        <>
+            <Modal
+                isOpen={isOpen}
+                onClose={handleClose}
+                title={initialData ? "Editar Aposta" : "Nova Aposta"}
+                footer={
+                    <div className="flex justify-end gap-3 w-full">
+                        <Button variant="neutral" onClick={handleClose} disabled={isUploading}>Cancelar</Button>
+                        <Button onClick={handleSave} disabled={isUploading}>
+                            {isUploading ? (
+                                <>
+                                    <Loader2 size={16} className="animate-spin" />
+                                    <span>Salvando...</span>
+                                </>
+                            ) : (
+                                initialData ? "Salvar Alterações" : "Adicionar Aposta"
+                            )}
                         </Button>
                     </div>
-
-                    <div className="space-y-4">
-                        {formData.coverages.map((cov, index) => {
-                            const statusItem = statuses.find(s => s.name === cov.status);
-                            const statusColor = statusItem ? statusItem.color : '#fbbf24';
-
-                            return (
-                                <div key={cov.id} className="relative bg-[#0d1121] rounded-lg p-4 border border-white/5 overflow-hidden shadow-sm">
-                                    <div
-                                        className="absolute left-0 top-0 bottom-0 w-1"
-                                        style={{ backgroundColor: statusColor }}
-                                    />
-
-                                    <div className="flex justify-between items-start mb-4 pl-2">
-                                        <span className="text-[10px] font-bold text-textMuted uppercase tracking-wider">COBERTURA {index + 1}</span>
-                                        <div className="flex items-center gap-1">
-                                            <button
-                                                onClick={() => moveCoverage(cov.id, 'up')}
-                                                disabled={index === 0}
-                                                className="text-gray-600 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed p-1"
-                                                title="Mover para cima"
-                                            >
-                                                <ChevronUp size={16} />
-                                            </button>
-                                            <button
-                                                onClick={() => moveCoverage(cov.id, 'down')}
-                                                disabled={index === formData.coverages.length - 1}
-                                                className="text-gray-600 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed p-1"
-                                                title="Mover para baixo"
-                                            >
-                                                <ChevronDown size={16} />
-                                            </button>
-                                            <div className="w-px h-3 bg-white/10 mx-1" />
-                                            <button
-                                                onClick={() => duplicateCoverage(cov.id)}
-                                                className="text-gray-600 hover:text-white transition-colors p-1"
-                                                title="Duplicar"
-                                            >
-                                                <Copy size={16} />
-                                            </button>
-                                            <button
-                                                onClick={() => removeCoverage(cov.id)}
-                                                className="text-gray-600 hover:text-danger transition-colors p-1"
-                                                title="Excluir"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-3 pl-2">
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] text-textMuted uppercase font-bold">Casa</label>
-                                            <Dropdown
-                                                options={bookmakerOptions}
-                                                value={cov.bookmakerId}
-                                                onChange={value => updateCoverage(cov.id, 'bookmakerId', value)}
-                                                placeholder="Casa"
-                                                className="text-xs"
-                                                isSearchable={true}
-                                                searchPlaceholder="Buscar casa..."
-                                            />
-                                        </div>
-                                        <Input
-                                            label="Mercado"
-                                            className="text-xs py-1.5"
-                                            placeholder="Mercado"
-                                            value={cov.market}
-                                            onChange={e => updateCoverage(cov.id, 'market', e.target.value)}
-                                        />
-                                        <Input
-                                            label="ODD"
-                                            type="tel"
-                                            inputMode="decimal"
-                                            className="text-xs py-1.5"
-                                            placeholder="0.00"
-                                            value={cov.odd === 0 ? '' : cov.odd.toFixed(2)}
-                                            onChange={e => {
-                                                const digits = e.target.value.replace(/\D/g, '');
-                                                if (digits === '') {
-                                                    updateCoverage(cov.id, 'odd', 0);
-                                                } else {
-                                                    const val = parseInt(digits) / 100;
-                                                    updateCoverage(cov.id, 'odd', val);
-                                                }
-                                                // Reset manual return when odd changes to ensure auto-calc is used
-                                                updateCoverage(cov.id, 'manualReturn', undefined);
-                                            }}
-                                        />
-                                        <Input
-                                            label="Stake"
-                                            type="tel"
-                                            inputMode="numeric"
-                                            className="text-xs py-1.5"
-                                            placeholder="R$ 0,00"
-                                            value={cov.stake.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                            onChange={e => {
-                                                const value = e.target.value.replace(/\D/g, '');
-                                                const numberValue = parseInt(value, 10) / 100;
-                                                updateCoverage(cov.id, 'stake', isNaN(numberValue) ? 0 : numberValue);
-                                                // Reset manual return when stake changes to ensure auto-calc is used
-                                                updateCoverage(cov.id, 'manualReturn', undefined);
-                                            }}
-                                        />
-
-                                        <div className="col-span-2">
-                                            <Input
-                                                label="Retorno Estimado"
-                                                type="tel"
-                                                inputMode="numeric"
-                                                className={`text-xs py-1.5 ${(cov.manualReturn !== undefined && cov.manualReturn > 0) ? 'text-white font-bold' : 'text-gray-400'}`}
-                                                placeholder="Auto-calc..."
-                                                value={
-                                                    (cov.manualReturn !== undefined && cov.manualReturn > 0)
-                                                        ? cov.manualReturn.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
-                                                        : (cov.stake && cov.odd ? (() => {
-                                                            const isFirstCoverage = index === 0;
-                                                            const isFreebetConversion = formData.promotionType?.toLowerCase().includes('conversão freebet');
-                                                            let calculatedReturn = cov.stake * cov.odd;
-
-                                                            if (isFreebetConversion && isFirstCoverage) {
-                                                                calculatedReturn -= cov.stake;
-                                                            }
-
-                                                            return calculatedReturn.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-                                                        })() : '')
-                                                }
-                                                onChange={e => {
-                                                    const rawValue = e.target.value;
-                                                    const value = rawValue.replace(/\D/g, '');
-
-                                                    // If field is completely empty, reset to auto-calc
-                                                    if (rawValue === '' || value === '' || value === '0') {
-                                                        updateCoverage(cov.id, 'manualReturn', undefined);
-                                                    } else {
-                                                        const numberValue = parseInt(value, 10) / 100;
-                                                        updateCoverage(cov.id, 'manualReturn', numberValue);
-                                                    }
-                                                }}
-                                            />
-                                        </div>
-
-                                        <div className="col-span-2 mt-1">
-                                            <label className="text-[10px] text-textMuted uppercase font-bold block mb-2">Status Cobertura</label>
-                                            <Dropdown
-                                                options={statusOptions}
-                                                value={cov.status}
-                                                onChange={value => updateCoverage(cov.id, 'status', value)}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                }
+            >
+                <div className="space-y-5">
+                    <div onClick={() => setIsDatePickerOpen(true)}>
+                        <Input
+                            label="Data"
+                            value={new Date(formData.date + 'T12:00:00').toLocaleDateString('pt-BR')}
+                            readOnly
+                            className="cursor-pointer"
+                            icon={<Calendar size={18} />}
+                        />
                     </div>
-                </div>
-
-                <div className="h-px bg-white/5 my-2" />
-
-                <div className="space-y-3">
-                    <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Ganho Extra (Opcional)</label>
-                    <Input
-                        type="tel"
-                        inputMode="decimal"
-                        prefix="R$"
-                        placeholder="0,00"
-                        value={formData.extraGain !== undefined && formData.extraGain !== 0 ? (formData.extraGain >= 0 ? formData.extraGain.toFixed(2) : formData.extraGain.toFixed(2)) : ''}
-                        onChange={e => {
-                            const value = e.target.value.replace(/[^\d-]/g, '');
-                            if (value === '' || value === '-') {
-                                dispatch({ type: 'UPDATE_FIELD', field: 'extraGain', value: undefined });
-                            } else {
-                                const numberValue = parseInt(value, 10) / 100;
-                                dispatch({ type: 'UPDATE_FIELD', field: 'extraGain', value: numberValue });
-                            }
+                    <SingleDatePickerModal
+                        isOpen={isDatePickerOpen}
+                        onClose={() => setIsDatePickerOpen(false)}
+                        date={formData.date ? parseDate(formData.date) : new Date()}
+                        onSelect={(date) => {
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            const dateStr = `${year}-${month}-${day}`;
+                            dispatch({ type: 'UPDATE_FIELD', field: 'date', value: dateStr });
+                            setIsDatePickerOpen(false);
                         }}
                     />
-                    <p className="text-[10px] text-gray-500">Adicione um valor extra ao lucro/prejuízo (ex: bônus, cashback). Use valores negativos para descontos.</p>
-                </div>
 
-
-
-                <div className="space-y-3">
-                    <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Anotações & Mídia</label>
-
-                    <textarea
-                        className="w-full bg-[#0d1121] border border-white/10 focus:border-primary text-white rounded-lg py-3 px-4 placeholder-gray-600 focus:outline-none transition-colors text-sm min-h-[100px] resize-none shadow-inner"
-                        placeholder="Detalhes adicionais..."
-                        value={formData.notes}
-                        onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'notes', value: e.target.value })}
+                    <Dropdown
+                        label="Casa Principal"
+                        placeholder="Ex: Bet365"
+                        options={bookmakerOptions}
+                        value={formData.mainBookmakerId}
+                        onChange={value => dispatch({ type: 'UPDATE_FIELD', field: 'mainBookmakerId', value })}
+                        isSearchable={true}
+                        searchPlaceholder="Buscar casa..."
                     />
 
-                    <div className="p-4 bg-[#0d1121] border border-dashed border-white/10 rounded-xl">
-                        <div className="flex justify-between items-center mb-3">
-                            <label className="text-[10px] text-textMuted uppercase font-bold block mb-2">Fotos</label>
-                            <div
-                                onDragOver={handleDragOver}
-                                onDragEnter={handleDragOver}
-                                onDragLeave={handleDragLeave}
-                                onDrop={handlePhotoSelect}
-                                className={`
+                    <Input
+                        label="Procedimento / Evento"
+                        placeholder="Ex: Múltipla Brasileirão"
+                        value={formData.event}
+                        onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'event', value: e.target.value })}
+                    />
+
+                    <Dropdown
+                        label="Promoção (Opcional)"
+                        placeholder="Nenhuma"
+                        options={promotionOptions}
+                        value={formData.promotionType || 'Nenhuma'}
+                        onChange={value => dispatch({ type: 'UPDATE_FIELD', field: 'promotionType', value })}
+                    />
+
+                    <Dropdown
+                        label="Status Geral"
+                        options={statusOptions}
+                        value={formData.generalStatus || 'Concluído'}
+                        onChange={value => dispatch({ type: 'UPDATE_FIELD', field: 'generalStatus', value })}
+                    />
+
+                    <div className="h-px bg-white/5 my-2" />
+
+                    <div>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-sm font-bold text-primary uppercase tracking-wider">Coberturas</h3>
+                            <Button size="sm" variant="neutral" onClick={addCoverage} className="text-xs h-8 px-3">
+                                <Plus size={14} /> Adicionar
+                            </Button>
+                        </div>
+
+                        <div className="space-y-4">
+                            {formData.coverages.map((cov, index) => {
+                                const statusItem = statuses.find(s => s.name === cov.status);
+                                const statusColor = statusItem ? statusItem.color : '#fbbf24';
+
+                                return (
+                                    <div key={cov.id} className="relative bg-[#0d1121] rounded-lg p-4 border border-white/5 overflow-hidden shadow-sm">
+                                        <div
+                                            className="absolute left-0 top-0 bottom-0 w-1"
+                                            style={{ backgroundColor: statusColor }}
+                                        />
+
+                                        <div className="flex justify-between items-start mb-4 pl-2">
+                                            <span className="text-[10px] font-bold text-textMuted uppercase tracking-wider">COBERTURA {index + 1}</span>
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    onClick={() => moveCoverage(cov.id, 'up')}
+                                                    disabled={index === 0}
+                                                    className="text-gray-600 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed p-1"
+                                                    title="Mover para cima"
+                                                >
+                                                    <ChevronUp size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => moveCoverage(cov.id, 'down')}
+                                                    disabled={index === formData.coverages.length - 1}
+                                                    className="text-gray-600 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed p-1"
+                                                    title="Mover para baixo"
+                                                >
+                                                    <ChevronDown size={16} />
+                                                </button>
+                                                <div className="w-px h-3 bg-white/10 mx-1" />
+                                                <button
+                                                    onClick={() => duplicateCoverage(cov.id)}
+                                                    className="text-gray-600 hover:text-white transition-colors p-1"
+                                                    title="Duplicar"
+                                                >
+                                                    <Copy size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => removeCoverage(cov.id)}
+                                                    className="text-gray-600 hover:text-danger transition-colors p-1"
+                                                    title="Excluir"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3 pl-2">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] text-textMuted uppercase font-bold">Casa</label>
+                                                <Dropdown
+                                                    options={bookmakerOptions}
+                                                    value={cov.bookmakerId}
+                                                    onChange={value => updateCoverage(cov.id, 'bookmakerId', value)}
+                                                    placeholder="Casa"
+                                                    className="text-xs"
+                                                    isSearchable={true}
+                                                    searchPlaceholder="Buscar casa..."
+                                                />
+                                            </div>
+                                            <Input
+                                                label="Mercado"
+                                                className="text-xs py-1.5"
+                                                placeholder="Mercado"
+                                                value={cov.market}
+                                                onChange={e => updateCoverage(cov.id, 'market', e.target.value)}
+                                            />
+                                            <Input
+                                                label="ODD"
+                                                type="tel"
+                                                inputMode="decimal"
+                                                className="text-xs py-1.5"
+                                                placeholder="0.00"
+                                                value={cov.odd === 0 ? '' : cov.odd.toFixed(2)}
+                                                onChange={e => {
+                                                    const digits = e.target.value.replace(/\D/g, '');
+                                                    if (digits === '') {
+                                                        updateCoverage(cov.id, 'odd', 0);
+                                                    } else {
+                                                        const val = parseInt(digits) / 100;
+                                                        updateCoverage(cov.id, 'odd', val);
+                                                    }
+                                                    // Reset manual return when odd changes to ensure auto-calc is used
+                                                    updateCoverage(cov.id, 'manualReturn', undefined);
+                                                }}
+                                            />
+                                            <Input
+                                                label="Stake"
+                                                type="tel"
+                                                inputMode="numeric"
+                                                className="text-xs py-1.5"
+                                                placeholder="R$ 0,00"
+                                                value={cov.stake.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                onChange={e => {
+                                                    const value = e.target.value.replace(/\D/g, '');
+                                                    const numberValue = parseInt(value, 10) / 100;
+                                                    updateCoverage(cov.id, 'stake', isNaN(numberValue) ? 0 : numberValue);
+                                                    // Reset manual return when stake changes to ensure auto-calc is used
+                                                    updateCoverage(cov.id, 'manualReturn', undefined);
+                                                }}
+                                            />
+
+                                            <div className="col-span-2">
+                                                <Input
+                                                    label="Retorno Estimado"
+                                                    type="tel"
+                                                    inputMode="numeric"
+                                                    className={`text-xs py-1.5 ${(cov.manualReturn !== undefined && cov.manualReturn > 0) ? 'text-white font-bold' : 'text-gray-400'}`}
+                                                    placeholder="Auto-calc..."
+                                                    value={
+                                                        (cov.manualReturn !== undefined && cov.manualReturn > 0)
+                                                            ? cov.manualReturn.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+                                                            : (cov.stake && cov.odd ? (() => {
+                                                                const isFirstCoverage = index === 0;
+                                                                const isFreebetConversion = formData.promotionType?.toLowerCase().includes('conversão freebet');
+                                                                let calculatedReturn = cov.stake * cov.odd;
+
+                                                                if (isFreebetConversion && isFirstCoverage) {
+                                                                    calculatedReturn -= cov.stake;
+                                                                }
+
+                                                                return calculatedReturn.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                                                            })() : '')
+                                                    }
+                                                    onChange={e => {
+                                                        const rawValue = e.target.value;
+                                                        const value = rawValue.replace(/\D/g, '');
+
+                                                        // If field is completely empty, reset to auto-calc
+                                                        if (rawValue === '' || value === '' || value === '0') {
+                                                            updateCoverage(cov.id, 'manualReturn', undefined);
+                                                        } else {
+                                                            const numberValue = parseInt(value, 10) / 100;
+                                                            updateCoverage(cov.id, 'manualReturn', numberValue);
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+
+                                            <div className="col-span-2 mt-1">
+                                                <label className="text-[10px] text-textMuted uppercase font-bold block mb-2">Status Cobertura</label>
+                                                <Dropdown
+                                                    options={statusOptions}
+                                                    value={cov.status}
+                                                    onChange={value => updateCoverage(cov.id, 'status', value)}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="h-px bg-white/5 my-2" />
+
+                    <div className="space-y-3">
+                        <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Ganho Extra (Opcional)</label>
+                        <Input
+                            type="tel"
+                            inputMode="decimal"
+                            prefix="R$"
+                            placeholder="0,00"
+                            value={formData.extraGain !== undefined && formData.extraGain !== 0 ? (formData.extraGain >= 0 ? formData.extraGain.toFixed(2) : formData.extraGain.toFixed(2)) : ''}
+                            onChange={e => {
+                                const value = e.target.value.replace(/[^\d-]/g, '');
+                                if (value === '' || value === '-') {
+                                    dispatch({ type: 'UPDATE_FIELD', field: 'extraGain', value: undefined });
+                                } else {
+                                    const numberValue = parseInt(value, 10) / 100;
+                                    dispatch({ type: 'UPDATE_FIELD', field: 'extraGain', value: numberValue });
+                                }
+                            }}
+                        />
+                        <p className="text-[10px] text-gray-500">Adicione um valor extra ao lucro/prejuízo (ex: bônus, cashback). Use valores negativos para descontos.</p>
+                    </div>
+
+
+
+                    <div className="space-y-3">
+                        <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Anotações & Mídia</label>
+
+                        <textarea
+                            className="w-full bg-[#0d1121] border border-white/10 focus:border-primary text-white rounded-lg py-3 px-4 placeholder-gray-600 focus:outline-none transition-colors text-sm min-h-[100px] resize-none shadow-inner"
+                            placeholder="Detalhes adicionais..."
+                            value={formData.notes}
+                            onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'notes', value: e.target.value })}
+                        />
+
+                        <div className="p-4 bg-[#0d1121] border border-dashed border-white/10 rounded-xl">
+                            <div className="flex justify-between items-center mb-3">
+                                <label className="text-[10px] text-textMuted uppercase font-bold block mb-2">Fotos</label>
+                                <div
+                                    onDragOver={handleDragOver}
+                                    onDragEnter={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handlePhotoSelect}
+                                    className={`
                                         border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center gap-2 transition-all
                                         ${isDragging ? 'border-primary bg-primary/10 scale-[1.02]' : 'border-white/10 bg-black/20 hover:border-white/20'}
                                     `}
-                            >
-                                <button
-                                    type="button"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase cursor-pointer hover:text-white transition-colors"
                                 >
-                                    <div className="p-2 bg-white/5 rounded-full"><Paperclip size={14} /></div>
-                                    <span>{isDragging ? 'Solte as fotos aqui' : 'Adicionar Fotos (ou arraste aqui)'}</span>
-                                </button>
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    multiple
-                                    accept="image/*"
-                                    style={{ display: 'none' }}
-                                    onChange={handlePhotoSelect}
-                                />
-                                <span className="text-[10px] text-gray-600">Sem limite de tamanho</span>
-                            </div>
-                        </div>
-
-                        {tempPhotos.length > 0 && (
-                            <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 mt-2">
-                                {tempPhotos.map((photo, index) => (
-                                    <div
-                                        key={index}
-                                        onClick={() => {
-                                            setViewerStartIndex(index);
-                                            setIsViewerOpen(true);
-                                        }}
-                                        className="relative aspect-square rounded-lg overflow-hidden border border-white/10 group bg-black/40 cursor-pointer"
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase cursor-pointer hover:text-white transition-colors"
                                     >
-                                        <img src={photo.url} alt="Preview" className="w-full h-full object-cover" />
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                removePhoto(index);
-                                            }}
-                                            className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full hover:bg-danger transition-colors opacity-0 group-hover:opacity-100"
-                                        >
-                                            <X size={10} />
-                                        </button>
-                                    </div>
-                                ))}
+                                        <div className="p-2 bg-white/5 rounded-full"><Paperclip size={14} /></div>
+                                        <span>{isDragging ? 'Solte as fotos aqui' : 'Adicionar Fotos (ou arraste aqui)'}</span>
+                                    </button>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        multiple
+                                        accept="image/*"
+                                        style={{ display: 'none' }}
+                                        onChange={handlePhotoSelect}
+                                    />
+                                    <span className="text-[10px] text-gray-600">Sem limite de tamanho</span>
+                                </div>
                             </div>
-                        )}
+
+                            {tempPhotos.length > 0 && (
+                                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 mt-2">
+                                    {tempPhotos.map((photo, index) => (
+                                        <div
+                                            key={index}
+                                            onClick={() => {
+                                                setViewerStartIndex(index);
+                                                setIsViewerOpen(true);
+                                            }}
+                                            className="relative aspect-square rounded-lg overflow-hidden border border-white/10 group bg-black/40 cursor-pointer"
+                                        >
+                                            <img src={photo.url} alt="Preview" className="w-full h-full object-cover" />
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    removePhoto(index);
+                                                }}
+                                                className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full hover:bg-danger transition-colors opacity-0 group-hover:opacity-100"
+                                            >
+                                                <X size={10} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
-            </div>
-        </Modal>
-        <ImageViewer
-            isOpen={isViewerOpen}
-            onClose={() => setIsViewerOpen(false)}
-            images={tempPhotos.map(p => p.url)}
-            startIndex={viewerStartIndex}
-        />
-    </>
-);
+            </Modal>
+            <ImageViewer
+                isOpen={isViewerOpen}
+                onClose={() => setIsViewerOpen(false)}
+                images={tempPhotos.map(p => p.url)}
+                startIndex={viewerStartIndex}
+            />
+        </>
+    );
 };
 
 export default BetFormModal;
