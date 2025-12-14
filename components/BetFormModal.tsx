@@ -138,6 +138,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
         if (e.type === 'drop') {
             e.preventDefault();
+            e.stopPropagation();
             files = Array.from((e as React.DragEvent<HTMLDivElement>).dataTransfer.files);
             setIsDragging(false);
         } else {
@@ -176,12 +177,17 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         e.stopPropagation();
+        e.dataTransfer.dropEffect = 'copy';
         setIsDragging(true);
     };
 
     const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         e.stopPropagation();
+
+        // Prevent flickering when dragging over child elements
+        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+
         setIsDragging(false);
     };
 
