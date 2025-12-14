@@ -1,7 +1,7 @@
 import React, { useState, useReducer, useEffect, useRef, useCallback } from 'react';
 import { Button, Input, Dropdown, Modal, SingleDatePickerModal, ImageViewer, MoneyDisplay } from './ui/UIComponents';
 import {
-    Plus, Trash2, X, Calendar, Paperclip, Minus, Loader2, Copy, ChevronUp, ChevronDown
+    Plus, Trash2, X, Calendar, Paperclip, Minus, Loader2, Copy, ChevronUp, ChevronDown, UploadCloud
 } from 'lucide-react';
 import { Bet, Bookmaker, StatusItem, PromotionItem, Coverage, User } from '../types';
 import { FirestoreService } from '../services/firestoreService';
@@ -96,6 +96,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
+    const [isGlobalDragging, setIsGlobalDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const tempPhotosRef = useRef(tempPhotos);
 
@@ -177,28 +178,56 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
             }
         };
 
-        const onDrop = (e: any) => {
-            console.log('Global drop captured!'); // Debug
+        const onDragEnterGlobal = (e: any) => {
             e.preventDefault();
             e.stopPropagation();
+            if (e.dataTransfer && e.dataTransfer.types && Array.from(e.dataTransfer.types).includes("Files")) {
+                setIsGlobalDragging(true);
+            }
+        };
+
+        const onDropGlobal = (e: any) => {
+            console.log('Global drop captured via Overlay!');
+            e.preventDefault();
+            e.stopPropagation();
+            setIsGlobalDragging(false);
             if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
                 processFiles(Array.from(e.dataTransfer.files));
             }
         };
 
         if (isOpen) {
-            // Attach to document with capture to be absolutely sure we catch it first
-            document.addEventListener('dragenter', preventDefault, true);
+            // Document listeners to detect drag start and prevent browser defaults
+            document.addEventListener('dragenter', onDragEnterGlobal, true);
             document.addEventListener('dragover', preventDefault, true);
-            document.addEventListener('drop', onDrop, true);
+            document.addEventListener('drop', onDropGlobal, true); // Fallback if overlay fails to catch it
         }
 
         return () => {
-            document.removeEventListener('dragenter', preventDefault, true);
+            document.removeEventListener('dragenter', onDragEnterGlobal, true);
             document.removeEventListener('dragover', preventDefault, true);
-            document.removeEventListener('drop', onDrop, true);
+            document.removeEventListener('drop', onDropGlobal, true);
         };
-    }, [isOpen, processFiles]); // processFiles is now stable
+    }, [isOpen, processFiles]);
+
+    // Overlay handlers
+    const handleOverlayDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsGlobalDragging(false);
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            processFiles(Array.from(e.dataTransfer.files));
+        }
+    };
+
+    const handleOverlayDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Only close if we are leaving the window or the overlay itself (not entering a child)
+        if (e.relatedTarget === null) {
+            setIsGlobalDragging(false);
+        }
+    }; // processFiles is now stable
 
     const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent<HTMLDivElement>) => {
         let files: File[] = [];
@@ -748,6 +777,25 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                         </div>
                     </div>
                 </div>
+
+                {isGlobalDragging && (
+                    <div
+                        className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center border-4 border-dashed border-primary m-4 rounded-3xl animate-in fade-in duration-200"
+                        onDragOver={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.dataTransfer.dropEffect = 'copy';
+                        }}
+                        onDrop={handleOverlayDrop}
+                        onDragLeave={handleOverlayDragLeave}
+                    >
+                        <div className="bg-[#151b2e] p-8 rounded-full mb-6 shadow-[0_0_50px_rgba(23,186,164,0.3)] animate-bounce">
+                            <UploadCloud size={64} className="text-primary" />
+                        </div>
+                        <h3 className="text-3xl font-bold text-white mb-2">Solte a imagem agora!</h3>
+                        <p className="text-lg text-gray-400">Adicionar à aposta automaticamente</p>
+                    </div>
+                )}
             </Modal>
             <ImageViewer
                 isOpen={isViewerOpen}
