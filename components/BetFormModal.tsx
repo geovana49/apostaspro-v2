@@ -181,7 +181,8 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
         const onDragEnterGlobal = (e: any) => {
             e.preventDefault();
             e.stopPropagation();
-            if (e.dataTransfer && e.dataTransfer.types && Array.from(e.dataTransfer.types).includes("Files")) {
+            // Relaxed check: Trigger on any drag event to ensure visibility
+            if (e.dataTransfer) {
                 setIsGlobalDragging(true);
             }
         };
