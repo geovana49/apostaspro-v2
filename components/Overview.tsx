@@ -32,11 +32,13 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
 
     // --- Filtering Logic ---
     const getFilteredBets = () => {
-        const now = new Date();
+        const now = new Date(); // Local time
 
         return bets.filter(bet => {
-            const betDate = new Date(bet.date);
-            const betDay = new Date(betDate.getFullYear(), betDate.getMonth(), betDate.getDate());
+            // Parse YYYY-MM-DD string to local Date components to avoid UTC shift
+            const [y, m, d] = bet.date.split('-').map(Number);
+            const betDate = new Date(y, m - 1, d); // Local midnight
+            const betDay = new Date(y, m - 1, d);
             const currentDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
             switch (period) {
@@ -49,6 +51,7 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
                 case 'month':
                     return betDate.getMonth() === now.getMonth() && betDate.getFullYear() === now.getFullYear();
                 case 'last-month':
+                    // Safe last month calculation
                     const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
                     return betDate.getMonth() === lastMonthDate.getMonth() && betDate.getFullYear() === lastMonthDate.getFullYear();
                 case 'specific-month':
@@ -57,10 +60,13 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
                     return betDate.getMonth() === month - 1 && betDate.getFullYear() === year;
                 case 'custom':
                     if (!startDate && !endDate) return true;
-                    const start = startDate ? new Date(startDate) : new Date('2000-01-01');
-                    const startDay = new Date(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate());
-                    const end = endDate ? new Date(endDate) : new Date('2100-01-01');
-                    const endDay = new Date(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate());
+                    // Fix custom range parsing too
+                    const startRaw = startDate ? startDate.split('-').map(Number) : [2000, 1, 1];
+                    const startDay = new Date(startRaw[0], startRaw[1] - 1, startRaw[2]);
+
+                    const endRaw = endDate ? endDate.split('-').map(Number) : [2100, 1, 1];
+                    const endDay = new Date(endRaw[0], endRaw[1] - 1, endRaw[2]);
+
                     return betDay >= startDay && betDay <= endDay;
                 case 'all':
                 default:
@@ -73,8 +79,10 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
         const now = new Date();
 
         return gains.filter(gain => {
-            const gainDate = new Date(gain.date);
-            const gainDay = new Date(gainDate.getFullYear(), gainDate.getMonth(), gainDate.getDate());
+            // Parse YYYY-MM-DD string to local Date components
+            const [y, m, d] = gain.date.split('-').map(Number);
+            const gainDate = new Date(y, m - 1, d);
+            const gainDay = new Date(y, m - 1, d);
             const currentDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
             switch (period) {
@@ -95,13 +103,13 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
                     return gainDate.getMonth() === month - 1 && gainDate.getFullYear() === year;
                 case 'custom':
                     if (!startDate && !endDate) return true;
-                    const start = startDate ? new Date(startDate) : new Date('2000-01-01');
-                    const startDay = new Date(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate());
-                    const end = endDate ? new Date(endDate) : new Date('2100-01-01');
-                    const endDay = new Date(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate());
-                    // FIX: Used betDay instead of gainDay
+                    const startRaw = startDate ? startDate.split('-').map(Number) : [2000, 1, 1];
+                    const startDay = new Date(startRaw[0], startRaw[1] - 1, startRaw[2]);
+
+                    const endRaw = endDate ? endDate.split('-').map(Number) : [2100, 1, 1];
+                    const endDay = new Date(endRaw[0], endRaw[1] - 1, endRaw[2]);
+
                     return gainDay >= startDay && gainDay <= endDay;
-                case 'all':
                 default:
                     return true;
             }
