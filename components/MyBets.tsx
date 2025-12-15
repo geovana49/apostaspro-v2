@@ -688,12 +688,17 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             if (betLower === filterLower) {
                 // Match - continue to next check
             } else {
-                // Word-based matching: check if all significant words from filter are in bet promo
-                // This handles "Super Odd" vs "Super Odds" but not "Freebet" vs "Conversão Freebet"
+                // Word-based matching with strict word count check
                 const filterWords = filterLower.split(/\s+/).filter(w => w.length > 2); // Ignore small words
                 const betWords = betLower.split(/\s+/).filter(w => w.length > 2);
 
-                // Check if bet promo contains all filter words (or very similar)
+                // IMPORTANT: Both must have the same number of significant words
+                // This prevents "Freebet" from matching "Conversão Freebet"
+                if (filterWords.length !== betWords.length) {
+                    return false;
+                }
+
+                // Check if all filter words have a matching bet word (handles "Odd" vs "Odds")
                 const allWordsMatch = filterWords.every(filterWord =>
                     betWords.some(betWord =>
                         betWord === filterWord || // Exact word match
