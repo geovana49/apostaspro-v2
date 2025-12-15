@@ -166,15 +166,7 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             };
         });
 
-        // Calculate Total Gains first to include in Net Profit
-        const totalGainsInPeriod = filteredGains.reduce((acc, gain) => {
-            if (['Recebido', 'Confirmado', 'Concluido', 'Concluído'].includes(gain.status)) {
-                return acc + gain.amount;
-            }
-            return acc;
-        }, 0);
-
-        const totalProfit = resolvedReturned - resolvedStaked + totalGainsInPeriod;
+        const totalProfit = resolvedReturned - resolvedStaked;
         const roi = resolvedStaked > 0 ? (totalProfit / resolvedStaked) * 100 : 0;
 
         const betPromotionsCount = filteredBets.filter(b => b.promotionType && b.promotionType !== 'Nenhuma').length;
@@ -283,14 +275,6 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
             const { profit } = calculateBetStats(bet);
             monthlyProfits[key] = (monthlyProfits[key] || 0) + profit;
-        });
-
-        // Add all gains to monthly profits
-        gains.forEach(gain => {
-            if (!['Recebido', 'Confirmado', 'Concluido', 'Concluído'].includes(gain.status)) return;
-            const date = new Date(gain.date);
-            const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-            monthlyProfits[key] = (monthlyProfits[key] || 0) + gain.amount;
         });
 
         const bestMonths = Object.entries(monthlyProfits)
