@@ -249,7 +249,7 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
         if (bestBookmakerId && bookmakerProfits[bestBookmakerId]) {
             topPromos = Object.entries(bookmakerProfits[bestBookmakerId].promos)
                 .map(([name, profit]) => ({ name, profit }))
-                .filter(p => p.profit > 0) // Only positive contributors
+                // Removed strict positive filter to show top contributors (even if mixed)
                 .sort((a, b) => b.profit - a.profit)
                 .slice(0, 3); // Take top 3
         }
@@ -611,7 +611,7 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
 
                             {/* Best Promo */}
                             <div>
-                                <p className="text-[10px] text-textMuted uppercase font-bold mb-1">Melhor Estratégia</p>
+                                <p className="text-[10px] text-textMuted uppercase font-bold mb-1">PROMOÇÕES</p>
                                 <div className="flex flex-col gap-1 mt-1">
                                     {bestStats.topPromos.length > 0 ? (
                                         bestStats.topPromos.map((promo, idx) => (
