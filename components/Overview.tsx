@@ -518,7 +518,7 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
                         <h3 className="font-bold text-white text-sm uppercase tracking-wide">Destaque {getPeriodLabel()}</h3>
                     </div>
 
-                    {bestStats && bestStats.totalProfit > 0 ? (
+                    {bestStats ? (
                         <div className="space-y-4 relative z-10">
                             {/* Best Bookmaker */}
                             <div>
