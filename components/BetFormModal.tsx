@@ -111,22 +111,37 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
         console.log('BetFormModal isOpen changed:', isOpen, 'saveAsGain:', saveAsGain);
         if (isOpen) {
             if (initialData) {
-                dispatch({
-                    type: 'SET_FORM',
-                    payload: {
-                        id: initialData.id,
-                        date: initialData.date.split('T')[0],
-                        mainBookmakerId: initialData.mainBookmakerId,
-                        event: initialData.event,
-                        promotionType: initialData.promotionType || 'Nenhuma',
-                        status: initialData.status as any,
-                        generalStatus: (initialData as any).generalStatus || 'Concluído',
-                        coverages: initialData.coverages,
-                        notes: initialData.notes || '',
-                        extraGain: (initialData as any).extraGain
+                // 1. Load standard initial data first
+                let formPayload = {
+                    id: initialData.id,
+                    date: initialData.date.split('T')[0],
+                    mainBookmakerId: initialData.mainBookmakerId,
+                    event: initialData.event,
+                    promotionType: initialData.promotionType || 'Nenhuma',
+                    status: initialData.status as any,
+                    generalStatus: (initialData as any).generalStatus || 'Concluído',
+                    coverages: initialData.coverages,
+                    notes: initialData.notes || '',
+                    extraGain: (initialData as any).extraGain
+                };
+                let photosPayload = initialData.photos ? initialData.photos.map(url => ({ url })) : [];
+
+                // 2. Check for specific edit draft
+                const editDraft = localStorage.getItem(`apostaspro_draft_edit_${initialData.id}`);
+                if (editDraft) {
+                    try {
+                        const { formData: savedForm, tempPhotos: savedPhotos } = JSON.parse(editDraft);
+                        console.log('Restoring EDIT draft for', initialData.id);
+                        // Merge saved form data with ID from initialData to be safe
+                        formPayload = { ...savedForm, id: initialData.id };
+                        photosPayload = savedPhotos || [];
+                    } catch (e) {
+                        console.error('Error parsing edit draft:', e);
                     }
-                });
-                setTempPhotos(initialData.photos ? initialData.photos.map(url => ({ url })) : []);
+                }
+
+                dispatch({ type: 'SET_FORM', payload: formPayload });
+                setTempPhotos(photosPayload);
             } else {
                 // Check for generic draft
                 const savedDraft = localStorage.getItem('apostaspro_draft_modal');
@@ -151,13 +166,18 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
     // Auto-Save Draft
     useEffect(() => {
-        if (isOpen && !initialData) {
+        if (isOpen) {
             const draft = {
                 formData,
                 tempPhotos,
                 timestamp: Date.now()
             };
-            localStorage.setItem('apostaspro_draft_modal', JSON.stringify(draft));
+
+            if (initialData && initialData.id) {
+                localStorage.setItem(`apostaspro_draft_edit_${initialData.id}`, JSON.stringify(draft));
+            } else {
+                localStorage.setItem('apostaspro_draft_modal', JSON.stringify(draft));
+            }
         }
     }, [formData, tempPhotos, isOpen, initialData]);
 
@@ -462,7 +482,14 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
             const betDate = parseDate(formData.date);
             onSaveSuccess(betDate);
-            localStorage.removeItem('apostaspro_draft_modal'); // Clear draft on success
+
+            // Clear specific draft
+            if (initialData && initialData.id) {
+                localStorage.removeItem(`apostaspro_draft_edit_${initialData.id}`);
+            } else {
+                localStorage.removeItem('apostaspro_draft_modal');
+            }
+
             onClose();
         } catch (error: any) {
             console.error("Error saving:", error);

@@ -224,20 +224,36 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
 
     const handleEdit = (bet: Bet) => {
         setIsEditing(true);
-        dispatch({
-            type: 'SET_FORM',
-            payload: {
-                id: bet.id,
-                date: bet.date.split('T')[0],
-                mainBookmakerId: bet.mainBookmakerId,
-                event: bet.event,
-                promotionType: bet.promotionType || 'Nenhuma',
-                status: bet.status as any,
-                coverages: bet.coverages,
-                notes: bet.notes || ''
+
+        // 1. Initial State
+        let formPayload = {
+            id: bet.id,
+            date: bet.date.split('T')[0],
+            mainBookmakerId: bet.mainBookmakerId,
+            event: bet.event,
+            promotionType: bet.promotionType || 'Nenhuma',
+            status: bet.status as any,
+            coverages: bet.coverages,
+            notes: bet.notes || ''
+        };
+        let photosPayload = bet.photos ? bet.photos.map(url => ({ url })) : [];
+
+        // 2. Check for EDIT draft
+        const editDraft = localStorage.getItem(`apostaspro_draft_edit_${bet.id}`);
+        if (editDraft) {
+            try {
+                const { formData: savedForm, tempPhotos: savedPhotos } = JSON.parse(editDraft);
+                console.log('Restoring EDIT draft for MyBets:', bet.id);
+                // Force ID to match bet.id to be safe
+                formPayload = { ...savedForm, id: bet.id };
+                photosPayload = savedPhotos || [];
+            } catch (e) {
+                console.error('Error parsing edit draft:', e);
             }
-        });
-        setTempPhotos(bet.photos ? bet.photos.map(url => ({ url })) : []);
+        }
+
+        dispatch({ type: 'SET_FORM', payload: formPayload });
+        setTempPhotos(photosPayload);
         setIsModalOpen(true);
         setDeleteId(null);
     };
@@ -266,14 +282,20 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     };
 
     // Auto-Save Draft
+    // Auto-Save Draft
     useEffect(() => {
-        if (isModalOpen && !isEditing) {
+        if (isModalOpen) {
             const draft = {
                 formData,
                 tempPhotos,
                 timestamp: Date.now()
             };
-            localStorage.setItem('apostaspro_draft_mybets', JSON.stringify(draft));
+
+            if (isEditing && formData.id) {
+                localStorage.setItem(`apostaspro_draft_edit_${formData.id}`, JSON.stringify(draft));
+            } else if (!isEditing) {
+                localStorage.setItem('apostaspro_draft_mybets', JSON.stringify(draft));
+            }
         }
     }, [formData, tempPhotos, isModalOpen, isEditing]);
 
@@ -465,7 +487,13 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             console.log("Navigated to date:", betDate);
 
             setIsModalOpen(false);
-            localStorage.removeItem('apostaspro_draft_mybets'); // Clear draft on success
+
+            // Clear correct draft
+            if (isEditing && formData.id) {
+                localStorage.removeItem(`apostaspro_draft_edit_${formData.id}`);
+            } else {
+                localStorage.removeItem('apostaspro_draft_mybets');
+            }
         } catch (error: any) {
             console.error("Error saving bet:", error);
             alert(`Erro ao salvar a aposta: ${error.message || error}`);
