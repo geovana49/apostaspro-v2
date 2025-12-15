@@ -128,9 +128,29 @@ export const FirestoreService = {
         // 1. Settings (Check if exists first)
         const settingsRef = doc(db, "users", userId, "settings", "preferences");
         const settingsSnap = await getDocs(query(collection(db, "users", userId, "settings")));
-        if (settingsSnap.empty) {
-            batch.set(settingsRef, initialData.settings, { merge: true });
+
+        // Critical Check: If settings exist and have 'initialized: true', DO NOT overwrite/recreate anything.
+        // This prevents re-creating bookmakers if user intentionally deleted them or if network glitch returns empty collection.
+        let isInitialized = false;
+        if (!settingsSnap.empty) {
+            const settingsData = settingsSnap.docs[0].data();
+            if (settingsData.initialized) {
+                console.log("User data already initialized. Skipping default creation.");
+                return;
+            }
+            // If settings exist but no flag (migration), we assume initialized if bookmakers exist
+            // But let's be safe and check specific collections below only if NOT initialized
         }
+
+        if (settingsSnap.empty) {
+            batch.set(settingsRef, { ...initialData.settings, initialized: true }, { merge: true });
+            isInitialized = true; // Mark that we are initializing now
+        } else {
+            // Mark as initialized for future if not already
+            batch.set(settingsRef, { initialized: true }, { merge: true });
+        }
+
+        // Only proceed to create defaults if we are in the initialization phase (settings were created or flag set)
 
         // 2. Bookmakers (Check if ANY bookmaker exists)
         const bookmakersSnap = await getDocs(query(collection(db, "users", userId, "bookmakers")));
