@@ -13,15 +13,15 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
     // --- GLOBAL DRAG & DROP SHIELD (CAPTURE MODE) ---
-    console.log("🛡️ Global Drag Shield Active");
+    console.log("🛡️ Global Drag Shield Active (Flow-Through)");
     window.addEventListener('dragover', function (e) {
-      e.preventDefault();
-      e.stopPropagation();
+      e.preventDefault(); // Stop browser default (opening file)
+      // e.stopPropagation(); // REMOVED: Allow event to reach React/App
     }, true);
 
     window.addEventListener('drop', function (e) {
-      e.preventDefault();
-      e.stopPropagation();
+      e.preventDefault(); // Stop browser default (opening file)
+      // e.stopPropagation(); // REMOVED: Allow event to reach React/App
     }, true);
     // ------------------------------------------------
   </script>
