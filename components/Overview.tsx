@@ -166,7 +166,15 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             };
         });
 
-        const totalProfit = resolvedReturned - resolvedStaked;
+        // Calculate Total Gains first to include in Net Profit
+        const totalGainsInPeriod = filteredGains.reduce((acc, gain) => {
+            if (['Recebido', 'Confirmado', 'Concluido', 'Concluído'].includes(gain.status)) {
+                return acc + gain.amount;
+            }
+            return acc;
+        }, 0);
+
+        const totalProfit = resolvedReturned - resolvedStaked + totalGainsInPeriod;
         const roi = resolvedStaked > 0 ? (totalProfit / resolvedStaked) * 100 : 0;
 
         const betPromotionsCount = filteredBets.filter(b => b.promotionType && b.promotionType !== 'Nenhuma').length;
@@ -233,8 +241,10 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
         let maxProfit = -Infinity;
 
         Object.entries(bookmakerProfits).forEach(([id, data]) => {
-            if (data.total > maxProfit) {
-                maxProfit = data.total;
+            // Ensure profit is a valid number, default to 0 if NaN
+            const profit = isNaN(data.total) ? 0 : data.total;
+            if (profit > maxProfit) {
+                maxProfit = profit;
                 bestBookmakerId = id;
             }
         });
@@ -261,20 +271,22 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             bestPromoProfit: maxPromoProfit
         } : null;
 
-        // --- Best Months Calculation ---
+        // --- Best Months Calculation (Global - All Time) ---
         const monthlyProfits: Record<string, number> = {};
 
+        // Use all bets for global ranking, not just filtered ones
+        const allResolvedBets = bets.filter(b => !['Pendente', 'Rascunho'].includes(b.status));
+
         // Group bets by month
-        resolvedBets.forEach(bet => {
+        allResolvedBets.forEach(bet => {
             const date = new Date(bet.date);
             const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
             const { profit } = calculateBetStats(bet);
             monthlyProfits[key] = (monthlyProfits[key] || 0) + profit;
         });
 
-        // Extra Gains are usually not monthly based in the same way, but let's include them?
-        // For simplicity and consistency with 'Evolution', let's include Gains if they have dates.
-        filteredGains.forEach(gain => {
+        // Add all gains to monthly profits
+        gains.forEach(gain => {
             if (!['Recebido', 'Confirmado', 'Concluido', 'Concluído'].includes(gain.status)) return;
             const date = new Date(gain.date);
             const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
