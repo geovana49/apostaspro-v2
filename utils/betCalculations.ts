@@ -57,5 +57,8 @@ export const calculateBetStats = (bet: Bet) => {
         });
     }
 
-    return { totalStake, totalReturn, profit };
+    const greenCount = bet.coverages.filter(c => c.status === 'Green' || c.status === 'Meio Green').length;
+    const isDoubleGreen = !!bet.isDoubleGreen || greenCount >= 2;
+
+    return { totalStake, totalReturn, profit, isDoubleGreen };
 };

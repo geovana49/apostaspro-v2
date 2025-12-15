@@ -163,7 +163,7 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
             sampleFilteredBets: filteredBets.slice(0, 3).map(b => ({ date: b.date, hasPromotion: !!(b.promotionType && b.promotionType !== 'Nenhuma'), promotion: b.promotionType }))
         });
         const totalPromotionsCount = betPromotionsCount;
-        const doubleGreenBets = filteredBets.filter(b => b.isDoubleGreen);
+        const doubleGreenBets = filteredBets.filter(b => calculateBetStats(b).isDoubleGreen);
 
         return { totalStaked: resolvedStaked, totalReturned: resolvedReturned, netProfit: totalProfit, roi, chartData, totalPromotionsCount, doubleGreenBets };
     };

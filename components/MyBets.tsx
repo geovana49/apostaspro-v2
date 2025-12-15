@@ -864,7 +864,7 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
 
                     const isExpanded = expandedId === bet.id;
                     const isDraft = bet.status === 'Rascunho';
-                    const { totalStake, totalReturn, profit } = calculateBetStats(bet);
+                    const { totalStake, totalReturn, profit, isDoubleGreen } = calculateBetStats(bet);
 
                     console.log("✅ About to render card for:", bet.event);
 
@@ -898,7 +898,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                                 <h4 className="font-semibold text-white text-base flex items-center gap-2">
                                                     {bet.event}
                                                     {isDraft && <span className="text-[9px] bg-yellow-500/20 text-yellow-500 border border-yellow-500/30 px-1.5 py-0.5 rounded ml-2 font-bold tracking-wider">RASCUNHO</span>}
-                                                    {bet.isDoubleGreen && <span className="text-[9px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded ml-2 font-bold tracking-wider flex items-center gap-1"><Copy size={8} /> 2X</span>}
+                                                    {isDoubleGreen && <span className="text-[9px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded ml-2 font-bold tracking-wider flex items-center gap-1"><Copy size={8} /> 2X</span>}
                                                 </h4>
                                                 <div className="flex items-center gap-2 mt-1">
                                                     <span className="text-xs text-textMuted">{new Date(bet.date).toLocaleDateString('pt-BR')}</span>
