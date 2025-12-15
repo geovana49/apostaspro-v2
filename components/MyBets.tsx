@@ -1,4 +1,4 @@
-import React, { useState, useReducer, useRef, useEffect } from 'react';
+import React, { useState, useReducer, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, SingleDatePickerModal } from './ui/UIComponents';
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
@@ -112,6 +112,59 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const [editingId, setEditingId] = useState<string | null>(null); // Format: `${betId}-${coverageId}-${field}`
     const [editingValue, setEditingValue] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Process files for drag & drop
+    const processFiles = useCallback(async (files: File[]) => {
+        if (files.length === 0) return;
+        const MAX_PHOTOS = 8;
+
+        console.log('[MyBets processFiles] Called with', files.length, 'files');
+
+        files.sort((a, b) => a.lastModified - b.lastModified);
+
+        if (tempPhotos.length + files.length > MAX_PHOTOS) {
+            alert(`Máximo de ${MAX_PHOTOS} fotos por aposta.`);
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            const compressedBase64 = await compressImages(files);
+            const newPhotos = compressedBase64.map((base64) => ({
+                url: base64,
+                file: undefined
+            }));
+            setTempPhotos(prev => [...prev, ...newPhotos]);
+        } catch (error) {
+            console.error('Erro ao comprimir imagens:', error);
+            alert('Erro ao processar imagens. Tente novamente.');
+        } finally {
+            setIsUploading(false);
+        }
+    }, [tempPhotos.length]);
+
+    // Stable reference to processFiles
+    const processFilesRef = useRef(processFiles);
+    useEffect(() => {
+        processFilesRef.current = processFiles;
+    }, [processFiles]);
+
+    // Register global drop handler when modal is open
+    useLayoutEffect(() => {
+        if (isModalOpen) {
+            console.log('[MyBets] useLayoutEffect - Registering handler NOW');
+            (window as any).onApostasProDrop = (files: FileList) => {
+                console.log('[MyBets] Handler called with', files.length, 'files');
+                processFilesRef.current(Array.from(files));
+            };
+        }
+        return () => {
+            if (isModalOpen) {
+                console.log('[MyBets] useLayoutEffect cleanup');
+                (window as any).onApostasProDrop = null;
+            }
+        };
+    }, [isModalOpen]);
 
     // IntersectionObserver for floating button
     useEffect(() => {
