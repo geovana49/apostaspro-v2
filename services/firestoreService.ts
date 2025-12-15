@@ -125,73 +125,54 @@ export const FirestoreService = {
     }) => {
         const batch = writeBatch(db);
 
-        // 1. Settings (Check if exists first)
+        // 1. Settings Check (The Gatekeeper)
         const settingsRef = doc(db, "users", userId, "settings", "preferences");
         const settingsSnap = await getDocs(query(collection(db, "users", userId, "settings")));
 
-        // Critical Check: If settings exist and have 'initialized: true', DO NOT overwrite/recreate anything.
-        // This prevents re-creating bookmakers if user intentionally deleted them or if network glitch returns empty collection.
-        let isInitialized = false;
+        // STRICT PROTECTION: If settings exist, we assume the user is already initialized.
+        // We DO NOT check if other collections are empty because slow connections can report false empty.
+        // This prevents overwriting custom bookmakers with defaults.
         if (!settingsSnap.empty) {
+            console.log("User settings found. detailed check skipped to protect data.");
+
+            // Optional: Ensure 'initialized' flag is present for future robustness, but don't touch data.
             const settingsData = settingsSnap.docs[0].data();
-            if (settingsData.initialized) {
-                console.log("User data already initialized. Skipping default creation.");
-                return;
+            if (!settingsData.initialized) {
+                batch.set(settingsRef, { initialized: true }, { merge: true });
+                await batch.commit();
             }
-            // If settings exist but no flag (migration), we assume initialized if bookmakers exist
-            // But let's be safe and check specific collections below only if NOT initialized
+            return;
         }
 
-        if (settingsSnap.empty) {
-            batch.set(settingsRef, { ...initialData.settings, initialized: true }, { merge: true });
-            isInitialized = true; // Mark that we are initializing now
-        } else {
-            // Mark as initialized for future if not already
-            batch.set(settingsRef, { initialized: true }, { merge: true });
-        }
+        // --- NEW USER FLOW ONLY (Settings are empty) ---
+        console.log("New user detected (no settings). Creating default data...");
 
-        // Only proceed to create defaults if we are in the initialization phase (settings were created or flag set)
+        // 1. Create Settings
+        batch.set(settingsRef, { ...initialData.settings, initialized: true }, { merge: true });
 
-        // 2. Bookmakers (Check if ANY bookmaker exists)
-        const bookmakersSnap = await getDocs(query(collection(db, "users", userId, "bookmakers")));
-        if (bookmakersSnap.empty) {
-            initialData.bookmakers.forEach(b => {
-                const ref = doc(db, "users", userId, "bookmakers", b.id);
-                // Use merge: true to be extra safe, though emptiness check should catch it
-                batch.set(ref, b, { merge: true });
-            });
-        }
+        // 2. Create Defaults for all collections
+        initialData.bookmakers.forEach(b => {
+            const ref = doc(db, "users", userId, "bookmakers", b.id);
+            batch.set(ref, b, { merge: true });
+        });
 
-        // 3. Statuses
-        const statusesSnap = await getDocs(query(collection(db, "users", userId, "statuses")));
-        if (statusesSnap.empty) {
-            initialData.statuses.forEach(s => {
-                const ref = doc(db, "users", userId, "statuses", s.id);
-                batch.set(ref, s, { merge: true });
-            });
-        }
+        initialData.statuses.forEach(s => {
+            const ref = doc(db, "users", userId, "statuses", s.id);
+            batch.set(ref, s, { merge: true });
+        });
 
-        // 4. Promotions
-        const promotionsSnap = await getDocs(query(collection(db, "users", userId, "promotions")));
-        if (promotionsSnap.empty) {
-            initialData.promotions.forEach(p => {
-                const ref = doc(db, "users", userId, "promotions", p.id);
-                batch.set(ref, p, { merge: true });
-            });
-        }
+        initialData.promotions.forEach(p => {
+            const ref = doc(db, "users", userId, "promotions", p.id);
+            batch.set(ref, p, { merge: true });
+        });
 
-        // 5. Origins
-        const originsSnap = await getDocs(query(collection(db, "users", userId, "origins")));
-        if (originsSnap.empty) {
-            initialData.origins.forEach(o => {
-                const ref = doc(db, "users", userId, "origins", o.id);
-                batch.set(ref, o, { merge: true });
-            });
-        }
+        initialData.origins.forEach(o => {
+            const ref = doc(db, "users", userId, "origins", o.id);
+            batch.set(ref, o, { merge: true });
+        });
 
-        // Commit only if there are operations in the batch
-        // (Batch can be empty if all collections exist, commit() handles empty batch gracefully or we can check)
         await batch.commit();
+        console.log("Default data created successfully.");
     },
 
     // Factory Reset
