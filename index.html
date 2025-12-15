@@ -12,16 +12,35 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
-    // --- GLOBAL DRAG & DROP SHIELD (CAPTURE MODE) ---
-    console.log("🛡️ Global Drag Shield Active (Flow-Through)");
+    // --- GLOBAL DRAG & DROP PIPELINE (GOD MODE) ---
+    console.log("🛡️ Drop Pipeline: Active");
+
     window.addEventListener('dragover', function (e) {
-      e.preventDefault(); // Stop browser default (opening file)
-      // e.stopPropagation(); // REMOVED: Allow event to reach React/App
+      e.preventDefault(); // BLOCK Browser standard behavior (New Tab)
+      // e.stopPropagation(); // REMOVE to allow detection
     }, true);
 
     window.addEventListener('drop', function (e) {
-      e.preventDefault(); // Stop browser default (opening file)
-      // e.stopPropagation(); // REMOVED: Allow event to reach React/App
+      e.preventDefault(); // BLOCK Browser standard behavior (New Tab)
+      e.stopPropagation(); // Stop bubbling to be safe, we handle manually
+
+      // Visual Signal Flare (Green Flash)
+      document.body.style.transition = "0.2s";
+      document.body.style.boxShadow = "inset 0 0 50px 20px rgba(0, 255, 0, 0.5)";
+      setTimeout(() => document.body.style.boxShadow = "", 500);
+
+      // Pipeline: Pass files to React if a handler is registered
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        console.log("🛡️ Drop received:", e.dataTransfer.files.length, "files");
+        if (window.onApostasProDrop) {
+          console.log("🚀 Forwarding to React...");
+          window.onApostasProDrop(e.dataTransfer.files);
+        } else {
+          console.warn("⚠️ React handler not connected yet.");
+          document.body.style.boxShadow = "inset 0 0 50px 20px rgba(255, 0, 0, 0.5)"; // Red flash
+          alert("ApostasPro: Arquivo recebido, mas o aplicativo não estava pronto. Tente abrir o modal novamente.");
+        }
+      }
     }, true);
     // ------------------------------------------------
   </script>
