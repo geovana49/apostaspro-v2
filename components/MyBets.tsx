@@ -677,13 +677,23 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         }
 
 
+
         if (promotionFilter !== 'all') {
             // Normalize: treat undefined, empty string, or 'Nenhuma' as equivalent
             const betPromo = bet.promotionType || 'Nenhuma';
-            if (betPromo !== promotionFilter) {
+
+            // Flexible matching: exact, case-insensitive, or partial
+            const isMatch =
+                betPromo === promotionFilter || // Exact match
+                betPromo.toLowerCase() === promotionFilter.toLowerCase() || // Case-insensitive
+                betPromo.toLowerCase().includes(promotionFilter.toLowerCase()) || // "Super Odd" includes "Super Odds"
+                promotionFilter.toLowerCase().includes(betPromo.toLowerCase()); // "Super Odds" includes "Super Odd"
+
+            if (!isMatch) {
                 return false;
             }
         }
+
 
 
         const term = searchTerm.toLowerCase();
