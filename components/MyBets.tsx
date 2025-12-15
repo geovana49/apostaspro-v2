@@ -908,11 +908,29 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                                 </h4>
                                                 <div className="flex items-center gap-2 mt-1">
                                                     <span className="text-xs text-textMuted">{new Date(bet.date).toLocaleDateString('pt-BR')}</span>
-                                                    {bet.promotionType && bet.promotionType !== 'Nenhuma' && (
-                                                        <Badge color={promotions.find(p => p.name === bet.promotionType)?.color || '#8B5CF6'}>
-                                                            {bet.promotionType}
-                                                        </Badge>
-                                                    )}
+                                                    {bet.promotionType && bet.promotionType !== 'Nenhuma' && (() => {
+                                                        // Try exact match first
+                                                        let promo = promotions.find(p => p.name === bet.promotionType);
+                                                        // If not found, try case-insensitive match
+                                                        if (!promo) {
+                                                            promo = promotions.find(p =>
+                                                                p.name.toLowerCase() === bet.promotionType.toLowerCase()
+                                                            );
+                                                        }
+                                                        // If still not found, try partial match (handles "Super Odd" vs "Super Odds")
+                                                        if (!promo) {
+                                                            promo = promotions.find(p =>
+                                                                p.name.toLowerCase().includes(bet.promotionType.toLowerCase()) ||
+                                                                bet.promotionType.toLowerCase().includes(p.name.toLowerCase())
+                                                            );
+                                                        }
+                                                        const color = promo?.color || '#8B5CF6';
+                                                        return (
+                                                            <Badge color={color}>
+                                                                {bet.promotionType}
+                                                            </Badge>
+                                                        );
+                                                    })()}
                                                     {bet.notes && (
                                                         <div className="flex items-center gap-1 text-xs text-textMuted" title="Tem anotações">
                                                             <StickyNote size={12} />
