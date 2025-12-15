@@ -14,6 +14,8 @@
   <script>
     // --- GLOBAL DRAG & DROP PIPELINE WITH RETRY ---
     (function () {
+      console.log('[DropPipeline] Initialized');
+
       // Queue for pending files
       var pendingFiles = null;
       var retryCount = 0;
@@ -23,18 +25,18 @@
       function tryDeliverFiles() {
         if (!pendingFiles) return;
 
+        console.log('[DropPipeline] Attempt', retryCount + 1, 'handler:', !!window.onApostasProDrop);
+
         if (window.onApostasProDrop) {
-          // Handler is ready, deliver files!
+          console.log('[DropPipeline] Delivering', pendingFiles.length, 'files');
           window.onApostasProDrop(pendingFiles);
           pendingFiles = null;
           retryCount = 0;
         } else if (retryCount < maxRetries) {
-          // Handler not ready, retry
           retryCount++;
           setTimeout(tryDeliverFiles, retryInterval);
         } else {
-          // All retries exhausted
-          console.warn("ApostasPro: Handler not ready after", maxRetries, "retries");
+          console.error('[DropPipeline] Failed after', maxRetries, 'retries');
           alert("ApostasPro: Arquivo recebido, mas o aplicativo não estava pronto. Tente abrir o modal novamente.");
           pendingFiles = null;
           retryCount = 0;
@@ -46,11 +48,11 @@
       }, true);
 
       window.addEventListener('drop', function (e) {
+        console.log('[DropPipeline] DROP EVENT! Files:', e.dataTransfer ? e.dataTransfer.files.length : 0);
         e.preventDefault();
         e.stopPropagation();
 
         if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-          // Store files and start delivery attempt
           pendingFiles = e.dataTransfer.files;
           retryCount = 0;
           tryDeliverFiles();

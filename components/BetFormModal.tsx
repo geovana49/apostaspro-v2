@@ -144,6 +144,8 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
         if (files.length === 0) return;
         const MAX_PHOTOS = 8;
 
+        console.log('[processFiles] Called with', files.length, 'files');
+
         // Sort files by date (oldest to newest)
         files.sort((a, b) => a.lastModified - b.lastModified);
 
