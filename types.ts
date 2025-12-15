@@ -50,6 +50,7 @@ export interface Bet {
   notes?: string;
   photos?: string[]; // Array of base64 image strings
   extraGain?: number; // Optional extra gain/loss to add to profit calculation
+  isDoubleGreen?: boolean; // Indicator for Double Green bets
 }
 
 export interface ExtraGain {

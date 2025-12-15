@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { TrendingUp, Trophy, Wallet, Activity, Calendar, Infinity, Filter, DollarSign, Target, Eye, EyeOff, StickyNote } from 'lucide-react';
+import { TrendingUp, Trophy, Wallet, Activity, Calendar, Infinity, Filter, DollarSign, Target, Eye, EyeOff, StickyNote, Copy } from 'lucide-react';
 import { Card, Dropdown, Input, MoneyDisplay } from './ui/UIComponents';
 import { Bet, ExtraGain, AppSettings } from '../types';
 import { calculateBetStats } from '../utils/betCalculations';
@@ -163,12 +163,13 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
             sampleFilteredBets: filteredBets.slice(0, 3).map(b => ({ date: b.date, hasPromotion: !!(b.promotionType && b.promotionType !== 'Nenhuma'), promotion: b.promotionType }))
         });
         const totalPromotionsCount = betPromotionsCount;
+        const doubleGreenBets = filteredBets.filter(b => b.isDoubleGreen);
 
-        return { totalStaked: resolvedStaked, totalReturned: resolvedReturned, netProfit: totalProfit, roi, chartData, totalPromotionsCount };
+        return { totalStaked: resolvedStaked, totalReturned: resolvedReturned, netProfit: totalProfit, roi, chartData, totalPromotionsCount, doubleGreenBets };
     };
 
 
-    const { totalStaked, totalReturned, netProfit, roi, chartData, totalPromotionsCount } = calculateMetrics();
+    const { totalStaked, totalReturned, netProfit, roi, chartData, totalPromotionsCount, doubleGreenBets } = calculateMetrics();
 
     const isProfitPositive = netProfit >= 0;
 
@@ -351,6 +352,41 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
                 </Card>
             </div>
 
+            {/* Double Green Bets List */}
+            {doubleGreenBets.length > 0 && (
+                <Card className="p-6 bg-[#151b2e] border-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="p-1.5 rounded-md bg-primary/10 text-primary">
+                            <Copy size={16} />
+                        </div>
+                        <h3 className="font-bold text-white text-sm uppercase tracking-wide">Apostas com Duplo Green ({doubleGreenBets.length})</h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {doubleGreenBets.map(bet => {
+                            const stats = calculateBetStats(bet);
+                            return (
+                                <div key={bet.id} className="bg-[#090c19]/40 p-3 rounded-lg border border-primary/10 hover:border-primary/30 transition-colors">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <span className="text-xs text-textMuted">{new Date(bet.date).toLocaleDateString()}</span>
+                                        <span className="text-[10px] font-bold bg-primary/20 text-primary px-1.5 py-0.5 rounded border border-primary/20">2X</span>
+                                    </div>
+                                    <h4 className="font-bold text-white text-sm mb-1 truncate">{bet.event}</h4>
+                                    <div className="flex justify-between items-end">
+                                        <span className="text-xs text-textMuted">Lucro:</span>
+                                        <span className="font-bold text-sm text-[#6ee7b7]">
+                                            <MoneyDisplay value={stats.profit} privacyMode={settings.privacyMode} />
+                                        </span>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </Card>
+            )}
+
+
+
             {/* Bottom Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
@@ -432,7 +468,7 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
                     </div>
                 </Card>
             </div>
-        </div>
+        </div >
     );
 };
 

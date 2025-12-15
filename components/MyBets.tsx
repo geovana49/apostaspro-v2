@@ -234,7 +234,8 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             promotionType: bet.promotionType || 'Nenhuma',
             status: bet.status as any,
             coverages: bet.coverages,
-            notes: bet.notes || ''
+            notes: bet.notes || '',
+            isDoubleGreen: bet.isDoubleGreen || false
         };
         let photosPayload = bet.photos ? bet.photos.map(url => ({ url })) : [];
 
@@ -467,6 +468,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                 notes: formData.notes,
                 photos: photoBase64,
                 date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
+                isDoubleGreen: formData.isDoubleGreen || false
             };
 
             // Remove undefined values to prevent Firestore errors
@@ -896,6 +898,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                                 <h4 className="font-semibold text-white text-base flex items-center gap-2">
                                                     {bet.event}
                                                     {isDraft && <span className="text-[9px] bg-yellow-500/20 text-yellow-500 border border-yellow-500/30 px-1.5 py-0.5 rounded ml-2 font-bold tracking-wider">RASCUNHO</span>}
+                                                    {bet.isDoubleGreen && <span className="text-[9px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded ml-2 font-bold tracking-wider flex items-center gap-1"><Copy size={8} /> 2X</span>}
                                                 </h4>
                                                 <div className="flex items-center gap-2 mt-1">
                                                     <span className="text-xs text-textMuted">{new Date(bet.date).toLocaleDateString('pt-BR')}</span>

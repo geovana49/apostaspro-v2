@@ -32,6 +32,7 @@ interface FormState {
     coverages: Coverage[];
     notes: string;
     extraGain?: number;
+    isDoubleGreen?: boolean;
 }
 
 const initialFormState: FormState = {
@@ -40,8 +41,10 @@ const initialFormState: FormState = {
     event: '',
     promotionType: 'Nenhuma',
     status: 'Pendente',
+    status: 'Pendente',
     coverages: [],
-    notes: ''
+    notes: '',
+    isDoubleGreen: false
 };
 
 const formReducer = (state: FormState, action: any): FormState => {
@@ -122,7 +125,8 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                     generalStatus: (initialData as any).generalStatus || 'Concluído',
                     coverages: initialData.coverages,
                     notes: initialData.notes || '',
-                    extraGain: (initialData as any).extraGain
+                    extraGain: (initialData as any).extraGain,
+                    isDoubleGreen: (initialData as any).isDoubleGreen || false
                 };
                 let photosPayload = initialData.photos ? initialData.photos.map(url => ({ url })) : [];
 
@@ -635,6 +639,20 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                         value={formData.promotionType || 'Nenhuma'}
                         onChange={value => dispatch({ type: 'UPDATE_FIELD', field: 'promotionType', value })}
                     />
+
+                    <div className="flex items-center gap-3 bg-[#0d1121] p-3 rounded-lg border border-primary/20 cursor-pointer hover:border-primary/50 transition-colors"
+                        onClick={() => dispatch({ type: 'UPDATE_FIELD', field: 'isDoubleGreen', value: !formData.isDoubleGreen })}>
+                        <div className={`w-10 h-6 rounded-full p-1 transition-colors relative ${formData.isDoubleGreen ? 'bg-primary' : 'bg-gray-700'}`}>
+                            <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${formData.isDoubleGreen ? 'translate-x-4' : 'translate-x-0'}`} />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-sm font-bold text-white flex items-center gap-2">
+                                Duplo Green (2x)
+                                {formData.isDoubleGreen && <Copy size={14} className="text-primary" />}
+                            </span>
+                            <span className="text-[10px] text-textMuted">Marque se essa aposta teve duplo pagamento</span>
+                        </div>
+                    </div>
 
                     <Dropdown
                         label="Status Geral"
