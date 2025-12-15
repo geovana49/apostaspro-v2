@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { TrendingUp, Trophy, Wallet, Activity, Calendar, Infinity, Filter, DollarSign, Target, Eye, EyeOff, StickyNote, Copy } from 'lucide-react';
 import { Card, Dropdown, Input, MoneyDisplay } from './ui/UIComponents';
-import { Bet, ExtraGain, AppSettings } from '../types';
+import { Bet, ExtraGain, AppSettings, Bookmaker } from '../types';
 import { calculateBetStats } from '../utils/betCalculations';
 
 interface OverviewProps {
@@ -10,9 +10,10 @@ interface OverviewProps {
     gains: ExtraGain[];
     settings: AppSettings;
     setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
+    bookmakers: Bookmaker[]; // Added bookmakers prop
 }
 
-const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings }) => {
+const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings, bookmakers }) => {
     const [period, setPeriod] = useState('month');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
@@ -165,11 +166,70 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
         const totalPromotionsCount = betPromotionsCount;
         const doubleGreenBets = filteredBets.filter(b => calculateBetStats(b).isDoubleGreen);
 
-        return { totalStaked: resolvedStaked, totalReturned: resolvedReturned, netProfit: totalProfit, roi, chartData, totalPromotionsCount, doubleGreenBets };
+        // --- Best Stats Calculation ---
+        const bookmakerProfits: Record<string, { total: number, promos: Record<string, number> }> = {};
+
+        // 1. Process Resolved Bets
+        resolvedBets.forEach(bet => {
+            const stats = calculateBetStats(bet);
+            const bmId = bet.mainBookmakerId;
+            const promo = bet.promotionType || 'Nenhuma';
+
+            if (!bookmakerProfits[bmId]) bookmakerProfits[bmId] = { total: 0, promos: {} };
+            bookmakerProfits[bmId].total += stats.profit;
+
+            if (!bookmakerProfits[bmId].promos[promo]) bookmakerProfits[bmId].promos[promo] = 0;
+            bookmakerProfits[bmId].promos[promo] += stats.profit;
+        });
+
+        // 2. Process Extra Gains
+        filteredGains.forEach(gain => {
+            const bmId = gain.bookmakerId;
+            const promo = gain.origin || 'Outros';
+
+            if (!bookmakerProfits[bmId]) bookmakerProfits[bmId] = { total: 0, promos: {} };
+            bookmakerProfits[bmId].total += gain.amount;
+
+            if (!bookmakerProfits[bmId].promos[promo]) bookmakerProfits[bmId].promos[promo] = 0;
+            bookmakerProfits[bmId].promos[promo] += gain.amount;
+        });
+
+        // 3. Find Best Bookmaker
+        let bestBookmakerId = '';
+        let maxProfit = -Infinity;
+
+        Object.entries(bookmakerProfits).forEach(([id, data]) => {
+            if (data.total > maxProfit) {
+                maxProfit = data.total;
+                bestBookmakerId = id;
+            }
+        });
+
+        // 4. Find Best Promo for that Bookmaker
+        let bestPromo = '';
+        let maxPromoProfit = -Infinity;
+
+        if (bestBookmakerId && bookmakerProfits[bestBookmakerId]) {
+            Object.entries(bookmakerProfits[bestBookmakerId].promos).forEach(([promo, profit]) => {
+                if (profit > maxPromoProfit) {
+                    maxPromoProfit = profit;
+                    bestPromo = promo;
+                }
+            });
+        }
+
+        const bestStats = bestBookmakerId ? {
+            bookmakerId: bestBookmakerId,
+            totalProfit: maxProfit,
+            bestPromo: bestPromo,
+            bestPromoProfit: maxPromoProfit
+        } : null;
+
+        return { totalStaked: resolvedStaked, totalReturned: resolvedReturned, netProfit: totalProfit, roi, chartData, totalPromotionsCount, doubleGreenBets, bestStats };
     };
 
 
-    const { totalStaked, totalReturned, netProfit, roi, chartData, totalPromotionsCount, doubleGreenBets } = calculateMetrics();
+    const { totalStaked, totalReturned, netProfit, roi, chartData, totalPromotionsCount, doubleGreenBets, bestStats } = calculateMetrics();
 
     const isProfitPositive = netProfit >= 0;
 
@@ -409,6 +469,72 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
                         <Trophy className="text-white/10 group-hover/empty:text-white/20 transition-colors animate-float" size={32} />
                         <span className="text-gray-500 text-xs font-medium">Sem histórico suficiente para análise</span>
                     </div>
+                </Card>
+
+                {/* Best Stats Card - Casa e Promoção */}
+                <Card className="p-6 bg-[#151b2e] group relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <Trophy size={64} className="text-yellow-500" />
+                    </div>
+
+                    <div className="flex items-center gap-2 mb-6 relative z-10">
+                        <div className="p-1.5 rounded-md bg-yellow-500/10 text-yellow-500 group-hover:bg-yellow-500/20 transition-colors">
+                            <Trophy size={16} className="animate-pulse-slow" />
+                        </div>
+                        <h3 className="font-bold text-white text-sm uppercase tracking-wide">Destaque do Período</h3>
+                    </div>
+
+                    {bestStats && bestStats.totalProfit > 0 ? (
+                        <div className="space-y-4 relative z-10">
+                            {/* Best Bookmaker */}
+                            <div>
+                                <p className="text-[10px] text-textMuted uppercase font-bold mb-1">Casa Mais Lucrativa</p>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        {(() => {
+                                            const bookmaker = bookmakers.find(b => b.id === bestStats.bookmakerId);
+                                            return bookmaker ? (
+                                                <>
+                                                    {bookmaker.logo ? (
+                                                        <img src={bookmaker.logo} alt={bookmaker.name} className="w-6 h-6 object-contain rounded-sm bg-white p-[1px]" />
+                                                    ) : (
+                                                        <div className="w-6 h-6 rounded-sm bg-gray-700 flex items-center justify-center text-[10px] font-bold">
+                                                            {bookmaker.name.substring(0, 2).toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                    <span className="font-bold text-white text-lg">{bookmaker.name}</span>
+                                                </>
+                                            ) : <span className="font-bold text-white">Desconhecida</span>
+                                        })()}
+                                    </div>
+                                    <span className="font-bold text-[#6ee7b7] text-lg">
+                                        <MoneyDisplay value={bestStats.totalProfit} privacyMode={settings.privacyMode} />
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="h-px bg-white/10" />
+
+                            {/* Best Promo */}
+                            <div>
+                                <p className="text-[10px] text-textMuted uppercase font-bold mb-1">Melhor Estratégia</p>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm text-gray-300 flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-secondary" />
+                                        {bestStats.bestPromo}
+                                    </span>
+                                    <span className="font-bold text-secondary text-sm">
+                                        <MoneyDisplay value={bestStats.bestPromoProfit} privacyMode={settings.privacyMode} />
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="border border-dashed border-white/10 rounded-xl h-[120px] flex flex-col items-center justify-center bg-white/[0.02] gap-2 hover:bg-white/[0.04] transition-colors cursor-default group/empty">
+                            <Trophy className="text-white/10 group-hover/empty:text-white/20 transition-colors animate-float" size={32} />
+                            <span className="text-gray-500 text-xs font-medium">Sem lucro suficiente</span>
+                        </div>
+                    )}
                 </Card>
 
                 {/* Evolution Chart */}

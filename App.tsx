@@ -152,7 +152,7 @@ const App: React.FC = () => {
       setSettings={setSettings} // This will need to be updated to save to Firestore
       onLogout={handleLogout}
     >
-      {activePage === Page.OVERVIEW && <Overview bets={bets} gains={gains} settings={settings} setSettings={setSettings} />}
+      {activePage === Page.OVERVIEW && <Overview bets={bets} gains={gains} settings={settings} setSettings={setSettings} bookmakers={bookmakers} />}
 
       {activePage === Page.BETS && (
         <MyBets
