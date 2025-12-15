@@ -57,8 +57,13 @@ export const calculateBetStats = (bet: Bet) => {
         });
     }
 
-    const greenCount = bet.coverages.filter(c => c.status === 'Green' || c.status === 'Meio Green').length;
-    const isDoubleGreen = !!bet.isDoubleGreen || greenCount >= 2;
+    const greenMarkets = bet.coverages
+        .filter(c => c.status === 'Green' || c.status === 'Meio Green')
+        .map(c => (c.market || '').trim().toLowerCase()); // Normalize market names
+
+    // Count unique winning markets
+    const uniqueGreenMarkets = new Set(greenMarkets);
+    const isDoubleGreen = !!bet.isDoubleGreen || uniqueGreenMarkets.size >= 2;
 
     return { totalStake, totalReturn, profit, isDoubleGreen };
 };
