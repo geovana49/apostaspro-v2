@@ -246,7 +246,9 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
         Object.entries(bookmakerProfits).forEach(([id, data]) => {
             // Ensure profit is a valid number, default to 0 if NaN
             const profit = isNaN(data.total) ? 0 : data.total;
-            if (profit > maxProfit) {
+
+            // Fix: Initialize with first item or if profit is greater
+            if (bestBookmakerId === '' || profit > maxProfit) {
                 maxProfit = profit;
                 bestBookmakerId = id;
             }
@@ -306,7 +308,9 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             debugCounts: {
                 resolvedBets: resolvedBets.length,
                 filteredGains: filteredGains.length,
-                bookmakerProfitsKeys: Object.keys(bookmakerProfits).length
+                bookmakerProfitsKeys: Object.keys(bookmakerProfits).length,
+                bestId: bestBookmakerId,
+                maxProfit: maxProfit
             }
         };
     };
@@ -645,10 +649,8 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
                         <div className="border border-dashed border-white/10 rounded-xl h-[120px] flex flex-col items-center justify-center bg-white/[0.02] gap-2 hover:bg-white/[0.04] transition-colors cursor-default group/empty">
                             <Trophy className="text-white/10 group-hover/empty:text-white/20 transition-colors animate-float" size={32} />
                             <span className="text-gray-500 text-xs font-medium">Sem lucro suficiente</span>
-                            <span className="text-[10px] text-gray-700 font-mono mt-1 select-all">
-                                (Res: {debugCounts?.resolvedBets ?? 0} |
-                                Gains: {debugCounts?.filteredGains ?? 0} |
-                                BMs: {debugCounts?.bookmakerProfitsKeys ?? 0})
+                            <span className="text-[10px] text-gray-700 font-mono mt-1 select-all hover:text-white transition-colors">
+                                (R:{debugCounts?.resolvedBets ?? 0}|G:{debugCounts?.filteredGains ?? 0}|K:{debugCounts?.bookmakerProfitsKeys ?? 0}|ID:{debugCounts?.bestId}|MP:{debugCounts?.maxProfit})
                             </span>
                         </div>
                     )}
