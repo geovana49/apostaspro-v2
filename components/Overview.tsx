@@ -111,6 +111,30 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
     const filteredBets = getFilteredBets();
     const filteredGains = getFilteredGains();
 
+    // Helper to get dynamic label for the selected period
+    const getPeriodLabel = () => {
+        const now = new Date();
+        const getMonthName = (date: Date) => date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+        switch (period) {
+            case 'today': return 'de Hoje';
+            case 'week': return 'desta Semana';
+            case 'month': return `de ${now.toLocaleDateString('pt-BR', { month: 'long' })}`;
+            case 'last-month':
+                const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                return `de ${lastMonth.toLocaleDateString('pt-BR', { month: 'long' })}`;
+            case 'specific-month':
+                if (!selectedMonth) return 'do Mês Selecionado';
+                const [year, month] = selectedMonth.split('-').map(Number);
+                const specDate = new Date(year, month - 1, 1);
+                return `de ${specDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`;
+            case 'custom': return 'do Período Personalizado';
+            case 'all': return 'de Todo o Período';
+            default: return 'do Período';
+        }
+    };
+
+    // Calculate metrics
     // --- Calculations ---
     // --- Calculations ---
     const calculateMetrics = () => {
@@ -481,7 +505,7 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
                         <div className="p-1.5 rounded-md bg-yellow-500/10 text-yellow-500 group-hover:bg-yellow-500/20 transition-colors">
                             <Trophy size={16} className="animate-pulse-slow" />
                         </div>
-                        <h3 className="font-bold text-white text-sm uppercase tracking-wide">Destaque do Período</h3>
+                        <h3 className="font-bold text-white text-sm uppercase tracking-wide">Destaque {getPeriodLabel()}</h3>
                     </div>
 
                     {bestStats && bestStats.totalProfit > 0 ? (
