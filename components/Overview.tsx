@@ -227,39 +227,25 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
 
 
 
-        // 3. Find Best Bookmaker
-        let bestBookmakerId = '';
-        let maxProfit = -Infinity;
+        // 3. Find Top 3 Bookmakers
+        const top3Bookmakers = Object.entries(bookmakerProfits)
+            .map(([id, data]) => {
+                const topPromos = Object.entries(data.promos)
+                    .map(([name, profit]) => ({ name, profit }))
+                    .sort((a, b) => b.profit - a.profit)
+                    .slice(0, 3);
 
-        Object.entries(bookmakerProfits).forEach(([id, data]) => {
-            // Ensure profit is a valid number, default to 0 if NaN
-            const profit = isNaN(data.total) ? 0 : data.total;
+                return {
+                    bookmakerId: id,
+                    totalProfit: data.total,
+                    topPromos
+                };
+            })
+            .sort((a, b) => b.totalProfit - a.totalProfit)
+            .slice(0, 3);
 
-            // Fix: Initialize with first item or if profit is greater
-            if (bestBookmakerId === '' || profit > maxProfit) {
-                maxProfit = profit;
-                bestBookmakerId = id;
-            }
-        });
-
-        // 4. Find Best Promo for that Bookmaker
-        // 4. Get all profitable promos for that Bookmaker (Sorted)
-        let topPromos: { name: string, profit: number }[] = [];
-
-        if (bestBookmakerId && bookmakerProfits[bestBookmakerId]) {
-            topPromos = Object.entries(bookmakerProfits[bestBookmakerId].promos)
-                .map(([name, profit]) => ({ name, profit }))
-                // Removed strict positive filter to show top contributors (even if mixed)
-                .sort((a, b) => b.profit - a.profit)
-                .slice(0, 3); // Take top 3
-        }
-
-        // Even if bestBookmakerId is 'unknown', we show it. 
-        const bestStats = bestBookmakerId !== '' ? {
-            bookmakerId: bestBookmakerId,
-            totalProfit: maxProfit,
-            topPromos // List of top strategies
-        } : null;
+        // Legacy support (optional, but cleaner to just use array)
+        const bestStats = top3Bookmakers.length > 0 ? top3Bookmakers[0] : null;
 
         // --- Best Months Calculation (Global - All Time) ---
         const monthlyProfits: Record<string, number> = {};
@@ -288,13 +274,15 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             chartData,
             totalPromotionsCount,
             doubleGreenBets,
-            bestStats,
+            bestStats, // Main winner (for compat)
+            top3Bookmakers, // New array
             bestMonths
         };
     };
 
 
-    const { totalStaked, totalReturned, netProfit, roi, chartData, totalPromotionsCount, doubleGreenBets, bestStats, bestMonths } = calculateMetrics();
+
+    const { totalStaked, totalReturned, netProfit, roi, chartData, totalPromotionsCount, doubleGreenBets, bestStats, top3Bookmakers, bestMonths } = calculateMetrics();
 
     const isProfitPositive = netProfit >= 0;
 
@@ -565,71 +553,78 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
                     )}
                 </Card>
 
-                {/* Best Stats Card - Casa e Promoção */}
+                {/* Best Stats / Top 3 Bookmakers */}
                 <Card className="p-6 bg-[#151b2e] group relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <Trophy size={64} className="text-yellow-500" />
-                    </div>
-
-                    <div className="flex items-center gap-2 mb-6 relative z-10">
-                        <div className="p-1.5 rounded-md bg-yellow-500/10 text-yellow-500 group-hover:bg-yellow-500/20 transition-colors">
-                            <Trophy size={16} className="animate-pulse-slow" />
+                    <div className="flex items-center gap-2 mb-4 relative z-10">
+                        <div className="p-1.5 rounded-md bg-yellow-500/10 text-yellow-500 group-hover:text-yellow-400 transition-colors">
+                            <Trophy size={16} />
                         </div>
-                        <h3 className="font-bold text-white text-sm uppercase tracking-wide">Destaque {getPeriodLabel()}</h3>
+                        <h3 className="font-bold text-white text-sm uppercase tracking-wide">TOP 3 CASAS</h3>
                     </div>
 
-                    {bestStats ? (
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity">
+                        <Trophy size={120} />
+                    </div>
+
+                    {top3Bookmakers && top3Bookmakers.length > 0 ? (
                         <div className="space-y-4 relative z-10">
-                            {/* Best Bookmaker */}
-                            <div>
-                                <p className="text-[10px] text-textMuted uppercase font-bold mb-1">Casa Mais Lucrativa</p>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        {(() => {
-                                            const bookmaker = bookmakers.find(b => b.id === bestStats.bookmakerId);
-                                            return bookmaker ? (
-                                                <>
+                            {top3Bookmakers.map((stats, index) => {
+                                const isWinner = index === 0;
+                                const rankColors = [
+                                    'text-yellow-400', // Gold
+                                    'text-gray-300',   // Silver
+                                    'text-amber-700'   // Bronze
+                                ];
+                                const rankColor = rankColors[index] || 'text-gray-500';
+
+                                const bookmaker = bookmakers.find(b => b.id === stats.bookmakerId) || { name: 'Desconhecida', logo: '' };
+
+                                return (
+                                    <div key={stats.bookmakerId} className={`relative flex flex-col gap-2 ${!isWinner ? 'pt-2 border-t border-white/5' : ''}`}>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                {/* Rank Indicator */}
+                                                <div className={`font-bold text-lg w-4 text-center ${rankColor}`}>
+                                                    {index + 1}º
+                                                </div>
+
+                                                {/* Logo & Name */}
+                                                <div className="flex items-center gap-2">
                                                     {bookmaker.logo ? (
-                                                        <img src={bookmaker.logo} alt={bookmaker.name} className="w-6 h-6 object-contain rounded-sm bg-white p-[1px]" />
+                                                        <div className="w-6 h-6 rounded-full overflow-hidden bg-white/10 shrink-0">
+                                                            <img src={bookmaker.logo} alt={bookmaker.name} className="w-full h-full object-cover" />
+                                                        </div>
                                                     ) : (
-                                                        <div className="w-6 h-6 rounded-sm bg-gray-700 flex items-center justify-center text-[10px] font-bold">
-                                                            {bookmaker.name.substring(0, 2).toUpperCase()}
+                                                        <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                                                            <Trophy size={12} className="text-white/50" />
                                                         </div>
                                                     )}
-                                                    <span className="font-bold text-white text-lg">{bookmaker.name}</span>
-                                                </>
-                                            ) : <span className="font-bold text-white">Desconhecida</span>
-                                        })()}
-                                    </div>
-                                    <span className="font-bold text-[#6ee7b7] text-lg">
-                                        <MoneyDisplay value={bestStats.totalProfit} privacyMode={settings.privacyMode} />
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="h-px bg-white/10" />
-
-                            {/* Best Promo */}
-                            <div>
-                                <p className="text-[10px] text-textMuted uppercase font-bold mb-1">PROMOÇÕES</p>
-                                <div className="flex flex-col gap-1 mt-1">
-                                    {bestStats.topPromos.length > 0 ? (
-                                        bestStats.topPromos.map((promo, idx) => (
-                                            <div key={idx} className="flex items-center justify-between text-xs">
-                                                <span className="text-gray-400 flex items-center gap-1.5">
-                                                    <div className={`w-1 h-1 rounded-full ${idx === 0 ? 'bg-secondary' : 'bg-gray-600'}`} />
-                                                    {promo.name}
-                                                </span>
-                                                <span className={`${idx === 0 ? 'text-secondary font-bold' : 'text-gray-500'}`}>
-                                                    <MoneyDisplay value={promo.profit} privacyMode={settings.privacyMode} />
-                                                </span>
+                                                    <span className={`font-bold ${isWinner ? 'text-white text-base' : 'text-gray-300 text-sm'}`}>{bookmaker.name}</span>
+                                                </div>
                                             </div>
-                                        ))
-                                    ) : (
-                                        <span className="text-xs text-gray-500 italic">Sem estratégias definidas</span>
-                                    )}
-                                </div>
-                            </div>
+
+                                            {/* Profit */}
+                                            <span className={`font-bold ${isWinner ? 'text-[#6ee7b7] text-base' : 'text-[#6ee7b7]/80 text-sm'}`}>
+                                                <MoneyDisplay value={stats.totalProfit} privacyMode={settings.privacyMode} />
+                                            </span>
+                                        </div>
+
+                                        {/* Winner Promos Breakdown */}
+                                        {isWinner && stats.topPromos.length > 0 && (
+                                            <div className="ml-9 pl-2 border-l-2 border-white/10">
+                                                <div className="flex flex-col gap-1">
+                                                    {stats.topPromos.map((promo, idx) => (
+                                                        <div key={idx} className="flex items-center justify-between text-[11px] text-gray-400">
+                                                            <span>{promo.name}</span>
+                                                            <MoneyDisplay value={promo.profit} privacyMode={settings.privacyMode} />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     ) : (
                         <div className="border border-dashed border-white/10 rounded-xl h-[120px] flex flex-col items-center justify-center bg-white/[0.02] gap-2 hover:bg-white/[0.04] transition-colors cursor-default group/empty">
