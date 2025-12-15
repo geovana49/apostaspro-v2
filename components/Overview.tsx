@@ -293,11 +293,26 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             .sort((a, b) => b.profit - a.profit)
             .slice(0, 3); // Top 3
 
-        return { totalStaked: resolvedStaked, totalReturned: resolvedReturned, netProfit: totalProfit, roi, chartData, totalPromotionsCount, doubleGreenBets, bestStats, bestMonths };
+        return {
+            totalStaked: resolvedStaked,
+            totalReturned: resolvedReturned,
+            netProfit: totalProfit,
+            roi,
+            chartData,
+            totalPromotionsCount,
+            doubleGreenBets,
+            bestStats,
+            bestMonths,
+            debugCounts: {
+                resolvedBets: resolvedBets.length,
+                filteredGains: filteredGains.length,
+                bookmakerProfitsKeys: Object.keys(bookmakerProfits).length
+            }
+        };
     };
 
 
-    const { totalStaked, totalReturned, netProfit, roi, chartData, totalPromotionsCount, doubleGreenBets, bestStats, bestMonths } = calculateMetrics();
+    const { totalStaked, totalReturned, netProfit, roi, chartData, totalPromotionsCount, doubleGreenBets, bestStats, bestMonths, debugCounts } = calculateMetrics();
 
     const isProfitPositive = netProfit >= 0;
 
@@ -630,6 +645,11 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
                         <div className="border border-dashed border-white/10 rounded-xl h-[120px] flex flex-col items-center justify-center bg-white/[0.02] gap-2 hover:bg-white/[0.04] transition-colors cursor-default group/empty">
                             <Trophy className="text-white/10 group-hover/empty:text-white/20 transition-colors animate-float" size={32} />
                             <span className="text-gray-500 text-xs font-medium">Sem lucro suficiente</span>
+                            <span className="text-[10px] text-gray-700 font-mono mt-1 select-all">
+                                (Res: {debugCounts?.resolvedBets ?? 0} |
+                                Gains: {debugCounts?.filteredGains ?? 0} |
+                                BMs: {debugCounts?.bookmakerProfitsKeys ?? 0})
+                            </span>
                         </div>
                     )}
                 </Card>
