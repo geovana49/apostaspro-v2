@@ -217,27 +217,15 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             bookmakerProfits[bmId].promos[promo] += profit;
         });
 
-        // 2. Process Extra Gains (Only Received/Confirmed/Concluded)
+        // 2. Extra Gains are explicitly EXCLUDED from Best Stats per user request
+        // Only My Bets (resolvedBets) contribute to "Casa Mais Lucrativa" stats.
+        /*
         filteredGains.forEach(gain => {
-            // Filter out non-final statuses
-            if (!['Recebido', 'Confirmado', 'Concluido', 'Concluído'].includes(gain.status)) return;
+             // ... Code removed/commented to filter only My Bets ...
+        }); 
+        */
 
-            const bmId = gain.bookmakerId || 'unknown'; // Handle missing ID
-            const promo = gain.origin || 'Outros';
 
-            if (!bookmakerProfits[bmId]) bookmakerProfits[bmId] = { total: 0, promos: {} };
-            bookmakerProfits[bmId].total += gain.amount;
-
-            if (!bookmakerProfits[bmId].promos[promo]) bookmakerProfits[bmId].promos[promo] = 0;
-            bookmakerProfits[bmId].promos[promo] += gain.amount;
-        });
-
-        console.log("📊 Debug Best Stats:", {
-            period,
-            resolvedBetsCount: resolvedBets.length,
-            filteredGainsCount: filteredGains.length,
-            bookmakerProfits
-        });
 
         // 3. Find Best Bookmaker
         let bestBookmakerId = '';
@@ -304,19 +292,12 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             totalPromotionsCount,
             doubleGreenBets,
             bestStats,
-            bestMonths,
-            debugCounts: {
-                resolvedBets: resolvedBets.length,
-                filteredGains: filteredGains.length,
-                bookmakerProfitsKeys: Object.keys(bookmakerProfits).length,
-                bestId: bestBookmakerId,
-                maxProfit: maxProfit
-            }
+            bestMonths
         };
     };
 
 
-    const { totalStaked, totalReturned, netProfit, roi, chartData, totalPromotionsCount, doubleGreenBets, bestStats, bestMonths, debugCounts } = calculateMetrics();
+    const { totalStaked, totalReturned, netProfit, roi, chartData, totalPromotionsCount, doubleGreenBets, bestStats, bestMonths } = calculateMetrics();
 
     const isProfitPositive = netProfit >= 0;
 
@@ -649,9 +630,6 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
                         <div className="border border-dashed border-white/10 rounded-xl h-[120px] flex flex-col items-center justify-center bg-white/[0.02] gap-2 hover:bg-white/[0.04] transition-colors cursor-default group/empty">
                             <Trophy className="text-white/10 group-hover/empty:text-white/20 transition-colors animate-float" size={32} />
                             <span className="text-gray-500 text-xs font-medium">Sem lucro suficiente</span>
-                            <span className="text-[10px] text-gray-700 font-mono mt-1 select-all hover:text-white transition-colors">
-                                (R:{debugCounts?.resolvedBets ?? 0}|G:{debugCounts?.filteredGains ?? 0}|K:{debugCounts?.bookmakerProfitsKeys ?? 0}|ID:{debugCounts?.bestId}|MP:{debugCounts?.maxProfit})
-                            </span>
                         </div>
                     )}
                 </Card>
