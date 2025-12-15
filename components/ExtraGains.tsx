@@ -990,6 +990,27 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                     <span className="text-sm">{formData.date ? new Date(formData.date + 'T12:00:00').toLocaleDateString('pt-BR') : 'Selecione a data'}</span>
                                     <Calendar size={16} className="text-gray-500 group-hover:text-primary transition-colors" />
                                 </button>
+                                <SingleDatePickerModal
+                                    isOpen={isFormDatePickerOpen}
+                                    onClose={() => setIsFormDatePickerOpen(false)}
+                                    date={formData.date ? parseDate(formData.date) : new Date()}
+                                    onSelect={(date) => {
+                                        const year = date.getFullYear();
+                                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                                        const day = String(date.getDate()).padStart(2, '0');
+                                        const dateStr = `${year}-${month}-${day}`;
+
+                                        dispatch({ type: 'UPDATE_FIELD', field: 'date', value: dateStr });
+                                        setIsFormDatePickerOpen(false);
+
+                                        // Auto-save logic if needed, but the original code only had auto-save on Status change
+                                        if (editingId && currentUser) {
+                                            // We could consider auto-saving date too, but maybe safer to wait for explicit save?
+                                            // The existing status dropdown has auto-save.
+                                            // Let's stick to just updating state for now.
+                                        }
+                                    }}
+                                />
                             </div>
                             <Dropdown label="Status" options={statusOptionsForForm} value={formData.status || 'Recebido'} onChange={async (v) => {
                                 dispatch({ type: 'UPDATE_FIELD', field: 'status', value: v as any });
@@ -1082,6 +1103,19 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     </div>
                 </Modal>
             )}
+
+            {/* Date Range Picker Modal */}
+            <DateRangePickerModal
+                isOpen={isDateRangeModalOpen}
+                onClose={() => setIsDateRangeModalOpen(false)}
+                startDate={startDate}
+                endDate={endDate}
+                onSelect={(start, end) => {
+                    setStartDate(start);
+                    setEndDate(end);
+                    setIsDateRangeModalOpen(false);
+                }}
+            />
 
             {/* Floating Novo Ganho Button */}
             {showFloatingButton && (

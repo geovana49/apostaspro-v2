@@ -180,7 +180,6 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
     // Native DOM Overlay Logic - The "Nuclear Option"
     useEffect(() => {
         if (isOpen) {
-            console.log("=== DRAG DEBUGGER INITIALIZED ===");
             const overlayId = 'global-drop-overlay';
 
             const createOverlay = () => {
@@ -224,13 +223,10 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
             };
 
             const onDragEnterGlobal = (e: DragEvent) => {
-                console.log("=== DRAG ENTER DETECTED ===", e);
                 e.preventDefault();
                 e.stopPropagation();
 
-                // REMOVED CHECK: Trigger on EVERYTHING for debug
-                // if (e.dataTransfer && e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
-                if (true) {
+                if (e.dataTransfer && e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
                     const existing = document.getElementById(overlayId);
                     if (!existing) {
                         const overlay = createOverlay();
@@ -277,7 +273,6 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
             // PIPELINE REGISTRATION
             // We tell index.html: "Here is the function to call when you get a file"
             (window as any).onApostasProDrop = (files: FileList) => {
-                console.log("✅ React received files via Pipeline!");
                 processFilesRef.current(Array.from(files));
                 const ex = document.getElementById(overlayId);
                 if (ex) ex.remove();

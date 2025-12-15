@@ -10,7 +10,7 @@ echo [1/2] Preparando para enviar...
 echo Voce precisara fazer login na Vercel se for a primeira vez.
 echo.
 
-call npx vercel --prod
+call npx vercel --prod --yes
 
 echo.
 echo ==========================================
