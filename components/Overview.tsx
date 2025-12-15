@@ -243,25 +243,22 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
         });
 
         // 4. Find Best Promo for that Bookmaker
-        let bestPromo = '';
-        let maxPromoProfit = -Infinity;
+        // 4. Get all profitable promos for that Bookmaker (Sorted)
+        let topPromos: { name: string, profit: number }[] = [];
 
         if (bestBookmakerId && bookmakerProfits[bestBookmakerId]) {
-            Object.entries(bookmakerProfits[bestBookmakerId].promos).forEach(([promo, profit]) => {
-                if (profit > maxPromoProfit) {
-                    maxPromoProfit = profit;
-                    bestPromo = promo;
-                }
-            });
+            topPromos = Object.entries(bookmakerProfits[bestBookmakerId].promos)
+                .map(([name, profit]) => ({ name, profit }))
+                .filter(p => p.profit > 0) // Only positive contributors
+                .sort((a, b) => b.profit - a.profit)
+                .slice(0, 3); // Take top 3
         }
 
         // Even if bestBookmakerId is 'unknown', we show it. 
-        // Logic checks if filtered list has entries, so bestBookmakerId should be found if there is ANY profit/loss.
         const bestStats = bestBookmakerId !== '' ? {
             bookmakerId: bestBookmakerId,
             totalProfit: maxProfit,
-            bestPromo: bestPromo,
-            bestPromoProfit: maxPromoProfit
+            topPromos // List of top strategies
         } : null;
 
         // --- Best Months Calculation (Global - All Time) ---
@@ -615,88 +612,97 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
                             {/* Best Promo */}
                             <div>
                                 <p className="text-[10px] text-textMuted uppercase font-bold mb-1">Melhor Estratégia</p>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm text-gray-300 flex items-center gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-secondary" />
-                                        {bestStats.bestPromo}
-                                    </span>
-                                    <span className="font-bold text-secondary text-sm">
-                                        <MoneyDisplay value={bestStats.bestPromoProfit} privacyMode={settings.privacyMode} />
-                                    </span>
+                                <div className="flex flex-col gap-1 mt-1">
+                                    {bestStats.topPromos.length > 0 ? (
+                                        bestStats.topPromos.map((promo, idx) => (
+                                            <div key={idx} className="flex items-center justify-between text-xs">
+                                                <span className="text-gray-400 flex items-center gap-1.5">
+                                                    <div className={`w-1 h-1 rounded-full ${idx === 0 ? 'bg-secondary' : 'bg-gray-600'}`} />
+                                                    {promo.name}
+                                                </span>
+                                                <span className={`${idx === 0 ? 'text-secondary font-bold' : 'text-gray-500'}`}>
+                                                    <MoneyDisplay value={promo.profit} privacyMode={settings.privacyMode} />
+                                                </span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <span className="text-xs text-gray-500 italic">Sem estratégias definidas</span>
+                                    )}
                                 </div>
                             </div>
                         </div>
-                    ) : (
-                        <div className="border border-dashed border-white/10 rounded-xl h-[120px] flex flex-col items-center justify-center bg-white/[0.02] gap-2 hover:bg-white/[0.04] transition-colors cursor-default group/empty">
-                            <Trophy className="text-white/10 group-hover/empty:text-white/20 transition-colors animate-float" size={32} />
-                            <span className="text-gray-500 text-xs font-medium">Sem lucro suficiente</span>
                         </div>
-                    )}
-                </Card>
-
-                {/* Evolution Chart */}
-                <Card className="p-6 bg-[#151b2e] group">
-                    <div className="flex items-center gap-2 mb-6">
-                        <div className="p-1.5 rounded-md bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
-                            <TrendingUp size={16} className="animate-pulse-slow" />
-                        </div>
-                        <h3 className="font-bold text-white text-sm uppercase tracking-wide">Evolução da Banca</h3>
-                    </div>
-
-                    <div className="w-full">
-                        <div className="w-full">
-                            {chartData.length > 0 ? (
-                                <ResponsiveContainer width="100%" aspect={2.5}>
-                                    <AreaChart data={chartData}>
-                                        <defs>
-                                            <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#17baa4" stopOpacity={0.2} />
-                                                <stop offset="95%" stopColor="#17baa4" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                                        <XAxis
-                                            dataKey="date"
-                                            stroke="#475569"
-                                            fontSize={10}
-                                            tickLine={false}
-                                            axisLine={false}
-                                            dy={10}
-                                        />
-                                        <YAxis
-                                            stroke="#475569"
-                                            fontSize={10}
-                                            tickFormatter={(value) => settings.privacyMode ? '•••' : `R$${value}`}
-                                            tickLine={false}
-                                            axisLine={false}
-                                            width={60}
-                                        />
-                                        <Tooltip
-                                            contentStyle={{ backgroundColor: '#151b2e', borderColor: '#334155', borderRadius: '8px', color: '#fff', fontSize: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)' }}
-                                            itemStyle={{ color: '#17baa4', fontWeight: 'bold' }}
-                                            formatter={(value: number) => [settings.privacyMode ? 'R$ ••••' : formatCurrency(value), 'Lucro']}
-                                            cursor={{ stroke: '#334155', strokeWidth: 1 }}
-                                        />
-                                        <Area
-                                            type="monotone"
-                                            dataKey="profit"
-                                            stroke="#17baa4"
-                                            strokeWidth={2}
-                                            fillOpacity={1}
-                                            fill="url(#colorProfit)"
-                                        />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            ) : (
-                                <div className="h-[200px] border border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center bg-white/[0.02] gap-2 hover:bg-white/[0.04] transition-colors group/empty">
-                                    <Activity className="text-white/10 group-hover/empty:text-white/20 transition-colors animate-float" size={32} />
-                                    <span className="text-gray-500 text-xs font-medium">Sem dados no período selecionado</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </Card>
+            ) : (
+            <div className="border border-dashed border-white/10 rounded-xl h-[120px] flex flex-col items-center justify-center bg-white/[0.02] gap-2 hover:bg-white/[0.04] transition-colors cursor-default group/empty">
+                <Trophy className="text-white/10 group-hover/empty:text-white/20 transition-colors animate-float" size={32} />
+                <span className="text-gray-500 text-xs font-medium">Sem lucro suficiente</span>
             </div>
+                    )}
+        </Card>
+
+                {/* Evolution Chart */ }
+    <Card className="p-6 bg-[#151b2e] group">
+        <div className="flex items-center gap-2 mb-6">
+            <div className="p-1.5 rounded-md bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
+                <TrendingUp size={16} className="animate-pulse-slow" />
+            </div>
+            <h3 className="font-bold text-white text-sm uppercase tracking-wide">Evolução da Banca</h3>
+        </div>
+
+        <div className="w-full">
+            <div className="w-full">
+                {chartData.length > 0 ? (
+                    <ResponsiveContainer width="100%" aspect={2.5}>
+                        <AreaChart data={chartData}>
+                            <defs>
+                                <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#17baa4" stopOpacity={0.2} />
+                                    <stop offset="95%" stopColor="#17baa4" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                            <XAxis
+                                dataKey="date"
+                                stroke="#475569"
+                                fontSize={10}
+                                tickLine={false}
+                                axisLine={false}
+                                dy={10}
+                            />
+                            <YAxis
+                                stroke="#475569"
+                                fontSize={10}
+                                tickFormatter={(value) => settings.privacyMode ? '•••' : `R$${value}`}
+                                tickLine={false}
+                                axisLine={false}
+                                width={60}
+                            />
+                            <Tooltip
+                                contentStyle={{ backgroundColor: '#151b2e', borderColor: '#334155', borderRadius: '8px', color: '#fff', fontSize: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)' }}
+                                itemStyle={{ color: '#17baa4', fontWeight: 'bold' }}
+                                formatter={(value: number) => [settings.privacyMode ? 'R$ ••••' : formatCurrency(value), 'Lucro']}
+                                cursor={{ stroke: '#334155', strokeWidth: 1 }}
+                            />
+                            <Area
+                                type="monotone"
+                                dataKey="profit"
+                                stroke="#17baa4"
+                                strokeWidth={2}
+                                fillOpacity={1}
+                                fill="url(#colorProfit)"
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                ) : (
+                    <div className="h-[200px] border border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center bg-white/[0.02] gap-2 hover:bg-white/[0.04] transition-colors group/empty">
+                        <Activity className="text-white/10 group-hover/empty:text-white/20 transition-colors animate-float" size={32} />
+                        <span className="text-gray-500 text-xs font-medium">Sem dados no período selecionado</span>
+                    </div>
+                )}
+            </div>
+        </div>
+    </Card>
+            </div >
         </div >
     );
 };
