@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { TrendingUp, Trophy, Wallet, Activity, Calendar, Infinity, Filter, DollarSign, Target, Eye, EyeOff, StickyNote, Copy } from 'lucide-react';
+import { TrendingUp, Trophy, Wallet, Activity, Calendar, Infinity, Filter, DollarSign, Target, Eye, EyeOff, StickyNote, Copy, ChevronDown } from 'lucide-react';
 import { Card, Dropdown, Input, MoneyDisplay } from './ui/UIComponents';
 import { Bet, ExtraGain, AppSettings, Bookmaker } from '../types';
 import { calculateBetStats } from '../utils/betCalculations';
@@ -18,6 +18,8 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+    const [expandedBookmaker, setExpandedBookmaker] = useState<string | null>(null); // For Top 3 expansion
+
 
     // Period Options with Icons
     const periodOptions = [
@@ -578,10 +580,14 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
                                 const rankColor = rankColors[index] || 'text-gray-500';
 
                                 const bookmaker = bookmakers.find(b => b.id === stats.bookmakerId) || { name: 'Desconhecida', logo: '' };
+                                const isExpanded = expandedBookmaker === stats.bookmakerId;
 
                                 return (
                                     <div key={stats.bookmakerId} className={`relative flex flex-col gap-2 ${!isWinner ? 'pt-2 border-t border-white/5' : ''}`}>
-                                        <div className="flex items-center justify-between">
+                                        <div
+                                            className="flex items-center justify-between cursor-pointer hover:bg-white/5 rounded-lg p-2 -m-2 transition-colors group/item"
+                                            onClick={() => setExpandedBookmaker(isExpanded ? null : stats.bookmakerId)}
+                                        >
                                             <div className="flex items-center gap-3">
                                                 {/* Rank Indicator */}
                                                 <div className={`font-bold text-lg w-4 text-center ${rankColor}`}>
@@ -603,15 +609,25 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
                                                 </div>
                                             </div>
 
-                                            {/* Profit */}
-                                            <span className={`font-bold ${isWinner ? 'text-[#6ee7b7] text-base' : 'text-[#6ee7b7]/80 text-sm'}`}>
-                                                <MoneyDisplay value={stats.totalProfit} privacyMode={settings.privacyMode} />
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                {/* Profit */}
+                                                <span className={`font-bold ${isWinner ? 'text-[#6ee7b7] text-base' : 'text-[#6ee7b7]/80 text-sm'}`}>
+                                                    <MoneyDisplay value={stats.totalProfit} privacyMode={settings.privacyMode} />
+                                                </span>
+
+                                                {/* Chevron Indicator */}
+                                                {stats.topPromos.length > 0 && (
+                                                    <ChevronDown
+                                                        size={16}
+                                                        className={`text-gray-500 group-hover/item:text-gray-400 transition-all ${isExpanded ? 'rotate-180' : ''}`}
+                                                    />
+                                                )}
+                                            </div>
                                         </div>
 
-                                        {/* Winner Promos Breakdown */}
-                                        {isWinner && stats.topPromos.length > 0 && (
-                                            <div className="ml-9 pl-2 border-l-2 border-white/10">
+                                        {/* Promos Breakdown - Expandable */}
+                                        {isExpanded && stats.topPromos.length > 0 && (
+                                            <div className="ml-9 pl-2 border-l-2 border-white/10 animate-in fade-in slide-in-from-top-2 duration-200">
                                                 <div className="flex flex-col gap-1">
                                                     {stats.topPromos.map((promo, idx) => (
                                                         <div key={idx} className="flex items-center justify-between text-[11px] text-gray-400">
