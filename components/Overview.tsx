@@ -166,7 +166,11 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             };
         });
 
-        const totalProfit = resolvedBets.reduce((acc, bet) => acc + calculateBetStats(bet).profit, 0);
+        // Use strict Profit (Return - Stake) to match user expectations
+        const totalProfit = resolvedBets.reduce((acc, bet) => {
+            const stats = calculateBetStats(bet);
+            return acc + (stats.totalReturn - stats.totalStake);
+        }, 0);
         const roi = resolvedStaked > 0 ? (totalProfit / resolvedStaked) * 100 : 0;
 
         const betPromotionsCount = filteredBets.filter(b => b.promotionType && b.promotionType !== 'Nenhuma').length;
@@ -200,10 +204,12 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             const promo = bet.promotionType || 'Nenhuma';
 
             if (!bookmakerProfits[bmId]) bookmakerProfits[bmId] = { total: 0, promos: {} };
-            bookmakerProfits[bmId].total += stats.profit;
+            // Use strict Profit (Right - Stake) to match dashboard baseline
+            const profit = stats.totalReturn - stats.totalStake;
+            bookmakerProfits[bmId].total += profit;
 
             if (!bookmakerProfits[bmId].promos[promo]) bookmakerProfits[bmId].promos[promo] = 0;
-            bookmakerProfits[bmId].promos[promo] += stats.profit;
+            bookmakerProfits[bmId].promos[promo] += profit;
         });
 
         // 2. Process Extra Gains (Only Received/Confirmed/Concluded)
@@ -273,7 +279,8 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
         allResolvedBets.forEach(bet => {
             const date = new Date(bet.date);
             const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-            const { profit } = calculateBetStats(bet);
+            const { totalReturn, totalStake } = calculateBetStats(bet);
+            const profit = totalReturn - totalStake;
             monthlyProfits[key] = (monthlyProfits[key] || 0) + profit;
         });
 
