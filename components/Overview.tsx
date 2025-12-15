@@ -35,8 +35,9 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
         const now = new Date(); // Local time
 
         return bets.filter(bet => {
-            // Parse YYYY-MM-DD string to local Date components to avoid UTC shift
-            const [y, m, d] = bet.date.split('-').map(Number);
+            // Parse YYYY-MM-DD string or ISO string to local Date components 
+            const dateStr = bet.date.includes('T') ? bet.date.split('T')[0] : bet.date;
+            const [y, m, d] = dateStr.split('-').map(Number);
             const betDate = new Date(y, m - 1, d); // Local midnight
             const betDay = new Date(y, m - 1, d);
             const currentDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -79,8 +80,9 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
         const now = new Date();
 
         return gains.filter(gain => {
-            // Parse YYYY-MM-DD string to local Date components
-            const [y, m, d] = gain.date.split('-').map(Number);
+            // Parse YYYY-MM-DD string or ISO string to local Date components 
+            const dateStr = gain.date.includes('T') ? gain.date.split('T')[0] : gain.date;
+            const [y, m, d] = dateStr.split('-').map(Number);
             const gainDate = new Date(y, m - 1, d);
             const gainDay = new Date(y, m - 1, d);
             const currentDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
