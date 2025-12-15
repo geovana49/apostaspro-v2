@@ -118,8 +118,6 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         if (files.length === 0) return;
         const MAX_PHOTOS = 8;
 
-        console.log('[MyBets processFiles] Called with', files.length, 'files');
-
         files.sort((a, b) => a.lastModified - b.lastModified);
 
         if (tempPhotos.length + files.length > MAX_PHOTOS) {
@@ -152,15 +150,12 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     // Register global drop handler when modal is open
     useLayoutEffect(() => {
         if (isModalOpen) {
-            console.log('[MyBets] useLayoutEffect - Registering handler NOW');
             (window as any).onApostasProDrop = (files: FileList) => {
-                console.log('[MyBets] Handler called with', files.length, 'files');
                 processFilesRef.current(Array.from(files));
             };
         }
         return () => {
             if (isModalOpen) {
-                console.log('[MyBets] useLayoutEffect cleanup');
                 (window as any).onApostasProDrop = null;
             }
         };

@@ -144,8 +144,6 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
         if (files.length === 0) return;
         const MAX_PHOTOS = 8;
 
-        console.log('[processFiles] Called with', files.length, 'files');
-
         // Sort files by date (oldest to newest)
         files.sort((a, b) => a.lastModified - b.lastModified);
 
@@ -181,9 +179,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
     // This runs before the browser paints, ensuring handler is ready immediately
     useLayoutEffect(() => {
         if (isOpen) {
-            console.log('[BetFormModal] useLayoutEffect - Registering handler NOW');
             (window as any).onApostasProDrop = (files: FileList) => {
-                console.log('[BetFormModal] Handler called with', files.length, 'files');
                 processFilesRef.current(Array.from(files));
                 const overlay = document.getElementById('global-drop-overlay');
                 if (overlay) overlay.remove();
@@ -191,7 +187,6 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
         }
         return () => {
             if (isOpen) {
-                console.log('[BetFormModal] useLayoutEffect cleanup');
                 (window as any).onApostasProDrop = null;
             }
         };
