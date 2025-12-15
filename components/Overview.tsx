@@ -196,7 +196,7 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
         // 1. Process Resolved Bets
         resolvedBets.forEach(bet => {
             const stats = calculateBetStats(bet);
-            const bmId = bet.mainBookmakerId;
+            const bmId = bet.mainBookmakerId || 'unknown'; // Handle missing ID
             const promo = bet.promotionType || 'Nenhuma';
 
             if (!bookmakerProfits[bmId]) bookmakerProfits[bmId] = { total: 0, promos: {} };
@@ -211,7 +211,7 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             // Filter out non-final statuses
             if (!['Recebido', 'Confirmado', 'Concluido', 'Concluído'].includes(gain.status)) return;
 
-            const bmId = gain.bookmakerId;
+            const bmId = gain.bookmakerId || 'unknown'; // Handle missing ID
             const promo = gain.origin || 'Outros';
 
             if (!bookmakerProfits[bmId]) bookmakerProfits[bmId] = { total: 0, promos: {} };
@@ -252,18 +252,45 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             });
         }
 
-        const bestStats = bestBookmakerId ? {
+        // Even if bestBookmakerId is 'unknown', we show it. 
+        // Logic checks if filtered list has entries, so bestBookmakerId should be found if there is ANY profit/loss.
+        const bestStats = bestBookmakerId !== '' ? {
             bookmakerId: bestBookmakerId,
             totalProfit: maxProfit,
             bestPromo: bestPromo,
             bestPromoProfit: maxPromoProfit
         } : null;
 
-        return { totalStaked: resolvedStaked, totalReturned: resolvedReturned, netProfit: totalProfit, roi, chartData, totalPromotionsCount, doubleGreenBets, bestStats };
+        // --- Best Months Calculation ---
+        const monthlyProfits: Record<string, number> = {};
+
+        // Group bets by month
+        resolvedBets.forEach(bet => {
+            const date = new Date(bet.date);
+            const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            const { profit } = calculateBetStats(bet);
+            monthlyProfits[key] = (monthlyProfits[key] || 0) + profit;
+        });
+
+        // Extra Gains are usually not monthly based in the same way, but let's include them?
+        // For simplicity and consistency with 'Evolution', let's include Gains if they have dates.
+        filteredGains.forEach(gain => {
+            if (!['Recebido', 'Confirmado', 'Concluido', 'Concluído'].includes(gain.status)) return;
+            const date = new Date(gain.date);
+            const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            monthlyProfits[key] = (monthlyProfits[key] || 0) + gain.amount;
+        });
+
+        const bestMonths = Object.entries(monthlyProfits)
+            .map(([month, profit]) => ({ month, profit }))
+            .sort((a, b) => b.profit - a.profit)
+            .slice(0, 3); // Top 3
+
+        return { totalStaked: resolvedStaked, totalReturned: resolvedReturned, netProfit: totalProfit, roi, chartData, totalPromotionsCount, doubleGreenBets, bestStats, bestMonths };
     };
 
 
-    const { totalStaked, totalReturned, netProfit, roi, chartData, totalPromotionsCount, doubleGreenBets, bestStats } = calculateMetrics();
+    const { totalStaked, totalReturned, netProfit, roi, chartData, totalPromotionsCount, doubleGreenBets, bestStats, bestMonths } = calculateMetrics();
 
     const isProfitPositive = netProfit >= 0;
 
@@ -499,10 +526,39 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
                         <h3 className="font-bold text-white text-sm uppercase tracking-wide">Meses Mais Lucrativos</h3>
                     </div>
 
-                    <div className="border border-dashed border-white/10 rounded-xl h-[200px] flex flex-col items-center justify-center bg-white/[0.02] gap-2 hover:bg-white/[0.04] transition-colors cursor-default group/empty">
-                        <Trophy className="text-white/10 group-hover/empty:text-white/20 transition-colors animate-float" size={32} />
-                        <span className="text-gray-500 text-xs font-medium">Sem histórico suficiente para análise</span>
-                    </div>
+                    {bestMonths && bestMonths.length > 0 ? (
+                        <div className="space-y-3">
+                            {bestMonths.map((item, index) => {
+                                const [year, month] = item.month.split('-');
+                                const date = new Date(Number(year), Number(month) - 1, 1);
+                                const monthName = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+                                return (
+                                    <div key={item.month} className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/5">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`
+                                                w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold
+                                                ${index === 0 ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' :
+                                                    index === 1 ? 'bg-gray-400/20 text-gray-400 border border-gray-400/30' :
+                                                        'bg-orange-700/20 text-orange-700 border border-orange-700/30'}
+                                            `}>
+                                                {index + 1}º
+                                            </div>
+                                            <span className="text-sm text-gray-300 capitalize">{monthName}</span>
+                                        </div>
+                                        <span className={`text-sm font-bold ${item.profit >= 0 ? 'text-[#6ee7b7]' : 'text-red-400'}`}>
+                                            <MoneyDisplay value={item.profit} privacyMode={settings.privacyMode} />
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="border border-dashed border-white/10 rounded-xl h-[200px] flex flex-col items-center justify-center bg-white/[0.02] gap-2 hover:bg-white/[0.04] transition-colors cursor-default group/empty">
+                            <Trophy className="text-white/10 group-hover/empty:text-white/20 transition-colors animate-float" size={32} />
+                            <span className="text-gray-500 text-xs font-medium">Sem histórico suficiente para análise</span>
+                        </div>
+                    )}
                 </Card>
 
                 {/* Best Stats Card - Casa e Promoção */}
