@@ -677,23 +677,36 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         }
 
 
-
         if (promotionFilter !== 'all') {
             // Normalize: treat undefined, empty string, or 'Nenhuma' as equivalent
             const betPromo = bet.promotionType || 'Nenhuma';
 
-            // Flexible matching: exact, case-insensitive, or partial
-            const isMatch =
-                betPromo === promotionFilter || // Exact match
-                betPromo.toLowerCase() === promotionFilter.toLowerCase() || // Case-insensitive
-                betPromo.toLowerCase().includes(promotionFilter.toLowerCase()) || // "Super Odd" includes "Super Odds"
-                promotionFilter.toLowerCase().includes(betPromo.toLowerCase()); // "Super Odds" includes "Super Odd"
+            const betLower = betPromo.toLowerCase();
+            const filterLower = promotionFilter.toLowerCase();
 
-            if (!isMatch) {
-                return false;
+            // Exact or case-insensitive match
+            if (betLower === filterLower) {
+                // Match - continue to next check
+            } else {
+                // Word-based matching: check if all significant words from filter are in bet promo
+                // This handles "Super Odd" vs "Super Odds" but not "Freebet" vs "Conversão Freebet"
+                const filterWords = filterLower.split(/\s+/).filter(w => w.length > 2); // Ignore small words
+                const betWords = betLower.split(/\s+/).filter(w => w.length > 2);
+
+                // Check if bet promo contains all filter words (or very similar)
+                const allWordsMatch = filterWords.every(filterWord =>
+                    betWords.some(betWord =>
+                        betWord === filterWord || // Exact word match
+                        betWord.includes(filterWord) || // "odds" includes "odd"
+                        filterWord.includes(betWord) // "odd" includes in "odds"
+                    )
+                );
+
+                if (!allWordsMatch) {
+                    return false;
+                }
             }
         }
-
 
 
         const term = searchTerm.toLowerCase();
