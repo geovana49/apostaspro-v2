@@ -128,11 +128,38 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                 });
                 setTempPhotos(initialData.photos ? initialData.photos.map(url => ({ url })) : []);
             } else {
-                dispatch({ type: 'RESET_FORM' });
-                setTempPhotos([]);
+                // Check for generic draft
+                const savedDraft = localStorage.getItem('apostaspro_draft_modal');
+                if (savedDraft) {
+                    try {
+                        const { formData: savedForm, tempPhotos: savedPhotos } = JSON.parse(savedDraft);
+                        console.log('Restoring draft for BetFormModal');
+                        dispatch({ type: 'SET_FORM', payload: savedForm });
+                        setTempPhotos(savedPhotos || []);
+                    } catch (e) {
+                        console.error('Error parsing draft:', e);
+                        dispatch({ type: 'RESET_FORM' });
+                        setTempPhotos([]);
+                    }
+                } else {
+                    dispatch({ type: 'RESET_FORM' });
+                    setTempPhotos([]);
+                }
             }
         }
     }, [isOpen, initialData]);
+
+    // Auto-Save Draft
+    useEffect(() => {
+        if (isOpen && !initialData) {
+            const draft = {
+                formData,
+                tempPhotos,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('apostaspro_draft_modal', JSON.stringify(draft));
+        }
+    }, [formData, tempPhotos, isOpen, initialData]);
 
     const parseDate = (dateStr: string): Date => {
         const datePart = dateStr.split('T')[0];
@@ -435,6 +462,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
             const betDate = parseDate(formData.date);
             onSaveSuccess(betDate);
+            localStorage.removeItem('apostaspro_draft_modal'); // Clear draft on success
             onClose();
         } catch (error: any) {
             console.error("Error saving:", error);

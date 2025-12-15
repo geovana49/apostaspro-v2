@@ -244,11 +244,39 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
 
     const handleOpenNew = () => {
         setIsEditing(false);
-        dispatch({ type: 'RESET_FORM' });
-        setTempPhotos([]);
+        // Check for generic draft
+        const savedDraft = localStorage.getItem('apostaspro_draft_mybets');
+        if (savedDraft) {
+            try {
+                const { formData: savedForm, tempPhotos: savedPhotos } = JSON.parse(savedDraft);
+                console.log('Restoring draft for MyBets');
+                dispatch({ type: 'SET_FORM', payload: savedForm });
+                setTempPhotos(savedPhotos || []);
+            } catch (e) {
+                console.error('Error parsing draft:', e);
+                dispatch({ type: 'RESET_FORM' });
+                setTempPhotos([]);
+            }
+        } else {
+            dispatch({ type: 'RESET_FORM' });
+            setTempPhotos([]);
+        }
         setIsModalOpen(true);
         setDeleteId(null);
     };
+
+    // Auto-Save Draft
+    useEffect(() => {
+        if (isModalOpen && !isEditing) {
+            const draft = {
+                formData,
+                tempPhotos,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('apostaspro_draft_mybets', JSON.stringify(draft));
+        }
+    }, [formData, tempPhotos, isModalOpen, isEditing]);
+
 
     const requestDelete = (id: string) => setDeleteId(id);
     const cancelDelete = () => setDeleteId(null);
@@ -437,6 +465,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             console.log("Navigated to date:", betDate);
 
             setIsModalOpen(false);
+            localStorage.removeItem('apostaspro_draft_mybets'); // Clear draft on success
         } catch (error: any) {
             console.error("Error saving bet:", error);
             alert(`Erro ao salvar a aposta: ${error.message || error}`);
