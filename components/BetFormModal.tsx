@@ -178,10 +178,11 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
     // Global Safety Net & Drop Zone: Handle drops anywhere on the modal
     // Global Safety Net & Drop Zone: Handle drops anywhere on the modal
     useEffect(() => {
-        if (isOpen) {
-            const overlayId = 'global-drop-overlay';
+        const overlayId = 'global-drop-overlay';
 
-            // PIPELINE REGISTRATION - Register FIRST, before anything else
+        // ALWAYS register handler when component renders with modal open
+        if (isOpen) {
+            // PIPELINE REGISTRATION - Register on EVERY render when open
             (window as any).onApostasProDrop = (files: FileList) => {
                 processFilesRef.current(Array.from(files));
                 const ex = document.getElementById(overlayId);
@@ -286,8 +287,11 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                 // Unregister pipeline
                 (window as any).onApostasProDrop = null;
             };
+        } else {
+            // Modal is closed, make sure handler is unregistered
+            (window as any).onApostasProDrop = null;
         }
-    }, [isOpen]); // Removed processFiles dependency!
+    }); // NO dependencies - runs on every render!
 
 
 
