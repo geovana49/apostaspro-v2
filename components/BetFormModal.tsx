@@ -478,6 +478,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                     notes: formData.notes,
                     photos: photoBase64,
                     date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
+                    isDoubleGreen: formData.isDoubleGreen
                 };
 
                 const betToSave = JSON.parse(JSON.stringify(rawBet));
