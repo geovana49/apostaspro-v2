@@ -12,31 +12,51 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
-    // --- GLOBAL DRAG & DROP PIPELINE ---
+    // --- GLOBAL DRAG & DROP PIPELINE WITH RETRY ---
+    (function () {
+      // Queue for pending files
+      var pendingFiles = null;
+      var retryCount = 0;
+      var maxRetries = 10;
+      var retryInterval = 100; // ms
 
+      function tryDeliverFiles() {
+        if (!pendingFiles) return;
 
-    window.addEventListener('dragover', function (e) {
-      e.preventDefault(); // BLOCK Browser standard behavior (New Tab)
-      // e.stopPropagation(); // REMOVE to allow detection
-    }, true);
-
-    window.addEventListener('drop', function (e) {
-      e.preventDefault(); // BLOCK Browser standard behavior (New Tab)
-      e.stopPropagation(); // Stop bubbling to be safe, we handle manually
-
-
-
-      // Pipeline: Pass files to React if a handler is registered
-      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         if (window.onApostasProDrop) {
-          window.onApostasProDrop(e.dataTransfer.files);
+          // Handler is ready, deliver files!
+          window.onApostasProDrop(pendingFiles);
+          pendingFiles = null;
+          retryCount = 0;
+        } else if (retryCount < maxRetries) {
+          // Handler not ready, retry
+          retryCount++;
+          setTimeout(tryDeliverFiles, retryInterval);
         } else {
-          console.warn("React handler not connected yet.");
+          // All retries exhausted
+          console.warn("ApostasPro: Handler not ready after", maxRetries, "retries");
           alert("ApostasPro: Arquivo recebido, mas o aplicativo não estava pronto. Tente abrir o modal novamente.");
+          pendingFiles = null;
+          retryCount = 0;
         }
       }
-    }, true);
-    // ------------------------------------------------
+
+      window.addEventListener('dragover', function (e) {
+        e.preventDefault();
+      }, true);
+
+      window.addEventListener('drop', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          // Store files and start delivery attempt
+          pendingFiles = e.dataTransfer.files;
+          retryCount = 0;
+          tryDeliverFiles();
+        }
+      }, true);
+    })();
   </script>
   <script>
     tailwind.config = {
