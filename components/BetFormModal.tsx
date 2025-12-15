@@ -169,6 +169,12 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
         }
     }, []); // No dependencies needed now
 
+    // Stable reference to processFiles to avoid re-registering the pipeline
+    const processFilesRef = useRef(processFiles);
+    useEffect(() => {
+        processFilesRef.current = processFiles;
+    }, [processFiles]);
+
     // Global Safety Net & Drop Zone: Handle drops anywhere on the modal
     // Global Safety Net & Drop Zone: Handle drops anywhere on the modal
     // Native DOM Overlay Logic - The "Nuclear Option"
@@ -250,7 +256,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                             ev.stopPropagation();
                             overlay.remove(); // Close overlay
                             if (ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files.length > 0) {
-                                processFiles(Array.from(ev.dataTransfer.files));
+                                processFilesRef.current(Array.from(ev.dataTransfer.files));
                             }
                         });
 
@@ -272,7 +278,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
             // We tell index.html: "Here is the function to call when you get a file"
             (window as any).onApostasProDrop = (files: FileList) => {
                 console.log("✅ React received files via Pipeline!");
-                processFiles(Array.from(files));
+                processFilesRef.current(Array.from(files));
                 const ex = document.getElementById(overlayId);
                 if (ex) ex.remove();
             };
@@ -288,7 +294,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                 (window as any).onApostasProDrop = null;
             };
         }
-    }, [isOpen, processFiles]);
+    }, [isOpen]); // Removed processFiles dependency!
 
 
 
