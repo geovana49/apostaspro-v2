@@ -268,12 +268,24 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
             window.addEventListener('dragover', preventDefault, { capture: true, passive: false });
             window.addEventListener('drop', preventDefault, { capture: true, passive: false });
 
+            // PIPELINE REGISTRATION
+            // We tell index.html: "Here is the function to call when you get a file"
+            (window as any).onApostasProDrop = (files: FileList) => {
+                console.log("✅ React received files via Pipeline!");
+                processFiles(Array.from(files));
+                const ex = document.getElementById(overlayId);
+                if (ex) ex.remove();
+            };
+
             return () => {
                 window.removeEventListener('dragenter', onDragEnterGlobal, { capture: true } as any);
                 window.removeEventListener('dragover', preventDefault, { capture: true } as any);
                 window.removeEventListener('drop', preventDefault, { capture: true } as any);
                 const ex = document.getElementById(overlayId);
                 if (ex) ex.remove();
+
+                // Unregister pipeline
+                (window as any).onApostasProDrop = null;
             };
         }
     }, [isOpen, processFiles]);
