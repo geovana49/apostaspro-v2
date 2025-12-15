@@ -1,4 +1,4 @@
-import React, { useState, useReducer, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useReducer, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Button, Input, Dropdown, Modal, SingleDatePickerModal, ImageViewer, MoneyDisplay } from './ui/UIComponents';
 import {
@@ -177,6 +177,26 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
         processFilesRef.current = processFiles;
     }, [processFiles]);
 
+    // CRITICAL: Register handler SYNCHRONOUSLY using useLayoutEffect
+    // This runs before the browser paints, ensuring handler is ready immediately
+    useLayoutEffect(() => {
+        if (isOpen) {
+            console.log('[BetFormModal] useLayoutEffect - Registering handler NOW');
+            (window as any).onApostasProDrop = (files: FileList) => {
+                console.log('[BetFormModal] Handler called with', files.length, 'files');
+                processFilesRef.current(Array.from(files));
+                const overlay = document.getElementById('global-drop-overlay');
+                if (overlay) overlay.remove();
+            };
+        }
+        return () => {
+            if (isOpen) {
+                console.log('[BetFormModal] useLayoutEffect cleanup');
+                (window as any).onApostasProDrop = null;
+            }
+        };
+    }, [isOpen]);
+
     // Global Safety Net & Drop Zone: Handle drops anywhere on the modal
     // Global Safety Net & Drop Zone: Handle drops anywhere on the modal
     useEffect(() => {
@@ -184,12 +204,6 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
         // ALWAYS register handler when component renders with modal open
         if (isOpen) {
-            // PIPELINE REGISTRATION - Register on EVERY render when open
-            (window as any).onApostasProDrop = (files: FileList) => {
-                processFilesRef.current(Array.from(files));
-                const ex = document.getElementById(overlayId);
-                if (ex) ex.remove();
-            };
 
             const createOverlay = () => {
                 const el = document.createElement('div');
@@ -285,15 +299,11 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                 window.removeEventListener('drop', preventDefault, { capture: true } as any);
                 const ex = document.getElementById(overlayId);
                 if (ex) ex.remove();
-
-                // Unregister pipeline
-                (window as any).onApostasProDrop = null;
+                // Handler cleanup is now in useLayoutEffect
             };
-        } else {
-            // Modal is closed, make sure handler is unregistered
-            (window as any).onApostasProDrop = null;
         }
-    }); // NO dependencies - runs on every render!
+        // Handler cleanup is now in useLayoutEffect
+    }, [isOpen]); // Run when isOpen changes
 
 
 
