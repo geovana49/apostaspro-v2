@@ -41,7 +41,7 @@ const initialFormState: FormState = {
     event: '',
     promotionType: 'Nenhuma',
     status: 'Pendente',
-    status: 'Pendente',
+
     coverages: [],
     notes: '',
     isDoubleGreen: false

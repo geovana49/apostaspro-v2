@@ -353,15 +353,16 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
             </div>
 
             {/* Double Green Bets List */}
-            {doubleGreenBets.length > 0 && (
-                <Card className="p-6 bg-[#151b2e] border-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <div className="flex items-center gap-2 mb-4">
-                        <div className="p-1.5 rounded-md bg-primary/10 text-primary">
-                            <Copy size={16} />
-                        </div>
-                        <h3 className="font-bold text-white text-sm uppercase tracking-wide">Apostas com Duplo Green ({doubleGreenBets.length})</h3>
+            {/* Double Green Bets List - Always Visible */}
+            <Card className="p-6 bg-[#151b2e] border-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="p-1.5 rounded-md bg-primary/10 text-primary">
+                        <Copy size={16} />
                     </div>
+                    <h3 className="font-bold text-white text-sm uppercase tracking-wide">Apostas com Duplo Green ({doubleGreenBets.length})</h3>
+                </div>
 
+                {doubleGreenBets.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {doubleGreenBets.map(bet => {
                             const stats = calculateBetStats(bet);
@@ -382,8 +383,13 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings 
                             )
                         })}
                     </div>
-                </Card>
-            )}
+                ) : (
+                    <div className="border border-dashed border-white/10 rounded-xl h-[120px] flex flex-col items-center justify-center bg-white/[0.02] gap-2 hover:bg-white/[0.04] transition-colors cursor-default">
+                        <Copy className="text-white/10" size={24} />
+                        <span className="text-gray-500 text-xs font-medium">Nenhuma aposta Duplo Green no período</span>
+                    </div>
+                )}
+            </Card>
 
 
 
