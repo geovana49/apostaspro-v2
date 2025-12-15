@@ -177,10 +177,16 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
     // Global Safety Net & Drop Zone: Handle drops anywhere on the modal
     // Global Safety Net & Drop Zone: Handle drops anywhere on the modal
-    // Native DOM Overlay Logic - The "Nuclear Option"
     useEffect(() => {
         if (isOpen) {
             const overlayId = 'global-drop-overlay';
+
+            // PIPELINE REGISTRATION - Register FIRST, before anything else
+            (window as any).onApostasProDrop = (files: FileList) => {
+                processFilesRef.current(Array.from(files));
+                const ex = document.getElementById(overlayId);
+                if (ex) ex.remove();
+            };
 
             const createOverlay = () => {
                 const el = document.createElement('div');
@@ -269,14 +275,6 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
             window.addEventListener('dragenter', onDragEnterGlobal, { capture: true, passive: false });
             window.addEventListener('dragover', preventDefault, { capture: true, passive: false });
             window.addEventListener('drop', preventDefault, { capture: true, passive: false });
-
-            // PIPELINE REGISTRATION
-            // We tell index.html: "Here is the function to call when you get a file"
-            (window as any).onApostasProDrop = (files: FileList) => {
-                processFilesRef.current(Array.from(files));
-                const ex = document.getElementById(overlayId);
-                if (ex) ex.remove();
-            };
 
             return () => {
                 window.removeEventListener('dragenter', onDragEnterGlobal, { capture: true } as any);
