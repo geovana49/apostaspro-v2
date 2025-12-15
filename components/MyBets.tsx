@@ -676,9 +676,15 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             return false;
         }
 
-        if (promotionFilter !== 'all' && bet.promotionType !== promotionFilter) {
-            return false;
+
+        if (promotionFilter !== 'all') {
+            // Normalize: treat undefined, empty string, or 'Nenhuma' as equivalent
+            const betPromo = bet.promotionType || 'Nenhuma';
+            if (betPromo !== promotionFilter) {
+                return false;
+            }
         }
+
 
         const term = searchTerm.toLowerCase();
         const matchesEvent = bet.event.toLowerCase().includes(term);
