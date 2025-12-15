@@ -206,8 +206,11 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             bookmakerProfits[bmId].promos[promo] += stats.profit;
         });
 
-        // 2. Process Extra Gains
+        // 2. Process Extra Gains (Only Received/Confirmed/Concluded)
         filteredGains.forEach(gain => {
+            // Filter out non-final statuses
+            if (!['Recebido', 'Confirmado', 'Concluido', 'Concluído'].includes(gain.status)) return;
+
             const bmId = gain.bookmakerId;
             const promo = gain.origin || 'Outros';
 
@@ -216,6 +219,13 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
 
             if (!bookmakerProfits[bmId].promos[promo]) bookmakerProfits[bmId].promos[promo] = 0;
             bookmakerProfits[bmId].promos[promo] += gain.amount;
+        });
+
+        console.log("📊 Debug Best Stats:", {
+            period,
+            resolvedBetsCount: resolvedBets.length,
+            filteredGainsCount: filteredGains.length,
+            bookmakerProfits
         });
 
         // 3. Find Best Bookmaker
