@@ -32,37 +32,37 @@ interface SettingsProps {
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e', '#64748b', '#000000', '#FFFFFF'];
 
 const PRESET_AVATARS = [
-    // Adventurer style - diverse characters
-    'https://api.dicebear.com/9.x/adventurer/svg?seed=Casper',
-    'https://api.dicebear.com/9.x/adventurer/svg?seed=Mimi',
-    'https://api.dicebear.com/9.x/adventurer/svg?seed=Leo',
-    'https://api.dicebear.com/9.x/adventurer/svg?seed=Luna',
-    'https://api.dicebear.com/9.x/adventurer/svg?seed=Felix',
-    'https://api.dicebear.com/9.x/adventurer/svg?seed=Cleo',
-    'https://api.dicebear.com/9.x/adventurer/svg?seed=Ollie',
-    'https://api.dicebear.com/9.x/adventurer/svg?seed=Zoe',
-    'https://api.dicebear.com/9.x/adventurer/svg?seed=Rocky',
-    'https://api.dicebear.com/9.x/adventurer/svg?seed=Pepper',
-    'https://api.dicebear.com/9.x/adventurer/svg?seed=Max',
-    'https://api.dicebear.com/9.x/adventurer/svg?seed=Bella',
+    // Lorelei style - elegant professionals
+    'https://api.dicebear.com/9.x/lorelei/svg?seed=Sophia',
+    'https://api.dicebear.com/9.x/lorelei/svg?seed=Isabella',
+    'https://api.dicebear.com/9.x/lorelei/svg?seed=Olivia',
+    'https://api.dicebear.com/9.x/lorelei/svg?seed=Emma',
+    'https://api.dicebear.com/9.x/lorelei/svg?seed=Ava',
+    'https://api.dicebear.com/9.x/lorelei/svg?seed=Charlotte',
 
-    // Avataaars style - more playful
-    'https://api.dicebear.com/9.x/avataaars/svg?seed=Charlie',
-    'https://api.dicebear.com/9.x/avataaars/svg?seed=Sophie',
-    'https://api.dicebear.com/9.x/avataaars/svg?seed=Jack',
-    'https://api.dicebear.com/9.x/avataaars/svg?seed=Emma',
+    // Notionists style - minimalist modern
+    'https://api.dicebear.com/9.x/notionists/svg?seed=Gabriel',
+    'https://api.dicebear.com/9.x/notionists/svg?seed=Sebastian',
+    'https://api.dicebear.com/9.x/notionists/svg?seed=Julian',
+    'https://api.dicebear.com/9.x/notionists/svg?seed=Lucas',
+    'https://api.dicebear.com/9.x/notionists/svg?seed=Alexander',
+    'https://api.dicebear.com/9.x/notionists/svg?seed=Theodore',
 
-    // Big Smile style - friendly vibes
-    'https://api.dicebear.com/9.x/big-smile/svg?seed=Alex',
-    'https://api.dicebear.com/9.x/big-smile/svg?seed=Riley',
-    'https://api.dicebear.com/9.x/big-smile/svg?seed=Morgan',
-    'https://api.dicebear.com/9.x/big-smile/svg?seed=Jordan',
+    // Personas style - professional portraits
+    'https://api.dicebear.com/9.x/personas/svg?seed=Victoria',
+    'https://api.dicebear.com/9.x/personas/svg?seed=Grace',
+    'https://api.dicebear.com/9.x/personas/svg?seed=Eleanor',
+    'https://api.dicebear.com/9.x/personas/svg?seed=Claire',
+    'https://api.dicebear.com/9.x/personas/svg?seed=Amelia',
+    'https://api.dicebear.com/9.x/personas/svg?seed=Harper',
 
-    // Lorelei style - professional
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Taylor',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Casey',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Avery',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Sage'
+    // Shapes style - abstract elegant
+    'https://api.dicebear.com/9.x/shapes/svg?seed=Azure',
+    'https://api.dicebear.com/9.x/shapes/svg?seed=Emerald',
+    'https://api.dicebear.com/9.x/shapes/svg?seed=Ruby',
+    'https://api.dicebear.com/9.x/shapes/svg?seed=Sapphire',
+    'https://api.dicebear.com/9.x/shapes/svg?seed=Gold',
+    'https://api.dicebear.com/9.x/shapes/svg?seed=Silver'
 ];
 
 const Settings: React.FC<SettingsProps> = ({
@@ -544,8 +544,8 @@ const Settings: React.FC<SettingsProps> = ({
                                         key={index}
                                         onClick={() => setAppSettings({ ...appSettings, profileImage: avatar })}
                                         className={`aspect-square rounded-full border-2 overflow-hidden transition-all hover:shadow-lg ${appSettings.profileImage === avatar
-                                                ? 'border-primary ring-4 ring-primary/20 scale-110 shadow-xl'
-                                                : 'border-white/10 hover:border-primary/50 hover:scale-105'
+                                            ? 'border-primary ring-4 ring-primary/20 scale-110 shadow-xl'
+                                            : 'border-white/10 hover:border-primary/50 hover:scale-105'
                                             }`}
                                         title={`Avatar ${index + 1}`}
                                     >
