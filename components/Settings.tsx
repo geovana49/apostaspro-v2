@@ -32,6 +32,7 @@ interface SettingsProps {
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e', '#64748b', '#000000', '#FFFFFF'];
 
 const PRESET_AVATARS = [
+    // Adventurer style - diverse characters
     'https://api.dicebear.com/9.x/adventurer/svg?seed=Casper',
     'https://api.dicebear.com/9.x/adventurer/svg?seed=Mimi',
     'https://api.dicebear.com/9.x/adventurer/svg?seed=Leo',
@@ -41,7 +42,27 @@ const PRESET_AVATARS = [
     'https://api.dicebear.com/9.x/adventurer/svg?seed=Ollie',
     'https://api.dicebear.com/9.x/adventurer/svg?seed=Zoe',
     'https://api.dicebear.com/9.x/adventurer/svg?seed=Rocky',
-    'https://api.dicebear.com/9.x/adventurer/svg?seed=Pepper'
+    'https://api.dicebear.com/9.x/adventurer/svg?seed=Pepper',
+    'https://api.dicebear.com/9.x/adventurer/svg?seed=Max',
+    'https://api.dicebear.com/9.x/adventurer/svg?seed=Bella',
+
+    // Avataaars style - more playful
+    'https://api.dicebear.com/9.x/avataaars/svg?seed=Charlie',
+    'https://api.dicebear.com/9.x/avataaars/svg?seed=Sophie',
+    'https://api.dicebear.com/9.x/avataaars/svg?seed=Jack',
+    'https://api.dicebear.com/9.x/avataaars/svg?seed=Emma',
+
+    // Big Smile style - friendly vibes
+    'https://api.dicebear.com/9.x/big-smile/svg?seed=Alex',
+    'https://api.dicebear.com/9.x/big-smile/svg?seed=Riley',
+    'https://api.dicebear.com/9.x/big-smile/svg?seed=Morgan',
+    'https://api.dicebear.com/9.x/big-smile/svg?seed=Jordan',
+
+    // Lorelei style - professional
+    'https://api.dicebear.com/9.x/lorelei/svg?seed=Taylor',
+    'https://api.dicebear.com/9.x/lorelei/svg?seed=Casey',
+    'https://api.dicebear.com/9.x/lorelei/svg?seed=Avery',
+    'https://api.dicebear.com/9.x/lorelei/svg?seed=Sage'
 ];
 
 const Settings: React.FC<SettingsProps> = ({
@@ -509,15 +530,26 @@ const Settings: React.FC<SettingsProps> = ({
                             />
                         </div>
                         <div className="pt-4 mt-4 border-t border-white/5">
-                            <label className="text-xs font-bold text-textMuted uppercase tracking-wider mb-3 block">Sugestões de Avatar</label>
-                            <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
+                            <label className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4 block flex items-center gap-2">
+                                <span className="bg-primary/10 p-1.5 rounded-md">
+                                    <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </span>
+                                Sugestões de Avatar
+                            </label>
+                            <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-3">
                                 {PRESET_AVATARS.map((avatar, index) => (
                                     <button
                                         key={index}
                                         onClick={() => setAppSettings({ ...appSettings, profileImage: avatar })}
-                                        className={`w-12 h-12 rounded-full border-2 overflow-hidden shrink-0 transition-all ${appSettings.profileImage === avatar ? 'border-primary ring-2 ring-primary/30 scale-110' : 'border-white/10 hover:border-white/30 hover:scale-105'}`}
+                                        className={`aspect-square rounded-full border-2 overflow-hidden transition-all hover:shadow-lg ${appSettings.profileImage === avatar
+                                                ? 'border-primary ring-4 ring-primary/20 scale-110 shadow-xl'
+                                                : 'border-white/10 hover:border-primary/50 hover:scale-105'
+                                            }`}
+                                        title={`Avatar ${index + 1}`}
                                     >
-                                        <img src={avatar} alt={`Avatar ${index}`} className="w-full h-full object-cover bg-[#151b2e]" />
+                                        <img src={avatar} alt={`Avatar ${index + 1}`} className="w-full h-full object-cover bg-[#151b2e]" />
                                     </button>
                                 ))}
                             </div>
