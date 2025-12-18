@@ -32,7 +32,7 @@ interface SettingsProps {
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e', '#64748b', '#000000', '#FFFFFF'];
 
 const PRESET_AVATARS = [
-    // Fun Emoji - cute expressive faces (expanded!)
+    // Fun Emoji - only cute expressive emoji faces
     'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Happy',
     'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Sleepy',
     'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Excited',
@@ -49,36 +49,30 @@ const PRESET_AVATARS = [
     'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Wink',
     'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Cool',
     'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Sweet',
-
-    // Croodles - doodle cuties
-    'https://api.dicebear.com/9.x/croodles/svg?seed=Honey',
-    'https://api.dicebear.com/9.x/croodles/svg?seed=Peaches',
-    'https://api.dicebear.com/9.x/croodles/svg?seed=Button',
-    'https://api.dicebear.com/9.x/croodles/svg?seed=Marshmallow',
-    'https://api.dicebear.com/9.x/croodles/svg?seed=Cupcake',
-    'https://api.dicebear.com/9.x/croodles/svg?seed=Jellybean',
-    'https://api.dicebear.com/9.x/croodles/svg?seed=Candy',
-    'https://api.dicebear.com/9.x/croodles/svg?seed=Sugar',
-
-    // Bottts - cute robots
-    'https://api.dicebear.com/9.x/bottts/svg?seed=Fluffy',
-    'https://api.dicebear.com/9.x/bottts/svg?seed=Bubbles',
-    'https://api.dicebear.com/9.x/bottts/svg?seed=Sparkle',
-    'https://api.dicebear.com/9.x/bottts/svg?seed=Cookie',
-    'https://api.dicebear.com/9.x/bottts/svg?seed=Mochi',
-    'https://api.dicebear.com/9.x/bottts/svg?seed=Peanut',
-    'https://api.dicebear.com/9.x/bottts/svg?seed=Buddy',
-    'https://api.dicebear.com/9.x/bottts/svg?seed=Beep',
-
-    // Big Smile - super friendly
-    'https://api.dicebear.com/9.x/big-smile/svg?seed=Joy',
-    'https://api.dicebear.com/9.x/big-smile/svg?seed=Giggle',
-    'https://api.dicebear.com/9.x/big-smile/svg?seed=Cheer',
-    'https://api.dicebear.com/9.x/big-smile/svg?seed=Bloom',
-    'https://api.dicebear.com/9.x/big-smile/svg?seed=Sunny',
-    'https://api.dicebear.com/9.x/big-smile/svg?seed=Merry',
-    'https://api.dicebear.com/9.x/big-smile/svg?seed=Bright',
-    'https://api.dicebear.com/9.x/big-smile/svg?seed=Jolly'
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Joy',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Giggle',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Laugh',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Cheer',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Blush',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Kiss',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Hug',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Dream',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Peace',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Cozy',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Cute',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Bright',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Sunny',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Merry',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Jolly',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Cheerful',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Grin',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Silly',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Playful',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Lucky',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Sparkles',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Magic',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Wonder',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Dreamy'
 ];
 
 const Settings: React.FC<SettingsProps> = ({
