@@ -32,37 +32,37 @@ interface SettingsProps {
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e', '#64748b', '#000000', '#FFFFFF'];
 
 const PRESET_AVATARS = [
-    // Lorelei style - elegant professionals
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Sophia',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Isabella',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Olivia',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Emma',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Ava',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Charlotte',
+    // Bottts - cute robots
+    'https://api.dicebear.com/9.x/bottts/svg?seed=Fluffy',
+    'https://api.dicebear.com/9.x/bottts/svg?seed=Bubbles',
+    'https://api.dicebear.com/9.x/bottts/svg?seed=Sparkle',
+    'https://api.dicebear.com/9.x/bottts/svg?seed=Cookie',
+    'https://api.dicebear.com/9.x/bottts/svg?seed=Mochi',
+    'https://api.dicebear.com/9.x/bottts/svg?seed=Peanut',
 
-    // Notionists style - minimalist modern
-    'https://api.dicebear.com/9.x/notionists/svg?seed=Gabriel',
-    'https://api.dicebear.com/9.x/notionists/svg?seed=Sebastian',
-    'https://api.dicebear.com/9.x/notionists/svg?seed=Julian',
-    'https://api.dicebear.com/9.x/notionists/svg?seed=Lucas',
-    'https://api.dicebear.com/9.x/notionists/svg?seed=Alexander',
-    'https://api.dicebear.com/9.x/notionists/svg?seed=Theodore',
+    // Croodles - doodle cuties
+    'https://api.dicebear.com/9.x/croodles/svg?seed=Honey',
+    'https://api.dicebear.com/9.x/croodles/svg?seed=Peaches',
+    'https://api.dicebear.com/9.x/croodles/svg?seed=Button',
+    'https://api.dicebear.com/9.x/croodles/svg?seed=Marshmallow',
+    'https://api.dicebear.com/9.x/croodles/svg?seed=Cupcake',
+    'https://api.dicebear.com/9.x/croodles/svg?seed=Jellybean',
 
-    // Personas style - professional portraits
-    'https://api.dicebear.com/9.x/personas/svg?seed=Victoria',
-    'https://api.dicebear.com/9.x/personas/svg?seed=Grace',
-    'https://api.dicebear.com/9.x/personas/svg?seed=Eleanor',
-    'https://api.dicebear.com/9.x/personas/svg?seed=Claire',
-    'https://api.dicebear.com/9.x/personas/svg?seed=Amelia',
-    'https://api.dicebear.com/9.x/personas/svg?seed=Harper',
+    // Fun Emoji - cute emojis
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Sunshine',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Rainbow',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Star',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Heart',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Cloud',
+    'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Moon',
 
-    // Shapes style - abstract elegant
-    'https://api.dicebear.com/9.x/shapes/svg?seed=Azure',
-    'https://api.dicebear.com/9.x/shapes/svg?seed=Emerald',
-    'https://api.dicebear.com/9.x/shapes/svg?seed=Ruby',
-    'https://api.dicebear.com/9.x/shapes/svg?seed=Sapphire',
-    'https://api.dicebear.com/9.x/shapes/svg?seed=Gold',
-    'https://api.dicebear.com/9.x/shapes/svg?seed=Silver'
+    // Pixel Art - retro cute
+    'https://api.dicebear.com/9.x/pixel-art/svg?seed=Pixel',
+    'https://api.dicebear.com/9.x/pixel-art/svg?seed=Cherry',
+    'https://api.dicebear.com/9.x/pixel-art/svg?seed=Blueberry',
+    'https://api.dicebear.com/9.x/pixel-art/svg?seed=Strawberry',
+    'https://api.dicebear.com/9.x/pixel-art/svg?seed=Lemon',
+    'https://api.dicebear.com/9.x/pixel-art/svg?seed=Grape'
 ];
 
 const Settings: React.FC<SettingsProps> = ({
