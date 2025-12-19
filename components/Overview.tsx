@@ -209,22 +209,23 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
         resolvedBets.forEach(bet => {
             const stats = calculateBetStats(bet);
 
-            // Distribute profit per coverage/bookmaker
-            if (stats.coverageProfits) {
+            // HYBRID LOGIC:
+            // 1. If it's a Double Green (Win-Win), we distribute the profit to each bookmaker involved.
+            //    This ensures secondary bookmakers get credit for their wins.
+            // 2. If it's a Standard Bet (Arb/Hedge/Bonus) where one side likely lost, 
+            //    we attribute the NET Profit of the entire bet to the MAIN Bookmaker.
+            //    This forces the "Cost" of the hedge to be subtracted from the Main Bookmaker's gain,
+            //    showing the true "Strategy Profit" for that bookmaker.
+
+            if (stats.isDoubleGreen && stats.coverageProfits) {
                 stats.coverageProfits.forEach(cp => {
                     const bmId = cp.bookmakerId || 'unknown';
 
-                    // Determine promotion name
-                    // If this bookmaker is the main one, use the bet's promotion
-                    // If it's a hedge bookmaker (secondary), we need a label.
-                    // If it's a Double Green scenario, use 'Double Green' for secondary?
-                    // Or just default to 'Cobertura' / 'Hedge'.
-                    // User mentioned 'Duplo' specifically.
-                    // For simplicity and accuracy:
-                    // Main Bookmaker -> Uses bet.promotionType
-                    // Others -> Use 'Nenhuma' or 'Cobertura'.
-                    // HOWEVER, if it's a Double Green, the profit on Secondary is significant.
-                    // Let's use 'Nenhuma' for now to match standard logic, unless it's the main bookmaker.
+                    // For Double Green, both sides contributed positively.
+                    // We label the secondary ones as 'Green' or keep 'Nenhuma'.
+                    // Let's stick to standard promo logic:
+                    // Main -> bet.promotionType
+                    // Secondary -> 'Nenhuma' (or maybe 'Lucro Duplo'?)
 
                     let promo = 'Nenhuma';
                     if (bmId === bet.mainBookmakerId) {
@@ -239,11 +240,14 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
                     bookmakerProfits[bmId].promos[promo] += cp.profit;
                 });
             } else {
-                // Fallback for safety (though calculateBetStats always returns it now)
+                // Standard Logic (Net Profit to Main Bookie)
                 const bmId = bet.mainBookmakerId || 'unknown';
                 const promo = bet.promotionType || 'Nenhuma';
+
                 if (!bookmakerProfits[bmId]) bookmakerProfits[bmId] = { total: 0, promos: {} };
+
                 bookmakerProfits[bmId].total += stats.profit;
+
                 if (!bookmakerProfits[bmId].promos[promo]) bookmakerProfits[bmId].promos[promo] = 0;
                 bookmakerProfits[bmId].promos[promo] += stats.profit;
             }
