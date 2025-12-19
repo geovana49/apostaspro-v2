@@ -217,15 +217,21 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             //    This forces the "Cost" of the hedge to be subtracted from the Main Bookmaker's gain,
             //    showing the true "Strategy Profit" for that bookmaker.
 
-            if (stats.isDoubleGreen && stats.coverageProfits) {
+            // ROBUST HYBRID LOGIC:
+            // Identify if the bet is a "Win-Win" (all coverages profitable) or "Win-Loss" (hedge/arb).
+            // Logic: If ANY coverage has negative profit (loss), it means there was a cost. 
+            // We must aggregate everything to the Main Bookmaker (Net Profit).
+            // If ALL coverages have >= 0 profit, it's a Double Green / Bonus. Distribute profit evenly.
+
+            let hasLoss = false;
+            if (stats.coverageProfits) {
+                hasLoss = stats.coverageProfits.some(cp => cp.profit < 0);
+            }
+
+            if (!hasLoss && stats.coverageProfits && stats.coverageProfits.length > 0) {
+                // DOUBLE GREEN / ALL WIN SCENARIO
                 stats.coverageProfits.forEach(cp => {
                     const bmId = cp.bookmakerId || 'unknown';
-
-                    // For Double Green, both sides contributed positively.
-                    // We label the secondary ones as 'Green' or keep 'Nenhuma'.
-                    // Let's stick to standard promo logic:
-                    // Main -> bet.promotionType
-                    // Secondary -> 'Nenhuma' (or maybe 'Lucro Duplo'?)
 
                     let promo = 'Nenhuma';
                     if (bmId === bet.mainBookmakerId) {
@@ -240,7 +246,7 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
                     bookmakerProfits[bmId].promos[promo] += cp.profit;
                 });
             } else {
-                // Standard Logic (Net Profit to Main Bookie)
+                // STANDARD SCENARIO (Net Profit to Main Bookie)
                 const bmId = bet.mainBookmakerId || 'unknown';
                 const promo = bet.promotionType || 'Nenhuma';
 
