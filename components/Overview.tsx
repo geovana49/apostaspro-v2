@@ -230,12 +230,29 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
 
 
         // 3. Find Top 3 Bookmakers
+        console.log('📊 DEBUG Top 3 Bookmakers Calculation:', {
+            totalResolvedBets: resolvedBets.length,
+            resolvedBetsDetails: resolvedBets.map(b => ({
+                id: b.id,
+                event: b.event,
+                bookmaker: b.mainBookmakerId,
+                date: b.date,
+                profit: calculateBetStats(b).profit
+            })),
+            bookmakerProfitsRaw: bookmakerProfits
+        });
+
         const top3Bookmakers = Object.entries(bookmakerProfits)
             .map(([id, data]) => {
                 const topPromos = Object.entries(data.promos)
                     .map(([name, profit]) => ({ name, profit }))
                     .sort((a, b) => b.profit - a.profit)
                     .slice(0, 3);
+
+                console.log(`📈 Bookmaker ${id}:`, {
+                    totalProfit: data.total,
+                    topPromos
+                });
 
                 return {
                     bookmakerId: id,
@@ -245,6 +262,8 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             })
             .sort((a, b) => b.totalProfit - a.totalProfit)
             .slice(0, 3);
+
+        console.log('🏆 Final Top 3:', top3Bookmakers);
 
         // Legacy support (optional, but cleaner to just use array)
         const bestStats = top3Bookmakers.length > 0 ? top3Bookmakers[0] : null;
