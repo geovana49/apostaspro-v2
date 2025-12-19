@@ -208,34 +208,59 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
         // 1. Process Resolved Bets
         resolvedBets.forEach(bet => {
             const stats = calculateBetStats(bet);
-            const bmId = bet.mainBookmakerId || 'unknown'; // Handle missing ID
-            const promo = bet.promotionType || 'Nenhuma';
 
-            if (!bookmakerProfits[bmId]) bookmakerProfits[bmId] = { total: 0, promos: {} };
-            const profit = stats.profit;
-            bookmakerProfits[bmId].total += profit;
+            // Distribute profit per coverage/bookmaker
+            if (stats.coverageProfits) {
+                stats.coverageProfits.forEach(cp => {
+                    const bmId = cp.bookmakerId || 'unknown';
 
-            if (!bookmakerProfits[bmId].promos[promo]) bookmakerProfits[bmId].promos[promo] = 0;
-            bookmakerProfits[bmId].promos[promo] += profit;
+                    // Determine promotion name
+                    // If this bookmaker is the main one, use the bet's promotion
+                    // If it's a hedge bookmaker (secondary), we need a label.
+                    // If it's a Double Green scenario, use 'Double Green' for secondary?
+                    // Or just default to 'Cobertura' / 'Hedge'.
+                    // User mentioned 'Duplo' specifically.
+                    // For simplicity and accuracy:
+                    // Main Bookmaker -> Uses bet.promotionType
+                    // Others -> Use 'Nenhuma' or 'Cobertura'.
+                    // HOWEVER, if it's a Double Green, the profit on Secondary is significant.
+                    // Let's use 'Nenhuma' for now to match standard logic, unless it's the main bookmaker.
+
+                    let promo = 'Nenhuma';
+                    if (bmId === bet.mainBookmakerId) {
+                        promo = bet.promotionType || 'Nenhuma';
+                    }
+
+                    if (!bookmakerProfits[bmId]) bookmakerProfits[bmId] = { total: 0, promos: {} };
+
+                    bookmakerProfits[bmId].total += cp.profit;
+
+                    if (!bookmakerProfits[bmId].promos[promo]) bookmakerProfits[bmId].promos[promo] = 0;
+                    bookmakerProfits[bmId].promos[promo] += cp.profit;
+                });
+            } else {
+                // Fallback for safety (though calculateBetStats always returns it now)
+                const bmId = bet.mainBookmakerId || 'unknown';
+                const promo = bet.promotionType || 'Nenhuma';
+                if (!bookmakerProfits[bmId]) bookmakerProfits[bmId] = { total: 0, promos: {} };
+                bookmakerProfits[bmId].total += stats.profit;
+                if (!bookmakerProfits[bmId].promos[promo]) bookmakerProfits[bmId].promos[promo] = 0;
+                bookmakerProfits[bmId].promos[promo] += stats.profit;
+            }
+
+            // Add Extra Gain (Single Value) to Main Bookmaker
+            if (bet.extraGain) {
+                const bmId = bet.mainBookmakerId || 'unknown';
+                const promo = bet.promotionType || 'Nenhuma';
+                if (!bookmakerProfits[bmId]) bookmakerProfits[bmId] = { total: 0, promos: {} };
+                bookmakerProfits[bmId].total += bet.extraGain;
+                if (!bookmakerProfits[bmId].promos[promo]) bookmakerProfits[bmId].promos[promo] = 0;
+                bookmakerProfits[bmId].promos[promo] += bet.extraGain;
+            }
         });
 
-        // 2. Extra Gains (Included to match Total Profit)
-        // Filter out pending/cancelled gains
-        filteredGains.forEach(gain => {
-            if (['Pendente', 'Cancelado', 'Rascunho'].includes(gain.status)) return;
-
-            const bmId = gain.bookmakerId || 'unknown';
-            const origin = gain.origin || 'Outros';
-
-            if (!bookmakerProfits[bmId]) bookmakerProfits[bmId] = { total: 0, promos: {} };
-
-            // Ensure amount is treated as number
-            const amount = Number(gain.amount);
-            bookmakerProfits[bmId].total += amount;
-
-            if (!bookmakerProfits[bmId].promos[origin]) bookmakerProfits[bmId].promos[origin] = 0;
-            bookmakerProfits[bmId].promos[origin] += amount;
-        });
+        // 2. Extra Gains from "Gains" tab are EXCLUDED per user request.
+        // We only use the extraGain field within the Bet itself (above).
 
         // 3. Find Top 3 Bookmakers
         const top3Bookmakers = Object.entries(bookmakerProfits)

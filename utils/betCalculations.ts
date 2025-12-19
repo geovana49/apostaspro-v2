@@ -65,5 +65,53 @@ export const calculateBetStats = (bet: Bet) => {
     const uniqueGreenMarkets = new Set(greenMarkets);
     const isDoubleGreen = !!bet.isDoubleGreen || uniqueGreenMarkets.size >= 2;
 
-    return { totalStake, totalReturn, profit, isDoubleGreen };
+    const coverageProfits = bet.coverages.map((c, index) => {
+        let returnValue = 0;
+
+        if (c.status === 'Red') {
+            returnValue = 0;
+        } else if (c.manualReturn !== undefined && c.manualReturn !== null && c.manualReturn !== 0) {
+            returnValue = Number(c.manualReturn);
+        } else {
+            if (c.status === 'Green') returnValue = (c.stake * c.odd);
+            else if (c.status === 'Anulada' || c.status === 'Cashout') returnValue = c.stake;
+            else if (c.status === 'Meio Green') returnValue = (c.stake * c.odd) / 2 + (c.stake / 2);
+            else if (c.status === 'Meio Red') returnValue = (c.stake / 2);
+        }
+
+        // Apply Freebet conversion logic to individual coverage return
+        if (isFreebetConversion && index === 0) {
+            // For first coverage in freebet conversion, stake is not returned (it was free)
+            // But visually/logically we subtract the 'stake' value from return to get net real money gain
+            // Wait, standard logic: Return includes stake. Net = Return - Stake.
+            // If Freebet: Stake is 0 (cost). Return is (Stake*Odd). Net = Stake*Odd.
+            // But usually we enter 'Stake' as the freebet value.
+            // Logic at line 27: if (returnValue > 0) returnValue -= c.stake;
+            // This effectively removes the stake from the return amount.
+            // So if Stake 100, Odd 2. Return 200. Logic -> Return 100.
+            // Net Profit = Return (100) - Stake (0 in calculation logic line 8).
+            // Line 8: if(isFreebetConversion && index===0) return sum; (skips adding to totalStake).
+            // So TotalStake = 0.
+            // Line 27: returnValue -= c.stake. Return becomes 100.
+            // Profit = 100 - 0 = 100. Correct.
+            if (returnValue > 0) {
+                returnValue -= c.stake;
+            }
+        }
+
+        // Per coverage profit is Return - Stake.
+        // BUT for Freebet first coverage, Stake is effectively "paid by house".
+        // In calculating `totalStake`, we skipped it.
+        // Here, to get correct per-coverage profit relative to USER money:
+        // Coverage 1 (Freebet): Cost 0. Return 100. Profit +100.
+        // Formula: ReturnValue (adjusted) - RealCost.
+        // RealCost = (isFreebetConversion && index === 0) ? 0 : c.stake;
+        const realCost = (isFreebetConversion && index === 0) ? 0 : c.stake;
+        return {
+            bookmakerId: c.bookmakerId,
+            profit: returnValue - realCost
+        };
+    });
+
+    return { totalStake, totalReturn, profit, isDoubleGreen, coverageProfits };
 };
