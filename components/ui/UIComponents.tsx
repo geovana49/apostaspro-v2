@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronDown, Check, ZoomIn, RotateCcw, Move, Crop, Pipette, ChevronUp, Gamepad2, Trophy, Star, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronDown, Check, ZoomIn, RotateCcw, Move, Crop, Pipette, ChevronUp, Gamepad2, Trophy, Star, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target, Search, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 
 // --- Color Helpers ---
 const hexToRgb = (hex: string) => {
@@ -1088,6 +1088,10 @@ interface ImageViewerProps {
 export const ImageViewer: React.FC<ImageViewerProps> = ({ isOpen, onClose, images, startIndex = 0 }) => {
   const [currentIndex, setCurrentIndex] = useState(startIndex);
 
+  // Swipe State
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchCurrent, setTouchCurrent] = useState<number | null>(null);
+
   // Reset index when component opens or images change
   useEffect(() => {
     if (isOpen) {
@@ -1126,44 +1130,124 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ isOpen, onClose, image
     };
   }, [isOpen, goToNext, goToPrev, onClose]);
 
+  // Download Handler
+  const handleDownload = async () => {
+    const currentImage = images[currentIndex];
+    try {
+      const response = await fetch(currentImage);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `apostas-pro-proof-${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (e) {
+      // Fallback
+      const link = document.createElement('a');
+      link.href = currentImage;
+      link.target = "_blank";
+      link.download = "download.jpg";
+      link.click();
+    }
+  };
+
+  // Touch Handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+    setTouchCurrent(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchCurrent(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStart !== null && touchCurrent !== null) {
+      const diff = touchStart - touchCurrent;
+      const threshold = 50; // px
+
+      if (diff > threshold) {
+        goToNext();
+      } else if (diff < -threshold) {
+        goToPrev();
+      }
+    }
+    setTouchStart(null);
+    setTouchCurrent(null);
+  };
+
+  // Calculate dragging visual offset
+  const translateX = (touchStart !== null && touchCurrent !== null) ? (touchCurrent - touchStart) : 0;
+
   if (!isOpen) return null;
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100002] bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[100002] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
-      {/* Header with Counter and Close Button */}
-      <div className="absolute top-0 left-0 right-0 h-16 flex items-center justify-between px-4 text-white z-20">
-        <div className="font-mono text-lg bg-black/30 px-3 py-1 rounded-lg">
+      {/* Header with Counter, Download and Close Button */}
+      <div className="absolute top-0 left-0 right-0 h-16 flex items-center justify-between px-4 text-white z-50 pointer-events-none">
+        <div className="font-mono text-sm sm:text-lg bg-black/40 backdrop-blur px-3 py-1 rounded-lg pointer-events-auto">
           {currentIndex + 1} / {images.length}
         </div>
-        <button
-          onClick={(e) => { e.stopPropagation(); onClose(); }}
-          className="p-2 bg-black/30 rounded-full hover:bg-white/20 transition-colors"
-        >
-          <X size={24} />
-        </button>
+
+        <div className="flex items-center gap-2 sm:gap-4 pointer-events-auto">
+          <button
+            onClick={(e) => { e.stopPropagation(); handleDownload(); }}
+            className="p-2 sm:p-2.5 bg-black/40 backdrop-blur rounded-full hover:bg-white/10 transition-colors text-white/80 hover:text-white"
+            title="Baixar Imagem"
+          >
+            <Download size={20} className="sm:w-6 sm:h-6" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onClose(); }}
+            className="p-2 sm:p-2.5 bg-black/40 backdrop-blur rounded-full hover:bg-white/10 transition-colors text-white/80 hover:text-white"
+          >
+            <X size={24} className="sm:w-8 sm:h-8" />
+          </button>
+        </div>
       </div>
 
-      {/* Main Content */}
-      <div className="relative w-full h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-        {/* Previous Button */}
+      {/* Main Content Area - Swipeable */}
+      <div
+        className="relative w-full h-full flex items-center justify-center overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Previous Button (Hidden on Mobile if Swipe is intended primarily, but good to keep for accessibility/clarity) */}
         {images.length > 1 && (
           <button
             onClick={(e) => { e.stopPropagation(); goToPrev(); }}
-            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-black/30 rounded-full hover:bg-white/20 transition-colors z-20"
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-black/30 backdrop-blur-sm rounded-full hover:bg-white/20 transition-all z-40 hidden sm:flex group"
           >
-            <ChevronLeft size={28} className="text-white" />
+            <ChevronLeft size={28} className="text-white/70 group-hover:text-white" />
           </button>
         )}
 
-        {/* Image */}
-        <div className="w-full h-full flex items-center justify-center">
+        {/* Image Container with Transform */}
+        <div
+          className="w-full h-full flex items-center justify-center transition-transform duration-200 ease-out"
+          style={{
+            transform: `translateX(${translateX}px)`,
+            cursor: images.length > 1 ? 'grab' : 'default'
+          }}
+        >
           <img
             src={images[currentIndex]}
             alt={`View ${currentIndex + 1}`}
-            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-200 select-none"
+            className="max-w-full max-h-full object-contain shadow-2xl select-none"
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100dvh' // Dynamic viewport height for mobile address bars
+            }}
+            draggable={false}
           />
         </div>
 
@@ -1171,12 +1255,19 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ isOpen, onClose, image
         {images.length > 1 && (
           <button
             onClick={(e) => { e.stopPropagation(); goToNext(); }}
-            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-black/30 rounded-full hover:bg-white/20 transition-colors z-20"
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-black/30 backdrop-blur-sm rounded-full hover:bg-white/20 transition-all z-40 hidden sm:flex group"
           >
-            <ChevronRight size={28} className="text-white" />
+            <ChevronRight size={28} className="text-white/70 group-hover:text-white" />
           </button>
         )}
       </div>
+
+      {/* Mobile Swipe Indicator / Hint */}
+      {images.length > 1 && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/40 text-[10px] uppercase font-bold tracking-widest sm:hidden pointer-events-none animate-pulse">
+          Arraste para navegar
+        </div>
+      )}
     </div>,
     document.body
   );
