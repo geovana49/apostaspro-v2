@@ -1087,6 +1087,7 @@ interface ImageViewerProps {
 
 export const ImageViewer: React.FC<ImageViewerProps> = ({ isOpen, onClose, images, startIndex = 0 }) => {
   const [currentIndex, setCurrentIndex] = useState(startIndex);
+  const [showDownloadOptions, setShowDownloadOptions] = useState(false);
 
   // Swipe State
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -1096,6 +1097,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ isOpen, onClose, image
   useEffect(() => {
     if (isOpen) {
       setCurrentIndex(startIndex);
+      setShowDownloadOptions(false);
     }
   }, [isOpen, startIndex]);
 
@@ -1130,17 +1132,16 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ isOpen, onClose, image
     };
   }, [isOpen, goToNext, goToPrev, onClose]);
 
-  // Download Handler
-  const handleDownload = async () => {
-    const currentImage = images[currentIndex];
+  // Helper: Download Single Image
+  const downloadImage = async (url: string, index: number) => {
     try {
-      const response = await fetch(currentImage);
+      const response = await fetch(url);
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
 
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = `apostas-pro-proof-${Date.now()}.jpg`;
+      link.download = `apostas-pro-proof-${Date.now()}-${index + 1}.jpg`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -1148,11 +1149,34 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ isOpen, onClose, image
     } catch (e) {
       // Fallback
       const link = document.createElement('a');
-      link.href = currentImage;
+      link.href = url;
       link.target = "_blank";
-      link.download = "download.jpg";
+      link.download = `download-${index}.jpg`;
       link.click();
     }
+  };
+
+  // Download Handler Wrapper
+  const handleDownloadClick = () => {
+    if (images.length > 1) {
+      setShowDownloadOptions(!showDownloadOptions);
+    } else {
+      downloadImage(images[0], 0);
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    setShowDownloadOptions(false);
+    // Sequential download to avoid browser blocking
+    for (let i = 0; i < images.length; i++) {
+      await downloadImage(images[i], i);
+      await new Promise(resolve => setTimeout(resolve, 500)); // Small delay
+    }
+  };
+
+  const handleDownloadCurrent = () => {
+    setShowDownloadOptions(false);
+    downloadImage(images[currentIndex], currentIndex);
   };
 
   // Touch Handlers
@@ -1196,14 +1220,33 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ isOpen, onClose, image
           {currentIndex + 1} / {images.length}
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4 pointer-events-auto">
+        <div className="flex items-center gap-2 sm:gap-4 pointer-events-auto relative">
           <button
-            onClick={(e) => { e.stopPropagation(); handleDownload(); }}
-            className="p-2 sm:p-2.5 bg-black/40 backdrop-blur rounded-full hover:bg-white/10 transition-colors text-white/80 hover:text-white"
+            onClick={(e) => { e.stopPropagation(); handleDownloadClick(); }}
+            className={`p-2 sm:p-2.5 backdrop-blur rounded-full hover:bg-white/10 transition-colors text-white/80 hover:text-white ${showDownloadOptions ? 'bg-white/20 text-white' : 'bg-black/40'}`}
             title="Baixar Imagem"
           >
             <Download size={20} className="sm:w-6 sm:h-6" />
           </button>
+
+          {/* Download Options Menu */}
+          {showDownloadOptions && (
+            <div className="absolute top-full right-12 mt-2 w-48 bg-[#151b2e] border border-white/10 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 z-[60]">
+              <button
+                onClick={(e) => { e.stopPropagation(); handleDownloadCurrent(); }}
+                className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white flex items-center gap-2 transition-colors border-b border-white/5"
+              >
+                <Download size={14} /> Baixar Atual
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleDownloadAll(); }}
+                className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white flex items-center gap-2 transition-colors"
+              >
+                <Coins size={14} /> Baixar Todas ({images.length})
+              </button>
+            </div>
+          )}
+
           <button
             onClick={(e) => { e.stopPropagation(); onClose(); }}
             className="p-2 sm:p-2.5 bg-black/40 backdrop-blur rounded-full hover:bg-white/10 transition-colors text-white/80 hover:text-white"
@@ -1216,16 +1259,19 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ isOpen, onClose, image
       {/* Main Content Area - Swipeable */}
       <div
         className="relative w-full h-full flex items-center justify-center overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (showDownloadOptions) setShowDownloadOptions(false);
+        }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Previous Button (Hidden on Mobile if Swipe is intended primarily, but good to keep for accessibility/clarity) */}
+        {/* Previous Button (Always Visible now per user request) */}
         {images.length > 1 && (
           <button
             onClick={(e) => { e.stopPropagation(); goToPrev(); }}
-            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-black/30 backdrop-blur-sm rounded-full hover:bg-white/20 transition-all z-40 hidden sm:flex group"
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-black/30 backdrop-blur-sm rounded-full hover:bg-white/20 transition-all z-40 flex group"
           >
             <ChevronLeft size={28} className="text-white/70 group-hover:text-white" />
           </button>
@@ -1251,11 +1297,11 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ isOpen, onClose, image
           />
         </div>
 
-        {/* Next Button */}
+        {/* Next Button (Always Visible now per user request) */}
         {images.length > 1 && (
           <button
             onClick={(e) => { e.stopPropagation(); goToNext(); }}
-            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-black/30 backdrop-blur-sm rounded-full hover:bg-white/20 transition-all z-40 hidden sm:flex group"
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-black/30 backdrop-blur-sm rounded-full hover:bg-white/20 transition-all z-40 flex group"
           >
             <ChevronRight size={28} className="text-white/70 group-hover:text-white" />
           </button>
@@ -1265,7 +1311,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ isOpen, onClose, image
       {/* Mobile Swipe Indicator / Hint */}
       {images.length > 1 && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/40 text-[10px] uppercase font-bold tracking-widest sm:hidden pointer-events-none animate-pulse">
-          Arraste para navegar
+          Arraste ou use as setas
         </div>
       )}
     </div>,
