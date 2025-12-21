@@ -533,14 +533,30 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
     };
 
     const handleClose = () => {
+        // Compare current formData with initial state to see if there are actual changes
+        // This is a simplified check - helps avoid annoying prompts when just viewing
         const hasContent = formData.event || formData.notes || formData.coverages.length > 0 || tempPhotos.length > 0;
+
         if (hasContent && !isUploading && !initialData) {
+            // New Bet Mode: Ask to save draft
             if (window.confirm('Você tem alterações não salvas. Deseja salvar como rascunho para terminar depois?')) {
                 saveAsDraft();
             } else {
+                // User rejected draft save. Clear generic draft.
+                localStorage.removeItem('apostaspro_draft_modal');
                 onClose();
             }
+        } else if (initialData) {
+            // Edit Mode: Check if we should warn? 
+            // Currently users expect "Cancel" to just discard edits.
+            // We should definitely clear the specific edit draft so it doesn't persist.
+            if (initialData.id) {
+                localStorage.removeItem(`apostaspro_draft_edit_${initialData.id}`);
+            }
+            onClose();
         } else {
+            // Empty new bet
+            localStorage.removeItem('apostaspro_draft_modal');
             onClose();
         }
     };
