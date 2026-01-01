@@ -25,15 +25,19 @@ const convertDate = (data: any) => {
 
 export const FirestoreService = {
     // --- Bets ---
-    subscribeToBets: (userId: string, callback: (bets: Bet[]) => void) => {
+    subscribeToBets: (userId: string, callback: (bets: Bet[]) => void, onError?: (err: any) => void) => {
         const q = query(
             collection(db, "users", userId, "bets"),
-            orderBy("date", "desc"),
-            limit(100) // Optimization: and only local cached data if needed
+            // Temporarily removing orderBy to test if it's the loading blocker
+            // orderBy("date", "desc"),
+            limit(100)
         );
         return onSnapshot(q, (snapshot) => {
             const bets = snapshot.docs.map(doc => ({ id: doc.id, ...convertDate(doc.data()) } as Bet));
             callback(bets);
+        }, (error) => {
+            console.error("Snapshot error (Bets):", error);
+            if (onError) onError(error);
         });
     },
 
@@ -65,15 +69,19 @@ export const FirestoreService = {
     },
 
     // --- Extra Gains ---
-    subscribeToGains: (userId: string, callback: (gains: ExtraGain[]) => void) => {
+    subscribeToGains: (userId: string, callback: (gains: ExtraGain[]) => void, onError?: (err: any) => void) => {
         const q = query(
             collection(db, "users", userId, "gains"),
-            orderBy("date", "desc"),
+            // Temporarily removing orderBy to test if it's the loading blocker
+            // orderBy("date", "desc"),
             limit(100)
         );
         return onSnapshot(q, (snapshot) => {
             const gains = snapshot.docs.map(doc => ({ id: doc.id, ...convertDate(doc.data()) } as ExtraGain));
             callback(gains);
+        }, (error) => {
+            console.error("Snapshot error (Gains):", error);
+            if (onError) onError(error);
         });
     },
 
@@ -91,12 +99,18 @@ export const FirestoreService = {
     },
 
     // --- Settings ---
-    subscribeToSettings: (userId: string, callback: (settings: AppSettings) => void) => {
+    subscribeToSettings: (userId: string, callback: (settings: AppSettings | null) => void, onError?: (err: any) => void) => {
         const docRef = doc(db, "users", userId, "settings", "preferences");
         return onSnapshot(docRef, (doc) => {
             if (doc.exists()) {
                 callback(doc.data() as AppSettings);
+            } else {
+                console.log("Settings document not found, returning null");
+                callback(null);
             }
+        }, (error) => {
+            console.error("Snapshot error (Settings):", error);
+            if (onError) onError(error);
         });
     },
 
@@ -107,11 +121,14 @@ export const FirestoreService = {
     // --- Configurations (Bookmakers, Statuses, etc) ---
 
     // Generic subscriber for simple collections
-    subscribeToCollection: <T>(userId: string, collectionName: string, callback: (items: T[]) => void) => {
+    subscribeToCollection: <T>(userId: string, collectionName: string, callback: (items: T[]) => void, onError?: (err: any) => void) => {
         const q = query(collection(db, "users", userId, collectionName));
         return onSnapshot(q, (snapshot) => {
             const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as unknown as T));
             callback(items);
+        }, (error) => {
+            console.error(`Snapshot error (${collectionName}):`, error);
+            if (onError) onError(error);
         });
     },
 

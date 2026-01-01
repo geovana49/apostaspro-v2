@@ -81,9 +81,20 @@ const App: React.FC = () => {
         let initialGainsLoaded = false;
         let initialSettingsLoaded = false;
 
-        const checkDataLoaded = () => {
-          if (initialBetsLoaded && initialGainsLoaded && initialSettingsLoaded) {
+        // Subscription Timeout (Safety Net)
+        const loadingTimeout = setTimeout(() => {
+          if (isLoading) {
+            console.warn("Loading timeout reached. Forcing app to show.");
             setIsLoading(false);
+          }
+        }, 8000); // 8 seconds timeout
+
+        const checkDataLoaded = (source: string) => {
+          console.log(`Snapshot received from: ${source}`);
+          if (initialBetsLoaded && initialGainsLoaded && initialSettingsLoaded) {
+            console.log("All essential initial data loaded.");
+            setIsLoading(false);
+            clearTimeout(loadingTimeout);
           }
         };
 
@@ -91,34 +102,35 @@ const App: React.FC = () => {
           setBets(data);
           if (!initialBetsLoaded) {
             initialBetsLoaded = true;
-            checkDataLoaded();
+            checkDataLoaded("Bets");
           }
-        });
+        }, (err) => console.error("Error subscribing to bets:", err));
 
         const unsubGains = FirestoreService.subscribeToGains(user.uid, (data) => {
           setGains(data);
           if (!initialGainsLoaded) {
             initialGainsLoaded = true;
-            checkDataLoaded();
+            checkDataLoaded("Gains");
           }
-        });
+        }, (err) => console.error("Error subscribing to gains:", err));
 
         const unsubSettings = FirestoreService.subscribeToSettings(user.uid, (newSettings) => {
           if (newSettings) setSettings(newSettings);
           if (!initialSettingsLoaded) {
             initialSettingsLoaded = true;
-            checkDataLoaded();
+            checkDataLoaded("Settings");
           }
-        });
+        }, (err) => console.error("Error subscribing to settings:", err));
 
-        // Subscribe to Configurations
-        const unsubBookmakers = FirestoreService.subscribeToCollection<Bookmaker>(user.uid, "bookmakers", setBookmakers);
-        const unsubStatuses = FirestoreService.subscribeToCollection<StatusItem>(user.uid, "statuses", setStatuses);
-        const unsubPromotions = FirestoreService.subscribeToCollection<PromotionItem>(user.uid, "promotions", setPromotions);
-        const unsubOrigins = FirestoreService.subscribeToCollection<OriginItem>(user.uid, "origins", setOrigins);
+        // Subscribe to Configurations (Non-blocking for isLoading)
+        const unsubBookmakers = FirestoreService.subscribeToCollection<Bookmaker>(user.uid, "bookmakers", setBookmakers, (err) => console.error("Error subscribing to bookmakers:", err));
+        const unsubStatuses = FirestoreService.subscribeToCollection<StatusItem>(user.uid, "statuses", setStatuses, (err) => console.error("Error subscribing to statuses:", err));
+        const unsubPromotions = FirestoreService.subscribeToCollection<PromotionItem>(user.uid, "promotions", setPromotions, (err) => console.error("Error subscribing to promotions:", err));
+        const unsubOrigins = FirestoreService.subscribeToCollection<OriginItem>(user.uid, "origins", setOrigins, (err) => console.error("Error subscribing to origins:", err));
 
         // Cleanup subscriptions on logout/unmount
         return () => {
+          clearTimeout(loadingTimeout);
           unsubBets();
           unsubGains();
           unsubSettings();
