@@ -11,10 +11,10 @@ export interface CompressionOptions {
 }
 
 const DEFAULT_OPTIONS: CompressionOptions = {
-    maxWidth: 1400,
-    maxHeight: 1400,
-    quality: 0.90,
-    maxSizeMB: 0.15 // 150KB por imagem
+    maxWidth: 2000,
+    maxHeight: 2000,
+    quality: 0.92,
+    maxSizeMB: 1.0 // 1MB por imagem (muito melhor qualidade)
 };
 
 /**

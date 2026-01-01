@@ -68,10 +68,38 @@ const App: React.FC = () => {
         });
 
         // Subscribe to Real-time Data
-        const unsubBets = FirestoreService.subscribeToBets(user.uid, setBets);
-        const unsubGains = FirestoreService.subscribeToGains(user.uid, setGains);
+        let initialBetsLoaded = false;
+        let initialGainsLoaded = false;
+        let initialSettingsLoaded = false;
+
+        const checkDataLoaded = () => {
+          if (initialBetsLoaded && initialGainsLoaded && initialSettingsLoaded) {
+            setIsLoading(false);
+          }
+        };
+
+        const unsubBets = FirestoreService.subscribeToBets(user.uid, (data) => {
+          setBets(data);
+          if (!initialBetsLoaded) {
+            initialBetsLoaded = true;
+            checkDataLoaded();
+          }
+        });
+
+        const unsubGains = FirestoreService.subscribeToGains(user.uid, (data) => {
+          setGains(data);
+          if (!initialGainsLoaded) {
+            initialGainsLoaded = true;
+            checkDataLoaded();
+          }
+        });
+
         const unsubSettings = FirestoreService.subscribeToSettings(user.uid, (newSettings) => {
           if (newSettings) setSettings(newSettings);
+          if (!initialSettingsLoaded) {
+            initialSettingsLoaded = true;
+            checkDataLoaded();
+          }
         });
 
         // Subscribe to Configurations
@@ -79,8 +107,6 @@ const App: React.FC = () => {
         const unsubStatuses = FirestoreService.subscribeToCollection<StatusItem>(user.uid, "statuses", setStatuses);
         const unsubPromotions = FirestoreService.subscribeToCollection<PromotionItem>(user.uid, "promotions", setPromotions);
         const unsubOrigins = FirestoreService.subscribeToCollection<OriginItem>(user.uid, "origins", setOrigins);
-
-        setIsLoading(false);
 
         // Cleanup subscriptions on logout/unmount
         return () => {

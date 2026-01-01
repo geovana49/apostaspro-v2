@@ -462,47 +462,23 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         setIsUploading(true);
 
         try {
-            // Process Photos - Convert to base64 instead of uploading to Firebase (as per original code, but maybe should use storage?)
-            // The original code used base64 for gains photos. Let's keep it consistent with original for now, 
-            // or upgrade to Storage if we want. The prompt didn't explicitly say to change this, but Storage is better.
-            // However, MyBets uses Storage. Let's stick to base64 for now to minimize changes, or switch to Storage if easy.
-            // Actually, storing large base64 strings in Firestore documents is bad practice (1MB limit).
-            // But for this task, I'll stick to the existing logic to avoid breaking changes, 
-            // unless I want to refactor to Storage like MyBets.
-            // Let's stick to base64 for now as per the existing code structure in this file.
+            const betId = editingId || formData.id || Date.now().toString();
 
-            const uploadedPhotoUrls: string[] = await Promise.all(tempPhotos.map(async (photo) => {
-                if (photo.file) {
-                    try {
-                        console.log('🗜️ Compressing image:', photo.file.name, photo.file.size);
-                        // Compress image before converting to base64
-                        const compressedBase64 = await compressImage(photo.file, {
-                            maxWidth: 800, // Reasonable size for viewing
-                            maxHeight: 800,
-                            quality: 0.7,
-                            maxSizeMB: 0.2 // Max 200KB per image
-                        });
-                        console.log('✅ Image compressed, new size:', compressedBase64.length);
-                        return compressedBase64;
-                    } catch (err) {
-                        console.error('Error compressing image:', err);
-                        // Fallback to original if compression fails (though likely to fail save if too big)
-                        return new Promise<string>((resolve) => {
-                            const reader = new FileReader();
-                            reader.onloadend = () => resolve(reader.result as string);
-                            reader.readAsDataURL(photo.file!);
-                        });
+            // Process images (Async upload to Storage)
+            const photoUrls = await Promise.all(
+                tempPhotos.map(async (photo) => {
+                    if (photo.url.startsWith('data:')) {
+                        return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
                     }
-                } else {
                     return photo.url;
-                }
-            }));
+                })
+            );
 
             const rawGainData: ExtraGain = {
                 ...formData,
-                id: editingId || formData.id || Date.now().toString(),
+                id: betId,
                 notes: formData.notes,
-                photos: uploadedPhotoUrls,
+                photos: photoUrls,
                 date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
             };
 

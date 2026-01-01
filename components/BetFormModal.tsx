@@ -428,21 +428,24 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
         setIsUploading(true);
 
         try {
-            const photoBase64 = tempPhotos.map(photo => photo.url);
-            const validation = validateFirestoreSize(photoBase64);
-            if (!validation.valid) {
-                alert(`As fotos ultrapassam o limite permitido (${validation.totalMB.toFixed(2)}MB de ${validation.limitMB}MB). Remova algumas fotos.`);
-                setIsUploading(false);
-                return;
-            }
+            const betId = formData.id || Date.now().toString();
 
+            // Process images (Async upload to Storage)
+            const photoUrls = await Promise.all(
+                tempPhotos.map(async (photo) => {
+                    if (photo.url.startsWith('data:')) {
+                        return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
+                    }
+                    return photo.url;
+                })
+            );
 
             if (saveAsGain) {
                 // Save as Extra Gain instead of Bet
                 // Use the same calculation logic as My Bets (handles FreeBet, Conversion, all statuses)
                 const tempBet: Bet = {
                     ...formData,
-                    id: formData.id || Date.now().toString(),
+                    id: betId,
                     date: formData.date,
                     notes: formData.notes || '',
                     photos: []
@@ -453,7 +456,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                 let gainStatus = formData.generalStatus || 'Confirmado';
 
                 const gainData = {
-                    id: formData.id || Date.now().toString(),
+                    id: betId,
                     amount: profit,
                     date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
                     status: gainStatus,
@@ -461,7 +464,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                     bookmakerId: formData.mainBookmakerId,
                     game: formData.event,
                     notes: formData.notes || '',
-                    photos: photoBase64,
+                    photos: photoUrls,
                     coverages: formData.coverages // Include coverages
                 };
 
@@ -474,9 +477,9 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                 // Save as Bet (original behavior)
                 const rawBet: Bet = {
                     ...formData,
-                    id: formData.id || Date.now().toString(),
+                    id: betId,
                     notes: formData.notes,
-                    photos: photoBase64,
+                    photos: photoUrls,
                     date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
                     isDoubleGreen: formData.isDoubleGreen
                 };
@@ -509,12 +512,24 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
         setIsUploading(true);
         try {
+            const betId = formData.id || Date.now().toString();
+
+            // Process images (Async upload to Storage)
+            const photoUrls = await Promise.all(
+                tempPhotos.map(async (photo) => {
+                    if (photo.url.startsWith('data:')) {
+                        return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
+                    }
+                    return photo.url;
+                })
+            );
+
             const draftBet: Bet = {
                 ...formData,
-                id: formData.id || Date.now().toString(),
+                id: betId,
                 status: 'Rascunho',
                 event: formData.event || `Rascunho - ${new Date().toLocaleDateString('pt-BR')}`,
-                photos: tempPhotos.map(p => p.url),
+                photos: photoUrls,
                 date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
             };
 

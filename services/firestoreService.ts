@@ -8,9 +8,11 @@ import {
     orderBy,
     Timestamp,
     getDocs,
-    writeBatch
+    writeBatch,
+    limit
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import { db, storage } from "../firebase";
 import { Bet, ExtraGain, AppSettings, Bookmaker, StatusItem, PromotionItem, OriginItem } from "../types";
 
 // Helper to convert Firestore Timestamp to ISO string and vice-versa
@@ -24,7 +26,11 @@ const convertDate = (data: any) => {
 export const FirestoreService = {
     // --- Bets ---
     subscribeToBets: (userId: string, callback: (bets: Bet[]) => void) => {
-        const q = query(collection(db, "users", userId, "bets"), orderBy("date", "desc"));
+        const q = query(
+            collection(db, "users", userId, "bets"),
+            orderBy("date", "desc"),
+            limit(100) // Optimization: and only local cached data if needed
+        );
         return onSnapshot(q, (snapshot) => {
             const bets = snapshot.docs.map(doc => ({ id: doc.id, ...convertDate(doc.data()) } as Bet));
             callback(bets);
@@ -60,7 +66,11 @@ export const FirestoreService = {
 
     // --- Extra Gains ---
     subscribeToGains: (userId: string, callback: (gains: ExtraGain[]) => void) => {
-        const q = query(collection(db, "users", userId, "gains"), orderBy("date", "desc"));
+        const q = query(
+            collection(db, "users", userId, "gains"),
+            orderBy("date", "desc"),
+            limit(100)
+        );
         return onSnapshot(q, (snapshot) => {
             const gains = snapshot.docs.map(doc => ({ id: doc.id, ...convertDate(doc.data()) } as ExtraGain));
             callback(gains);
@@ -197,8 +207,27 @@ export const FirestoreService = {
             }
         }
 
-        if (operationCount > 0) {
-            await batch.commit();
+        await batch.commit();
+    },
+
+    // --- Media ---
+    uploadImage: async (userId: string, betId: string, base64: string): Promise<string> => {
+        // Only upload if it's actually base64
+        if (!base64.startsWith('data:')) return base64;
+
+        try {
+            const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(7)}.webp`;
+            const storageRef = ref(storage, `users/${userId}/bets/${betId}/${fileName}`);
+
+            // Upload base64 string
+            await uploadString(storageRef, base64, 'data_url');
+
+            // Get download URL
+            const downloadURL = await getDownloadURL(storageRef);
+            return downloadURL;
+        } catch (error) {
+            console.error("Error uploading image:", error);
+            throw error;
         }
     }
 };
