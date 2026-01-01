@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
 import { FirestoreService } from "./services/firestoreService";
@@ -7,13 +7,13 @@ import { INITIAL_BOOKMAKERS, INITIAL_STATUSES, INITIAL_PROMOTIONS, INITIAL_ORIGI
 import Layout from './components/Layout';
 import { Loader2, AlertCircle } from 'lucide-react';
 
-// Standard imports for stability (removing lazy for now)
-import Overview from './components/Overview';
-import MyBets from './components/MyBets';
-import ExtraGains from './components/ExtraGains';
-import Coach from './components/Coach';
-import Settings from './components/Settings';
-import LandingPage from './components/LandingPage';
+// Lazy load components for code splitting
+const Overview = lazy(() => import('./components/Overview'));
+const MyBets = lazy(() => import('./components/MyBets'));
+const ExtraGains = lazy(() => import('./components/ExtraGains'));
+const Coach = lazy(() => import('./components/Coach'));
+const Settings = lazy(() => import('./components/Settings'));
+const LandingPage = lazy(() => import('./components/LandingPage'));
 
 // A simplified loading component for page transitions
 const PageLoader = () => (
@@ -212,80 +212,83 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#090c19]">
-      {isLoading ? (
-        <div className="min-h-screen bg-[#020617] flex items-center justify-center text-white">Carregando...</div>
-      ) : !isLoggedIn ? (
-        <LandingPage onLogin={(user) => { setCurrentUser(user); setIsLoggedIn(true); }} />
-      ) : (
-        <Layout
-          activePage={activePage}
-          onNavigate={handleNavigate}
-          settings={settings}
-          setSettings={setSettings}
-          onLogout={handleLogout}
-        >
+    <Suspense fallback={<div className="min-h-screen bg-[#020617] flex items-center justify-center text-white">Carregando...</div>}>
+      <div className="min-h-screen bg-[#090c19]">
+        {isLoading ? (
+          <div className="min-h-screen bg-[#020617] flex items-center justify-center text-white">Carregando...</div>
+        ) : !isLoggedIn ? (
+          <LandingPage onLogin={(user) => { setCurrentUser(user); setIsLoggedIn(true); }} />
+        ) : (
+          <Layout
+            activePage={activePage}
+            onNavigate={handleNavigate}
+            settings={settings}
+            setSettings={setSettings}
+            onLogout={handleLogout}
+          >
+            <Suspense fallback={<PageLoader />}>
+              {activePage === Page.OVERVIEW && <Overview bets={bets} gains={gains} settings={settings} setSettings={setSettings} bookmakers={bookmakers} />}
 
-          {activePage === Page.OVERVIEW && <Overview bets={bets} gains={gains} settings={settings} setSettings={setSettings} bookmakers={bookmakers} />}
+              {activePage === Page.BETS && (
+                <MyBets
+                  bets={bets}
+                  setBets={setBets}
+                  bookmakers={bookmakers}
+                  statuses={statuses}
+                  promotions={promotions}
+                  settings={settings}
+                  setSettings={setSettings}
+                  currentUser={currentUser}
+                />
+              )}
 
-          {activePage === Page.BETS && (
-            <MyBets
-              bets={bets}
-              setBets={setBets}
-              bookmakers={bookmakers}
-              statuses={statuses}
-              promotions={promotions}
-              settings={settings}
-              setSettings={setSettings}
-              currentUser={currentUser}
-            />
-          )}
+              {activePage === Page.GAINS && (
+                <ExtraGains
+                  gains={gains}
+                  setGains={setGains}
+                  origins={origins}
+                  setOrigins={setOrigins}
+                  bookmakers={bookmakers}
+                  statuses={statuses}
+                  setStatuses={setStatuses}
+                  promotions={promotions}
+                  appSettings={settings}
+                  setSettings={setSettings}
+                  currentUser={currentUser}
+                />
+              )}
 
-          {activePage === Page.GAINS && (
-            <ExtraGains
-              gains={gains}
-              setGains={setGains}
-              origins={origins}
-              setOrigins={setOrigins}
-              bookmakers={bookmakers}
-              statuses={statuses}
-              setStatuses={setStatuses}
-              promotions={promotions}
-              appSettings={settings}
-              setSettings={setSettings}
-              currentUser={currentUser}
-            />
-          )}
+              {activePage === Page.COACH && (
+                <Coach
+                  bets={bets}
+                  gains={gains}
+                  bookmakers={bookmakers}
+                  statuses={statuses}
+                />
+              )}
 
-          {activePage === Page.COACH && (
-            <Coach
-              bets={bets}
-              gains={gains}
-              bookmakers={bookmakers}
-              statuses={statuses}
-            />
-          )}
-
-          {activePage === Page.SETTINGS && (
-            <Settings
-              bookmakers={bookmakers}
-              setBookmakers={setBookmakers}
-              statuses={statuses}
-              setStatuses={setStatuses}
-              promotions={promotions}
-              setPromotions={setPromotions}
-              origins={origins}
-              setOrigins={setOrigins}
-              appSettings={settings}
-              setAppSettings={setSettings}
-              initialTab={initialSettingsTab}
-              onFactoryReset={handleFactoryReset}
-              currentUser={currentUser}
-            />
-          )}
-        </Layout>
-      )}
-    </div>
+              {activePage === Page.SETTINGS && (
+                <Settings
+                  bookmakers={bookmakers}
+                  setBookmakers={setBookmakers}
+                  statuses={statuses}
+                  setStatuses={setStatuses}
+                  promotions={promotions}
+                  setPromotions={setPromotions}
+                  origins={origins}
+                  setOrigins={setOrigins}
+                  appSettings={settings}
+                  setAppSettings={setSettings}
+                  initialTab={initialSettingsTab}
+                  onFactoryReset={handleFactoryReset}
+                  currentUser={currentUser}
+                />
+              )}
+            </Suspense>
+          </Layout>
+        )}
+      </div>
+    </Suspense>
   );
 };
 
