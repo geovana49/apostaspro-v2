@@ -1,19 +1,19 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
 import { FirestoreService } from "./services/firestoreService";
 import { Page, Bet, ExtraGain, AppSettings, Bookmaker, StatusItem, PromotionItem, OriginItem, SettingsTab, User } from './types';
 import { INITIAL_BOOKMAKERS, INITIAL_STATUSES, INITIAL_PROMOTIONS, INITIAL_ORIGINS } from './constants';
 import Layout from './components/Layout';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 
-// Lazy load components for code splitting
-const Overview = lazy(() => import('./components/Overview'));
-const MyBets = lazy(() => import('./components/MyBets'));
-const ExtraGains = lazy(() => import('./components/ExtraGains'));
-const Coach = lazy(() => import('./components/Coach'));
-const Settings = lazy(() => import('./components/Settings'));
-const LandingPage = lazy(() => import('./components/LandingPage'));
+// Standard imports for stability (removing lazy for now)
+import Overview from './components/Overview';
+import MyBets from './components/MyBets';
+import ExtraGains from './components/ExtraGains';
+import Coach from './components/Coach';
+import Settings from './components/Settings';
+import LandingPage from './components/LandingPage';
 
 // A simplified loading component for page transitions
 const PageLoader = () => (
@@ -49,6 +49,16 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Global Error Listener
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      setErrorMessage(`Error: ${event.message} at ${event.filename}:${event.lineno}`);
+    };
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
 
   // --- Auth & Data Synchronization ---
   useEffect(() => {
@@ -185,12 +195,28 @@ const App: React.FC = () => {
   };
 
   // Render
+  if (errorMessage) {
+    return (
+      <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center text-white p-6 text-center">
+        <AlertCircle size={48} className="text-danger mb-4" />
+        <h1 className="text-xl font-bold mb-2">Ops! Algo deu errado.</h1>
+        <p className="text-gray-400 text-sm max-w-md">{errorMessage}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-6 px-6 py-2 bg-primary text-background rounded-lg font-bold"
+        >
+          Recarregar App
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#020617] flex items-center justify-center text-white">Carregando...</div>}>
+    <div className="min-h-screen bg-[#090c19]">
       {isLoading ? (
         <div className="min-h-screen bg-[#020617] flex items-center justify-center text-white">Carregando...</div>
       ) : !isLoggedIn ? (
-        <LandingPage onLogin={() => { }} />
+        <LandingPage onLogin={(user) => { setCurrentUser(user); setIsLoggedIn(true); }} />
       ) : (
         <Layout
           activePage={activePage}
@@ -199,68 +225,67 @@ const App: React.FC = () => {
           setSettings={setSettings}
           onLogout={handleLogout}
         >
-          <Suspense fallback={<PageLoader />}>
-            {activePage === Page.OVERVIEW && <Overview bets={bets} gains={gains} settings={settings} setSettings={setSettings} bookmakers={bookmakers} />}
 
-            {activePage === Page.BETS && (
-              <MyBets
-                bets={bets}
-                setBets={setBets}
-                bookmakers={bookmakers}
-                statuses={statuses}
-                promotions={promotions}
-                settings={settings}
-                setSettings={setSettings}
-                currentUser={currentUser}
-              />
-            )}
+          {activePage === Page.OVERVIEW && <Overview bets={bets} gains={gains} settings={settings} setSettings={setSettings} bookmakers={bookmakers} />}
 
-            {activePage === Page.GAINS && (
-              <ExtraGains
-                gains={gains}
-                setGains={setGains}
-                origins={origins}
-                setOrigins={setOrigins}
-                bookmakers={bookmakers}
-                statuses={statuses}
-                setStatuses={setStatuses}
-                promotions={promotions}
-                appSettings={settings}
-                setSettings={setSettings}
-                currentUser={currentUser}
-              />
-            )}
+          {activePage === Page.BETS && (
+            <MyBets
+              bets={bets}
+              setBets={setBets}
+              bookmakers={bookmakers}
+              statuses={statuses}
+              promotions={promotions}
+              settings={settings}
+              setSettings={setSettings}
+              currentUser={currentUser}
+            />
+          )}
 
-            {activePage === Page.COACH && (
-              <Coach
-                bets={bets}
-                gains={gains}
-                bookmakers={bookmakers}
-                statuses={statuses}
-              />
-            )}
+          {activePage === Page.GAINS && (
+            <ExtraGains
+              gains={gains}
+              setGains={setGains}
+              origins={origins}
+              setOrigins={setOrigins}
+              bookmakers={bookmakers}
+              statuses={statuses}
+              setStatuses={setStatuses}
+              promotions={promotions}
+              appSettings={settings}
+              setSettings={setSettings}
+              currentUser={currentUser}
+            />
+          )}
 
-            {activePage === Page.SETTINGS && (
-              <Settings
-                bookmakers={bookmakers}
-                setBookmakers={setBookmakers}
-                statuses={statuses}
-                setStatuses={setStatuses}
-                promotions={promotions}
-                setPromotions={setPromotions}
-                origins={origins}
-                setOrigins={setOrigins}
-                appSettings={settings}
-                setAppSettings={setSettings}
-                initialTab={initialSettingsTab}
-                onFactoryReset={handleFactoryReset}
-                currentUser={currentUser}
-              />
-            )}
-          </Suspense>
+          {activePage === Page.COACH && (
+            <Coach
+              bets={bets}
+              gains={gains}
+              bookmakers={bookmakers}
+              statuses={statuses}
+            />
+          )}
+
+          {activePage === Page.SETTINGS && (
+            <Settings
+              bookmakers={bookmakers}
+              setBookmakers={setBookmakers}
+              statuses={statuses}
+              setStatuses={setStatuses}
+              promotions={promotions}
+              setPromotions={setPromotions}
+              origins={origins}
+              setOrigins={setOrigins}
+              appSettings={settings}
+              setAppSettings={setSettings}
+              initialTab={initialSettingsTab}
+              onFactoryReset={handleFactoryReset}
+              currentUser={currentUser}
+            />
+          )}
         </Layout>
       )}
-    </Suspense>
+    </div>
   );
 };
 
