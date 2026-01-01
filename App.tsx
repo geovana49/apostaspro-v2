@@ -1,17 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
 import { FirestoreService } from "./services/firestoreService";
 import { Page, Bet, ExtraGain, AppSettings, Bookmaker, StatusItem, PromotionItem, OriginItem, SettingsTab, User } from './types';
 import { INITIAL_BOOKMAKERS, INITIAL_STATUSES, INITIAL_PROMOTIONS, INITIAL_ORIGINS } from './constants';
 import Layout from './components/Layout';
-import Overview from './components/Overview';
-import MyBets from './components/MyBets';
-import ExtraGains from './components/ExtraGains';
-import Coach from './components/Coach';
-import Settings from './components/Settings';
-import AIAssistant from './components/AIAssistant';
-import LandingPage from './components/LandingPage';
+import { Loader2 } from 'lucide-react';
+
+// Lazy load components for code splitting
+const Overview = lazy(() => import('./components/Overview'));
+const MyBets = lazy(() => import('./components/MyBets'));
+const ExtraGains = lazy(() => import('./components/ExtraGains'));
+const Coach = lazy(() => import('./components/Coach'));
+const Settings = lazy(() => import('./components/Settings'));
+const LandingPage = lazy(() => import('./components/LandingPage'));
+
+// A simplified loading component for page transitions
+const PageLoader = () => (
+  <div className="flex-1 flex items-center justify-center p-12">
+    <Loader2 className="w-8 h-8 text-primary animate-spin" />
+  </div>
+);
 
 const DEFAULT_SETTINGS: AppSettings = {
   showProfileInHeader: true,
@@ -54,8 +63,8 @@ const App: React.FC = () => {
         setCurrentUser(user);
         setIsLoggedIn(true);
 
-        // Initialize Data if needed (first login)
-        await FirestoreService.initializeUserData(user.uid, {
+        // Initialize Data asynchronously in the background
+        FirestoreService.initializeUserData(user.uid, {
           bookmakers: INITIAL_BOOKMAKERS,
           statuses: INITIAL_STATUSES,
           promotions: INITIAL_PROMOTIONS,
@@ -65,7 +74,7 @@ const App: React.FC = () => {
             username: user.username,
             email: user.email
           }
-        });
+        }).catch(err => console.error("Initialization error:", err));
 
         // Subscribe to Real-time Data
         let initialBetsLoaded = false;
@@ -175,66 +184,68 @@ const App: React.FC = () => {
       activePage={activePage}
       onNavigate={handleNavigate}
       settings={settings}
-      setSettings={setSettings} // This will need to be updated to save to Firestore
+      setSettings={setSettings}
       onLogout={handleLogout}
     >
-      {activePage === Page.OVERVIEW && <Overview bets={bets} gains={gains} settings={settings} setSettings={setSettings} bookmakers={bookmakers} />}
+      <Suspense fallback={<PageLoader />}>
+        {activePage === Page.OVERVIEW && <Overview bets={bets} gains={gains} settings={settings} setSettings={setSettings} bookmakers={bookmakers} />}
 
-      {activePage === Page.BETS && (
-        <MyBets
-          bets={bets}
-          setBets={setBets} // This will need to be updated to save to Firestore
-          bookmakers={bookmakers}
-          statuses={statuses}
-          promotions={promotions}
-          settings={settings}
-          setSettings={setSettings}
-          currentUser={currentUser}
-        />
-      )}
+        {activePage === Page.BETS && (
+          <MyBets
+            bets={bets}
+            setBets={setBets}
+            bookmakers={bookmakers}
+            statuses={statuses}
+            promotions={promotions}
+            settings={settings}
+            setSettings={setSettings}
+            currentUser={currentUser}
+          />
+        )}
 
-      {activePage === Page.GAINS && (
-        <ExtraGains
-          gains={gains}
-          setGains={setGains} // This will need to be updated to save to Firestore
-          origins={origins}
-          setOrigins={setOrigins}
-          bookmakers={bookmakers}
-          statuses={statuses}
-          setStatuses={setStatuses}
-          promotions={promotions}
-          appSettings={settings}
-          setSettings={setSettings}
-          currentUser={currentUser}
-        />
-      )}
+        {activePage === Page.GAINS && (
+          <ExtraGains
+            gains={gains}
+            setGains={setGains}
+            origins={origins}
+            setOrigins={setOrigins}
+            bookmakers={bookmakers}
+            statuses={statuses}
+            setStatuses={setStatuses}
+            promotions={promotions}
+            appSettings={settings}
+            setSettings={setSettings}
+            currentUser={currentUser}
+          />
+        )}
 
-      {activePage === Page.COACH && (
-        <Coach
-          bets={bets}
-          gains={gains}
-          bookmakers={bookmakers}
-          statuses={statuses}
-        />
-      )}
+        {activePage === Page.COACH && (
+          <Coach
+            bets={bets}
+            gains={gains}
+            bookmakers={bookmakers}
+            statuses={statuses}
+          />
+        )}
 
-      {activePage === Page.SETTINGS && (
-        <Settings
-          bookmakers={bookmakers}
-          setBookmakers={setBookmakers}
-          statuses={statuses}
-          setStatuses={setStatuses}
-          promotions={promotions}
-          setPromotions={setPromotions}
-          origins={origins}
-          setOrigins={setOrigins}
-          appSettings={settings}
-          setAppSettings={setSettings}
-          initialTab={initialSettingsTab}
-          onFactoryReset={handleFactoryReset}
-          currentUser={currentUser}
-        />
-      )}
+        {activePage === Page.SETTINGS && (
+          <Settings
+            bookmakers={bookmakers}
+            setBookmakers={setBookmakers}
+            statuses={statuses}
+            setStatuses={setStatuses}
+            promotions={promotions}
+            setPromotions={setPromotions}
+            origins={origins}
+            setOrigins={setOrigins}
+            appSettings={settings}
+            setAppSettings={setSettings}
+            initialTab={initialSettingsTab}
+            onFactoryReset={handleFactoryReset}
+            currentUser={currentUser}
+          />
+        )}
+      </Suspense>
     </Layout>
   );
 };

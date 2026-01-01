@@ -48,4 +48,15 @@ export default defineConfig({
     open: true,
     https: true
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'firebase-vendor': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
+          'ui-vendor': ['lucide-react', 'recharts'],
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000,
+  }
 })
