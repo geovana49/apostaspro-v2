@@ -8,6 +8,7 @@ import {
     orderBy,
     Timestamp,
     getDocs,
+    getDoc,
     writeBatch,
     limit
 } from "firebase/firestore";
@@ -28,8 +29,7 @@ export const FirestoreService = {
     subscribeToBets: (userId: string, callback: (bets: Bet[]) => void, onError?: (err: any) => void) => {
         const q = query(
             collection(db, "users", userId, "bets"),
-            // Temporarily removing orderBy to test if it's the loading blocker
-            // orderBy("date", "desc"),
+            orderBy("date", "desc"),
             limit(100)
         );
         return onSnapshot(q, (snapshot) => {
@@ -72,8 +72,7 @@ export const FirestoreService = {
     subscribeToGains: (userId: string, callback: (gains: ExtraGain[]) => void, onError?: (err: any) => void) => {
         const q = query(
             collection(db, "users", userId, "gains"),
-            // Temporarily removing orderBy to test if it's the loading blocker
-            // orderBy("date", "desc"),
+            orderBy("date", "desc"),
             limit(100)
         );
         return onSnapshot(q, (snapshot) => {
@@ -142,7 +141,7 @@ export const FirestoreService = {
         await deleteDoc(doc(db, "users", userId, collectionName, itemId));
     },
 
-    // Initial Setup (if empty)
+    // Initial Setup (if empty or migration needed)
     initializeUserData: async (userId: string, initialData: {
         bookmakers: Bookmaker[],
         statuses: StatusItem[],
@@ -152,32 +151,71 @@ export const FirestoreService = {
     }) => {
         const batch = writeBatch(db);
 
-        // 1. Settings Check (The Gatekeeper)
+        // 1. Check for Legacy Data (Migration Bridge)
+        const userDocRef = doc(db, "users", userId);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+            const data = userDocSnap.data();
+            // If it has 'bets' array, it's a legacy document
+            if (data.bets && Array.isArray(data.bets) && !data.migratedToV2) {
+                console.log("Legacy data detected! Starting migration to V2 (sub-collections)...");
+
+                // Migrate Bets
+                data.bets.forEach((bet: Bet) => {
+                    const ref = doc(db, "users", userId, "bets", bet.id);
+                    batch.set(ref, { ...bet, date: Timestamp.fromDate(new Date(bet.date)) }, { merge: true });
+                });
+
+                // Migrate Gains
+                if (data.gains) {
+                    data.gains.forEach((gain: ExtraGain) => {
+                        const ref = doc(db, "users", userId, "gains", gain.id);
+                        batch.set(ref, { ...gain, date: Timestamp.fromDate(new Date(gain.date)) }, { merge: true });
+                    });
+                }
+
+                // Migrate Configs
+                if (data.bookmakers) {
+                    data.bookmakers.forEach((b: Bookmaker) => {
+                        const ref = doc(db, "users", userId, "bookmakers", b.id);
+                        batch.set(ref, b, { merge: true });
+                    });
+                }
+
+                if (data.statuses) {
+                    data.statuses.forEach((s: StatusItem) => {
+                        const ref = doc(db, "users", userId, "statuses", s.id);
+                        batch.set(ref, s, { merge: true });
+                    });
+                }
+
+                // Migrate Settings
+                const settingsRef = doc(db, "users", userId, "settings", "preferences");
+                batch.set(settingsRef, { ...(data.settings || initialData.settings), initialized: true }, { merge: true });
+
+                // Mark legacy doc as migrated
+                batch.update(userDocRef, { migratedToV2: true });
+
+                await batch.commit();
+                console.log("Migration to V2 completed successfully.");
+                return;
+            }
+        }
+
+        // 2. Normal Initialization (Check Settings collection)
         const settingsRef = doc(db, "users", userId, "settings", "preferences");
         const settingsSnap = await getDocs(query(collection(db, "users", userId, "settings")));
 
-        // STRICT PROTECTION: If settings exist, we assume the user is already initialized.
-        // We DO NOT check if other collections are empty because slow connections can report false empty.
-        // This prevents overwriting custom bookmakers with defaults.
         if (!settingsSnap.empty) {
             console.log("User settings found. detailed check skipped to protect data.");
-
-            // Optional: Ensure 'initialized' flag is present for future robustness, but don't touch data.
-            const settingsData = settingsSnap.docs[0].data();
-            if (!settingsData.initialized) {
-                batch.set(settingsRef, { initialized: true }, { merge: true });
-                await batch.commit();
-            }
             return;
         }
 
-        // --- NEW USER FLOW ONLY (Settings are empty) ---
-        console.log("New user detected (no settings). Creating default data...");
-
-        // 1. Create Settings
+        // --- NEW USER FLOW ONLY ---
+        console.log("New user detected. Creating default data...");
         batch.set(settingsRef, { ...initialData.settings, initialized: true }, { merge: true });
 
-        // 2. Create Defaults for all collections
         initialData.bookmakers.forEach(b => {
             const ref = doc(db, "users", userId, "bookmakers", b.id);
             batch.set(ref, b, { merge: true });
