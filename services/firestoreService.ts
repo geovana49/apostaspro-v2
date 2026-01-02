@@ -24,6 +24,16 @@ const convertDate = (data: any) => {
     return data;
 };
 
+// Helper for timeout wrapped promises
+const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, operationName: string): Promise<T> => {
+    return Promise.race([
+        promise,
+        new Promise<T>((_, reject) =>
+            setTimeout(() => reject(new Error(`Timeout: ${operationName} demorou mais de ${timeoutMs / 1000}s`)), timeoutMs)
+        )
+    ]);
+};
+
 export const FirestoreService = {
     // --- Bets ---
     subscribeToBets: (userId: string, callback: (bets: Bet[]) => void, onError?: (err: any) => void) => {
@@ -42,24 +52,30 @@ export const FirestoreService = {
     },
 
     saveBet: async (userId: string, bet: Bet) => {
-        console.log("Saving bet:", bet);
+        console.info("[Firestore] Iniciando saveBet para ID:", bet.id);
         try {
             const betRef = doc(db, "users", userId, "bets", bet.id);
 
             let dateToSave = new Date(bet.date);
             if (isNaN(dateToSave.getTime())) {
-                console.error("Invalid date in bet:", bet.date);
-                dateToSave = new Date(); // Fallback to now
+                console.error("Data inválida na aposta:", bet.date);
+                dateToSave = new Date(); // Fallback
             }
 
             const dataToSave = {
                 ...bet,
                 date: Timestamp.fromDate(dateToSave)
             };
-            await setDoc(betRef, dataToSave, { merge: true });
-            console.log("Bet saved successfully");
+
+            await withTimeout(
+                setDoc(betRef, dataToSave, { merge: true }),
+                10000,
+                "Salvamento de Aposta (setDoc)"
+            );
+
+            console.info("[Firestore] saveBet concluído com sucesso.");
         } catch (error) {
-            console.error("Error in FirestoreService.saveBet:", error);
+            console.error("[Firestore] Erro em saveBet:", error);
             throw error;
         }
     },
@@ -85,7 +101,7 @@ export const FirestoreService = {
     },
 
     saveGain: async (userId: string, gain: ExtraGain) => {
-        console.log("Saving gain:", gain);
+        console.info("[Firestore] Iniciando saveGain para ID:", gain.id);
         try {
             const gainRef = doc(db, "users", userId, "gains", gain.id);
             let dateToSave = new Date(gain.date);
@@ -95,10 +111,16 @@ export const FirestoreService = {
                 ...gain,
                 date: Timestamp.fromDate(dateToSave)
             };
-            await setDoc(gainRef, dataToSave, { merge: true });
-            console.log("Gain saved successfully");
+
+            await withTimeout(
+                setDoc(gainRef, dataToSave, { merge: true }),
+                10000,
+                "Salvamento de Ganho (setDoc)"
+            );
+
+            console.info("[Firestore] saveGain concluído com sucesso.");
         } catch (error) {
-            console.error("Error in saveGain:", error);
+            console.error("[Firestore] Erro em saveGain:", error);
             throw error;
         }
     },
@@ -127,9 +149,8 @@ export const FirestoreService = {
         await setDoc(doc(db, "users", userId, "settings", "preferences"), settings, { merge: true });
     },
 
-    // --- Configurations (Bookmakers, Statuses, etc) ---
+    // --- Configurations ---
 
-    // Generic subscriber for simple collections
     subscribeToCollection: <T>(userId: string, collectionName: string, callback: (items: T[]) => void, onError?: (err: any) => void) => {
         const q = query(collection(db, "users", userId, collectionName));
         return onSnapshot(q, (snapshot) => {
@@ -141,17 +162,14 @@ export const FirestoreService = {
         });
     },
 
-    // Generic saver
     saveItem: async (userId: string, collectionName: string, item: any) => {
         await setDoc(doc(db, "users", userId, collectionName, item.id), item, { merge: true });
     },
 
-    // Generic deleter
     deleteItem: async (userId: string, collectionName: string, itemId: string) => {
         await deleteDoc(doc(db, "users", userId, collectionName, itemId));
     },
 
-    // Initial Setup (if empty or migration needed)
     initializeUserData: async (userId: string, initialData: {
         bookmakers: Bookmaker[],
         statuses: StatusItem[],
@@ -159,31 +177,27 @@ export const FirestoreService = {
         origins: OriginItem[],
         settings: AppSettings
     }) => {
-        // 1. Check for Legacy Data (Migration Bridge)
         const userDocRef = doc(db, "users", userId);
         const userDocSnap = await getDoc(userDocRef);
 
         if (userDocSnap.exists()) {
             const data = userDocSnap.data();
-            // If it has 'bets' array, it's a legacy document
             if (data.bets && Array.isArray(data.bets) && !data.migratedToV2) {
-                console.log("Legacy data detected! Starting migration to V2...");
+                console.info("[Migration] Migrando dados para V2...");
 
                 const itemsToMigrate: { ref: any, data: any }[] = [];
 
                 data.bets.forEach((bet: Bet) => {
-                    const ref = doc(db, "users", userId, "bets", bet.id);
                     itemsToMigrate.push({
-                        ref,
+                        ref: doc(db, "users", userId, "bets", bet.id),
                         data: { ...bet, date: Timestamp.fromDate(new Date(bet.date)) }
                     });
                 });
 
                 if (data.gains) {
                     data.gains.forEach((gain: ExtraGain) => {
-                        const ref = doc(db, "users", userId, "gains", gain.id);
                         itemsToMigrate.push({
-                            ref,
+                            ref: doc(db, "users", userId, "gains", gain.id),
                             data: { ...gain, date: Timestamp.fromDate(new Date(gain.date)) }
                         });
                     });
@@ -191,77 +205,47 @@ export const FirestoreService = {
 
                 if (data.bookmakers) {
                     data.bookmakers.forEach((b: Bookmaker) => {
-                        const ref = doc(db, "users", userId, "bookmakers", b.id);
-                        itemsToMigrate.push({ ref, data: b });
+                        itemsToMigrate.push({ ref: doc(db, "users", userId, "bookmakers", b.id), data: b });
                     });
                 }
 
                 if (data.statuses) {
                     data.statuses.forEach((s: StatusItem) => {
-                        const ref = doc(db, "users", userId, "statuses", s.id);
-                        itemsToMigrate.push({ ref, data: s });
+                        itemsToMigrate.push({ ref: doc(db, "users", userId, "statuses", s.id), data: s });
                     });
                 }
 
-                const settingsRef = doc(db, "users", userId, "settings", "preferences");
                 itemsToMigrate.push({
-                    ref: settingsRef,
+                    ref: doc(db, "users", userId, "settings", "preferences"),
                     data: { ...(data.settings || initialData.settings), initialized: true }
                 });
 
-                // Execute migration in chunks of 400
                 for (let i = 0; i < itemsToMigrate.length; i += 400) {
                     const migrationBatch = writeBatch(db);
                     itemsToMigrate.slice(i, i + 400).forEach(item => migrationBatch.set(item.ref, item.data, { merge: true }));
                     await migrationBatch.commit();
-                    console.log(`Migration chunk committed: ${i + itemsToMigrate.slice(i, i + 400).length}/${itemsToMigrate.length}`);
                 }
 
                 await setDoc(userDocRef, { migratedToV2: true }, { merge: true });
-                console.log("Migration to V2 completed successfully.");
+                console.info("[Migration] Migração concluída.");
                 return;
             }
         }
 
-        // 2. Normal Initialization (Check Settings collection)
         const settingsRef = doc(db, "users", userId, "settings", "preferences");
         const settingsSnap = await getDocs(query(collection(db, "users", userId, "settings")));
+        if (!settingsSnap.empty) return;
 
-        if (!settingsSnap.empty) {
-            console.log("User settings found. detailed check skipped to protect data.");
-            return;
-        }
-
-        // --- NEW USER FLOW ONLY ---
-        console.log("New user detected. Creating default data...");
+        console.info("[Initialization] Criando dados iniciais para novo usuário...");
         const batch = writeBatch(db);
         batch.set(settingsRef, { ...initialData.settings, initialized: true }, { merge: true });
-
-        initialData.bookmakers.forEach(b => {
-            const ref = doc(db, "users", userId, "bookmakers", b.id);
-            batch.set(ref, b, { merge: true });
-        });
-
-        initialData.statuses.forEach(s => {
-            const ref = doc(db, "users", userId, "statuses", s.id);
-            batch.set(ref, s, { merge: true });
-        });
-
-        initialData.promotions.forEach(p => {
-            const ref = doc(db, "users", userId, "promotions", p.id);
-            batch.set(ref, p, { merge: true });
-        });
-
-        initialData.origins.forEach(o => {
-            const ref = doc(db, "users", userId, "origins", o.id);
-            batch.set(ref, o, { merge: true });
-        });
-
+        initialData.bookmakers.forEach(b => batch.set(doc(db, "users", userId, "bookmakers", b.id), b, { merge: true }));
+        initialData.statuses.forEach(s => batch.set(doc(db, "users", userId, "statuses", s.id), s, { merge: true }));
+        initialData.promotions.forEach(p => batch.set(doc(db, "users", userId, "promotions", p.id), p, { merge: true }));
+        initialData.origins.forEach(o => batch.set(doc(db, "users", userId, "origins", o.id), o, { merge: true }));
         await batch.commit();
-        console.log("Default data created successfully.");
     },
 
-    // Factory Reset
     factoryReset: async (userId: string) => {
         const collections = ["bets", "gains", "bookmakers", "statuses", "promotions", "origins", "settings"];
         let batch = writeBatch(db);
@@ -270,11 +254,9 @@ export const FirestoreService = {
         for (const colName of collections) {
             const colRef = collection(db, "users", userId, colName);
             const snapshot = await getDocs(colRef);
-
             for (const doc of snapshot.docs) {
                 batch.delete(doc.ref);
                 operationCount++;
-
                 if (operationCount >= 400) {
                     await batch.commit();
                     batch = writeBatch(db);
@@ -282,38 +264,29 @@ export const FirestoreService = {
                 }
             }
         }
-
         await batch.commit();
     },
 
     // --- Media ---
     uploadImage: async (userId: string, betId: string, base64: string): Promise<string> => {
-        // Only upload if it's actually base64
         if (!base64.startsWith('data:')) return base64;
 
-        return new Promise(async (resolve, reject) => {
-            // Safety timeout: 12 seconds
+        return new Promise(async (resolve) => {
             const timeout = setTimeout(() => {
-                console.warn("Upload timeout! Falling back to original string.");
-                resolve(base64); // Fallback to base64 so save doesn't hang
+                console.warn("[Media] Upload timeout. Fallback para base64.");
+                resolve(base64);
             }, 12000);
 
             try {
                 const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(7)}.webp`;
                 const storageRef = ref(storage, `users/${userId}/bets/${betId}/${fileName}`);
-
-                // Upload base64 string
                 await uploadString(storageRef, base64, 'data_url');
-
-                // Get download URL
                 const downloadURL = await getDownloadURL(storageRef);
-
                 clearTimeout(timeout);
                 resolve(downloadURL);
             } catch (error) {
-                console.error("Error uploading image:", error);
+                console.error("[Media] Erro no upload:", error);
                 clearTimeout(timeout);
-                // On error, we still resolve with base64 to allow saving the bet data
                 resolve(base64);
             }
         });

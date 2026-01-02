@@ -509,6 +509,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
             console.error("Error saving:", error);
             alert(`Erro ao salvar: ${error.message || error}`);
         } finally {
+            clearTimeout(safetyTimeout);
             setIsUploading(false);
         }
     };

@@ -506,6 +506,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             console.error("Error saving bet:", error);
             alert(`Erro ao salvar a aposta: ${error.message || error}`);
         } finally {
+            clearTimeout(safetyTimeout);
             setIsUploading(false);
         }
     };
