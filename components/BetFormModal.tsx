@@ -427,6 +427,12 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
         setIsUploading(true);
 
+        // Safety timeout: 20 seconds
+        const safetyTimeout = setTimeout(() => {
+            setIsUploading(false);
+            console.warn("Save operation exceeded 20s safety limit.");
+        }, 20000);
+
         try {
             const betId = formData.id || Date.now().toString();
 

@@ -448,7 +448,12 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         if (!currentUser) return alert('Você precisa estar logado para salvar.');
 
         setIsUploading(true);
-        setIsUploading(true);
+
+        // Safety timeout: 20 seconds
+        const safetyTimeout = setTimeout(() => {
+            setIsUploading(false);
+            console.warn("Save operation exceeded 20s safety limit.");
+        }, 20000);
 
         try {
             const betId = formData.id || Date.now().toString();

@@ -85,12 +85,22 @@ export const FirestoreService = {
     },
 
     saveGain: async (userId: string, gain: ExtraGain) => {
-        const gainRef = doc(db, "users", userId, "gains", gain.id);
-        const dataToSave = {
-            ...gain,
-            date: Timestamp.fromDate(new Date(gain.date))
-        };
-        await setDoc(gainRef, dataToSave, { merge: true });
+        console.log("Saving gain:", gain);
+        try {
+            const gainRef = doc(db, "users", userId, "gains", gain.id);
+            let dateToSave = new Date(gain.date);
+            if (isNaN(dateToSave.getTime())) dateToSave = new Date();
+
+            const dataToSave = {
+                ...gain,
+                date: Timestamp.fromDate(dateToSave)
+            };
+            await setDoc(gainRef, dataToSave, { merge: true });
+            console.log("Gain saved successfully");
+        } catch (error) {
+            console.error("Error in saveGain:", error);
+            throw error;
+        }
     },
 
     deleteGain: async (userId: string, gainId: string) => {
@@ -149,8 +159,6 @@ export const FirestoreService = {
         origins: OriginItem[],
         settings: AppSettings
     }) => {
-        const batch = writeBatch(db);
-
         // 1. Check for Legacy Data (Migration Bridge)
         const userDocRef = doc(db, "users", userId);
         const userDocSnap = await getDoc(userDocRef);
@@ -159,45 +167,57 @@ export const FirestoreService = {
             const data = userDocSnap.data();
             // If it has 'bets' array, it's a legacy document
             if (data.bets && Array.isArray(data.bets) && !data.migratedToV2) {
-                console.log("Legacy data detected! Starting migration to V2 (sub-collections)...");
+                console.log("Legacy data detected! Starting migration to V2...");
 
-                // Migrate Bets
+                const itemsToMigrate: { ref: any, data: any }[] = [];
+
                 data.bets.forEach((bet: Bet) => {
                     const ref = doc(db, "users", userId, "bets", bet.id);
-                    batch.set(ref, { ...bet, date: Timestamp.fromDate(new Date(bet.date)) }, { merge: true });
+                    itemsToMigrate.push({
+                        ref,
+                        data: { ...bet, date: Timestamp.fromDate(new Date(bet.date)) }
+                    });
                 });
 
-                // Migrate Gains
                 if (data.gains) {
                     data.gains.forEach((gain: ExtraGain) => {
                         const ref = doc(db, "users", userId, "gains", gain.id);
-                        batch.set(ref, { ...gain, date: Timestamp.fromDate(new Date(gain.date)) }, { merge: true });
+                        itemsToMigrate.push({
+                            ref,
+                            data: { ...gain, date: Timestamp.fromDate(new Date(gain.date)) }
+                        });
                     });
                 }
 
-                // Migrate Configs
                 if (data.bookmakers) {
                     data.bookmakers.forEach((b: Bookmaker) => {
                         const ref = doc(db, "users", userId, "bookmakers", b.id);
-                        batch.set(ref, b, { merge: true });
+                        itemsToMigrate.push({ ref, data: b });
                     });
                 }
 
                 if (data.statuses) {
                     data.statuses.forEach((s: StatusItem) => {
                         const ref = doc(db, "users", userId, "statuses", s.id);
-                        batch.set(ref, s, { merge: true });
+                        itemsToMigrate.push({ ref, data: s });
                     });
                 }
 
-                // Migrate Settings
                 const settingsRef = doc(db, "users", userId, "settings", "preferences");
-                batch.set(settingsRef, { ...(data.settings || initialData.settings), initialized: true }, { merge: true });
+                itemsToMigrate.push({
+                    ref: settingsRef,
+                    data: { ...(data.settings || initialData.settings), initialized: true }
+                });
 
-                // Mark legacy doc as migrated
-                batch.update(userDocRef, { migratedToV2: true });
+                // Execute migration in chunks of 400
+                for (let i = 0; i < itemsToMigrate.length; i += 400) {
+                    const migrationBatch = writeBatch(db);
+                    itemsToMigrate.slice(i, i + 400).forEach(item => migrationBatch.set(item.ref, item.data, { merge: true }));
+                    await migrationBatch.commit();
+                    console.log(`Migration chunk committed: ${i + itemsToMigrate.slice(i, i + 400).length}/${itemsToMigrate.length}`);
+                }
 
-                await batch.commit();
+                await setDoc(userDocRef, { migratedToV2: true }, { merge: true });
                 console.log("Migration to V2 completed successfully.");
                 return;
             }
@@ -214,6 +234,7 @@ export const FirestoreService = {
 
         // --- NEW USER FLOW ONLY ---
         console.log("New user detected. Creating default data...");
+        const batch = writeBatch(db);
         batch.set(settingsRef, { ...initialData.settings, initialized: true }, { merge: true });
 
         initialData.bookmakers.forEach(b => {
@@ -270,19 +291,31 @@ export const FirestoreService = {
         // Only upload if it's actually base64
         if (!base64.startsWith('data:')) return base64;
 
-        try {
-            const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(7)}.webp`;
-            const storageRef = ref(storage, `users/${userId}/bets/${betId}/${fileName}`);
+        return new Promise(async (resolve, reject) => {
+            // Safety timeout: 12 seconds
+            const timeout = setTimeout(() => {
+                console.warn("Upload timeout! Falling back to original string.");
+                resolve(base64); // Fallback to base64 so save doesn't hang
+            }, 12000);
 
-            // Upload base64 string
-            await uploadString(storageRef, base64, 'data_url');
+            try {
+                const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(7)}.webp`;
+                const storageRef = ref(storage, `users/${userId}/bets/${betId}/${fileName}`);
 
-            // Get download URL
-            const downloadURL = await getDownloadURL(storageRef);
-            return downloadURL;
-        } catch (error) {
-            console.error("Error uploading image:", error);
-            throw error;
-        }
+                // Upload base64 string
+                await uploadString(storageRef, base64, 'data_url');
+
+                // Get download URL
+                const downloadURL = await getDownloadURL(storageRef);
+
+                clearTimeout(timeout);
+                resolve(downloadURL);
+            } catch (error) {
+                console.error("Error uploading image:", error);
+                clearTimeout(timeout);
+                // On error, we still resolve with base64 to allow saving the bet data
+                resolve(base64);
+            }
+        });
     }
 };
