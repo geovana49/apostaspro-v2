@@ -429,9 +429,11 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
         // Safety timeout: 20 seconds
         const safetyTimeout = setTimeout(() => {
+            console.warn("[BetFormModal] Save operation force-unlocked by safety limit.");
             setIsUploading(false);
-            console.warn("Save operation exceeded 20s safety limit.");
         }, 20000);
+
+        console.info("[BetFormModal] Iniciando handleSave...");
 
         try {
             const betId = formData.id || Date.now().toString();
@@ -474,11 +476,12 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                     coverages: formData.coverages // Include coverages
                 };
 
-                console.log('Saving gain with data:', gainData);
-                console.log('formData.promotionType:', formData.promotionType);
-
-                const gainToSave = JSON.parse(JSON.stringify(gainData));
-                await FirestoreService.saveGain(currentUser.uid, gainToSave);
+                console.info('[BetFormModal] Salvando como GANHO EXTRA...');
+                const cleanGain = JSON.parse(JSON.stringify(gainData, (key, value) => {
+                    if (value === undefined) return null;
+                    return value;
+                }));
+                await FirestoreService.saveGain(currentUser.uid, cleanGain);
             } else {
                 // Save as Bet (original behavior)
                 const rawBet: Bet = {
@@ -490,8 +493,12 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                     isDoubleGreen: formData.isDoubleGreen
                 };
 
-                const betToSave = JSON.parse(JSON.stringify(rawBet));
-                await FirestoreService.saveBet(currentUser.uid, betToSave);
+                console.info('[BetFormModal] Salvando como APOSTA...');
+                const cleanBet = JSON.parse(JSON.stringify(rawBet, (key, value) => {
+                    if (value === undefined) return null;
+                    return value;
+                }));
+                await FirestoreService.saveBet(currentUser.uid, cleanBet);
             }
 
             const betDate = parseDate(formData.date);

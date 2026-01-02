@@ -449,11 +449,13 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
 
         setIsUploading(true);
 
-        // Safety timeout: 20 seconds
+        // Safety timeout: 20 seconds - MUST be first to guarantee unlocking UI
         const safetyTimeout = setTimeout(() => {
+            console.warn("[MyBets] Save operation force-unlocked by safety limit.");
             setIsUploading(false);
-            console.warn("Save operation exceeded 20s safety limit.");
         }, 20000);
+
+        console.info("[MyBets] Iniciando handleSave...");
 
         try {
             const betId = formData.id || Date.now().toString();
@@ -477,19 +479,21 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                 isDoubleGreen: formData.isDoubleGreen || false
             };
 
-            // Remove undefined values to prevent Firestore errors
-            const betToSave = JSON.parse(JSON.stringify(rawBet));
+            // Clean data for Firestore: remove undefined and ensure simple types
+            const cleanData = JSON.parse(JSON.stringify(rawBet, (key, value) => {
+                if (value === undefined) return null;
+                return value;
+            }));
 
-            await FirestoreService.saveBet(currentUser.uid, betToSave);
+            console.info("[MyBets] Enviando para FirestoreService.saveBet...");
+            await FirestoreService.saveBet(currentUser.uid, cleanData);
             console.log("Bet saved, date:", formData.date);
 
             // Navigate to the month of the saved bet
             const betDate = parseDate(formData.date);
             console.log("Parsed bet date:", betDate, "Month:", betDate.getMonth(), "Year:", betDate.getFullYear());
 
-            // Wait a moment for Firestore to sync
-            await new Promise(resolve => setTimeout(resolve, 300));
-
+            console.info("[MyBets] Atualizando interface pós-save...");
             setCurrentDate(betDate);
             setPickerYear(betDate.getFullYear());
             console.log("Navigated to date:", betDate);
