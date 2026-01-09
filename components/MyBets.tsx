@@ -282,22 +282,29 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         setDeleteId(null);
     };
 
-    // Auto-Save Draft
-    // Auto-Save Draft
+    // Auto-Save Draft (Debounced)
     useEffect(() => {
-        if (isModalOpen) {
-            const draft = {
-                formData,
-                tempPhotos,
-                timestamp: Date.now()
-            };
+        if (!isModalOpen) return;
 
-            if (isEditing && formData.id) {
-                localStorage.setItem(`apostaspro_draft_edit_${formData.id}`, JSON.stringify(draft));
-            } else if (!isEditing) {
-                localStorage.setItem('apostaspro_draft_mybets', JSON.stringify(draft));
+        const timeout = setTimeout(() => {
+            try {
+                const draft = {
+                    formData,
+                    tempPhotos,
+                    timestamp: Date.now()
+                };
+
+                if (isEditing && formData.id) {
+                    localStorage.setItem(`apostaspro_draft_edit_${formData.id}`, JSON.stringify(draft));
+                } else if (!isEditing) {
+                    localStorage.setItem('apostaspro_draft_mybets', JSON.stringify(draft));
+                }
+            } catch (error) {
+                console.warn('LocalStorage draft save failed (possibly full):', error);
             }
-        }
+        }, 1500); // 1.5s debounce to save main thread
+
+        return () => clearTimeout(timeout);
     }, [formData, tempPhotos, isModalOpen, isEditing]);
 
 
@@ -458,60 +465,53 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         console.info("[MyBets] Iniciando handleSave...");
 
         try {
-            const betId = formData.id || Date.now().toString();
+            // Optimistic UI: Close modal immediately and run save in background
+            (async () => {
+                const betId = formData.id || Date.now().toString();
+                try {
+                    // 1. Process images (Async upload to Storage)
+                    const photoUrls = await Promise.all(
+                        tempPhotos.map(async (photo) => {
+                            if (photo.url.startsWith('data:')) {
+                                return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
+                            }
+                            return photo.url;
+                        })
+                    );
 
-            // Process images (Async upload to Storage)
-            const photoUrls = await Promise.all(
-                tempPhotos.map(async (photo) => {
-                    if (photo.url.startsWith('data:')) {
-                        return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
-                    }
-                    return photo.url;
-                })
-            );
+                    const rawBet: Bet = {
+                        ...formData, id: betId, notes: formData.notes, photos: photoUrls,
+                        date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
+                        isDoubleGreen: (formData as any).isDoubleGreen || false
+                    };
 
-            const rawBet: Bet = {
-                ...formData,
-                id: betId,
-                notes: formData.notes,
-                photos: photoUrls,
-                date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
-                isDoubleGreen: formData.isDoubleGreen || false
-            };
+                    const cleanData = JSON.parse(JSON.stringify(rawBet, (k, v) => v === undefined ? null : v));
+                    await FirestoreService.saveBet(currentUser.uid, cleanData);
+                    console.info("[MyBets] Background Save Concluído.");
+                } catch (bgError) {
+                    console.error("[MyBets] Background Save Erro:", bgError);
+                } finally {
+                    clearTimeout(safetyTimeout);
+                }
+            })();
 
-            // Clean data for Firestore: remove undefined and ensure simple types
-            const cleanData = JSON.parse(JSON.stringify(rawBet, (key, value) => {
-                if (value === undefined) return null;
-                return value;
-            }));
-
-            console.info("[MyBets] Enviando para FirestoreService.saveBet...");
-            await FirestoreService.saveBet(currentUser.uid, cleanData);
-            console.log("Bet saved, date:", formData.date);
-
-            // Navigate to the month of the saved bet
+            // 2. Immediate UI Update
             const betDate = parseDate(formData.date);
-            console.log("Parsed bet date:", betDate, "Month:", betDate.getMonth(), "Year:", betDate.getFullYear());
-
-            console.info("[MyBets] Atualizando interface pós-save...");
             setCurrentDate(betDate);
             setPickerYear(betDate.getFullYear());
-            console.log("Navigated to date:", betDate);
-
             setIsModalOpen(false);
 
-            // Clear correct draft
+            // 3. Clear drafts
             if (isEditing && formData.id) {
                 localStorage.removeItem(`apostaspro_draft_edit_${formData.id}`);
             } else {
                 localStorage.removeItem('apostaspro_draft_mybets');
             }
         } catch (error: any) {
-            console.error("Error saving bet:", error);
-            alert(`Erro ao salvar a aposta: ${error.message || error}`);
-        } finally {
-            clearTimeout(safetyTimeout);
+            console.error("Error initiating save:", error);
+            alert(`Erro ao iniciar salvamento: ${error.message || error}`);
             setIsUploading(false);
+            clearTimeout(safetyTimeout);
         }
     };
 
@@ -519,6 +519,13 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         if (!currentUser) return;
 
         setIsUploading(true);
+
+        // Safety timeout for draft
+        const safetyTimeout = setTimeout(() => {
+            console.warn("[MyBets] Draft save operation force-unlocked.");
+            setIsUploading(false);
+        }, 20000);
+
         try {
             const betId = formData.id || Date.now().toString();
 
@@ -554,6 +561,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             console.error("Error saving draft:", error);
             alert("Erro ao salvar rascunho.");
         } finally {
+            clearTimeout(safetyTimeout);
             setIsUploading(false);
         }
     };
@@ -677,56 +685,38 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         );
     };
 
-    console.log("=== FILTER DEBUG ===");
-    console.log("showOnlyPending:", showOnlyPending);
-    console.log("searchTerm:", searchTerm);
-    console.log("currentDate:", currentDate);
-
     const filteredBets = bets.filter(bet => {
         const betDate = parseDate(bet.date);
         const inCurrentMonth = betDate.getMonth() === currentDate.getMonth() &&
             betDate.getFullYear() === currentDate.getFullYear();
 
-        console.log("Bet:", bet.event, "Date:", bet.date, "Parsed:", betDate, "InCurrentMonth:", inCurrentMonth);
-
         if (!inCurrentMonth) {
-            console.log("  ❌ Rejected: Not in current month");
             return false;
         }
 
         if (showOnlyPending && !['Pendente', 'Rascunho'].includes(bet.status)) {
-            console.log("  ❌ Rejected: Not pending (status:", bet.status, ")");
             return false;
         }
-
 
         if (promotionFilter !== 'all') {
             // Normalize: treat undefined, empty string, or 'Nenhuma' as equivalent
             const betPromo = bet.promotionType || 'Nenhuma';
-
             const betLower = betPromo.toLowerCase();
             const filterLower = promotionFilter.toLowerCase();
 
-            // Exact or case-insensitive match
-            if (betLower === filterLower) {
-                // Match - continue to next check
-            } else {
-                // Word-based matching with strict word count check
-                const filterWords = filterLower.split(/\s+/).filter(w => w.length > 2); // Ignore small words
+            if (betLower !== filterLower) {
+                const filterWords = filterLower.split(/\s+/).filter(w => w.length > 2);
                 const betWords = betLower.split(/\s+/).filter(w => w.length > 2);
 
-                // IMPORTANT: Both must have the same number of significant words
-                // This prevents "Freebet" from matching "Conversão Freebet"
                 if (filterWords.length !== betWords.length) {
                     return false;
                 }
 
-                // Check if all filter words have a matching bet word (handles "Odd" vs "Odds")
                 const allWordsMatch = filterWords.every(filterWord =>
                     betWords.some(betWord =>
-                        betWord === filterWord || // Exact word match
-                        betWord.includes(filterWord) || // "odds" includes "odd"
-                        filterWord.includes(betWord) // "odd" includes in "odds"
+                        betWord === filterWord ||
+                        betWord.includes(filterWord) ||
+                        filterWord.includes(betWord)
                     )
                 );
 
@@ -736,7 +726,6 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             }
         }
 
-
         const term = searchTerm.toLowerCase();
         const matchesEvent = bet.event.toLowerCase().includes(term);
         const bookmakerForFilter = getBookmaker(bet.mainBookmakerId);
@@ -745,14 +734,10 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         const matchesDate = formattedDate.includes(searchTerm);
         const matchesSearch = matchesEvent || matchesBookie || matchesDate;
 
-        console.log("  Search - Event:", matchesEvent, "Bookie:", matchesBookie, "Date:", matchesDate, "Final:", matchesSearch);
-
         if (!matchesSearch) {
-            console.log("  ❌ Rejected: Doesn't match search");
             return false;
         }
 
-        console.log("  ✅ PASSED ALL FILTERS");
         return true;
     });
 
@@ -909,9 +894,7 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
             </div>
 
             <div ref={betsListRef} className="space-y-3">
-                {console.log("🎨 RENDERING filteredBets.length:", filteredBets.length)}
                 {filteredBets.map(bet => {
-                    console.log("Rendering bet:", bet.event, "coverages:", bet.coverages);
 
                     // Safety check for coverages
                     if (!bet.coverages || !Array.isArray(bet.coverages)) {

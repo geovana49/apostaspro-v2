@@ -36,15 +36,15 @@ const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, operationName: s
 
 export const FirestoreService = {
     // --- Bets ---
-    subscribeToBets: (userId: string, callback: (bets: Bet[]) => void, onError?: (err: any) => void) => {
+    subscribeToBets: (userId: string, callback: (bets: Bet[], isSyncing: boolean) => void, onError?: (err: any) => void) => {
         const q = query(
             collection(db, "users", userId, "bets"),
             orderBy("date", "desc"),
             limit(100)
         );
-        return onSnapshot(q, (snapshot) => {
+        return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
             const bets = snapshot.docs.map(doc => ({ id: doc.id, ...convertDate(doc.data()) } as Bet));
-            callback(bets);
+            callback(bets, snapshot.metadata.hasPendingWrites);
         }, (error) => {
             console.error("Snapshot error (Bets):", error);
             if (onError) onError(error);
@@ -85,15 +85,15 @@ export const FirestoreService = {
     },
 
     // --- Extra Gains ---
-    subscribeToGains: (userId: string, callback: (gains: ExtraGain[]) => void, onError?: (err: any) => void) => {
+    subscribeToGains: (userId: string, callback: (gains: ExtraGain[], isSyncing: boolean) => void, onError?: (err: any) => void) => {
         const q = query(
             collection(db, "users", userId, "gains"),
             orderBy("date", "desc"),
             limit(100)
         );
-        return onSnapshot(q, (snapshot) => {
+        return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
             const gains = snapshot.docs.map(doc => ({ id: doc.id, ...convertDate(doc.data()) } as ExtraGain));
-            callback(gains);
+            callback(gains, snapshot.metadata.hasPendingWrites);
         }, (error) => {
             console.error("Snapshot error (Gains):", error);
             if (onError) onError(error);
@@ -130,14 +130,15 @@ export const FirestoreService = {
     },
 
     // --- Settings ---
-    subscribeToSettings: (userId: string, callback: (settings: AppSettings | null) => void, onError?: (err: any) => void) => {
+    subscribeToSettings: (userId: string, callback: (settings: AppSettings | null, isSyncing: boolean) => void, onError?: (err: any) => void) => {
         const docRef = doc(db, "users", userId, "settings", "preferences");
-        return onSnapshot(docRef, (doc) => {
-            if (doc.exists()) {
-                callback(doc.data() as AppSettings);
+        return onSnapshot(docRef, { includeMetadataChanges: true }, (snapshot) => {
+            const isSyncing = (snapshot as any).metadata?.hasPendingWrites || false;
+            if (snapshot.exists()) {
+                callback(snapshot.data() as AppSettings, isSyncing);
             } else {
                 console.log("Settings document not found, returning null");
-                callback(null);
+                callback(null, isSyncing);
             }
         }, (error) => {
             console.error("Snapshot error (Settings):", error);

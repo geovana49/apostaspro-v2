@@ -51,13 +51,27 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // -- Offline/Sync State --
+  const [isOnline, setIsOnline] = useState(window.navigator.onLine);
+  const [isSyncing, setIsSyncing] = useState(false);
+
   // Global Error Listener
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
       setErrorMessage(`Error: ${event.message} at ${event.filename}:${event.lineno}`);
     };
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
     window.addEventListener('error', handleError);
-    return () => window.removeEventListener('error', handleError);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   // --- Auth & Data Synchronization ---
@@ -110,24 +124,27 @@ const App: React.FC = () => {
           });
         }, 8000); // 8 seconds timeout
 
-        const unsubBets = FirestoreService.subscribeToBets(user.uid, (data) => {
+        const unsubBets = FirestoreService.subscribeToBets(user.uid, (data, syncing) => {
           setBets(data);
+          setIsSyncing(syncing);
           if (!initialBetsLoaded) {
             initialBetsLoaded = true;
             checkDataLoaded("Bets");
           }
         }, (err) => console.error("Error subscribing to bets:", err));
 
-        const unsubGains = FirestoreService.subscribeToGains(user.uid, (data) => {
+        const unsubGains = FirestoreService.subscribeToGains(user.uid, (data, syncing) => {
           setGains(data);
+          setIsSyncing(syncing);
           if (!initialGainsLoaded) {
             initialGainsLoaded = true;
             checkDataLoaded("Gains");
           }
         }, (err) => console.error("Error subscribing to gains:", err));
 
-        const unsubSettings = FirestoreService.subscribeToSettings(user.uid, (newSettings) => {
+        const unsubSettings = FirestoreService.subscribeToSettings(user.uid, (newSettings, syncing) => {
           if (newSettings) setSettings(newSettings);
+          setIsSyncing(syncing);
           if (!initialSettingsLoaded) {
             initialSettingsLoaded = true;
             checkDataLoaded("Settings");

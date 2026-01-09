@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Menu, LayoutDashboard, Ticket, DollarSign, Bot, Settings, TrendingUp, User, LogOut, ChevronRight, X,
-  ArrowUp, ArrowDown
+  ArrowUp, ArrowDown, Cloud, CloudOff, RefreshCw
 } from 'lucide-react';
 import { Page, AppSettings, SettingsTab } from '../types';
 
@@ -13,9 +13,11 @@ interface LayoutProps {
   settings: AppSettings;
   setSettings: React.Dispatch<React.SetStateAction<AppSettings>>; // Add setSettings prop
   onLogout: () => void;
+  isOnline: boolean;
+  isSyncing: boolean;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate, settings, setSettings, onLogout }) => {
+const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate, settings, setSettings, onLogout, isOnline, isSyncing }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
@@ -274,6 +276,26 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate, setti
               <Menu size={24} />
             </button>
             <h2 className="text-lg font-bold text-white tracking-tight">{getPageTitle(activePage)}</h2>
+
+            {/* Sync / Offline Status Indicator */}
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/5 animate-in fade-in transition-all">
+              {!isOnline ? (
+                <>
+                  <CloudOff size={14} className="text-danger" />
+                  <span className="text-[10px] font-bold text-danger uppercase tracking-wider">Offline</span>
+                </>
+              ) : isSyncing ? (
+                <>
+                  <RefreshCw size={14} className="text-primary animate-spin" />
+                  <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Sincronizando...</span>
+                </>
+              ) : (
+                <>
+                  <Cloud size={14} className="text-primary/60" />
+                  <span className="text-[10px] font-bold text-primary/60 uppercase tracking-wider">Nuvem Sincronizada</span>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Right Actions */}

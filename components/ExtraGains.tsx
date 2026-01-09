@@ -461,39 +461,48 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
 
         setIsUploading(true);
 
+        // Safety timeout: 20 seconds
+        const safetyTimeout = setTimeout(() => {
+            console.warn("[ExtraGains] Save operation force-unlocked.");
+            setIsUploading(false);
+        }, 20000);
+
         try {
-            const betId = editingId || formData.id || Date.now().toString();
+            // Optimistic UI: Close modal immediately
+            (async () => {
+                const betId = editingId || formData.id || Date.now().toString();
+                try {
+                    const photoUrls = await Promise.all(
+                        tempPhotos.map(async (photo) => {
+                            if (photo.url.startsWith('data:')) {
+                                return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
+                            }
+                            return photo.url;
+                        })
+                    );
 
-            // Process images (Async upload to Storage)
-            const photoUrls = await Promise.all(
-                tempPhotos.map(async (photo) => {
-                    if (photo.url.startsWith('data:')) {
-                        return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
-                    }
-                    return photo.url;
-                })
-            );
+                    const rawGainData: ExtraGain = {
+                        ...formData, id: betId, notes: formData.notes, photos: photoUrls,
+                        date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
+                    };
 
-            const rawGainData: ExtraGain = {
-                ...formData,
-                id: betId,
-                notes: formData.notes,
-                photos: photoUrls,
-                date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
-            };
-
-            // Remove undefined values
-            const gainData = JSON.parse(JSON.stringify(rawGainData));
-
-            await FirestoreService.saveGain(currentUser.uid, gainData);
+                    const gainData = JSON.parse(JSON.stringify(rawGainData, (k, v) => v === undefined ? null : v));
+                    await FirestoreService.saveGain(currentUser.uid, gainData);
+                    console.info("[ExtraGains] Background Save Concluído.");
+                } catch (bgError) {
+                    console.error("[ExtraGains] Background Save Erro:", bgError);
+                } finally {
+                    clearTimeout(safetyTimeout);
+                }
+            })();
 
             setIsModalOpen(false);
             setEditingId(null);
         } catch (error: any) {
-            console.error("Error saving gain:", error);
-            alert(`Erro ao salvar: ${error.message || error}`);
-        } finally {
+            console.error("Error initiating save:", error);
+            alert(`Erro ao iniciar salvamento: ${error.message || error}`);
             setIsUploading(false);
+            clearTimeout(safetyTimeout);
         }
     };
 
