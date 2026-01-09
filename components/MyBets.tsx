@@ -497,8 +497,31 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
 
             // 2. Immediate UI Update
             const betDate = parseDate(formData.date);
+
+            // Optimistic State Update: Update the local bets list immediately
+            const betId = formData.id || Date.now().toString();
+            const optimisticBet: Bet = {
+                ...formData,
+                id: betId,
+                notes: formData.notes,
+                photos: tempPhotos.map(p => p.url),
+                date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
+                isDoubleGreen: (formData as any).isDoubleGreen || false
+            };
+
+            setBets(prev => {
+                const index = prev.findIndex(b => b.id === betId);
+                if (index !== -1) {
+                    const next = [...prev];
+                    next[index] = optimisticBet;
+                    return next;
+                }
+                return [optimisticBet, ...prev];
+            });
+
             setCurrentDate(betDate);
             setPickerYear(betDate.getFullYear());
+            setIsUploading(false); // Reset state so next open is fresh
             setIsModalOpen(false);
 
             // 3. Clear drafts
@@ -545,7 +568,6 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                 status: 'Rascunho',
                 event: formData.event || `Rascunho - ${new Date().toLocaleDateString('pt-BR')}`,
                 photos: photoUrls,
-                date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
             };
 
             const betToSave = JSON.parse(JSON.stringify(draftBet));
@@ -556,6 +578,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             setCurrentDate(betDate);
             setPickerYear(betDate.getFullYear());
 
+            setIsUploading(false); // Reset state
             setIsModalOpen(false);
         } catch (error) {
             console.error("Error saving draft:", error);

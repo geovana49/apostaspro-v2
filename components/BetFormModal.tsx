@@ -502,6 +502,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
             // 3. Inform parent and close modal immediately
             const betDate = parseDate(formData.date);
             onSaveSuccess(betDate);
+            setIsUploading(false); // Reset state
             onClose();
 
         } catch (error: any) {
@@ -553,6 +554,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
             const betDate = parseDate(formData.date);
             onSaveSuccess(betDate);
+            setIsUploading(false); // Reset state
             onClose();
         } catch (error) {
             console.error("Error initiating draft save:", error);

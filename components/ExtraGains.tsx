@@ -496,6 +496,27 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 }
             })();
 
+            // Optimistic State Update
+            const optimBetId = editingId || formData.id || Date.now().toString();
+            const optimisticGain: ExtraGain = {
+                ...formData,
+                id: optimBetId,
+                notes: formData.notes,
+                photos: tempPhotos.map(p => p.url),
+                date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
+            };
+
+            setGains(prev => {
+                const index = prev.findIndex(g => g.id === optimBetId);
+                if (index !== -1) {
+                    const next = [...prev];
+                    next[index] = optimisticGain;
+                    return next;
+                }
+                return [optimisticGain, ...prev];
+            });
+
+            setIsUploading(false);
             setIsModalOpen(false);
             setEditingId(null);
         } catch (error: any) {
