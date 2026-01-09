@@ -242,6 +242,8 @@ const App: React.FC = () => {
             settings={settings}
             setSettings={setSettings}
             onLogout={handleLogout}
+            isOnline={isOnline}
+            isSyncing={isSyncing}
           >
             <Suspense fallback={<PageLoader />}>
               {activePage === Page.OVERVIEW && <Overview bets={bets} gains={gains} settings={settings} setSettings={setSettings} bookmakers={bookmakers} />}
