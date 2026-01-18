@@ -489,8 +489,10 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     const gainData = JSON.parse(JSON.stringify(rawGainData, (k, v) => v === undefined ? null : v));
                     await FirestoreService.saveGain(currentUser.uid, gainData);
                     console.info("[ExtraGains] Background Save Concluído.");
-                } catch (bgError) {
+                } catch (bgError: any) {
                     console.error("[ExtraGains] Background Save Erro:", bgError);
+                    alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar seus dados na nuvem: ${bgError.message || "Erro desconhecido"}.\n\nPara garantir que você não perca dados, a página será recarregada para mostrar o estado real.`);
+                    window.location.reload();
                 } finally {
                     clearTimeout(safetyTimeout);
                 }

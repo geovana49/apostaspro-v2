@@ -488,8 +488,10 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     const cleanData = JSON.parse(JSON.stringify(rawBet, (k, v) => v === undefined ? null : v));
                     await FirestoreService.saveBet(currentUser.uid, cleanData);
                     console.info("[MyBets] Background Save Concluído.");
-                } catch (bgError) {
+                } catch (bgError: any) {
                     console.error("[MyBets] Background Save Erro:", bgError);
+                    alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar seus dados na nuvem: ${bgError.message || "Erro desconhecido"}.\n\nPara garantir que você não perca dados, a página será recarregada para mostrar o estado real.`);
+                    window.location.reload();
                 } finally {
                     clearTimeout(safetyTimeout);
                 }

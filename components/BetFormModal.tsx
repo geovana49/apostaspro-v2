@@ -484,8 +484,10 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                         await FirestoreService.saveBet(currentUser.uid, betToSave);
                     }
                     console.info("[BetFormModal] Background Save Concluído.");
-                } catch (bgError) {
+                } catch (bgError: any) {
                     console.error("[BetFormModal] Background Save Erro:", bgError);
+                    alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar seus dados na nuvem: ${bgError.message || "Erro desconhecido"}.\n\nPara garantir que você não perca dados, a página será recarregada para mostrar o estado real.`);
+                    window.location.reload();
                 } finally {
                     clearTimeout(safetyTimeout);
                     // No need to set setIsUploading(false) here as modal is already closed
@@ -545,8 +547,10 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                     };
                     const betToSave = JSON.parse(JSON.stringify(draftBet));
                     await FirestoreService.saveBet(currentUser.uid, betToSave);
-                } catch (bgError) {
+                } catch (bgError: any) {
                     console.error("[BetFormModal] Background Draft Save Erro:", bgError);
+                    alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar o rascunho na nuvem: ${bgError.message || "Erro desconhecido"}.\n\nPara garantir que você não perca dados, a página será recarregada.`);
+                    window.location.reload();
                 } finally {
                     clearTimeout(safetyTimeout);
                 }
