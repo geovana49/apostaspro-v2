@@ -41,8 +41,7 @@ export const FirestoreService = {
     subscribeToBets: (userId: string, callback: (bets: Bet[], isSyncing: boolean) => void, onError?: (err: any) => void) => {
         const q = query(
             collection(db, "users", userId, "bets"),
-            orderBy("date", "desc"),
-            limit(1000)
+            orderBy("date", "desc")
         );
         return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
             const bets = snapshot.docs.map(doc => ({ id: doc.id, ...convertDate(doc.data()) } as Bet));
@@ -90,8 +89,7 @@ export const FirestoreService = {
     subscribeToGains: (userId: string, callback: (gains: ExtraGain[], isSyncing: boolean) => void, onError?: (err: any) => void) => {
         const q = query(
             collection(db, "users", userId, "gains"),
-            orderBy("date", "desc"),
-            limit(1000)
+            orderBy("date", "desc")
         );
         return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
             const gains = snapshot.docs.map(doc => ({ id: doc.id, ...convertDate(doc.data()) } as ExtraGain));
