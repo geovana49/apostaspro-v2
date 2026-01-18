@@ -125,6 +125,7 @@ const App: React.FC = () => {
         }, 8000); // 8 seconds timeout
 
         const unsubBets = FirestoreService.subscribeToBets(user.uid, (data, syncing) => {
+          console.log("Bets updated from Firestore:", data.length);
           setBets(data);
           setIsSyncing(syncing);
           if (!initialBetsLoaded) {

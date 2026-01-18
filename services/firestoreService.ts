@@ -43,7 +43,7 @@ export const FirestoreService = {
             collection(db, "users", userId, "bets"),
             orderBy("date", "desc")
         );
-        return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
+        return onSnapshot(q, (snapshot) => {
             const bets = snapshot.docs.map(doc => ({ id: doc.id, ...convertDate(doc.data()) } as Bet));
             callback(bets, snapshot.metadata.hasPendingWrites);
         }, (error) => {
@@ -91,7 +91,7 @@ export const FirestoreService = {
             collection(db, "users", userId, "gains"),
             orderBy("date", "desc")
         );
-        return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
+        return onSnapshot(q, (snapshot) => {
             const gains = snapshot.docs.map(doc => ({ id: doc.id, ...convertDate(doc.data()) } as ExtraGain));
             callback(gains, snapshot.metadata.hasPendingWrites);
         }, (error) => {
