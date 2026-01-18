@@ -42,7 +42,7 @@ export const FirestoreService = {
         const q = query(
             collection(db, "users", userId, "bets"),
             orderBy("date", "desc"),
-            limit(100)
+            limit(1000)
         );
         return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
             const bets = snapshot.docs.map(doc => ({ id: doc.id, ...convertDate(doc.data()) } as Bet));
@@ -91,7 +91,7 @@ export const FirestoreService = {
         const q = query(
             collection(db, "users", userId, "gains"),
             orderBy("date", "desc"),
-            limit(100)
+            limit(1000)
         );
         return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
             const gains = snapshot.docs.map(doc => ({ id: doc.id, ...convertDate(doc.data()) } as ExtraGain));
