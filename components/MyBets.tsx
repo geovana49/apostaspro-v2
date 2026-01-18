@@ -365,6 +365,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     };
 
     const parseDate = (dateStr: string) => {
+        if (!dateStr || typeof dateStr !== 'string') return new Date(); // Fallback to now
         // Extract just the date part (YYYY-MM-DD) if it's an ISO datetime string
         const datePart = dateStr.split('T')[0];
         const [year, month, day] = datePart.split('-').map(Number);
@@ -447,8 +448,6 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             }
         }
     };
-
-    // ... (cancelDelete, handleEdit, handleOpenNew remain the same)
 
     const handleSave = async () => {
         if (!formData.event) return alert('Informe o evento');
@@ -629,8 +628,6 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         }
     };
 
-    // ... (openImageViewer, handlePressStart, handlePressEnd remain the same)
-
     const handleDuplicate = async (originalBet: Bet) => {
         if (!currentUser) return;
 
@@ -711,6 +708,14 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     };
 
     const filteredBets = bets.filter(bet => {
+        if (!bet) return false;
+
+        // Safety checks for required fields
+        if (!bet.date) {
+            console.error("Bet missing date:", bet);
+            return false;
+        }
+
         const betDate = parseDate(bet.date);
         const inCurrentMonth = betDate.getMonth() === currentDate.getMonth() &&
             betDate.getFullYear() === currentDate.getFullYear();
@@ -751,12 +756,18 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             }
         }
 
-        const term = searchTerm.toLowerCase();
-        const matchesEvent = bet.event.toLowerCase().includes(term);
+        const term = searchTerm.toLowerCase() || '';
+        const betEvent = (bet.event || '').toLowerCase();
+        const matchesEvent = betEvent.includes(term);
         const bookmakerForFilter = getBookmaker(bet.mainBookmakerId);
         const matchesBookie = bookmakerForFilter ? bookmakerForFilter.name.toLowerCase().includes(term) : false;
-        const formattedDate = new Date(bet.date).toLocaleDateString('pt-BR');
-        const matchesDate = formattedDate.includes(searchTerm);
+
+        let matchesDate = false;
+        if (bet.date) {
+            const formattedDate = new Date(bet.date).toLocaleDateString('pt-BR');
+            matchesDate = formattedDate.includes(term);
+        }
+
         const matchesSearch = matchesEvent || matchesBookie || matchesDate;
 
         if (!matchesSearch) {
