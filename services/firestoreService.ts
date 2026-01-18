@@ -10,7 +10,9 @@ import {
     getDocs,
     getDoc,
     writeBatch,
-    limit
+    limit,
+    clearIndexedDbPersistence,
+    terminate
 } from "firebase/firestore";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase";
@@ -291,5 +293,17 @@ export const FirestoreService = {
                 resolve(base64);
             }
         });
+    },
+
+    clearLocalCache: async () => {
+        try {
+            await terminate(db);
+            await clearIndexedDbPersistence(db);
+            console.log("Persistence cleared successfully.");
+            window.location.reload();
+        } catch (error) {
+            console.error("Error clearing persistence:", error);
+            window.location.reload();
+        }
     }
 };

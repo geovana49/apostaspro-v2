@@ -539,6 +539,40 @@ const Settings: React.FC<SettingsProps> = ({
                                 placeholder="Seu nome"
                             />
                         </div>
+                        <div className="pt-6 border-t border-white/5">
+                            <h4 className="font-bold text-white mb-4 flex items-center gap-2">
+                                <Monitor size={18} className="text-primary" />
+                                Zona de Perigo & Manutenção
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+                                    <h5 className="font-bold text-red-400 mb-2 flex items-center gap-2"><Trash2 size={16} /> Reset de Fábrica</h5>
+                                    <p className="text-xs text-gray-400 mb-4">Apaga todos os seus dados e restaura as configurações originais. Esta ação é irreversível.</p>
+                                    <Button
+                                        onClick={() => setIsResetModalOpen(true)}
+                                        variant="danger"
+                                        className="w-full text-sm"
+                                    >
+                                        Resetar Tudo
+                                    </Button>
+                                </div>
+
+                                <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                                    <h5 className="font-bold text-blue-400 mb-2 flex items-center gap-2"><RefreshCcw size={16} /> Reparar Sincronização</h5>
+                                    <p className="text-xs text-gray-400 mb-4">Se seus dados estiverem diferentes entre dispositivos (celular/PC), use isso para limpar o cache local e baixar tudo de novo.</p>
+                                    <Button
+                                        onClick={() => {
+                                            if (confirm("Isso irá recarregar a página e baixar todos os dados novamente da nuvem. Deseja continuar?")) {
+                                                FirestoreService.clearLocalCache();
+                                            }
+                                        }}
+                                        className="w-full text-sm bg-blue-600 hover:bg-blue-700 text-white border-none"
+                                    >
+                                        Forçar Ressincronização
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
                         <div className="pt-4 mt-4 border-t border-white/5">
                             <label className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4 block flex items-center gap-2">
                                 <span className="bg-primary/10 p-1.5 rounded-md">
