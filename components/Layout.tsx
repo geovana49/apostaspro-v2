@@ -278,7 +278,15 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate, setti
             <h2 className="text-lg font-bold text-white tracking-tight">{getPageTitle(activePage)}</h2>
 
             {/* Sync / Offline Status Indicator */}
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/5 animate-in fade-in transition-all">
+            <div
+              className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/5 animate-in fade-in transition-all cursor-pointer hover:bg-white/10 active:scale-95"
+              onClick={() => {
+                if (confirm("Deseja recarregar a página para forçar uma sincronização?")) {
+                  window.location.reload();
+                }
+              }}
+              title="Clique para recarregar e forçar sincronização"
+            >
               {!isOnline ? (
                 <>
                   <CloudOff size={14} className="text-danger" />
@@ -292,7 +300,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate, setti
               ) : (
                 <>
                   <Cloud size={14} className="text-primary/60" />
-                  <span className="text-[10px] font-bold text-primary/60 uppercase tracking-wider">Nuvem Sincronizada</span>
+                  <span className="text-[10px] font-bold text-primary/60 uppercase tracking-wider">Sincronizado</span>
                 </>
               )}
             </div>
