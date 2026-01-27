@@ -1487,7 +1487,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
 
                                             <div className="col-span-2">
                                                 <Input
-                                                    label="Retorno Estimado"
+                                                    label={cov.status === 'Cashout' ? "Valor do Cashout" : "Retorno Total (Stake + Lucro)"}
                                                     type="tel"
                                                     inputMode="numeric"
                                                     className={`text-xs py-1.5 ${(cov.manualReturn !== undefined && cov.manualReturn > 0) ? 'text-white font-bold' : 'text-gray-400'}`}

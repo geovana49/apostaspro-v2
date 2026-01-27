@@ -178,11 +178,8 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             };
         });
 
-        const totalProfitFromBets = resolvedBets.reduce((acc, bet) => acc + calculateBetStats(bet).profit, 0);
-        const totalExtraGains = filteredGains.reduce((acc, gain) => acc + Number(gain.amount), 0);
-        const totalProfit = totalProfitFromBets + totalExtraGains;
-
-        const roi = resolvedStaked > 0 ? (totalProfitFromBets / resolvedStaked) * 100 : 0; // ROI is typically on bets only
+        const totalProfit = resolvedBets.reduce((acc, bet) => acc + calculateBetStats(bet).profit, 0);
+        const roi = resolvedStaked > 0 ? (totalProfit / resolvedStaked) * 100 : 0;
 
         const betPromotionsCount = filteredBets.filter(b => b.promotionType && b.promotionType !== 'Nenhuma').length;
 
