@@ -408,1414 +408,1378 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         setDeleteId(null);
     };
 
-    const handleDuplicateLast = () => {
-        if (bets.length === 0) {
-            alert("Nenhuma aposta encontrada para duplicar.");
+    setIsModalOpen(true);
+    setDeleteId(null);
+};
+
+// Auto-Save Draft (Debounced)
+useEffect(() => {
+    if (!isModalOpen) return;
+
+    const timeout = setTimeout(() => {
+        try {
+            const draft = {
+                formData,
+                tempPhotos,
+                timestamp: Date.now()
+            };
+
+            if (isEditing && formData.id) {
+                localStorage.setItem(`apostaspro_draft_edit_${formData.id}`, JSON.stringify(draft));
+            } else if (!isEditing) {
+                localStorage.setItem('apostaspro_draft_mybets', JSON.stringify(draft));
+            }
+        } catch (error) {
+            console.warn('LocalStorage draft save failed (possibly full):', error);
+        }
+    }, 1500); // 1.5s debounce to save main thread
+
+    return () => clearTimeout(timeout);
+}, [formData, tempPhotos, isModalOpen, isEditing]);
+
+
+const requestDelete = (id: string) => setDeleteId(id);
+const cancelDelete = () => setDeleteId(null);
+
+const openImageViewer = (images: string[], index: number) => {
+    setViewerImages(images);
+    setViewerStartIndex(index);
+    setIsViewerOpen(true);
+};
+
+const handlePressStart = (id: string, e: React.MouseEvent | React.TouchEvent) => {
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    touchStartPos.current = { x: clientX, y: clientY };
+
+    longPressTimer.current = setTimeout(() => {
+        setLongPressId(id);
+        if (navigator.vibrate) navigator.vibrate(50);
+    }, 500);
+};
+
+const handlePressMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!touchStartPos.current) return;
+
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
+    const deltaX = Math.abs(clientX - touchStartPos.current.x);
+    const deltaY = Math.abs(clientY - touchStartPos.current.y);
+
+    // If moved more than 10px, cancel long press
+    if (deltaX > 10 || deltaY > 10) {
+        handlePressEnd();
+    }
+};
+
+const handlePressEnd = () => {
+    touchStartPos.current = null;
+    if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
+    }
+};
+
+const changeMonth = (direction: number) => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(newDate.getMonth() + direction);
+    setCurrentDate(newDate);
+    setPickerYear(newDate.getFullYear());
+};
+
+const handleMonthSelect = (monthIndex: number) => {
+    const newDate = new Date(pickerYear, monthIndex, 1);
+    setCurrentDate(newDate);
+    setIsMonthPickerOpen(false);
+};
+
+const parseDate = (dateStr: string) => {
+    if (!dateStr || typeof dateStr !== 'string') return new Date(); // Fallback to now
+    // Extract just the date part (YYYY-MM-DD) if it's an ISO datetime string
+    const datePart = dateStr.split('T')[0];
+    const [year, month, day] = datePart.split('-').map(Number);
+    return new Date(year, month - 1, day);
+};
+
+const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+        const MAX_PHOTOS = 8;
+        const files = Array.from(e.target.files) as File[];
+
+        // Sort files by date (oldest to newest)
+        files.sort((a, b) => a.lastModified - b.lastModified);
+
+        if (tempPhotos.length + files.length > MAX_PHOTOS) {
+            alert(`Máximo de ${MAX_PHOTOS} fotos por aposta.`);
+            e.target.value = ''; // Reset input
             return;
         }
 
-        // Get the most recent bet (already sorted by date desc usually, but let's be safe)
-        const lastBet = [...bets].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+        setIsUploading(true);
+        try {
+            // Comprimir imagens
+            const compressedBase64 = await compressImages(files);
 
-        const duplicatedForm: FormState = {
-            date: new Date().toISOString().split('T')[0],
-            mainBookmakerId: lastBet.mainBookmakerId || '',
-            event: lastBet.event || '',
-            promotionType: lastBet.promotionType || 'Nenhuma',
-            status: 'Pendente',
-            coverages: lastBet.coverages.map(c => ({
-                ...c,
-                id: Date.now().toString() + Math.random().toString(36).substring(7),
-                status: 'Pendente' // Reset status for duplicated bet
-            })),
-            notes: `Cópia de: ${lastBet.event || 'Aposta anterior'}`,
-            extraGain: 0,
-            isDoubleGreen: lastBet.isDoubleGreen || false
-        };
+            // Criar objetos com preview
+            const newPhotos = compressedBase64.map((base64) => ({
+                url: base64,
+                file: undefined // Já está em base64
+            }));
 
-        setIsEditing(false);
-        dispatch({ type: 'SET_FORM', payload: duplicatedForm });
-        setTempPhotos([]); // Start with fresh photos for dupe
-        setIsModalOpen(true);
-        setDeleteId(null);
-    };
+            setTempPhotos(prev => [...prev, ...newPhotos]);
+        } catch (error) {
+            console.error('Erro ao comprimir imagens:', error);
+            alert('Erro ao processar imagens. Tente novamente.');
+        } finally {
+            setIsUploading(false);
+            e.target.value = ''; // Reset input to allow selecting same files again
+        }
+    }
+};
 
-    // Auto-Save Draft (Debounced)
-    useEffect(() => {
-        if (!isModalOpen) return;
+const removePhoto = (index: number) => {
+    setTempPhotos(prev => prev.filter((_, i) => i !== index));
+};
 
-        const timeout = setTimeout(() => {
+const bookmakerOptions = bookmakers.map(b => ({
+    label: b.name,
+    value: b.id,
+    icon: (
+        <div className="w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold text-[#090c19] overflow-hidden" style={{ backgroundColor: b.color || '#FFFFFF' }}>
+            {b.logo ? <img src={b.logo} alt={b.name} className="w-full h-full object-contain p-[1px]" /> : b.name.substring(0, 2).toUpperCase()}
+        </div>
+    )
+}));
+
+const statusOptions = statuses.map(s => ({
+    label: s.name,
+    value: s.name,
+    icon: <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
+}));
+
+const promotionOptions = [
+    { label: 'Nenhuma', value: 'Nenhuma', icon: <Minus size={14} /> },
+    ...promotions.map(p => ({
+        label: p.name,
+        value: p.name,
+        icon: <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
+    }))
+];
+
+const confirmDelete = async () => {
+    if (deleteId && currentUser) {
+        try {
+            await FirestoreService.deleteBet(currentUser.uid, deleteId);
+            setDeleteId(null);
+        } catch (error) {
+            console.error("Error deleting bet:", error);
+            alert("Erro ao excluir a aposta.");
+        }
+    }
+};
+
+const handleSave = async () => {
+    if (!formData.event) return alert('Informe o evento');
+    if (!currentUser) return alert('Você precisa estar logado para salvar.');
+
+    setIsUploading(true);
+
+    // Safety timeout: 20 seconds - MUST be first to guarantee unlocking UI
+    const safetyTimeout = setTimeout(() => {
+        console.warn("[MyBets] Save operation force-unlocked by safety limit.");
+        setIsUploading(false);
+    }, 20000);
+
+    console.info("[MyBets] Iniciando handleSave...");
+
+    try {
+        // Optimistic UI: Close modal immediately and run save in background
+        (async () => {
+            const betId = formData.id || Date.now().toString();
             try {
-                const draft = {
-                    formData,
-                    tempPhotos,
-                    timestamp: Date.now()
+                // 1. Process images (Async upload to Storage)
+                const photoUrls = await Promise.all(
+                    tempPhotos.map(async (photo) => {
+                        if (photo.url.startsWith('data:')) {
+                            return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
+                        }
+                        return photo.url;
+                    })
+                );
+
+                const rawBet: Bet = {
+                    ...formData, id: betId, notes: formData.notes, photos: photoUrls,
+                    date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
+                    isDoubleGreen: (formData as any).isDoubleGreen || false
                 };
 
-                if (isEditing && formData.id) {
-                    localStorage.setItem(`apostaspro_draft_edit_${formData.id}`, JSON.stringify(draft));
-                } else if (!isEditing) {
-                    localStorage.setItem('apostaspro_draft_mybets', JSON.stringify(draft));
-                }
-            } catch (error) {
-                console.warn('LocalStorage draft save failed (possibly full):', error);
-            }
-        }, 1500); // 1.5s debounce to save main thread
-
-        return () => clearTimeout(timeout);
-    }, [formData, tempPhotos, isModalOpen, isEditing]);
-
-
-    const requestDelete = (id: string) => setDeleteId(id);
-    const cancelDelete = () => setDeleteId(null);
-
-    const openImageViewer = (images: string[], index: number) => {
-        setViewerImages(images);
-        setViewerStartIndex(index);
-        setIsViewerOpen(true);
-    };
-
-    const handlePressStart = (id: string, e: React.MouseEvent | React.TouchEvent) => {
-        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-        touchStartPos.current = { x: clientX, y: clientY };
-
-        longPressTimer.current = setTimeout(() => {
-            setLongPressId(id);
-            if (navigator.vibrate) navigator.vibrate(50);
-        }, 500);
-    };
-
-    const handlePressMove = (e: React.MouseEvent | React.TouchEvent) => {
-        if (!touchStartPos.current) return;
-
-        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-
-        const deltaX = Math.abs(clientX - touchStartPos.current.x);
-        const deltaY = Math.abs(clientY - touchStartPos.current.y);
-
-        // If moved more than 10px, cancel long press
-        if (deltaX > 10 || deltaY > 10) {
-            handlePressEnd();
-        }
-    };
-
-    const handlePressEnd = () => {
-        touchStartPos.current = null;
-        if (longPressTimer.current) {
-            clearTimeout(longPressTimer.current);
-            longPressTimer.current = null;
-        }
-    };
-
-    const changeMonth = (direction: number) => {
-        const newDate = new Date(currentDate);
-        newDate.setMonth(newDate.getMonth() + direction);
-        setCurrentDate(newDate);
-        setPickerYear(newDate.getFullYear());
-    };
-
-    const handleMonthSelect = (monthIndex: number) => {
-        const newDate = new Date(pickerYear, monthIndex, 1);
-        setCurrentDate(newDate);
-        setIsMonthPickerOpen(false);
-    };
-
-    const parseDate = (dateStr: string) => {
-        if (!dateStr || typeof dateStr !== 'string') return new Date(); // Fallback to now
-        // Extract just the date part (YYYY-MM-DD) if it's an ISO datetime string
-        const datePart = dateStr.split('T')[0];
-        const [year, month, day] = datePart.split('-').map(Number);
-        return new Date(year, month - 1, day);
-    };
-
-    const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-            const MAX_PHOTOS = 8;
-            const files = Array.from(e.target.files) as File[];
-
-            // Sort files by date (oldest to newest)
-            files.sort((a, b) => a.lastModified - b.lastModified);
-
-            if (tempPhotos.length + files.length > MAX_PHOTOS) {
-                alert(`Máximo de ${MAX_PHOTOS} fotos por aposta.`);
-                e.target.value = ''; // Reset input
-                return;
-            }
-
-            setIsUploading(true);
-            try {
-                // Comprimir imagens
-                const compressedBase64 = await compressImages(files);
-
-                // Criar objetos com preview
-                const newPhotos = compressedBase64.map((base64) => ({
-                    url: base64,
-                    file: undefined // Já está em base64
-                }));
-
-                setTempPhotos(prev => [...prev, ...newPhotos]);
-            } catch (error) {
-                console.error('Erro ao comprimir imagens:', error);
-                alert('Erro ao processar imagens. Tente novamente.');
+                const cleanData = JSON.parse(JSON.stringify(rawBet, (k, v) => v === undefined ? null : v));
+                await FirestoreService.saveBet(currentUser.uid, cleanData);
+                console.info("[MyBets] Background Save Concluído.");
+            } catch (bgError: any) {
+                console.error("[MyBets] Background Save Erro:", bgError);
+                alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar seus dados na nuvem: ${bgError.message || "Erro desconhecido"}.\n\nPara garantir que você não perca dados, a página será recarregada para mostrar o estado real.`);
+                window.location.reload();
             } finally {
-                setIsUploading(false);
-                e.target.value = ''; // Reset input to allow selecting same files again
+                clearTimeout(safetyTimeout);
             }
-        }
-    };
+        })();
 
-    const removePhoto = (index: number) => {
-        setTempPhotos(prev => prev.filter((_, i) => i !== index));
-    };
+        // 2. Immediate UI Update
+        const betDate = parseDate(formData.date);
 
-    const bookmakerOptions = bookmakers.map(b => ({
-        label: b.name,
-        value: b.id,
-        icon: (
-            <div className="w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold text-[#090c19] overflow-hidden" style={{ backgroundColor: b.color || '#FFFFFF' }}>
-                {b.logo ? <img src={b.logo} alt={b.name} className="w-full h-full object-contain p-[1px]" /> : b.name.substring(0, 2).toUpperCase()}
-            </div>
-        )
-    }));
-
-    const statusOptions = statuses.map(s => ({
-        label: s.name,
-        value: s.name,
-        icon: <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
-    }));
-
-    const promotionOptions = [
-        { label: 'Nenhuma', value: 'Nenhuma', icon: <Minus size={14} /> },
-        ...promotions.map(p => ({
-            label: p.name,
-            value: p.name,
-            icon: <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
-        }))
-    ];
-
-    const confirmDelete = async () => {
-        if (deleteId && currentUser) {
-            try {
-                await FirestoreService.deleteBet(currentUser.uid, deleteId);
-                setDeleteId(null);
-            } catch (error) {
-                console.error("Error deleting bet:", error);
-                alert("Erro ao excluir a aposta.");
-            }
-        }
-    };
-
-    const handleSave = async () => {
-        if (!formData.event) return alert('Informe o evento');
-        if (!currentUser) return alert('Você precisa estar logado para salvar.');
-
-        setIsUploading(true);
-
-        // Safety timeout: 20 seconds - MUST be first to guarantee unlocking UI
-        const safetyTimeout = setTimeout(() => {
-            console.warn("[MyBets] Save operation force-unlocked by safety limit.");
-            setIsUploading(false);
-        }, 20000);
-
-        console.info("[MyBets] Iniciando handleSave...");
-
-        try {
-            // Optimistic UI: Close modal immediately and run save in background
-            (async () => {
-                const betId = formData.id || Date.now().toString();
-                try {
-                    // 1. Process images (Async upload to Storage)
-                    const photoUrls = await Promise.all(
-                        tempPhotos.map(async (photo) => {
-                            if (photo.url.startsWith('data:')) {
-                                return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
-                            }
-                            return photo.url;
-                        })
-                    );
-
-                    const rawBet: Bet = {
-                        ...formData, id: betId, notes: formData.notes, photos: photoUrls,
-                        date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
-                        isDoubleGreen: (formData as any).isDoubleGreen || false
-                    };
-
-                    const cleanData = JSON.parse(JSON.stringify(rawBet, (k, v) => v === undefined ? null : v));
-                    await FirestoreService.saveBet(currentUser.uid, cleanData);
-                    console.info("[MyBets] Background Save Concluído.");
-                } catch (bgError: any) {
-                    console.error("[MyBets] Background Save Erro:", bgError);
-                    alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar seus dados na nuvem: ${bgError.message || "Erro desconhecido"}.\n\nPara garantir que você não perca dados, a página será recarregada para mostrar o estado real.`);
-                    window.location.reload();
-                } finally {
-                    clearTimeout(safetyTimeout);
-                }
-            })();
-
-            // 2. Immediate UI Update
-            const betDate = parseDate(formData.date);
-
-            // Optimistic State Update: Update the local bets list immediately
-            const betId = formData.id || Date.now().toString();
-            const optimisticBet: Bet = {
-                ...formData,
-                id: betId,
-                notes: formData.notes,
-                photos: tempPhotos.map(p => p.url),
-                date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
-                isDoubleGreen: (formData as any).isDoubleGreen || false
-            };
-
-            setBets(prev => {
-                const index = prev.findIndex(b => b.id === betId);
-                if (index !== -1) {
-                    const next = [...prev];
-                    next[index] = optimisticBet;
-                    return next;
-                }
-                return [optimisticBet, ...prev];
-            });
-
-            setCurrentDate(betDate);
-            setPickerYear(betDate.getFullYear());
-            setIsUploading(false); // Reset state so next open is fresh
-            setIsModalOpen(false);
-
-            // 3. Clear drafts
-            if (isEditing && formData.id) {
-                localStorage.removeItem(`apostaspro_draft_edit_${formData.id}`);
-            } else {
-                localStorage.removeItem('apostaspro_draft_mybets');
-            }
-        } catch (error: any) {
-            console.error("Error initiating save:", error);
-            alert(`Erro ao iniciar salvamento: ${error.message || error}`);
-            setIsUploading(false);
-            clearTimeout(safetyTimeout);
-        }
-    };
-
-    const saveAsDraft = async () => {
-        if (!currentUser) return;
-
-        setIsUploading(true);
-
-        // Safety timeout for draft
-        const safetyTimeout = setTimeout(() => {
-            console.warn("[MyBets] Draft save operation force-unlocked.");
-            setIsUploading(false);
-        }, 20000);
-
-        try {
-            const betId = formData.id || Date.now().toString();
-
-            // Process images (Async upload to Storage)
-            const photoUrls = await Promise.all(
-                tempPhotos.map(async (photo) => {
-                    if (photo.url.startsWith('data:')) {
-                        return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
-                    }
-                    return photo.url;
-                })
-            );
-
-            const draftBet: Bet = {
-                ...formData,
-                id: betId,
-                status: 'Rascunho',
-                event: formData.event || `Rascunho - ${new Date().toLocaleDateString('pt-BR')}`,
-                photos: photoUrls,
-            };
-
-            const betToSave = JSON.parse(JSON.stringify(draftBet));
-            await FirestoreService.saveBet(currentUser.uid, betToSave);
-
-            // Navigate to the month of the saved bet
-            const betDate = parseDate(formData.date);
-            setCurrentDate(betDate);
-            setPickerYear(betDate.getFullYear());
-
-            setIsUploading(false); // Reset state
-            setIsModalOpen(false);
-        } catch (error) {
-            console.error("Error saving draft:", error);
-            alert("Erro ao salvar rascunho.");
-        } finally {
-            clearTimeout(safetyTimeout);
-            setIsUploading(false);
-        }
-    };
-
-    const saveEdit = async (betId: string, coverageId: string, field: keyof Coverage, newValue: any) => {
-        if (!currentUser) return;
-
-        const bet = bets.find(b => b.id === betId);
-        if (!bet) return;
-
-        const updatedBet = {
-            ...bet,
-            coverages: bet.coverages.map(c =>
-                c.id === coverageId ? { ...c, [field]: newValue } : c
-            )
+        // Optimistic State Update: Update the local bets list immediately
+        const betId = formData.id || Date.now().toString();
+        const optimisticBet: Bet = {
+            ...formData,
+            id: betId,
+            notes: formData.notes,
+            photos: tempPhotos.map(p => p.url),
+            date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
+            isDoubleGreen: (formData as any).isDoubleGreen || false
         };
 
-        try {
-            await FirestoreService.saveBet(currentUser.uid, updatedBet);
-            setEditingId(null);
-            setEditingValue(null);
-        } catch (error) {
-            console.error("Error saving edit:", error);
-            alert("Erro ao salvar edição.");
+        setBets(prev => {
+            const index = prev.findIndex(b => b.id === betId);
+            if (index !== -1) {
+                const next = [...prev];
+                next[index] = optimisticBet;
+                return next;
+            }
+            return [optimisticBet, ...prev];
+        });
+
+        setCurrentDate(betDate);
+        setPickerYear(betDate.getFullYear());
+        setIsUploading(false); // Reset state so next open is fresh
+        setIsModalOpen(false);
+
+        // 3. Clear drafts
+        if (isEditing && formData.id) {
+            localStorage.removeItem(`apostaspro_draft_edit_${formData.id}`);
+        } else {
+            localStorage.removeItem('apostaspro_draft_mybets');
         }
+    } catch (error: any) {
+        console.error("Error initiating save:", error);
+        alert(`Erro ao iniciar salvamento: ${error.message || error}`);
+        setIsUploading(false);
+        clearTimeout(safetyTimeout);
+    }
+};
+
+const saveAsDraft = async () => {
+    if (!currentUser) return;
+
+    setIsUploading(true);
+
+    // Safety timeout for draft
+    const safetyTimeout = setTimeout(() => {
+        console.warn("[MyBets] Draft save operation force-unlocked.");
+        setIsUploading(false);
+    }, 20000);
+
+    try {
+        const betId = formData.id || Date.now().toString();
+
+        // Process images (Async upload to Storage)
+        const photoUrls = await Promise.all(
+            tempPhotos.map(async (photo) => {
+                if (photo.url.startsWith('data:')) {
+                    return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
+                }
+                return photo.url;
+            })
+        );
+
+        const draftBet: Bet = {
+            ...formData,
+            id: betId,
+            status: 'Rascunho',
+            event: formData.event || `Rascunho - ${new Date().toLocaleDateString('pt-BR')}`,
+            photos: photoUrls,
+        };
+
+        const betToSave = JSON.parse(JSON.stringify(draftBet));
+        await FirestoreService.saveBet(currentUser.uid, betToSave);
+
+        // Navigate to the month of the saved bet
+        const betDate = parseDate(formData.date);
+        setCurrentDate(betDate);
+        setPickerYear(betDate.getFullYear());
+
+        setIsUploading(false); // Reset state
+        setIsModalOpen(false);
+    } catch (error) {
+        console.error("Error saving draft:", error);
+        alert("Erro ao salvar rascunho.");
+    } finally {
+        clearTimeout(safetyTimeout);
+        setIsUploading(false);
+    }
+};
+
+const saveEdit = async (betId: string, coverageId: string, field: keyof Coverage, newValue: any) => {
+    if (!currentUser) return;
+
+    const bet = bets.find(b => b.id === betId);
+    if (!bet) return;
+
+    const updatedBet = {
+        ...bet,
+        coverages: bet.coverages.map(c =>
+            c.id === coverageId ? { ...c, [field]: newValue } : c
+        )
     };
 
-    const handleCloseModal = () => {
-        // Check if there are unsaved changes
-        const hasContent = formData.event || formData.notes || formData.coverages.length > 0 || tempPhotos.length > 0;
+    try {
+        await FirestoreService.saveBet(currentUser.uid, updatedBet);
+        setEditingId(null);
+        setEditingValue(null);
+    } catch (error) {
+        console.error("Error saving edit:", error);
+        alert("Erro ao salvar edição.");
+    }
+};
 
-        if (hasContent && !isUploading) {
-            if (window.confirm('Você tem alterações não salvas. Deseja salvar como rascunho para terminar depois?')) {
-                saveAsDraft();
-            } else {
-                setIsModalOpen(false);
-            }
+const handleCloseModal = () => {
+    // Check if there are unsaved changes
+    const hasContent = formData.event || formData.notes || formData.coverages.length > 0 || tempPhotos.length > 0;
+
+    if (hasContent && !isUploading) {
+        if (window.confirm('Você tem alterações não salvas. Deseja salvar como rascunho para terminar depois?')) {
+            saveAsDraft();
         } else {
             setIsModalOpen(false);
         }
+    } else {
+        setIsModalOpen(false);
+    }
+};
+
+const handleDuplicate = async (originalBet: Bet) => {
+    if (!currentUser) return;
+
+    const newBet: Bet = {
+        ...originalBet,
+        id: Date.now().toString(),
+        event: `${originalBet.event} (Cópia)`,
+        status: 'Rascunho',
+        coverages: originalBet.coverages.map(c => ({
+            ...c,
+            status: 'Pendente',
+            id: Date.now().toString() + Math.random().toString().slice(2, 6)
+        })),
+        photos: originalBet.photos || []
     };
 
-    const handleDuplicate = async (originalBet: Bet) => {
-        if (!currentUser) return;
+    try {
+        await FirestoreService.saveBet(currentUser.uid, newBet);
+        setLongPressId(null);
+    } catch (error) {
+        console.error("Error duplicating bet:", error);
+        alert("Erro ao duplicar a aposta.");
+    }
+};
 
-        const newBet: Bet = {
-            ...originalBet,
+const addCoverage = () => {
+    dispatch({
+        type: 'ADD_COVERAGE',
+        payload: {
             id: Date.now().toString(),
-            event: `${originalBet.event} (Cópia)`,
-            status: 'Rascunho',
-            coverages: originalBet.coverages.map(c => ({
-                ...c,
-                status: 'Pendente',
-                id: Date.now().toString() + Math.random().toString().slice(2, 6)
-            })),
-            photos: originalBet.photos || []
-        };
-
-        try {
-            await FirestoreService.saveBet(currentUser.uid, newBet);
-            setLongPressId(null);
-        } catch (error) {
-            console.error("Error duplicating bet:", error);
-            alert("Erro ao duplicar a aposta.");
+            bookmakerId: bookmakers[0].id,
+            market: '',
+            odd: 0,
+            stake: 0,
+            status: 'Pendente'
         }
-    };
-
-    const addCoverage = () => {
-        dispatch({
-            type: 'ADD_COVERAGE',
-            payload: {
-                id: Date.now().toString(),
-                bookmakerId: bookmakers[0].id,
-                market: '',
-                odd: 0,
-                stake: 0,
-                status: 'Pendente'
-            }
-        });
-    };
-
-    const removeCoverage = (id: string) => {
-        dispatch({ type: 'REMOVE_COVERAGE', id });
-    };
-
-    const duplicateCoverage = (id: string) => {
-        dispatch({ type: 'DUPLICATE_COVERAGE', id });
-    };
-
-    const moveCoverage = (id: string, direction: 'up' | 'down') => {
-        dispatch({ type: 'MOVE_COVERAGE', id, direction });
-    };
-
-    const updateCoverage = (id: string, field: keyof Coverage, value: any) => {
-        dispatch({ type: 'UPDATE_COVERAGE', id, field, value });
-    };
-
-    const getBookmaker = (id: string) => bookmakers.find(b => b.id === id);
-
-    const renderBookmakerLogo = (id: string, size: 'sm' | 'md' = 'md') => {
-        const bookie = getBookmaker(id);
-        const initials = bookie?.name.substring(0, 2).toUpperCase() || '??';
-        const color = bookie?.color || '#FFFFFF';
-        const logo = bookie?.logo;
-
-        const sizeClasses = size === 'sm' ? 'w-5 h-5 text-[8px]' : 'w-9 h-9 text-[10px]';
-
-        return (
-            <div
-                className={`${sizeClasses} rounded-full flex items-center justify-center font-bold text-[#090c19] shrink-0 shadow-sm overflow-hidden`}
-                style={{ backgroundColor: color }}
-            >
-                {logo ? (
-                    <img src={logo} alt={initials} className="w-full h-full object-contain p-[2px]" />
-                ) : (
-                    initials
-                )}
-            </div>
-        );
-    };
-
-    const filteredBets = bets.filter(bet => {
-        if (!bet) return false;
-
-        // Safety checks for required fields
-        if (!bet.date) {
-            console.error("Bet missing date:", bet);
-            return false;
-        }
-
-        const betDate = parseDate(bet.date);
-        const inCurrentMonth = betDate.getMonth() === currentDate.getMonth() &&
-            betDate.getFullYear() === currentDate.getFullYear();
-
-        if (!inCurrentMonth) {
-            return false;
-        }
-
-        if (showOnlyPending && !['Pendente', 'Rascunho'].includes(bet.status)) {
-            return false;
-        }
-
-        if (promotionFilter !== 'all') {
-            // Normalize: treat undefined, empty string, or 'Nenhuma' as equivalent
-            const betPromo = bet.promotionType || 'Nenhuma';
-            const betLower = betPromo.toLowerCase();
-            const filterLower = promotionFilter.toLowerCase();
-
-            if (betLower !== filterLower) {
-                const filterWords = filterLower.split(/\s+/).filter(w => w.length > 2);
-                const betWords = betLower.split(/\s+/).filter(w => w.length > 2);
-
-                if (filterWords.length !== betWords.length) {
-                    return false;
-                }
-
-                const allWordsMatch = filterWords.every(filterWord =>
-                    betWords.some(betWord =>
-                        betWord === filterWord ||
-                        betWord.includes(filterWord) ||
-                        filterWord.includes(betWord)
-                    )
-                );
-
-                if (!allWordsMatch) {
-                    return false;
-                }
-            }
-        }
-
-        const term = searchTerm.toLowerCase() || '';
-        const betEvent = (bet.event || '').toLowerCase();
-        const matchesEvent = betEvent.includes(term);
-        const bookmakerForFilter = getBookmaker(bet.mainBookmakerId);
-        const matchesBookie = bookmakerForFilter ? bookmakerForFilter.name.toLowerCase().includes(term) : false;
-
-        let matchesDate = false;
-        if (bet.date) {
-            const formattedDate = new Date(bet.date).toLocaleDateString('pt-BR');
-            matchesDate = formattedDate.includes(term);
-        }
-
-        const matchesSearch = matchesEvent || matchesBookie || matchesDate;
-
-        if (!matchesSearch) {
-            return false;
-        }
-
-        return true;
     });
+};
 
-    console.log("Total bets:", bets.length, "Filtered bets:", filteredBets.length, "Current month:", currentDate.getMonth(), "Current year:", currentDate.getFullYear());
+const removeCoverage = (id: string) => {
+    dispatch({ type: 'REMOVE_COVERAGE', id });
+};
 
-    const renderStatusBadge = (statusName: string) => {
-        if (statusName === 'Rascunho') {
-            return (
-                <span className="px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border border-dashed border-gray-500 text-gray-400 bg-gray-500/10 shadow-sm min-w-[60px] text-center backdrop-blur-sm">
-                    Rascunho
-                </span>
-            );
-        }
+const duplicateCoverage = (id: string) => {
+    dispatch({ type: 'DUPLICATE_COVERAGE', id });
+};
 
-        const statusItem = statuses.find(s => s.name === statusName);
-        const color = statusItem ? statusItem.color : '#fbbf24';
+const moveCoverage = (id: string, direction: 'up' | 'down') => {
+    dispatch({ type: 'MOVE_COVERAGE', id, direction });
+};
 
-        return (
-            <span
-                style={{
-                    backgroundColor: `${color} 26`,
-                    color: color,
-                    borderColor: color
-                }}
-                className="px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border shadow-sm min-w-[60px] text-center backdrop-blur-sm"
-            >
-                {statusName}
-            </span>
-        );
-    };
+const updateCoverage = (id: string, field: keyof Coverage, value: any) => {
+    dispatch({ type: 'UPDATE_COVERAGE', id, field, value });
+};
+
+const getBookmaker = (id: string) => bookmakers.find(b => b.id === id);
+
+const renderBookmakerLogo = (id: string, size: 'sm' | 'md' = 'md') => {
+    const bookie = getBookmaker(id);
+    const initials = bookie?.name.substring(0, 2).toUpperCase() || '??';
+    const color = bookie?.color || '#FFFFFF';
+    const logo = bookie?.logo;
+
+    const sizeClasses = size === 'sm' ? 'w-5 h-5 text-[8px]' : 'w-9 h-9 text-[10px]';
 
     return (
-        <div className="space-y-6">
-
-            <ImageViewer
-                isOpen={isViewerOpen}
-                onClose={() => setIsViewerOpen(false)}
-                images={viewerImages}
-                startIndex={viewerStartIndex}
-            />
-
-            <div className="flex flex-col gap-1 mb-6">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg border border-primary/20">
-                        <Ticket size={24} className="text-primary" />
-                    </div>
-                    <h2 className="text-xl font-bold text-white tracking-tight">Minhas Apostas</h2>
-                </div>
-                <p className="text-textMuted text-sm ml-[52px]">Acompanhe e gerencie todas as suas apostas em um só lugar.</p>
-            </div>
-
-            <div className="flex flex-col gap-4">
-                <div className="flex flex-col sm:flex-row gap-2 items-center">
-                    <div className="relative w-full flex-1">
-                        <Input
-                            placeholder="Buscar por time, evento, casa ou data..."
-                            icon={<Search size={18} />}
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                    <div className="w-full sm:w-auto min-w-[180px]">
-                        <Dropdown
-                            options={[
-                                { label: 'Todas Promoções', value: 'all', icon: <Ticket size={16} /> },
-                                ...promotions.map(p => ({
-                                    label: p.name,
-                                    value: p.name,
-                                    icon: <div className="w-3 h-3 rounded-full" style={{ backgroundColor: p.color }} />
-                                }))
-                            ]}
-                            value={promotionFilter}
-                            onChange={setPromotionFilter}
-                        />
-                    </div>
-                    <Button
-                        variant={showOnlyPending ? 'primary' : 'outline'}
-                        onClick={() => setShowOnlyPending(!showOnlyPending)}
-                        className="w-full sm:w-auto shrink-0"
-                        title="Filtrar apostas pendentes ou em rascunho"
-                    >
-                        <Filter size={16} />
-                        <span>Apostas em Aberto</span>
-                    </Button>
-                </div>
-
-                <div>
-                    <input
-                        type="file"
-                        ref={smartImportInputRef}
-                        onChange={handleSmartImport}
-                        accept="image/*"
-                        multiple
-                        className="hidden"
-                    />
-                    <div className="flex gap-2">
-                        <Button
-                            onClick={() => smartImportInputRef.current?.click()}
-                            className="flex-1 h-12 flex items-center justify-center gap-2 !rounded-xl shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-[1.01] transition-all duration-300 bg-gradient-to-br from-purple-600 to-indigo-600 text-white font-bold text-base"
-                            title="Importar Print via IA"
-                            disabled={isAnalyzing}
-                        >
-                            {isAnalyzing ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} strokeWidth={2} />}
-                            <span className="hidden sm:inline">Importar Print</span>
-                            <span className="sm:hidden">IA</span>
-                        </Button>
-                        <Button
-                            onClick={handleDuplicateLast}
-                            className="flex-1 h-12 flex items-center justify-center gap-2 !rounded-xl shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 hover:scale-[1.01] transition-all duration-300 bg-[#0d1121] text-white border border-white/10 font-bold text-base"
-                            title="Duplicar Última Aposta"
-                        >
-                            <Copy size={18} />
-                            <span className="hidden sm:inline">Duplicar</span>
-                        </Button>
-                        <Button
-                            onClick={handleOpenNew}
-                            className="flex-[2] h-12 flex items-center justify-center gap-2 !rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.01] transition-all duration-300 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] font-bold text-base"
-                            title="Nova Aposta"
-                        >
-                            <Plus size={20} strokeWidth={3} />
-                            Nova Aposta
-                        </Button>
-                    </div>
-                </div>
-            </div>
-
-            <div className="flex items-center justify-center gap-6 py-4 relative">
-                <button
-                    onClick={() => changeMonth(-1)}
-                    className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-full transition-colors active:scale-95"
-                >
-                    <ChevronLeft size={28} strokeWidth={2} />
-                </button>
-
-                <div className="relative z-20">
-                    <button
-                        onClick={() => setIsMonthPickerOpen(!isMonthPickerOpen)}
-                        className="flex items-center gap-2.5 font-bold text-white text-base uppercase tracking-wide px-4 py-2 rounded-lg hover:bg-white/5 transition-all group"
-                    >
-                        <Calendar size={18} className="text-primary group-hover:scale-110 transition-transform" />
-                        <span className="text-sm">{SHORT_MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}</span>
-                        <ChevronDown size={14} className={`text - gray - 500 transition - transform duration - 300 ${isMonthPickerOpen ? 'rotate-180' : ''} `} />
-                    </button>
-
-                    {isMonthPickerOpen && (
-                        <>
-                            <div className="fixed inset-0 z-30" onClick={() => setIsMonthPickerOpen(false)} />
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[280px] bg-[#151b2e] border border-white/10 rounded-xl shadow-2xl z-40 p-4 animate-in fade-in zoom-in-95 ring-1 ring-white/10">
-                                <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/5">
-                                    <button onClick={() => setPickerYear(y => y - 1)} className="p-1 hover:bg-white/5 rounded text-gray-400 hover:text-white transition-colors"><ChevronLeft size={18} /></button>
-                                    <span className="font-bold text-white text-lg">{pickerYear}</span>
-                                    <button onClick={() => setPickerYear(y => y + 1)} className="p-1 hover:bg-white/5 rounded text-gray-400 hover:text-white transition-colors"><ChevronRight size={18} /></button>
-                                </div>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {MONTHS.map((m, idx) => (
-                                        <button
-                                            key={m}
-                                            onClick={() => handleMonthSelect(idx)}
-                                            className={`
-text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
-                                        ${idx === currentDate.getMonth() && pickerYear === currentDate.getFullYear()
-                                                    ? 'bg-primary text-[#090c19] shadow-lg shadow-primary/20 scale-105'
-                                                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                                                }
-`}
-                                        >
-                                            {m.substring(0, 3)}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </div>
-
-                <button
-                    onClick={() => changeMonth(1)}
-                    className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-full transition-colors active:scale-95"
-                >
-                    <ChevronRight size={28} strokeWidth={2} />
-                </button>
-            </div>
-
-            <div ref={betsListRef} className="space-y-3">
-                {filteredBets.map(bet => {
-
-                    // Safety check for coverages
-                    if (!bet.coverages || !Array.isArray(bet.coverages)) {
-                        console.error("❌ Bet has no coverages array:", bet);
-                        return null;
-                    }
-
-                    const isExpanded = expandedId === bet.id;
-                    const isDraft = bet.status === 'Rascunho';
-                    const { totalStake, totalReturn, profit, isDoubleGreen } = calculateBetStats(bet);
-
-                    console.log("✅ About to render card for:", bet.event);
-
-                    return (
-                        <div
-                            key={bet.id}
-                            className="relative"
-                        >
-                            <Card
-                                className={`
-overflow-hidden border-none bg-surface transition-all duration-300 hover:border-white/10 hover:-translate-y-0.5 hover:shadow-lg select-none cursor-pointer
-                            ${isDraft ? 'border-dashed border-2 border-gray-600/50 opacity-90' : ''}
-`}
-                                onClick={() => { if (!longPressId) setExpandedId(isExpanded ? null : bet.id); }}
-                                onMouseDown={(e) => handlePressStart(bet.id, e)}
-                                onMouseMove={handlePressMove}
-                                onMouseUp={handlePressEnd}
-                                onMouseLeave={handlePressEnd}
-                                onTouchStart={(e) => handlePressStart(bet.id, e)}
-                                onTouchMove={handlePressMove}
-                                onTouchEnd={handlePressEnd}
-                            >
-                                <div className="p-4">
-                                    <div
-                                        className="flex flex-col md:flex-row md:items-center gap-4 hover:bg-white/5 transition-colors -mx-4 -mt-4 p-4 rounded-t-xl"
-                                    >
-                                        <div className="flex items-center gap-3 flex-1">
-                                            {renderBookmakerLogo(bet.mainBookmakerId, 'md')}
-
-                                            <div>
-                                                <h4 className="font-semibold text-white text-base flex items-center gap-2">
-                                                    {bet.event}
-                                                    {isDraft && <span className="text-[9px] bg-yellow-500/20 text-yellow-500 border border-yellow-500/30 px-1.5 py-0.5 rounded ml-2 font-bold tracking-wider">RASCUNHO</span>}
-                                                    {isDoubleGreen && <span className="text-[9px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded ml-2 font-bold tracking-wider flex items-center gap-1"><Copy size={8} /> 2X</span>}
-                                                </h4>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-xs text-textMuted">{new Date(bet.date).toLocaleDateString('pt-BR')}</span>
-                                                    {bet.promotionType && bet.promotionType !== 'Nenhuma' && (() => {
-                                                        // Try exact match first
-                                                        let promo = promotions.find(p => p.name === bet.promotionType);
-                                                        // If not found, try case-insensitive match
-                                                        if (!promo) {
-                                                            promo = promotions.find(p =>
-                                                                p.name.toLowerCase() === bet.promotionType.toLowerCase()
-                                                            );
-                                                        }
-                                                        // If still not found, try partial match (handles "Super Odd" vs "Super Odds")
-                                                        if (!promo) {
-                                                            promo = promotions.find(p =>
-                                                                p.name.toLowerCase().includes(bet.promotionType.toLowerCase()) ||
-                                                                bet.promotionType.toLowerCase().includes(p.name.toLowerCase())
-                                                            );
-                                                        }
-                                                        const color = promo?.color || '#8B5CF6';
-                                                        return (
-                                                            <Badge color={color}>
-                                                                {bet.promotionType}
-                                                            </Badge>
-                                                        );
-                                                    })()}
-                                                    {bet.notes && (
-                                                        <div className="flex items-center gap-1 text-xs text-textMuted" title="Tem anotações">
-                                                            <StickyNote size={12} />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto mt-2 md:mt-0">
-                                            <div className="text-right hidden sm:block">
-                                                <p className="text-[10px] text-textMuted uppercase font-bold">Apostado</p>
-                                                <p className="font-bold text-sm text-white">
-                                                    <MoneyDisplay value={totalStake} privacyMode={settings.privacyMode} />
-                                                </p>
-                                            </div>
-                                            <div className="text-left">
-                                                <p className="text-[10px] text-textMuted uppercase font-bold">Lucro/Prejuízo</p>
-                                                <p className={`font-bold text-sm ${profit >= 0 && bet.status !== 'Pendente' && !isDraft ? 'text-[#6ee7b7]' : ((bet.status === 'Pendente' || isDraft) ? 'text-textMuted' : 'text-[#ff0100]')}`}>
-                                                    {(bet.status === 'Pendente' || isDraft) ? '--' : <MoneyDisplay value={Math.abs(profit)} privacyMode={settings.privacyMode} />}
-                                                </p>
-                                                {bet.extraGain !== undefined && bet.extraGain !== 0 && (
-                                                    <p className={`text-[10px] font-medium mt-0.5 ${bet.extraGain > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                                        {bet.extraGain > 0 ? '+' : ''}<MoneyDisplay value={bet.extraGain} privacyMode={settings.privacyMode} /> (Extra)
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            <div className="flex items-center gap-3">
-                                                {renderStatusBadge(bet.status)}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        className="flex items-center justify-between gap-2 pt-3 mt-1 border-t border-white/5"
-                                    >
-                                        <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
-                                            <ChevronDown size={20} className="text-textMuted" />
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            {deleteId === bet.id ? (
-                                                <div className="flex items-center gap-2 animate-in slide-in-from-right-2 duration-200">
-                                                    <span className="text-[10px] text-danger font-bold uppercase mr-1">Confirmar Exclusão?</span>
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); confirmDelete(); }}
-                                                        className="p-1.5 px-3 bg-danger text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm flex items-center gap-1 text-xs font-bold"
-                                                        title="Confirmar"
-                                                    >
-                                                        <Check size={14} /> Sim
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); cancelDelete(); }}
-                                                        className="p-1.5 px-3 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors shadow-sm flex items-center gap-1 text-xs font-bold"
-                                                        title="Cancelar"
-                                                    >
-                                                        <X size={14} /> Não
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); handleDuplicate(bet); }}
-                                                        className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5 group/btn"
-                                                        title="Duplicar"
-                                                    >
-                                                        <Copy size={16} />
-                                                        <span className="text-[10px] font-medium group-hover/btn:text-white hidden sm:inline">Duplicar</span>
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); handleEdit(bet); }}
-                                                        className="p-2 text-gray-500 hover:text-primary hover:bg-white/5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5 group/btn"
-                                                        title="Editar"
-                                                    >
-                                                        <Edit2 size={16} />
-                                                        <span className="text-[10px] font-medium group-hover/btn:text-primary hidden sm:inline">Editar</span>
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); requestDelete(bet.id); }}
-                                                        className="p-2 text-gray-500 hover:text-danger hover:bg-white/5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5 group/btn"
-                                                        title="Excluir"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                        <span className="text-[10px] font-medium group-hover/btn:text-danger hidden sm:inline">Excluir</span>
-                                                    </button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {isExpanded && (
-                                    <div className="bg-black/20 p-4 border-t border-white/5 animate-in slide-in-from-top-2" onClick={(e) => e.stopPropagation()}>
-                                        <h5 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-3 ml-1">Coberturas & Entradas</h5>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                            {bet.coverages.map(cov => {
-                                                const statusItem = statuses.find(s => s.name === cov.status);
-                                                const statusColor = statusItem ? statusItem.color : '#fbbf24';
-
-                                                return (
-                                                    <div key={cov.id} className="bg-background rounded-lg p-3 border border-white/5 relative hover:border-white/20 transition-colors">
-                                                        <div
-                                                            className="absolute left-0 top-0 bottom-0 w-1"
-                                                            style={{ backgroundColor: statusColor }}
-                                                        />
-
-                                                        <div className="flex justify-between items-center mb-2">
-                                                            <div className="flex items-center gap-2">
-                                                                {renderBookmakerLogo(cov.bookmakerId, 'sm')}
-                                                                <span className="text-xs font-bold text-white">{getBookmaker(cov.bookmakerId)?.name}</span>
-                                                            </div>
-                                                            {editingId === `${bet.id}-${cov.id}-status` ? (
-                                                                <div onClick={(e) => e.stopPropagation()}>
-                                                                    <Dropdown
-                                                                        options={statusOptions}
-                                                                        value={editingValue}
-                                                                        onChange={(value) => saveEdit(bet.id, cov.id, 'status', value)}
-                                                                        className="min-w-[120px]"
-                                                                    />
-                                                                </div>
-                                                            ) : (
-                                                                <div
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setEditingId(`${bet.id}-${cov.id}-status`);
-                                                                        setEditingValue(cov.status);
-                                                                    }}
-                                                                    className="cursor-pointer hover:opacity-80 transition-opacity"
-                                                                    title="Clique para alterar status"
-                                                                >
-                                                                    {renderStatusBadge(cov.status)}
-                                                                </div>
-                                                            )}
-                                                        </div>
-
-                                                        {editingId === `${bet.id}-${cov.id}-market` ? (
-                                                            <textarea
-                                                                className="w-full bg-[#0d1121] border border-primary text-white rounded-lg py-2 px-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 mb-3"
-                                                                value={editingValue}
-                                                                onChange={(e) => setEditingValue(e.target.value)}
-                                                                onBlur={() => saveEdit(bet.id, cov.id, 'market', editingValue)}
-                                                                onKeyDown={(e) => {
-                                                                    if (e.key === 'Escape') {
-                                                                        setEditingId(null);
-                                                                    }
-                                                                }}
-                                                                autoFocus
-                                                                rows={3}
-                                                                onClick={(e) => e.stopPropagation()}
-                                                            />
-                                                        ) : (
-                                                            <p
-                                                                className="text-sm text-gray-400 mb-3 pl-1 break-words whitespace-pre-wrap cursor-pointer hover:text-gray-300 transition-colors"
-                                                                onDoubleClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setEditingId(`${bet.id}-${cov.id}-market`);
-                                                                    setEditingValue(cov.market);
-                                                                }}
-                                                                title="Duplo clique para editar"
-                                                            >
-                                                                {cov.market}
-                                                            </p>
-                                                        )}
-
-                                                        <div className="flex justify-between items-end border-t border-white/5 pt-2">
-                                                            <div>
-                                                                <span className="text-[10px] text-textMuted uppercase font-bold block">ODD</span>
-                                                                {editingId === `${bet.id}-${cov.id}-odd` ? (
-                                                                    <input
-                                                                        type="tel"
-                                                                        className="bg-[#0d1121] border border-primary text-white rounded px-2 py-1 text-lg font-bold w-20 focus:outline-none"
-                                                                        value={editingValue}
-                                                                        onChange={(e) => setEditingValue(e.target.value)}
-                                                                        onBlur={() => {
-                                                                            const val = parseFloat(editingValue);
-                                                                            saveEdit(bet.id, cov.id, 'odd', isNaN(val) ? 0 : val);
-                                                                        }}
-                                                                        onKeyDown={(e) => {
-                                                                            if (e.key === 'Enter') {
-                                                                                const val = parseFloat(editingValue);
-                                                                                saveEdit(bet.id, cov.id, 'odd', isNaN(val) ? 0 : val);
-                                                                            } else if (e.key === 'Escape') {
-                                                                                setEditingId(null);
-                                                                            }
-                                                                        }}
-                                                                        autoFocus
-                                                                        onClick={(e) => e.stopPropagation()}
-                                                                    />
-                                                                ) : (
-                                                                    <span
-                                                                        className="font-bold text-blue-400 text-lg cursor-pointer hover:text-blue-300 transition-colors"
-                                                                        onDoubleClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setEditingId(`${bet.id}-${cov.id}-odd`);
-                                                                            setEditingValue(cov.odd);
-                                                                        }}
-                                                                        title="Duplo clique para editar"
-                                                                    >
-                                                                        {cov.odd.toFixed(2)}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <span className="text-[10px] text-textMuted uppercase font-bold block">Stake</span>
-                                                                {editingId === `${bet.id}-${cov.id}-stake` ? (
-                                                                    <input
-                                                                        type="tel"
-                                                                        className="bg-[#0d1121] border border-primary text-white rounded px-2 py-1 text-lg font-bold w-24 text-right focus:outline-none"
-                                                                        value={editingValue}
-                                                                        onChange={(e) => setEditingValue(e.target.value)}
-                                                                        onBlur={() => {
-                                                                            const val = parseFloat(editingValue);
-                                                                            saveEdit(bet.id, cov.id, 'stake', isNaN(val) ? 0 : val);
-                                                                        }}
-                                                                        onKeyDown={(e) => {
-                                                                            if (e.key === 'Enter') {
-                                                                                const val = parseFloat(editingValue);
-                                                                                saveEdit(bet.id, cov.id, 'stake', isNaN(val) ? 0 : val);
-                                                                            } else if (e.key === 'Escape') {
-                                                                                setEditingId(null);
-                                                                            }
-                                                                        }}
-                                                                        autoFocus
-                                                                        onClick={(e) => e.stopPropagation()}
-                                                                    />
-                                                                ) : (
-                                                                    <span
-                                                                        className="font-bold text-white cursor-pointer hover:text-gray-300 transition-colors"
-                                                                        onDoubleClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setEditingId(`${bet.id}-${cov.id}-stake`);
-                                                                            setEditingValue(cov.stake);
-                                                                        }}
-                                                                        title="Duplo clique para editar"
-                                                                    >
-                                                                        <MoneyDisplay value={cov.stake} privacyMode={settings.privacyMode} />
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-
-                                        {bet.notes && (
-                                            <div className="mt-4 p-3 bg-[#FFAB00]/5 border border-[#FFAB00]/20 rounded-lg">
-                                                <div className="flex items-center gap-2 mb-1 text-[#FFAB00] text-xs font-bold">
-                                                    <AlertCircle size={12} /> ANOTAÇÕES
-                                                </div>
-                                                <p className="text-sm text-textMuted">{bet.notes}</p>
-                                            </div>
-                                        )}
-
-                                        {bet.photos && bet.photos.length > 0 && (
-                                            <div className="mt-4">
-                                                <div className="flex items-center gap-2 mb-2 text-primary text-xs font-bold">
-                                                    <ImageIcon size={12} /> FOTOS
-                                                </div>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {bet.photos.map((photo, idx) => (
-                                                        <div
-                                                            key={idx}
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                openImageViewer(bet.photos || [], idx);
-                                                            }}
-                                                            className="w-16 h-16 rounded border border-white/10 overflow-hidden cursor-zoom-in hover:scale-110 transition-transform hover:border-primary bg-black/50"
-                                                        >
-                                                            <img src={photo} alt="thumb" className="w-full h-full object-cover" />
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </Card>
-                        </div>
-                    );
-                })}
-
-                {filteredBets.length === 0 && (
-                    <div className="text-center py-12 text-textMuted">
-                        <p>Nenhuma aposta encontrada em {MONTHS[currentDate.getMonth()].toLowerCase()}.</p>
-                        <button
-                            onClick={() => {
-                                setIsEditing(false);
-                                handleOpenNew();
-                            }}
-                            className="text-primary hover:underline text-sm font-bold mt-2"
-                        >
-                            Criar aposta neste mês
-                        </button>
-                    </div>
-                )}
-            </div>
-
-            <Modal
-                isOpen={isModalOpen}
-                onClose={handleCloseModal}
-                title={isEditing ? "Editar Aposta" : "Nova Aposta"}
-                footer={
-                    <div className="flex justify-end gap-3 w-full">
-                        <Button variant="neutral" onClick={handleCloseModal} disabled={isUploading}>Cancelar</Button>
-                        <Button onClick={handleSave} disabled={isUploading}>
-                            {isUploading ? (
-                                <>
-                                    <Loader2 size={16} className="animate-spin" />
-                                    <span>Salvando...</span>
-                                </>
-                            ) : (
-                                isEditing ? "Salvar Alterações" : "Adicionar Aposta"
-                            )}
-                        </Button>
-                    </div>
-                }
-            >
-                <div className="space-y-5">
-                    <div onClick={() => setIsDatePickerOpen(true)}>
-                        <Input
-                            label="Data"
-                            value={new Date(formData.date + 'T12:00:00').toLocaleDateString('pt-BR')}
-                            readOnly
-                            className="cursor-pointer"
-                            icon={<Calendar size={18} />}
-                        />
-                    </div>
-                    <SingleDatePickerModal
-                        isOpen={isDatePickerOpen}
-                        onClose={() => setIsDatePickerOpen(false)}
-                        date={formData.date ? parseDate(formData.date) : new Date()}
-                        onSelect={(date) => {
-                            const year = date.getFullYear();
-                            const month = String(date.getMonth() + 1).padStart(2, '0');
-                            const day = String(date.getDate()).padStart(2, '0');
-                            const dateStr = `${year}-${month}-${day}`;
-                            dispatch({ type: 'UPDATE_FIELD', field: 'date', value: dateStr });
-                            setIsDatePickerOpen(false);
-                        }}
-                    />
-
-                    <Dropdown
-                        label="Casa Principal"
-                        placeholder="Ex: Bet365"
-                        options={bookmakerOptions}
-                        value={formData.mainBookmakerId}
-                        onChange={value => dispatch({ type: 'UPDATE_FIELD', field: 'mainBookmakerId', value })}
-                        isSearchable={true}
-                        searchPlaceholder="Buscar casa..."
-                    />
-
-                    <Input
-                        label="Procedimento / Evento"
-                        placeholder="Ex: Múltipla Brasileirão"
-                        value={formData.event}
-                        onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'event', value: e.target.value })}
-                    />
-
-                    <Dropdown
-                        label="Promoção (Opcional)"
-                        placeholder="Nenhuma"
-                        options={promotionOptions}
-                        value={formData.promotionType || 'Nenhuma'}
-                        onChange={value => dispatch({ type: 'UPDATE_FIELD', field: 'promotionType', value })}
-                    />
-
-                    <Dropdown
-                        label="Status Geral"
-                        options={statusOptions}
-                        value={formData.status}
-                        onChange={value => dispatch({ type: 'UPDATE_FIELD', field: 'status', value })}
-                    />
-
-                    <div className="h-px bg-white/5 my-2" />
-
-                    <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-sm font-bold text-primary uppercase tracking-wider">Coberturas</h3>
-                            <Button size="sm" variant="neutral" onClick={addCoverage} className="text-xs h-8 px-3">
-                                <Plus size={14} /> Adicionar
-                            </Button>
-                        </div>
-
-                        <div className="space-y-4">
-                            {formData.coverages.map((cov, index) => {
-                                const statusItem = statuses.find(s => s.name === cov.status);
-                                const statusColor = statusItem ? statusItem.color : '#fbbf24';
-
-                                return (
-                                    <div key={cov.id} className="relative bg-[#0d1121] rounded-lg p-4 border border-white/5 overflow-hidden shadow-sm">
-                                        <div
-                                            className="absolute left-0 top-0 bottom-0 w-1"
-                                            style={{ backgroundColor: statusColor }}
-                                        />
-
-                                        <div className="flex justify-between items-start mb-4 pl-2">
-                                            <span className="text-[10px] font-bold text-textMuted uppercase tracking-wider">COBERTURA {index + 1}</span>
-                                            <div className="flex items-center gap-1">
-                                                <button
-                                                    onClick={() => moveCoverage(cov.id, 'up')}
-                                                    disabled={index === 0}
-                                                    className="text-gray-600 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed p-1"
-                                                    title="Mover para cima"
-                                                >
-                                                    <ChevronUp size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => moveCoverage(cov.id, 'down')}
-                                                    disabled={index === formData.coverages.length - 1}
-                                                    className="text-gray-600 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed p-1"
-                                                    title="Mover para baixo"
-                                                >
-                                                    <ChevronDown size={16} />
-                                                </button>
-                                                <div className="w-px h-3 bg-white/10 mx-1" />
-                                                <button
-                                                    onClick={() => duplicateCoverage(cov.id)}
-                                                    className="text-gray-600 hover:text-white transition-colors p-1"
-                                                    title="Duplicar"
-                                                >
-                                                    <Copy size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => removeCoverage(cov.id)}
-                                                    className="text-gray-600 hover:text-danger transition-colors p-1"
-                                                    title="Excluir"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-3 pl-2">
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] text-textMuted uppercase font-bold">Casa</label>
-                                                <Dropdown
-                                                    options={bookmakerOptions}
-                                                    value={cov.bookmakerId}
-                                                    onChange={value => updateCoverage(cov.id, 'bookmakerId', value)}
-                                                    placeholder="Casa"
-                                                    className="text-xs"
-                                                    isSearchable={true}
-                                                    searchPlaceholder="Buscar casa..."
-                                                />
-                                            </div>
-                                            <Input
-                                                label="Mercado"
-                                                className="text-xs py-1.5"
-                                                placeholder="Mercado"
-                                                value={cov.market}
-                                                onChange={e => updateCoverage(cov.id, 'market', e.target.value)}
-                                            />
-                                            <Input
-                                                label="ODD"
-                                                type="tel"
-                                                inputMode="decimal"
-                                                className="text-xs py-1.5"
-                                                placeholder="0.00"
-                                                value={cov.odd === 0 ? '' : cov.odd.toFixed(2)}
-                                                onChange={e => {
-                                                    const digits = e.target.value.replace(/\D/g, '');
-                                                    if (digits === '') {
-                                                        updateCoverage(cov.id, 'odd', 0);
-                                                    } else {
-                                                        const val = parseInt(digits) / 100;
-                                                        updateCoverage(cov.id, 'odd', val);
-                                                    }
-                                                }}
-                                            />
-                                            <Input
-                                                label="Stake"
-                                                type="tel"
-                                                inputMode="numeric"
-                                                className="text-xs py-1.5"
-                                                placeholder="R$ 0,00"
-                                                value={cov.stake.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                                onChange={e => {
-                                                    const value = e.target.value.replace(/\D/g, '');
-                                                    const numberValue = parseInt(value, 10) / 100;
-                                                    updateCoverage(cov.id, 'stake', isNaN(numberValue) ? 0 : numberValue);
-                                                }}
-                                            />
-
-                                            <div className="col-span-2">
-                                                <Input
-                                                    label={cov.status === 'Cashout' ? "Valor do Cashout" : "Retorno Total (Stake + Lucro)"}
-                                                    type="tel"
-                                                    inputMode="numeric"
-                                                    className={`text-xs py-1.5 ${(cov.manualReturn !== undefined && cov.manualReturn > 0) ? 'text-white font-bold' : 'text-gray-400'}`}
-                                                    placeholder="Auto-calc..."
-                                                    value={
-                                                        (cov.manualReturn !== undefined && cov.manualReturn > 0)
-                                                            ? cov.manualReturn.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
-                                                            : (cov.stake && cov.odd ? (() => {
-                                                                const isFirstCoverage = index === 0;
-                                                                const isFreebetConversion = formData.promotionType?.toLowerCase().includes('conversão freebet');
-                                                                let calculatedReturn = cov.stake * cov.odd;
-
-                                                                if (isFreebetConversion && isFirstCoverage) {
-                                                                    calculatedReturn -= cov.stake;
-                                                                }
-
-                                                                return calculatedReturn.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-                                                            })() : '')
-                                                    }
-                                                    onChange={e => {
-                                                        const rawValue = e.target.value;
-                                                        const value = rawValue.replace(/\D/g, '');
-
-                                                        // If field is completely empty, reset to auto-calc
-                                                        if (rawValue === '' || value === '' || value === '0') {
-                                                            updateCoverage(cov.id, 'manualReturn', undefined);
-                                                        } else {
-                                                            const numberValue = parseInt(value, 10) / 100;
-                                                            updateCoverage(cov.id, 'manualReturn', numberValue);
-                                                        }
-                                                    }}
-                                                />
-                                            </div>
-
-                                            <div className="col-span-2 mt-1">
-                                                <label className="text-[10px] text-textMuted uppercase font-bold block mb-2">Status Cobertura</label>
-                                                <Dropdown
-                                                    options={statusOptions}
-                                                    value={cov.status}
-                                                    onChange={value => updateCoverage(cov.id, 'status', value)}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    <div className="h-px bg-white/5 my-2" />
-
-                    <div className="space-y-3">
-                        <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Ganho Extra (Opcional)</label>
-                        <Input
-                            type="tel"
-                            inputMode="decimal"
-                            prefix="R$"
-                            placeholder="0,00"
-                            value={formData.extraGain !== undefined && formData.extraGain !== 0 ? (formData.extraGain >= 0 ? formData.extraGain.toFixed(2) : formData.extraGain.toFixed(2)) : ''}
-                            onChange={e => {
-                                const value = e.target.value.replace(/[^\d-]/g, '');
-                                if (value === '' || value === '-') {
-                                    dispatch({ type: 'UPDATE_FIELD', field: 'extraGain', value: undefined });
-                                } else {
-                                    const numberValue = parseInt(value, 10) / 100;
-                                    dispatch({ type: 'UPDATE_FIELD', field: 'extraGain', value: numberValue });
-                                }
-                            }}
-                        />
-                        <p className="text-[10px] text-gray-500">Adicione um valor extra ao lucro/prejuízo (ex: bônus, cashback). Use valores negativos para descontos.</p>
-                    </div>
-
-                    <div className="space-y-3">
-                        <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Anotações & Mídia</label>
-
-                        <textarea
-                            className="w-full bg-[#0d1121] border border-white/10 focus:border-primary text-white rounded-lg py-3 px-4 placeholder-gray-600 focus:outline-none transition-colors text-sm min-h-[100px] resize-none shadow-inner"
-                            placeholder="Detalhes adicionais..."
-                            value={formData.notes}
-                            onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'notes', value: e.target.value })}
-                        />
-
-                        <div className="p-4 bg-[#0d1121] border border-dashed border-white/10 rounded-xl">
-                            <div className="flex justify-between items-center mb-3">
-                                <button
-                                    type="button"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase cursor-pointer hover:text-white transition-colors"
-                                >
-                                    <div className="p-2 bg-white/5 rounded-full"><Paperclip size={14} /></div>
-                                    <span>Adicionar Fotos</span>
-                                </button>
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    multiple
-                                    accept="image/*"
-                                    style={{ display: 'none' }}
-                                    onChange={handlePhotoSelect}
-                                />
-                                <span className="text-[10px] text-gray-600">Sem limite de tamanho</span>
-                            </div>
-
-                            {tempPhotos.length > 0 && (
-                                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 mt-2">
-                                    {tempPhotos.map((photo, index) => (
-                                        <div
-                                            key={index}
-                                            onClick={() => openImageViewer(tempPhotos.map(p => p.url), index)}
-                                            className="relative aspect-square rounded-lg overflow-hidden border border-white/10 group bg-black/40 cursor-pointer"
-                                        >
-                                            <img src={photo.url} alt="Preview" className="w-full h-full object-cover" />
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    removePhoto(index);
-                                                }}
-                                                className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full hover:bg-danger transition-colors opacity-0 group-hover:opacity-100"
-                                            >
-                                                <X size={10} />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </Modal>
-
-            {/* Floating Nova Aposta Button */}
-            {showFloatingButton && (
-                <button
-                    onClick={handleOpenNew}
-                    className={`fixed bottom-36 right-6 z-40 p-3 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 transition-all duration-500 active:scale-95 shadow-lg ${isFabVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
-                    title="Nova Aposta"
-                >
-                    <Plus size={24} strokeWidth={3} />
-                </button>
+        <div
+            className={`${sizeClasses} rounded-full flex items-center justify-center font-bold text-[#090c19] shrink-0 shadow-sm overflow-hidden`}
+            style={{ backgroundColor: color }}
+        >
+            {logo ? (
+                <img src={logo} alt={initials} className="w-full h-full object-contain p-[2px]" />
+            ) : (
+                initials
             )}
         </div>
     );
+};
+
+const filteredBets = bets.filter(bet => {
+    if (!bet) return false;
+
+    // Safety checks for required fields
+    if (!bet.date) {
+        console.error("Bet missing date:", bet);
+        return false;
+    }
+
+    const betDate = parseDate(bet.date);
+    const inCurrentMonth = betDate.getMonth() === currentDate.getMonth() &&
+        betDate.getFullYear() === currentDate.getFullYear();
+
+    if (!inCurrentMonth) {
+        return false;
+    }
+
+    if (showOnlyPending && !['Pendente', 'Rascunho'].includes(bet.status)) {
+        return false;
+    }
+
+    if (promotionFilter !== 'all') {
+        // Normalize: treat undefined, empty string, or 'Nenhuma' as equivalent
+        const betPromo = bet.promotionType || 'Nenhuma';
+        const betLower = betPromo.toLowerCase();
+        const filterLower = promotionFilter.toLowerCase();
+
+        if (betLower !== filterLower) {
+            const filterWords = filterLower.split(/\s+/).filter(w => w.length > 2);
+            const betWords = betLower.split(/\s+/).filter(w => w.length > 2);
+
+            if (filterWords.length !== betWords.length) {
+                return false;
+            }
+
+            const allWordsMatch = filterWords.every(filterWord =>
+                betWords.some(betWord =>
+                    betWord === filterWord ||
+                    betWord.includes(filterWord) ||
+                    filterWord.includes(betWord)
+                )
+            );
+
+            if (!allWordsMatch) {
+                return false;
+            }
+        }
+    }
+
+    const term = searchTerm.toLowerCase() || '';
+    const betEvent = (bet.event || '').toLowerCase();
+    const matchesEvent = betEvent.includes(term);
+    const bookmakerForFilter = getBookmaker(bet.mainBookmakerId);
+    const matchesBookie = bookmakerForFilter ? bookmakerForFilter.name.toLowerCase().includes(term) : false;
+
+    let matchesDate = false;
+    if (bet.date) {
+        const formattedDate = new Date(bet.date).toLocaleDateString('pt-BR');
+        matchesDate = formattedDate.includes(term);
+    }
+
+    const matchesSearch = matchesEvent || matchesBookie || matchesDate;
+
+    if (!matchesSearch) {
+        return false;
+    }
+
+    return true;
+});
+
+console.log("Total bets:", bets.length, "Filtered bets:", filteredBets.length, "Current month:", currentDate.getMonth(), "Current year:", currentDate.getFullYear());
+
+const renderStatusBadge = (statusName: string) => {
+    if (statusName === 'Rascunho') {
+        return (
+            <span className="px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border border-dashed border-gray-500 text-gray-400 bg-gray-500/10 shadow-sm min-w-[60px] text-center backdrop-blur-sm">
+                Rascunho
+            </span>
+        );
+    }
+
+    const statusItem = statuses.find(s => s.name === statusName);
+    const color = statusItem ? statusItem.color : '#fbbf24';
+
+    return (
+        <span
+            style={{
+                backgroundColor: `${color} 26`,
+                color: color,
+                borderColor: color
+            }}
+            className="px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border shadow-sm min-w-[60px] text-center backdrop-blur-sm"
+        >
+            {statusName}
+        </span>
+    );
+};
+
+return (
+    <div className="space-y-6">
+
+        <ImageViewer
+            isOpen={isViewerOpen}
+            onClose={() => setIsViewerOpen(false)}
+            images={viewerImages}
+            startIndex={viewerStartIndex}
+        />
+
+        <div className="flex flex-col gap-1 mb-6">
+            <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg border border-primary/20">
+                    <Ticket size={24} className="text-primary" />
+                </div>
+                <h2 className="text-xl font-bold text-white tracking-tight">Minhas Apostas</h2>
+            </div>
+            <p className="text-textMuted text-sm ml-[52px]">Acompanhe e gerencie todas as suas apostas em um só lugar.</p>
+        </div>
+
+        <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row gap-2 items-center">
+                <div className="relative w-full flex-1">
+                    <Input
+                        placeholder="Buscar por time, evento, casa ou data..."
+                        icon={<Search size={18} />}
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <div className="w-full sm:w-auto min-w-[180px]">
+                    <Dropdown
+                        options={[
+                            { label: 'Todas Promoções', value: 'all', icon: <Ticket size={16} /> },
+                            ...promotions.map(p => ({
+                                label: p.name,
+                                value: p.name,
+                                icon: <div className="w-3 h-3 rounded-full" style={{ backgroundColor: p.color }} />
+                            }))
+                        ]}
+                        value={promotionFilter}
+                        onChange={setPromotionFilter}
+                    />
+                </div>
+                <Button
+                    variant={showOnlyPending ? 'primary' : 'outline'}
+                    onClick={() => setShowOnlyPending(!showOnlyPending)}
+                    className="w-full sm:w-auto shrink-0"
+                    title="Filtrar apostas pendentes ou em rascunho"
+                >
+                    <Filter size={16} />
+                    <span>Apostas em Aberto</span>
+                </Button>
+            </div>
+
+            <div>
+                <input
+                    type="file"
+                    ref={smartImportInputRef}
+                    onChange={handleSmartImport}
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                />
+                <div className="flex gap-2">
+                    <Button
+                        onClick={() => smartImportInputRef.current?.click()}
+                        className="flex-1 h-12 flex items-center justify-center gap-2 !rounded-xl shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-[1.01] transition-all duration-300 bg-gradient-to-br from-purple-600 to-indigo-600 text-white font-bold text-base"
+                        title="Importar Print via IA"
+                        disabled={isAnalyzing}
+                    >
+                        {isAnalyzing ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} strokeWidth={2} />}
+                        <span className="hidden sm:inline">Importar Print</span>
+                        <span className="sm:hidden">IA</span>
+                    </Button>
+                    <Button
+                        onClick={handleOpenNew}
+                        className="flex-[2] h-12 flex items-center justify-center gap-2 !rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.01] transition-all duration-300 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] font-bold text-base"
+                        title="Nova Aposta"
+                    >
+                        <Plus size={20} strokeWidth={3} />
+                        Nova Aposta
+                    </Button>
+                </div>
+            </div>
+        </div>
+
+        <div className="flex items-center justify-center gap-6 py-4 relative">
+            <button
+                onClick={() => changeMonth(-1)}
+                className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-full transition-colors active:scale-95"
+            >
+                <ChevronLeft size={28} strokeWidth={2} />
+            </button>
+
+            <div className="relative z-20">
+                <button
+                    onClick={() => setIsMonthPickerOpen(!isMonthPickerOpen)}
+                    className="flex items-center gap-2.5 font-bold text-white text-base uppercase tracking-wide px-4 py-2 rounded-lg hover:bg-white/5 transition-all group"
+                >
+                    <Calendar size={18} className="text-primary group-hover:scale-110 transition-transform" />
+                    <span className="text-sm">{SHORT_MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}</span>
+                    <ChevronDown size={14} className={`text - gray - 500 transition - transform duration - 300 ${isMonthPickerOpen ? 'rotate-180' : ''} `} />
+                </button>
+
+                {isMonthPickerOpen && (
+                    <>
+                        <div className="fixed inset-0 z-30" onClick={() => setIsMonthPickerOpen(false)} />
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[280px] bg-[#151b2e] border border-white/10 rounded-xl shadow-2xl z-40 p-4 animate-in fade-in zoom-in-95 ring-1 ring-white/10">
+                            <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/5">
+                                <button onClick={() => setPickerYear(y => y - 1)} className="p-1 hover:bg-white/5 rounded text-gray-400 hover:text-white transition-colors"><ChevronLeft size={18} /></button>
+                                <span className="font-bold text-white text-lg">{pickerYear}</span>
+                                <button onClick={() => setPickerYear(y => y + 1)} className="p-1 hover:bg-white/5 rounded text-gray-400 hover:text-white transition-colors"><ChevronRight size={18} /></button>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                                {MONTHS.map((m, idx) => (
+                                    <button
+                                        key={m}
+                                        onClick={() => handleMonthSelect(idx)}
+                                        className={`
+text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
+                                        ${idx === currentDate.getMonth() && pickerYear === currentDate.getFullYear()
+                                                ? 'bg-primary text-[#090c19] shadow-lg shadow-primary/20 scale-105'
+                                                : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                                            }
+`}
+                                    >
+                                        {m.substring(0, 3)}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </>
+                )}
+            </div>
+
+            <button
+                onClick={() => changeMonth(1)}
+                className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-full transition-colors active:scale-95"
+            >
+                <ChevronRight size={28} strokeWidth={2} />
+            </button>
+        </div>
+
+        <div ref={betsListRef} className="space-y-3">
+            {filteredBets.map(bet => {
+
+                // Safety check for coverages
+                if (!bet.coverages || !Array.isArray(bet.coverages)) {
+                    console.error("❌ Bet has no coverages array:", bet);
+                    return null;
+                }
+
+                const isExpanded = expandedId === bet.id;
+                const isDraft = bet.status === 'Rascunho';
+                const { totalStake, totalReturn, profit, isDoubleGreen } = calculateBetStats(bet);
+
+                console.log("✅ About to render card for:", bet.event);
+
+                return (
+                    <div
+                        key={bet.id}
+                        className="relative"
+                    >
+                        <Card
+                            className={`
+overflow-hidden border-none bg-surface transition-all duration-300 hover:border-white/10 hover:-translate-y-0.5 hover:shadow-lg select-none cursor-pointer
+                            ${isDraft ? 'border-dashed border-2 border-gray-600/50 opacity-90' : ''}
+`}
+                            onClick={() => { if (!longPressId) setExpandedId(isExpanded ? null : bet.id); }}
+                            onMouseDown={(e) => handlePressStart(bet.id, e)}
+                            onMouseMove={handlePressMove}
+                            onMouseUp={handlePressEnd}
+                            onMouseLeave={handlePressEnd}
+                            onTouchStart={(e) => handlePressStart(bet.id, e)}
+                            onTouchMove={handlePressMove}
+                            onTouchEnd={handlePressEnd}
+                        >
+                            <div className="p-4">
+                                <div
+                                    className="flex flex-col md:flex-row md:items-center gap-4 hover:bg-white/5 transition-colors -mx-4 -mt-4 p-4 rounded-t-xl"
+                                >
+                                    <div className="flex items-center gap-3 flex-1">
+                                        {renderBookmakerLogo(bet.mainBookmakerId, 'md')}
+
+                                        <div>
+                                            <h4 className="font-semibold text-white text-base flex items-center gap-2">
+                                                {bet.event}
+                                                {isDraft && <span className="text-[9px] bg-yellow-500/20 text-yellow-500 border border-yellow-500/30 px-1.5 py-0.5 rounded ml-2 font-bold tracking-wider">RASCUNHO</span>}
+                                                {isDoubleGreen && <span className="text-[9px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded ml-2 font-bold tracking-wider flex items-center gap-1"><Copy size={8} /> 2X</span>}
+                                            </h4>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className="text-xs text-textMuted">{new Date(bet.date).toLocaleDateString('pt-BR')}</span>
+                                                {bet.promotionType && bet.promotionType !== 'Nenhuma' && (() => {
+                                                    // Try exact match first
+                                                    let promo = promotions.find(p => p.name === bet.promotionType);
+                                                    // If not found, try case-insensitive match
+                                                    if (!promo) {
+                                                        promo = promotions.find(p =>
+                                                            p.name.toLowerCase() === bet.promotionType.toLowerCase()
+                                                        );
+                                                    }
+                                                    // If still not found, try partial match (handles "Super Odd" vs "Super Odds")
+                                                    if (!promo) {
+                                                        promo = promotions.find(p =>
+                                                            p.name.toLowerCase().includes(bet.promotionType.toLowerCase()) ||
+                                                            bet.promotionType.toLowerCase().includes(p.name.toLowerCase())
+                                                        );
+                                                    }
+                                                    const color = promo?.color || '#8B5CF6';
+                                                    return (
+                                                        <Badge color={color}>
+                                                            {bet.promotionType}
+                                                        </Badge>
+                                                    );
+                                                })()}
+                                                {bet.notes && (
+                                                    <div className="flex items-center gap-1 text-xs text-textMuted" title="Tem anotações">
+                                                        <StickyNote size={12} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto mt-2 md:mt-0">
+                                        <div className="text-right hidden sm:block">
+                                            <p className="text-[10px] text-textMuted uppercase font-bold">Apostado</p>
+                                            <p className="font-bold text-sm text-white">
+                                                <MoneyDisplay value={totalStake} privacyMode={settings.privacyMode} />
+                                            </p>
+                                        </div>
+                                        <div className="text-left">
+                                            <p className="text-[10px] text-textMuted uppercase font-bold">Lucro/Prejuízo</p>
+                                            <p className={`font-bold text-sm ${profit >= 0 && bet.status !== 'Pendente' && !isDraft ? 'text-[#6ee7b7]' : ((bet.status === 'Pendente' || isDraft) ? 'text-textMuted' : 'text-[#ff0100]')}`}>
+                                                {(bet.status === 'Pendente' || isDraft) ? '--' : <MoneyDisplay value={Math.abs(profit)} privacyMode={settings.privacyMode} />}
+                                            </p>
+                                            {bet.extraGain !== undefined && bet.extraGain !== 0 && (
+                                                <p className={`text-[10px] font-medium mt-0.5 ${bet.extraGain > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                    {bet.extraGain > 0 ? '+' : ''}<MoneyDisplay value={bet.extraGain} privacyMode={settings.privacyMode} /> (Extra)
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <div className="flex items-center gap-3">
+                                            {renderStatusBadge(bet.status)}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div
+                                    className="flex items-center justify-between gap-2 pt-3 mt-1 border-t border-white/5"
+                                >
+                                    <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                                        <ChevronDown size={20} className="text-textMuted" />
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {deleteId === bet.id ? (
+                                            <div className="flex items-center gap-2 animate-in slide-in-from-right-2 duration-200">
+                                                <span className="text-[10px] text-danger font-bold uppercase mr-1">Confirmar Exclusão?</span>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); confirmDelete(); }}
+                                                    className="p-1.5 px-3 bg-danger text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm flex items-center gap-1 text-xs font-bold"
+                                                    title="Confirmar"
+                                                >
+                                                    <Check size={14} /> Sim
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); cancelDelete(); }}
+                                                    className="p-1.5 px-3 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors shadow-sm flex items-center gap-1 text-xs font-bold"
+                                                    title="Cancelar"
+                                                >
+                                                    <X size={14} /> Não
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleDuplicate(bet); }}
+                                                    className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5 group/btn"
+                                                    title="Duplicar"
+                                                >
+                                                    <Copy size={16} />
+                                                    <span className="text-[10px] font-medium group-hover/btn:text-white hidden sm:inline">Duplicar</span>
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleEdit(bet); }}
+                                                    className="p-2 text-gray-500 hover:text-primary hover:bg-white/5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5 group/btn"
+                                                    title="Editar"
+                                                >
+                                                    <Edit2 size={16} />
+                                                    <span className="text-[10px] font-medium group-hover/btn:text-primary hidden sm:inline">Editar</span>
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); requestDelete(bet.id); }}
+                                                    className="p-2 text-gray-500 hover:text-danger hover:bg-white/5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5 group/btn"
+                                                    title="Excluir"
+                                                >
+                                                    <Trash2 size={16} />
+                                                    <span className="text-[10px] font-medium group-hover/btn:text-danger hidden sm:inline">Excluir</span>
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {isExpanded && (
+                                <div className="bg-black/20 p-4 border-t border-white/5 animate-in slide-in-from-top-2" onClick={(e) => e.stopPropagation()}>
+                                    <h5 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-3 ml-1">Coberturas & Entradas</h5>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {bet.coverages.map(cov => {
+                                            const statusItem = statuses.find(s => s.name === cov.status);
+                                            const statusColor = statusItem ? statusItem.color : '#fbbf24';
+
+                                            return (
+                                                <div key={cov.id} className="bg-background rounded-lg p-3 border border-white/5 relative hover:border-white/20 transition-colors">
+                                                    <div
+                                                        className="absolute left-0 top-0 bottom-0 w-1"
+                                                        style={{ backgroundColor: statusColor }}
+                                                    />
+
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <div className="flex items-center gap-2">
+                                                            {renderBookmakerLogo(cov.bookmakerId, 'sm')}
+                                                            <span className="text-xs font-bold text-white">{getBookmaker(cov.bookmakerId)?.name}</span>
+                                                        </div>
+                                                        {editingId === `${bet.id}-${cov.id}-status` ? (
+                                                            <div onClick={(e) => e.stopPropagation()}>
+                                                                <Dropdown
+                                                                    options={statusOptions}
+                                                                    value={editingValue}
+                                                                    onChange={(value) => saveEdit(bet.id, cov.id, 'status', value)}
+                                                                    className="min-w-[120px]"
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <div
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setEditingId(`${bet.id}-${cov.id}-status`);
+                                                                    setEditingValue(cov.status);
+                                                                }}
+                                                                className="cursor-pointer hover:opacity-80 transition-opacity"
+                                                                title="Clique para alterar status"
+                                                            >
+                                                                {renderStatusBadge(cov.status)}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {editingId === `${bet.id}-${cov.id}-market` ? (
+                                                        <textarea
+                                                            className="w-full bg-[#0d1121] border border-primary text-white rounded-lg py-2 px-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 mb-3"
+                                                            value={editingValue}
+                                                            onChange={(e) => setEditingValue(e.target.value)}
+                                                            onBlur={() => saveEdit(bet.id, cov.id, 'market', editingValue)}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Escape') {
+                                                                    setEditingId(null);
+                                                                }
+                                                            }}
+                                                            autoFocus
+                                                            rows={3}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        />
+                                                    ) : (
+                                                        <p
+                                                            className="text-sm text-gray-400 mb-3 pl-1 break-words whitespace-pre-wrap cursor-pointer hover:text-gray-300 transition-colors"
+                                                            onDoubleClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setEditingId(`${bet.id}-${cov.id}-market`);
+                                                                setEditingValue(cov.market);
+                                                            }}
+                                                            title="Duplo clique para editar"
+                                                        >
+                                                            {cov.market}
+                                                        </p>
+                                                    )}
+
+                                                    <div className="flex justify-between items-end border-t border-white/5 pt-2">
+                                                        <div>
+                                                            <span className="text-[10px] text-textMuted uppercase font-bold block">ODD</span>
+                                                            {editingId === `${bet.id}-${cov.id}-odd` ? (
+                                                                <input
+                                                                    type="tel"
+                                                                    className="bg-[#0d1121] border border-primary text-white rounded px-2 py-1 text-lg font-bold w-20 focus:outline-none"
+                                                                    value={editingValue}
+                                                                    onChange={(e) => setEditingValue(e.target.value)}
+                                                                    onBlur={() => {
+                                                                        const val = parseFloat(editingValue);
+                                                                        saveEdit(bet.id, cov.id, 'odd', isNaN(val) ? 0 : val);
+                                                                    }}
+                                                                    onKeyDown={(e) => {
+                                                                        if (e.key === 'Enter') {
+                                                                            const val = parseFloat(editingValue);
+                                                                            saveEdit(bet.id, cov.id, 'odd', isNaN(val) ? 0 : val);
+                                                                        } else if (e.key === 'Escape') {
+                                                                            setEditingId(null);
+                                                                        }
+                                                                    }}
+                                                                    autoFocus
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                />
+                                                            ) : (
+                                                                <span
+                                                                    className="font-bold text-blue-400 text-lg cursor-pointer hover:text-blue-300 transition-colors"
+                                                                    onDoubleClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setEditingId(`${bet.id}-${cov.id}-odd`);
+                                                                        setEditingValue(cov.odd);
+                                                                    }}
+                                                                    title="Duplo clique para editar"
+                                                                >
+                                                                    {cov.odd.toFixed(2)}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <span className="text-[10px] text-textMuted uppercase font-bold block">Stake</span>
+                                                            {editingId === `${bet.id}-${cov.id}-stake` ? (
+                                                                <input
+                                                                    type="tel"
+                                                                    className="bg-[#0d1121] border border-primary text-white rounded px-2 py-1 text-lg font-bold w-24 text-right focus:outline-none"
+                                                                    value={editingValue}
+                                                                    onChange={(e) => setEditingValue(e.target.value)}
+                                                                    onBlur={() => {
+                                                                        const val = parseFloat(editingValue);
+                                                                        saveEdit(bet.id, cov.id, 'stake', isNaN(val) ? 0 : val);
+                                                                    }}
+                                                                    onKeyDown={(e) => {
+                                                                        if (e.key === 'Enter') {
+                                                                            const val = parseFloat(editingValue);
+                                                                            saveEdit(bet.id, cov.id, 'stake', isNaN(val) ? 0 : val);
+                                                                        } else if (e.key === 'Escape') {
+                                                                            setEditingId(null);
+                                                                        }
+                                                                    }}
+                                                                    autoFocus
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                />
+                                                            ) : (
+                                                                <span
+                                                                    className="font-bold text-white cursor-pointer hover:text-gray-300 transition-colors"
+                                                                    onDoubleClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setEditingId(`${bet.id}-${cov.id}-stake`);
+                                                                        setEditingValue(cov.stake);
+                                                                    }}
+                                                                    title="Duplo clique para editar"
+                                                                >
+                                                                    <MoneyDisplay value={cov.stake} privacyMode={settings.privacyMode} />
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {bet.notes && (
+                                        <div className="mt-4 p-3 bg-[#FFAB00]/5 border border-[#FFAB00]/20 rounded-lg">
+                                            <div className="flex items-center gap-2 mb-1 text-[#FFAB00] text-xs font-bold">
+                                                <AlertCircle size={12} /> ANOTAÇÕES
+                                            </div>
+                                            <p className="text-sm text-textMuted">{bet.notes}</p>
+                                        </div>
+                                    )}
+
+                                    {bet.photos && bet.photos.length > 0 && (
+                                        <div className="mt-4">
+                                            <div className="flex items-center gap-2 mb-2 text-primary text-xs font-bold">
+                                                <ImageIcon size={12} /> FOTOS
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {bet.photos.map((photo, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            openImageViewer(bet.photos || [], idx);
+                                                        }}
+                                                        className="w-16 h-16 rounded border border-white/10 overflow-hidden cursor-zoom-in hover:scale-110 transition-transform hover:border-primary bg-black/50"
+                                                    >
+                                                        <img src={photo} alt="thumb" className="w-full h-full object-cover" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </Card>
+                    </div>
+                );
+            })}
+
+            {filteredBets.length === 0 && (
+                <div className="text-center py-12 text-textMuted">
+                    <p>Nenhuma aposta encontrada em {MONTHS[currentDate.getMonth()].toLowerCase()}.</p>
+                    <button
+                        onClick={() => {
+                            setIsEditing(false);
+                            handleOpenNew();
+                        }}
+                        className="text-primary hover:underline text-sm font-bold mt-2"
+                    >
+                        Criar aposta neste mês
+                    </button>
+                </div>
+            )}
+        </div>
+
+        <Modal
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+            title={isEditing ? "Editar Aposta" : "Nova Aposta"}
+            footer={
+                <div className="flex justify-end gap-3 w-full">
+                    <Button variant="neutral" onClick={handleCloseModal} disabled={isUploading}>Cancelar</Button>
+                    <Button onClick={handleSave} disabled={isUploading}>
+                        {isUploading ? (
+                            <>
+                                <Loader2 size={16} className="animate-spin" />
+                                <span>Salvando...</span>
+                            </>
+                        ) : (
+                            isEditing ? "Salvar Alterações" : "Adicionar Aposta"
+                        )}
+                    </Button>
+                </div>
+            }
+        >
+            <div className="space-y-5">
+                <div onClick={() => setIsDatePickerOpen(true)}>
+                    <Input
+                        label="Data"
+                        value={new Date(formData.date + 'T12:00:00').toLocaleDateString('pt-BR')}
+                        readOnly
+                        className="cursor-pointer"
+                        icon={<Calendar size={18} />}
+                    />
+                </div>
+                <SingleDatePickerModal
+                    isOpen={isDatePickerOpen}
+                    onClose={() => setIsDatePickerOpen(false)}
+                    date={formData.date ? parseDate(formData.date) : new Date()}
+                    onSelect={(date) => {
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const dateStr = `${year}-${month}-${day}`;
+                        dispatch({ type: 'UPDATE_FIELD', field: 'date', value: dateStr });
+                        setIsDatePickerOpen(false);
+                    }}
+                />
+
+                <Dropdown
+                    label="Casa Principal"
+                    placeholder="Ex: Bet365"
+                    options={bookmakerOptions}
+                    value={formData.mainBookmakerId}
+                    onChange={value => dispatch({ type: 'UPDATE_FIELD', field: 'mainBookmakerId', value })}
+                    isSearchable={true}
+                    searchPlaceholder="Buscar casa..."
+                />
+
+                <Input
+                    label="Procedimento / Evento"
+                    placeholder="Ex: Múltipla Brasileirão"
+                    value={formData.event}
+                    onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'event', value: e.target.value })}
+                />
+
+                <Dropdown
+                    label="Promoção (Opcional)"
+                    placeholder="Nenhuma"
+                    options={promotionOptions}
+                    value={formData.promotionType || 'Nenhuma'}
+                    onChange={value => dispatch({ type: 'UPDATE_FIELD', field: 'promotionType', value })}
+                />
+
+                <Dropdown
+                    label="Status Geral"
+                    options={statusOptions}
+                    value={formData.status}
+                    onChange={value => dispatch({ type: 'UPDATE_FIELD', field: 'status', value })}
+                />
+
+                <div className="h-px bg-white/5 my-2" />
+
+                <div>
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-bold text-primary uppercase tracking-wider">Coberturas</h3>
+                        <Button size="sm" variant="neutral" onClick={addCoverage} className="text-xs h-8 px-3">
+                            <Plus size={14} /> Adicionar
+                        </Button>
+                    </div>
+
+                    <div className="space-y-4">
+                        {formData.coverages.map((cov, index) => {
+                            const statusItem = statuses.find(s => s.name === cov.status);
+                            const statusColor = statusItem ? statusItem.color : '#fbbf24';
+
+                            return (
+                                <div key={cov.id} className="relative bg-[#0d1121] rounded-lg p-4 border border-white/5 overflow-hidden shadow-sm">
+                                    <div
+                                        className="absolute left-0 top-0 bottom-0 w-1"
+                                        style={{ backgroundColor: statusColor }}
+                                    />
+
+                                    <div className="flex justify-between items-start mb-4 pl-2">
+                                        <span className="text-[10px] font-bold text-textMuted uppercase tracking-wider">COBERTURA {index + 1}</span>
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={() => moveCoverage(cov.id, 'up')}
+                                                disabled={index === 0}
+                                                className="text-gray-600 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed p-1"
+                                                title="Mover para cima"
+                                            >
+                                                <ChevronUp size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => moveCoverage(cov.id, 'down')}
+                                                disabled={index === formData.coverages.length - 1}
+                                                className="text-gray-600 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed p-1"
+                                                title="Mover para baixo"
+                                            >
+                                                <ChevronDown size={16} />
+                                            </button>
+                                            <div className="w-px h-3 bg-white/10 mx-1" />
+                                            <button
+                                                onClick={() => duplicateCoverage(cov.id)}
+                                                className="text-gray-600 hover:text-white transition-colors p-1"
+                                                title="Duplicar"
+                                            >
+                                                <Copy size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => removeCoverage(cov.id)}
+                                                className="text-gray-600 hover:text-danger transition-colors p-1"
+                                                title="Excluir"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3 pl-2">
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] text-textMuted uppercase font-bold">Casa</label>
+                                            <Dropdown
+                                                options={bookmakerOptions}
+                                                value={cov.bookmakerId}
+                                                onChange={value => updateCoverage(cov.id, 'bookmakerId', value)}
+                                                placeholder="Casa"
+                                                className="text-xs"
+                                                isSearchable={true}
+                                                searchPlaceholder="Buscar casa..."
+                                            />
+                                        </div>
+                                        <Input
+                                            label="Mercado"
+                                            className="text-xs py-1.5"
+                                            placeholder="Mercado"
+                                            value={cov.market}
+                                            onChange={e => updateCoverage(cov.id, 'market', e.target.value)}
+                                        />
+                                        <Input
+                                            label="ODD"
+                                            type="tel"
+                                            inputMode="decimal"
+                                            className="text-xs py-1.5"
+                                            placeholder="0.00"
+                                            value={cov.odd === 0 ? '' : cov.odd.toFixed(2)}
+                                            onChange={e => {
+                                                const digits = e.target.value.replace(/\D/g, '');
+                                                if (digits === '') {
+                                                    updateCoverage(cov.id, 'odd', 0);
+                                                } else {
+                                                    const val = parseInt(digits) / 100;
+                                                    updateCoverage(cov.id, 'odd', val);
+                                                }
+                                            }}
+                                        />
+                                        <Input
+                                            label="Stake"
+                                            type="tel"
+                                            inputMode="numeric"
+                                            className="text-xs py-1.5"
+                                            placeholder="R$ 0,00"
+                                            value={cov.stake.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                            onChange={e => {
+                                                const value = e.target.value.replace(/\D/g, '');
+                                                const numberValue = parseInt(value, 10) / 100;
+                                                updateCoverage(cov.id, 'stake', isNaN(numberValue) ? 0 : numberValue);
+                                            }}
+                                        />
+
+                                        <div className="col-span-2">
+                                            <Input
+                                                label={cov.status === 'Cashout' ? "Valor do Cashout" : "Retorno Total (Stake + Lucro)"}
+                                                type="tel"
+                                                inputMode="numeric"
+                                                className={`text-xs py-1.5 ${(cov.manualReturn !== undefined && cov.manualReturn > 0) ? 'text-white font-bold' : 'text-gray-400'}`}
+                                                placeholder="Auto-calc..."
+                                                value={
+                                                    (cov.manualReturn !== undefined && cov.manualReturn > 0)
+                                                        ? cov.manualReturn.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+                                                        : (cov.stake && cov.odd ? (() => {
+                                                            const isFirstCoverage = index === 0;
+                                                            const isFreebetConversion = formData.promotionType?.toLowerCase().includes('conversão freebet');
+                                                            let calculatedReturn = cov.stake * cov.odd;
+
+                                                            if (isFreebetConversion && isFirstCoverage) {
+                                                                calculatedReturn -= cov.stake;
+                                                            }
+
+                                                            return calculatedReturn.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                                                        })() : '')
+                                                }
+                                                onChange={e => {
+                                                    const rawValue = e.target.value;
+                                                    const value = rawValue.replace(/\D/g, '');
+
+                                                    // If field is completely empty, reset to auto-calc
+                                                    if (rawValue === '' || value === '' || value === '0') {
+                                                        updateCoverage(cov.id, 'manualReturn', undefined);
+                                                    } else {
+                                                        const numberValue = parseInt(value, 10) / 100;
+                                                        updateCoverage(cov.id, 'manualReturn', numberValue);
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+
+                                        <div className="col-span-2 mt-1">
+                                            <label className="text-[10px] text-textMuted uppercase font-bold block mb-2">Status Cobertura</label>
+                                            <Dropdown
+                                                options={statusOptions}
+                                                value={cov.status}
+                                                onChange={value => updateCoverage(cov.id, 'status', value)}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                <div className="h-px bg-white/5 my-2" />
+
+                <div className="space-y-3">
+                    <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Ganho Extra (Opcional)</label>
+                    <Input
+                        type="tel"
+                        inputMode="decimal"
+                        prefix="R$"
+                        placeholder="0,00"
+                        value={formData.extraGain !== undefined && formData.extraGain !== 0 ? (formData.extraGain >= 0 ? formData.extraGain.toFixed(2) : formData.extraGain.toFixed(2)) : ''}
+                        onChange={e => {
+                            const value = e.target.value.replace(/[^\d-]/g, '');
+                            if (value === '' || value === '-') {
+                                dispatch({ type: 'UPDATE_FIELD', field: 'extraGain', value: undefined });
+                            } else {
+                                const numberValue = parseInt(value, 10) / 100;
+                                dispatch({ type: 'UPDATE_FIELD', field: 'extraGain', value: numberValue });
+                            }
+                        }}
+                    />
+                    <p className="text-[10px] text-gray-500">Adicione um valor extra ao lucro/prejuízo (ex: bônus, cashback). Use valores negativos para descontos.</p>
+                </div>
+
+                <div className="space-y-3">
+                    <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Anotações & Mídia</label>
+
+                    <textarea
+                        className="w-full bg-[#0d1121] border border-white/10 focus:border-primary text-white rounded-lg py-3 px-4 placeholder-gray-600 focus:outline-none transition-colors text-sm min-h-[100px] resize-none shadow-inner"
+                        placeholder="Detalhes adicionais..."
+                        value={formData.notes}
+                        onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'notes', value: e.target.value })}
+                    />
+
+                    <div className="p-4 bg-[#0d1121] border border-dashed border-white/10 rounded-xl">
+                        <div className="flex justify-between items-center mb-3">
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase cursor-pointer hover:text-white transition-colors"
+                            >
+                                <div className="p-2 bg-white/5 rounded-full"><Paperclip size={14} /></div>
+                                <span>Adicionar Fotos</span>
+                            </button>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                multiple
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                                onChange={handlePhotoSelect}
+                            />
+                            <span className="text-[10px] text-gray-600">Sem limite de tamanho</span>
+                        </div>
+
+                        {tempPhotos.length > 0 && (
+                            <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 mt-2">
+                                {tempPhotos.map((photo, index) => (
+                                    <div
+                                        key={index}
+                                        onClick={() => openImageViewer(tempPhotos.map(p => p.url), index)}
+                                        className="relative aspect-square rounded-lg overflow-hidden border border-white/10 group bg-black/40 cursor-pointer"
+                                    >
+                                        <img src={photo.url} alt="Preview" className="w-full h-full object-cover" />
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                removePhoto(index);
+                                            }}
+                                            className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full hover:bg-danger transition-colors opacity-0 group-hover:opacity-100"
+                                        >
+                                            <X size={10} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </Modal>
+
+        {/* Floating Nova Aposta Button */}
+        {showFloatingButton && (
+            <button
+                onClick={handleOpenNew}
+                className={`fixed bottom-36 right-6 z-40 p-3 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 transition-all duration-500 active:scale-95 shadow-lg ${isFabVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
+                title="Nova Aposta"
+            >
+                <Plus size={24} strokeWidth={3} />
+            </button>
+        )}
+    </div>
+);
 };
 
 export default MyBets;
