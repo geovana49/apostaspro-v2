@@ -119,72 +119,92 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const smartImportInputRef = useRef<HTMLInputElement>(null);
 
     const handleSmartImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+        const files = Array.from(e.target.files || []) as File[];
+        if (files.length === 0) return;
 
         setIsAnalyzing(true);
         try {
-            // Compress first
-            const compressedBase64 = await compressImages([file]);
-            const imageBase64 = compressedBase64[0];
+            // Compress all images
+            const compressedBase64s = await compressImages(files);
 
-            // Analyze
-            const result = await analyzeImage(imageBase64);
+            // Analyze all images in parallel
+            const analysisPromises = compressedBase64s.map(base64 => analyzeImage(base64));
+            const results = await Promise.all(analysisPromises);
 
-            if (result.type !== 'bet' && result.confidence < 0.6) {
-                alert("A IA não tem certeza se isso é uma aposta. Verifique os dados.");
+            // Validate results
+            const validResults = results.filter(r => r.type === 'bet' || r.confidence > 0.4);
+            if (validResults.length === 0) {
+                alert("Não foi possível identificar apostas nas imagens. Tente novamente.");
+                return;
             }
 
-            const data = result.data;
+            // Use the first valid result for common fields (Event, Date, Main Bookmaker)
+            const mainData = validResults[0].data;
 
-            // Map Bookmaker
-            const foundBookmaker = bookmakers.find(b =>
-                b.name.toLowerCase().includes(data.bookmaker?.toLowerCase() || '') ||
-                (data.bookmaker && b.name.toLowerCase().includes(data.bookmaker.toLowerCase()))
-            );
+            // Map Main Bookmaker
+            const findBookmaker = (name: string) => {
+                return bookmakers.find(b =>
+                    b.name.toLowerCase().includes(name?.toLowerCase() || '') ||
+                    (name && b.name.toLowerCase().includes(name.toLowerCase()))
+                );
+            };
 
-            const bookmakerId = foundBookmaker?.id || settings.defaultBookmakerId || bookmakers[0]?.id || '';
+            const mainBookmaker = findBookmaker(mainData.bookmaker);
+            const mainBookmakerId = mainBookmaker?.id || settings.defaultBookmakerId || bookmakers[0]?.id || '';
 
-            // Map Status
-            let mappedStatus: any = 'Pendente';
-            if (data.status) {
-                const s = data.status.toLowerCase();
-                if (s.includes('green') || s.includes('ganhou') || s.includes('venceu')) mappedStatus = 'Green';
-                else if (s.includes('red') || s.includes('perdeu')) mappedStatus = 'Red';
-                else if (s.includes('anulad') || s.includes('devolv')) mappedStatus = 'Anulada';
-                else if (s.includes('cash')) mappedStatus = 'Cashout';
-            }
+            // Generate Coverages from ALL results
+            const newCoverages: Coverage[] = validResults.map((result, index) => {
+                const data = result.data;
+                const bk = findBookmaker(data.bookmaker);
+                const bkId = bk?.id || (index === 0 ? mainBookmakerId : '');
 
-            // Create Coverages
-            const newCoverage: Coverage = {
-                id: Date.now().toString(),
-                bookmakerId: bookmakerId,
-                market: data.market || data.description || 'Mercado Detectado',
-                odd: Number(data.odds) || 0,
-                stake: Number(data.value) || settings.defaultStake || 0,
-                status: mappedStatus
-            }
+                // Map Status
+                let mappedStatus: any = 'Pendente';
+                if (data.status) {
+                    const s = data.status.toLowerCase();
+                    if (s.includes('green') || s.includes('ganhou') || s.includes('venceu')) mappedStatus = 'Green';
+                    else if (s.includes('red') || s.includes('perdeu')) mappedStatus = 'Red';
+                    else if (s.includes('anulad') || s.includes('devolv')) mappedStatus = 'Anulada';
+                    else if (s.includes('cash')) mappedStatus = 'Cashout';
+                }
+
+                return {
+                    id: Date.now().toString() + index,
+                    bookmakerId: bkId,
+                    market: data.market || data.description || 'Mercado Detectado',
+                    odd: Number(data.odds) || 0,
+                    stake: Number(data.value) || (index === 0 ? settings.defaultStake || 0 : 0),
+                    status: mappedStatus
+                };
+            });
+
+            // Determine Overall Status
+            const overallStatus = 'Pendente';
 
             const newForm: FormState = {
-                id: undefined, // New ID will be generated on save
-                date: data.date ? new Date(data.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-                mainBookmakerId: bookmakerId,
-                event: data.match || data.description || 'Evento Detectado',
+                id: undefined,
+                date: mainData.date ? new Date(mainData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                mainBookmakerId: mainBookmakerId,
+                event: mainData.match || mainData.description || 'Evento Detectado',
                 promotionType: 'Nenhuma',
-                status: mappedStatus,
-                coverages: [newCoverage],
-                notes: `Importado via IA - Confiança: ${(result.confidence * 100).toFixed(0)}%`,
+                status: overallStatus,
+                coverages: newCoverages,
+                notes: `Importado via IA - ${validResults.length} imagens processadas`,
                 isDoubleGreen: false
             };
 
             setIsEditing(false);
             dispatch({ type: 'SET_FORM', payload: newForm });
-            setTempPhotos([{ url: imageBase64 }]); // Attach the print automatically
+
+            // Add photos to viewer immediately
+            const photoObjects = compressedBase64s.map(url => ({ url }));
+            setTempPhotos(photoObjects);
+
             setIsModalOpen(true);
 
         } catch (error: any) {
             console.error('Smart Import Error:', error);
-            alert(`Erro na importação inteligente: ${error.message}`);
+            alert(`Erro na importação: ${error.message}`);
         } finally {
             setIsAnalyzing(false);
             if (smartImportInputRef.current) smartImportInputRef.current.value = '';
@@ -944,6 +964,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                         ref={smartImportInputRef}
                         onChange={handleSmartImport}
                         accept="image/*"
+                        multiple
                         className="hidden"
                     />
                     <div className="flex gap-2">
