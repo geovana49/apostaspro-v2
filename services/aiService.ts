@@ -57,6 +57,7 @@ export async function analyzeImage(imageBase64: string): Promise<AIAnalysisResul
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${HF_API_KEY}`,
+                    'X-Wait-For-Model': 'true'
                 },
                 body: blob
             }
@@ -77,6 +78,7 @@ export async function analyzeImage(imageBase64: string): Promise<AIAnalysisResul
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${HF_API_KEY}`,
+                    'X-Wait-For-Model': 'true'
                 },
                 body: blob
             }
