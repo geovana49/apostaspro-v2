@@ -10,29 +10,10 @@ export default async function handler(req, res) {
     const GEMINI_KEY = process.env.VITE_GEMINI_API_KEY;
 
     if (req.method === 'GET') {
-        let availableModels = [];
-        let error = null;
-        if (GEMINI_KEY) {
-            try {
-                const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-                // Using the listModels method to see what's actually available
-                const listResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_KEY}`);
-                if (listResponse.ok) {
-                    const data = await listResponse.json();
-                    availableModels = data.models?.map(m => m.name) || [];
-                } else {
-                    error = `HTTP ${listResponse.status}: ${await listResponse.text()}`;
-                }
-            } catch (e) {
-                error = e.message;
-            }
-        }
         return res.status(200).json({
             status: 'online',
-            model_proxy: 'Gemini Resilient Diagnostics',
             env_check: GEMINI_KEY ? 'Key configured ✓' : 'Key MISSING ✗',
-            api_available_models: availableModels,
-            error: error
+            instructions: "Use POST with {image: 'base64'} to analyze."
         });
     }
 
@@ -40,69 +21,77 @@ export default async function handler(req, res) {
 
     try {
         const { image } = req.body || {};
-
         if (!image) return res.status(400).json({ error: 'Nenhuma imagem recebida.' });
-        if (!GEMINI_KEY) return res.status(500).json({ error: 'Chave do Gemini faltando na Vercel (VITE_GEMINI_API_KEY).' });
-
-        const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-
-        // Some environments require 'models/' prefix, others don't. We'll try both.
-        const modelNames = [
-            "gemini-1.5-flash",
-            "models/gemini-1.5-flash",
-            "gemini-1.5-flash-8b",
-            "models/gemini-1.5-flash-8b",
-            "gemini-1.5-pro",
-            "gemini-2.0-flash-exp"
-        ];
-
-        let lastError = null;
-        let text = null;
-        let usedModel = null;
+        if (!GEMINI_KEY) return res.status(500).json({ error: 'Chave do Gemini faltando na Vercel.' });
 
         const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
-        const prompt = "Analise este print de aposta. Extraia: Casa de Apostas, Valor Apostado (Stake), ODD, Evento/Jogo e Mercado. Se for um bônus ou lucro, identifique também. Retorne APENAS um texto curto com os dados encontrados.";
 
-        for (const modelName of modelNames) {
+        // Strategy 1: Attempt via SDK with multiple models
+        console.log("Strategy 1: SDK");
+        const genAI = new GoogleGenerativeAI(GEMINI_KEY);
+        const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"];
+
+        for (const modelName of modelsToTry) {
             try {
-                console.log(`Diagnostic: Testing ${modelName}`);
                 const model = genAI.getGenerativeModel({ model: modelName });
                 const result = await model.generateContent([
-                    prompt,
-                    {
-                        inlineData: {
-                            data: base64Data,
-                            mimeType: "image/jpeg"
-                        }
-                    }
+                    "Analise este print de aposta. Extraia dados como Casa, Odd e Valor.",
+                    { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
                 ]);
-
                 const response = await result.response;
-                text = response.text();
-                if (text) {
-                    usedModel = modelName;
-                    break;
-                }
-            } catch (error) {
-                lastError = error;
-                // If it's a 404, we continue to the next one
-                if (error.message?.includes('404')) continue;
-                // If it's another error (like quota or safety), we might want to know
-                console.warn(`Model ${modelName} failed with: ${error.message}`);
+                return res.status(200).json({
+                    description: `Sucesso via SDK (${modelName})`,
+                    extractedText: response.text()
+                });
+            } catch (e) {
+                console.warn(`SDK ${modelName} failed: ${e.message}`);
             }
         }
 
-        if (!text) {
-            throw new Error(`Infelizmente todos os modelos de IA (1.5 Flash, 8b, Pro, 2.0) retornaram 'Não Encontrado' (404). Isso geralmente indica um problema com a permissão da Chave de API ou restrição regional da Vercel. Erro técnico: ${lastError?.message}`);
+        // Strategy 2: Attempt via Direct REST API (Legacy/Version Fallback)
+        console.log("Strategy 2: REST API (v1 and v1beta)");
+        const apiVersions = ["v1", "v1beta"];
+        for (const ver of apiVersions) {
+            try {
+                const url = `https://generativelanguage.googleapis.com/${ver}/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+                const resp = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: "Analise este print de aposta. Extraia dados como Casa, Odd e Valor." },
+                                { inlineData: { mimeType: "image/jpeg", data: base64Data } }
+                            ]
+                        }]
+                    })
+                });
+
+                if (resp.ok) {
+                    const data = await resp.json();
+                    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    return res.status(200).json({
+                        description: `Sucesso via REST (${ver})`,
+                        extractedText: text
+                    });
+                }
+            } catch (e) {
+                console.warn(`REST ${ver} failed: ${e.message}`);
+            }
         }
 
-        return res.status(200).json({
-            description: `Análise via ${usedModel}`,
-            extractedText: text
+        // ALL FAILED: Perform Final Diagnostic to help the developer
+        const listResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_KEY}`);
+        const listData = listResp.ok ? await listResp.json() : { error: "Failed to list models" };
+        const available = listData.models?.map(m => m.name.replace('models/', '')) || [];
+
+        return res.status(500).json({
+            error: "IA Indisponível (404). O seu projeto não parece ter acesso aos modelos padrão do Gemini.",
+            available_models_for_your_key: available,
+            diagnostic_tip: available.length > 0 ? `Tente usar um destes nomes: ${available.join(', ')}` : "Verifique se a API do Gemini está ativada no Google Cloud Console."
         });
 
     } catch (error) {
-        console.error('Gemini API Error:', error);
-        return res.status(500).json({ error: `Erro na IA: ${error.message}` });
+        return res.status(500).json({ error: error.message });
     }
 }
