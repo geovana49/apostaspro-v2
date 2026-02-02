@@ -45,10 +45,13 @@ export async function analyzeImage(imageBase64: string): Promise<AIAnalysisResul
 
     try {
         // Get the generative model (vision model for images)
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        // Using 'gemini-1.5-flash-latest' to resolve 404 errors.
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
 
-        // Remove data URL prefix if present
-        const base64Image = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+        // Extract mime type and data
+        const matches = imageBase64.match(/^data:(image\/\w+);base64,(.+)$/);
+        const mimeType = matches ? matches[1] : 'image/jpeg';
+        const base64Data = matches ? matches[2] : imageBase64.replace(/^data:image\/\w+;base64,/, '');
 
         const prompt = `Você é um assistente que analisa screenshots de apostas esportivas e ganhos/bônus.
 
@@ -83,8 +86,8 @@ Se não conseguir identificar algo, omita o campo.`;
             prompt,
             {
                 inlineData: {
-                    mimeType: 'image/jpeg',
-                    data: base64Image
+                    mimeType: mimeType,
+                    data: base64Data
                 }
             }
         ]);
