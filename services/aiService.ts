@@ -53,17 +53,24 @@ export async function analyzeImage(imageBase64: string): Promise<AIAnalysisResul
             throw new Error((errorData.error || `Erro no servidor: ${response.status}`) + details);
         }
 
-        const { description, extractedText } = await response.json();
-        console.log('[AI Service] Proxy response received.');
+        const { data } = await response.json();
+        console.log('[AI Service] Proxy structured response received:', data);
 
-        // Parse result using existing logic
-        const parsedData = parseTextForBetInfo(extractedText, description);
-
+        // Map the structured data directly
         return {
-            type: parsedData.type,
-            confidence: parsedData.confidence,
-            data: parsedData.data,
-            rawText: extractedText,
+            type: data.type === 'gain' ? 'gain' : 'bet',
+            confidence: 0.95, // High confidence for structured Gemini output
+            data: {
+                bookmaker: data.bookmaker,
+                value: data.stake,
+                odds: data.odds,
+                date: data.date,
+                description: data.market,
+                market: data.market,
+                match: data.event,
+                status: 'Yellow' // Pending by default
+            },
+            rawText: JSON.stringify(data),
             suggestions: []
         };
 

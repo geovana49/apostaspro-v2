@@ -10,11 +10,7 @@ export default async function handler(req, res) {
     const GEMINI_KEY = process.env.VITE_GEMINI_API_KEY;
 
     if (req.method === 'GET') {
-        return res.status(200).json({
-            status: 'online',
-            model_proxy: 'Gemini Final Alignment',
-            env_check: GEMINI_KEY ? 'Key configured ✓' : 'Key MISSING ✗'
-        });
+        return res.status(200).json({ status: 'online', model_proxy: 'Gemini JSON Proxy' });
     }
 
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -26,38 +22,41 @@ export default async function handler(req, res) {
 
         const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
 
-        // The user's diagnostics confirmed these models are available for their key
-        const modelNamesToTry = [
-            "gemini-2.0-flash",
-            "gemini-2.5-flash",
-            "gemini-flash-latest",
-            "gemini-2.0-flash-lite"
-        ];
-
         const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-        let text = null;
+        const modelNamesToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.0-flash-lite"];
+
+        // Stronger prompt for structured JSON
+        const prompt = `Analise este print de aposta e extraia os dados exatamente no formato JSON abaixo:
+{
+  "bookmaker": "Nome da Casa de Apostas",
+  "stake": 0.00,
+  "odds": 0.00,
+  "market": "Mercado da aposta (ex: Vencedor do Jogo)",
+  "event": "Nome do Jogo/Evento",
+  "date": "Data se houver (DD/MM/AAAA)",
+  "type": "bet" ou "gain" (se for ganho/lucro puro)
+}
+Retorne APENAS o JSON, sem explicações.`;
+
+        let aiResult = null;
         let usedModel = null;
         let lastError = null;
 
-        const prompt = "Analise este print de aposta. Extraia: Casa de Apostas, Valor Apostado (Stake), ODD, Evento/Jogo e Mercado. Se for um bônus ou lucro, identifique também. Retorne APENAS um texto curto com os dados encontrados.";
-
         for (const modelName of modelNamesToTry) {
             try {
-                console.log(`Final Attempt: Trying ${modelName}`);
-                const model = genAI.getGenerativeModel({ model: modelName });
+                const model = genAI.getGenerativeModel({
+                    model: modelName,
+                    generationConfig: { responseMimeType: "application/json" } // Force JSON output
+                });
                 const result = await model.generateContent([
                     prompt,
-                    {
-                        inlineData: {
-                            data: base64Data,
-                            mimeType: "image/jpeg"
-                        }
-                    }
+                    { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
                 ]);
 
                 const response = await result.response;
-                text = response.text();
+                const text = response.text();
                 if (text) {
+                    aiResult = JSON.parse(text);
                     usedModel = modelName;
                     break;
                 }
@@ -67,13 +66,14 @@ export default async function handler(req, res) {
             }
         }
 
-        if (!text) {
-            throw new Error(`Infelizmente a IA retornou erro mesmo com os nomes sugeridos pelo Google. Erro: ${lastError?.message}`);
+        if (!aiResult) {
+            throw new Error(`Falha na extração: ${lastError?.message}`);
         }
 
+        // Return structured data
         return res.status(200).json({
-            description: `Sucesso via ${usedModel}`,
-            extractedText: text
+            source: usedModel,
+            data: aiResult
         });
 
     } catch (error) {
