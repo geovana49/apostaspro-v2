@@ -1,4 +1,4 @@
-// AI Service using OpenAI GPT-4o-mini for image analysis
+// AI Service using Hugging Face Inference API for image analysis
 export interface AIAnalysisResult {
     type: 'bet' | 'gain' | 'unknown';
     confidence: number; // 0-1
@@ -25,109 +25,138 @@ export interface BookmakerExtraction {
     confidence: number;
 }
 
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || '';
+const HF_API_KEY = import.meta.env.VITE_HF_API_KEY || '';
 
 /**
- * Analyzes a bet screenshot using OpenAI GPT-4o-mini
+ * Analyzes a bet screenshot using Hugging Face Vision Models
  * @param imageBase64 - Base64 encoded image (with or without data URI prefix)
  * @returns Structured bet information
  */
 export async function analyzeImage(imageBase64: string): Promise<AIAnalysisResult> {
-    if (!OPENAI_API_KEY) {
-        throw new Error('API Key da OpenAI não configurada. Configure VITE_OPENAI_API_KEY no arquivo .env');
+    if (!HF_API_KEY) {
+        throw new Error('API Key do Hugging Face não configurada. Configure VITE_HF_API_KEY no arquivo .env');
     }
 
     try {
-        // Extract mime type and data
-        const matches = imageBase64.match(/^data:(image\/\w+);base64,(.+)$/);
-        const mimeType = matches ? matches[1] : 'image/jpeg';
-        const base64Data = matches ? matches[2] : imageBase64.replace(/^data:image\/\w+;base64,/, '');
+        // Extract base64 data
+        const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
 
-        const prompt = `Você é um assistente que analisa screenshots de apostas esportivas e ganhos/bônus.
+        // Convert base64 to blob
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'image/jpeg' });
 
-Analise esta imagem e identifique:
-1. Se é uma APOSTA (bet slip) ou GANHO EXTRA (bonus, cashback, freebet)
-2. Extraia os seguintes dados (se disponíveis):
-   - Casa de apostas (nome)
-   - Valor apostado ou ganho (número)
-   - Odds/cotação (se for aposta)
-   - Data (formato DD/MM/YYYY ou YYYY-MM-DD)
-   - Descrição/evento
-   - Status (verde=ganhou, vermelho=perdeu, amarelo=pendente)
+        // Use BLIP for image captioning (describes what's in the image)
+        const captionResponse = await fetch(
+            'https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large',
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${HF_API_KEY}`,
+                },
+                body: blob
+            }
+        );
 
-Responda APENAS em JSON neste formato exato:
-{
-  "type": "bet" ou "gain" ou "unknown",
-  "confidence": 0.0 a 1.0,
-  "data": {
-    "bookmaker": "nome da casa",
-    "value": número,
-    "odds": número (só para apostas),
-    "date": "DD/MM/YYYY",
-    "description": "descrição",
-    "status": "Green" ou "Red" ou "Yellow"
-  },
-  "rawText": "todo texto visível na imagem"
-}
-
-Se não conseguir identificar algo, omita o campo.`;
-
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENAI_API_KEY}`
-            },
-            body: JSON.stringify({
-                model: 'gpt-4o-mini',
-                messages: [
-                    {
-                        role: 'user',
-                        content: [
-                            {
-                                type: 'text',
-                                text: prompt
-                            },
-                            {
-                                type: 'image_url',
-                                image_url: {
-                                    url: `data:${mimeType};base64,${base64Data}`
-                                }
-                            }
-                        ]
-                    }
-                ],
-                max_tokens: 1000,
-                temperature: 0.3
-            })
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`OpenAI API Error: ${errorData.error?.message || response.statusText}`);
+        if (!captionResponse.ok) {
+            const error = await captionResponse.text();
+            throw new Error(`Hugging Face API Error: ${error}`);
         }
 
-        const data = await response.json();
-        const content = data.choices[0]?.message?.content || '{}';
+        const captionData = await captionResponse.json();
+        const description = captionData[0]?.generated_text || '';
 
-        // Parse JSON response
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        const jsonStr = jsonMatch ? jsonMatch[0] : content;
-        const result = JSON.parse(jsonStr);
+        // Use TrOCR for text extraction
+        const ocrResponse = await fetch(
+            'https://api-inference.huggingface.co/models/microsoft/trocr-base-printed',
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${HF_API_KEY}`,
+                },
+                body: blob
+            }
+        );
 
-        // Validate and return
+        let extractedText = '';
+        if (ocrResponse.ok) {
+            const ocrData = await ocrResponse.json();
+            extractedText = ocrData[0]?.generated_text || '';
+        }
+
+        // Parse the extracted text to find bet information
+        const parsedData = parseTextForBetInfo(extractedText, description);
+
         return {
-            type: result.type || 'unknown',
-            confidence: result.confidence || 0.5,
-            data: result.data || {},
-            rawText: result.rawText || '',
-            suggestions: result.suggestions || []
+            type: parsedData.type,
+            confidence: parsedData.confidence,
+            data: parsedData.data,
+            rawText: extractedText,
+            suggestions: []
         };
 
     } catch (error) {
-        console.error('Error analyzing image with OpenAI:', error);
+        console.error('Error analyzing image with Hugging Face:', error);
         throw new Error(`Erro ao analisar imagem: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
+}
+
+/**
+ * Parse extracted text to find bet information
+ */
+function parseTextForBetInfo(text: string, description: string): {
+    type: 'bet' | 'gain' | 'unknown';
+    confidence: number;
+    data: AIAnalysisResult['data'];
+} {
+    const lowerText = text.toLowerCase();
+    const lowerDesc = description.toLowerCase();
+
+    // Detect bookmaker
+    const bookmaker = extractBookmaker(text + ' ' + description);
+
+    // Detect type
+    let type: 'bet' | 'gain' | 'unknown' = 'unknown';
+    if (lowerText.includes('aposta') || lowerText.includes('bet') || lowerDesc.includes('bet')) {
+        type = 'bet';
+    } else if (lowerText.includes('ganho') || lowerText.includes('bonus') || lowerText.includes('cashback')) {
+        type = 'gain';
+    }
+
+    // Extract numbers (potential odds/values)
+    const numbers = text.match(/\d+[.,]\d+|\d+/g) || [];
+    const potentialOdds = numbers.find(n => {
+        const num = parseFloat(n.replace(',', '.'));
+        return num >= 1.01 && num <= 100;
+    });
+    const potentialValue = numbers.find(n => {
+        const num = parseFloat(n.replace(',', '.'));
+        return num >= 1 && num <= 100000;
+    });
+
+    // Extract date
+    const dateMatch = text.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+    const date = dateMatch ? `${dateMatch[1]}/${dateMatch[2]}/${dateMatch[3]}` : undefined;
+
+    // Detect status from colors (would need color analysis, defaulting to unknown)
+    const status = 'Yellow'; // Pending by default
+
+    return {
+        type,
+        confidence: bookmaker ? 0.7 : 0.5,
+        data: {
+            bookmaker: bookmaker?.name,
+            value: potentialValue ? parseFloat(potentialValue.replace(',', '.')) : undefined,
+            odds: potentialOdds ? parseFloat(potentialOdds.replace(',', '.')) : undefined,
+            date,
+            description: description || text.substring(0, 100),
+            status
+        }
+    };
 }
 
 /**
