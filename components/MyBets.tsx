@@ -153,8 +153,8 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             for (const base64 of compressedBase64s) {
                 const result = await analyzeImage(base64);
                 results.push(result);
-                // Optional: add a tiny delay if needed
-                if (compressedBase64s.length > 1) await new Promise(r => setTimeout(r, 800));
+                // Optimized delay to avoid 429 errors (2 seconds between images)
+                if (compressedBase64s.length > 1) await new Promise(r => setTimeout(r, 2000));
             }
 
             // Validate results
