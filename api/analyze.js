@@ -15,18 +15,23 @@ export default async function handler(req, res) {
         if (GEMINI_KEY) {
             try {
                 const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-                // List models is not directly exposed in the same way in all SDK versions, 
-                // but we can try to probe.
-                availableModels = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro", "gemini-2.0-flash-exp"];
+                // Using the listModels method to see what's actually available
+                const listResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_KEY}`);
+                if (listResponse.ok) {
+                    const data = await listResponse.json();
+                    availableModels = data.models?.map(m => m.name) || [];
+                } else {
+                    error = `HTTP ${listResponse.status}: ${await listResponse.text()}`;
+                }
             } catch (e) {
                 error = e.message;
             }
         }
         return res.status(200).json({
             status: 'online',
-            model: 'Gemini Resilient Proxy',
+            model_proxy: 'Gemini Resilient Diagnostics',
             env_check: GEMINI_KEY ? 'Key configured ✓' : 'Key MISSING ✗',
-            probed_models: availableModels,
+            api_available_models: availableModels,
             error: error
         });
     }
@@ -41,12 +46,13 @@ export default async function handler(req, res) {
 
         const genAI = new GoogleGenerativeAI(GEMINI_KEY);
 
-        // Expanded model list
+        // Some environments require 'models/' prefix, others don't. We'll try both.
         const modelNames = [
             "gemini-1.5-flash",
+            "models/gemini-1.5-flash",
             "gemini-1.5-flash-8b",
+            "models/gemini-1.5-flash-8b",
             "gemini-1.5-pro",
-            "gemini-1.5-flash-latest",
             "gemini-2.0-flash-exp"
         ];
 
@@ -59,7 +65,7 @@ export default async function handler(req, res) {
 
         for (const modelName of modelNames) {
             try {
-                console.log(`Attempting Gemini model: ${modelName}...`);
+                console.log(`Diagnostic: Testing ${modelName}`);
                 const model = genAI.getGenerativeModel({ model: modelName });
                 const result = await model.generateContent([
                     prompt,
@@ -78,22 +84,25 @@ export default async function handler(req, res) {
                     break;
                 }
             } catch (error) {
-                console.warn(`Failed with ${modelName}:`, error.message);
                 lastError = error;
+                // If it's a 404, we continue to the next one
+                if (error.message?.includes('404')) continue;
+                // If it's another error (like quota or safety), we might want to know
+                console.warn(`Model ${modelName} failed with: ${error.message}`);
             }
         }
 
         if (!text) {
-            throw new Error(`Todos os modelos falharam. Erro final (${modelNames[modelNames.length - 1]}): ${lastError?.message}`);
+            throw new Error(`Infelizmente todos os modelos de IA (1.5 Flash, 8b, Pro, 2.0) retornaram 'Não Encontrado' (404). Isso geralmente indica um problema com a permissão da Chave de API ou restrição regional da Vercel. Erro técnico: ${lastError?.message}`);
         }
 
         return res.status(200).json({
-            description: `Análise inteligente via ${usedModel}`,
+            description: `Análise via ${usedModel}`,
             extractedText: text
         });
 
     } catch (error) {
         console.error('Gemini API Error:', error);
-        return res.status(500).json({ error: `Erro na análise do Gemini: ${error.message}` });
+        return res.status(500).json({ error: `Erro na IA: ${error.message}` });
     }
 }
