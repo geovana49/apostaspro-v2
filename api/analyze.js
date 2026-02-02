@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     const GEMINI_KEY = process.env.VITE_GEMINI_API_KEY;
 
     if (req.method === 'GET') {
-        return res.status(200).json({ status: 'online', model_proxy: 'Gemini JSON Proxy' });
+        return res.status(200).json({ status: 'online', model_proxy: 'Gemini Quota Optimized' });
     }
 
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -23,20 +23,22 @@ export default async function handler(req, res) {
         const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
 
         const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-        const modelNamesToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.0-flash-lite"];
 
-        // Stronger prompt for structured JSON
-        const prompt = `Analise este print de aposta e extraia os dados exatamente no formato JSON abaixo:
+        // Optimized model sequence: use the most stable/modern ones first to avoid wasting quota on retries
+        const modelNamesToTry = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"];
+
+        const prompt = `Analise este print de aposta. Identifique os dados principais e retorne APENAS um objeto JSON com esta estrutura exata:
 {
-  "bookmaker": "Nome da Casa de Apostas",
-  "stake": 0.00,
-  "odds": 0.00,
-  "market": "Mercado da aposta (ex: Vencedor do Jogo)",
-  "event": "Nome do Jogo/Evento",
-  "date": "Data se houver (DD/MM/AAAA)",
-  "type": "bet" ou "gain" (se for ganho/lucro puro)
+  "bookmaker": "Nome da Casa (ex: Bet365)",
+  "stake": 10.00,
+  "odds": 1.50,
+  "market": "Mercado (ex: Acima de 2.5 Gols)",
+  "event": "Time A vs Time B",
+  "date": "Data (DD/MM/AAAA)",
+  "type": "bet"
 }
-Retorne APENAS o JSON, sem explicações.`;
+Se for um lucro ou bônus, use "type": "gain".
+NÃO adicione nenhum texto antes ou depois do JSON.`;
 
         let aiResult = null;
         let usedModel = null;
@@ -44,10 +46,15 @@ Retorne APENAS o JSON, sem explicações.`;
 
         for (const modelName of modelNamesToTry) {
             try {
+                console.log(`Quota Guard: Trying ${modelName}...`);
                 const model = genAI.getGenerativeModel({
                     model: modelName,
-                    generationConfig: { responseMimeType: "application/json" } // Force JSON output
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        temperature: 0.1 // Lower temperature for more consistent JSON
+                    }
                 });
+
                 const result = await model.generateContent([
                     prompt,
                     { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
@@ -62,15 +69,20 @@ Retorne APENAS o JSON, sem explicações.`;
                 }
             } catch (error) {
                 lastError = error;
-                console.warn(`Model ${modelName} failed: ${error.message}`);
+                console.warn(`Model ${modelName} failed or quota hit: ${error.message}`);
+                // If it's a 429 (quota), we might as well stop or try ONE fallback
+                if (error.message?.includes('429')) break;
             }
         }
 
         if (!aiResult) {
-            throw new Error(`Falha na extração: ${lastError?.message}`);
+            const errorMsg = lastError?.message || 'Erro desconhecido';
+            const userFriendlyMsg = errorMsg.includes('429')
+                ? 'Limite de uso da IA atingido por hoje ou muitas tentativas rápidas. Por favor, aguarde 1 minuto e tente novamente.'
+                : `Falha na extração de dados: ${errorMsg}`;
+            throw new Error(userFriendlyMsg);
         }
 
-        // Return structured data
         return res.status(200).json({
             source: usedModel,
             data: aiResult
@@ -78,6 +90,6 @@ Retorne APENAS o JSON, sem explicações.`;
 
     } catch (error) {
         console.error('Gemini API Error:', error);
-        return res.status(500).json({ error: `Erro na IA: ${error.message}` });
+        return res.status(500).json({ error: error.message });
     }
 }
