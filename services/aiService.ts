@@ -27,7 +27,8 @@ export interface BookmakerExtraction {
     confidence: number;
 }
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+// TEMPORARY: Hardcoded key for testing
+const GEMINI_API_KEY = 'AIzaSyBYBc88XrM6fD24oRhI6j75QZBq2eATwV8';
 
 // Initialize the Gemini API client
 let genAI: GoogleGenerativeAI | null = null;
