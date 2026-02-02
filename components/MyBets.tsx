@@ -79,7 +79,27 @@ const formReducer = (state: FormState, action: any): FormState => {
             }
             return { ...state, coverages: newCoverages };
         }
-        case 'RESET_FORM': return initialFormState;
+        case 'RESET_FORM': {
+            const defaults = action.payload || {};
+            const initialCoverages: Coverage[] = [];
+
+            if (defaults.stake || defaults.bookmakerId) {
+                initialCoverages.push({
+                    id: Date.now().toString(),
+                    bookmakerId: defaults.bookmakerId || '',
+                    market: '',
+                    odd: 0,
+                    stake: defaults.stake || 0,
+                    status: 'Pendente'
+                });
+            }
+
+            return {
+                ...initialFormState,
+                mainBookmakerId: defaults.bookmakerId || '',
+                coverages: initialCoverages
+            };
+        }
         default: return state;
     }
 };
@@ -369,13 +389,53 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                 setTempPhotos(savedPhotos || []);
             } catch (e) {
                 console.error('Error parsing draft:', e);
-                dispatch({ type: 'RESET_FORM' });
+                const defaults = {
+                    bookmakerId: settings.defaultBookmakerId,
+                    stake: settings.defaultStake ? settings.defaultStake / 100 : 0
+                };
+                dispatch({ type: 'RESET_FORM', payload: defaults });
                 setTempPhotos([]);
             }
         } else {
-            dispatch({ type: 'RESET_FORM' });
+            const defaults = {
+                bookmakerId: settings.defaultBookmakerId,
+                stake: settings.defaultStake ? settings.defaultStake / 100 : 0
+            };
+            dispatch({ type: 'RESET_FORM', payload: defaults });
             setTempPhotos([]);
         }
+        setIsModalOpen(true);
+        setDeleteId(null);
+    };
+
+    const handleDuplicateLast = () => {
+        if (bets.length === 0) {
+            alert("Nenhuma aposta encontrada para duplicar.");
+            return;
+        }
+
+        // Get the most recent bet (already sorted by date desc usually, but let's be safe)
+        const lastBet = [...bets].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+
+        const duplicatedForm: FormState = {
+            date: new Date().toISOString().split('T')[0],
+            mainBookmakerId: lastBet.mainBookmakerId || '',
+            event: lastBet.event || '',
+            promotionType: lastBet.promotionType || 'Nenhuma',
+            status: 'Pendente',
+            coverages: lastBet.coverages.map(c => ({
+                ...c,
+                id: Date.now().toString() + Math.random().toString(36).substring(7),
+                status: 'Pendente' // Reset status for duplicated bet
+            })),
+            notes: `Cópia de: ${lastBet.event || 'Aposta anterior'}`,
+            extraGain: 0,
+            isDoubleGreen: lastBet.isDoubleGreen || false
+        };
+
+        setIsEditing(false);
+        dispatch({ type: 'SET_FORM', payload: duplicatedForm });
+        setTempPhotos([]); // Start with fresh photos for dupe
         setIsModalOpen(true);
         setDeleteId(null);
     };
@@ -977,6 +1037,14 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                             {isAnalyzing ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} strokeWidth={2} />}
                             <span className="hidden sm:inline">Importar Print</span>
                             <span className="sm:hidden">IA</span>
+                        </Button>
+                        <Button
+                            onClick={handleDuplicateLast}
+                            className="flex-1 h-12 flex items-center justify-center gap-2 !rounded-xl shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 hover:scale-[1.01] transition-all duration-300 bg-[#0d1121] text-white border border-white/10 font-bold text-base"
+                            title="Duplicar Última Aposta"
+                        >
+                            <Copy size={18} />
+                            <span className="hidden sm:inline">Duplicar</span>
                         </Button>
                         <Button
                             onClick={handleOpenNew}
