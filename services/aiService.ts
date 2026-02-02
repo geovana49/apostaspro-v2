@@ -56,12 +56,11 @@ export async function analyzeImage(imageBase64: string): Promise<AIAnalysisResul
         let description = '';
         try {
             const captionResponse = await fetch(
-                'https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large',
+                'https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large?wait_for_model=true',
                 {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${HF_API_KEY}`,
-                        'X-Wait-For-Model': 'true'
+                        'Authorization': `Bearer ${HF_API_KEY}`
                     },
                     body: blob
                 }
@@ -84,12 +83,11 @@ export async function analyzeImage(imageBase64: string): Promise<AIAnalysisResul
         let extractedText = '';
         try {
             const ocrResponse = await fetch(
-                'https://api-inference.huggingface.co/models/microsoft/trocr-base-printed',
+                'https://api-inference.huggingface.co/models/microsoft/trocr-base-printed?wait_for_model=true',
                 {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${HF_API_KEY}`,
-                        'X-Wait-For-Model': 'true'
+                        'Authorization': `Bearer ${HF_API_KEY}`
                     },
                     body: blob
                 }
