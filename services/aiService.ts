@@ -45,7 +45,7 @@ export async function analyzeImage(imageBase64: string): Promise<AIAnalysisResul
 
     try {
         // Get the generative model (vision model for images)
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro-vision' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
         // Remove data URL prefix if present
         const base64Image = imageBase64.replace(/^data:image\/\w+;base64,/, '');
