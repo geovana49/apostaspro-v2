@@ -148,8 +148,14 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             const compressedBase64s = await compressImages(files);
 
             // Analyze all images in parallel
-            const analysisPromises = compressedBase64s.map(base64 => analyzeImage(base64));
-            const results = await Promise.all(analysisPromises);
+            // Analyze images sequentially to avoid 429 rate limits
+            const results = [];
+            for (const base64 of compressedBase64s) {
+                const result = await analyzeImage(base64);
+                results.push(result);
+                // Optional: add a tiny delay if needed
+                if (compressedBase64s.length > 1) await new Promise(r => setTimeout(r, 800));
+            }
 
             // Validate results
             const validResults = results.filter(r => r.type === 'bet' || r.confidence > 0.4);
