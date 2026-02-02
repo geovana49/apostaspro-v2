@@ -24,8 +24,8 @@ export default async function handler(req, res) {
 
         const genAI = new GoogleGenerativeAI(GEMINI_KEY);
 
-        // Optimized model sequence: use the most stable/modern ones first to avoid wasting quota on retries
-        const modelNamesToTry = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"];
+        // Use the confirmed-working next-gen models first to avoid wasting quota on retries
+        const modelNamesToTry = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash"];
 
         const prompt = `Analise este print de aposta. Identifique os dados principais e retorne APENAS um objeto JSON com esta estrutura exata:
 {
