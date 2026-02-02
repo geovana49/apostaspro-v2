@@ -12,8 +12,8 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
         return res.status(200).json({
             status: 'online',
-            env_check: GEMINI_KEY ? 'Key configured ✓' : 'Key MISSING ✗',
-            instructions: "Use POST with {image: 'base64'} to analyze."
+            model_proxy: 'Gemini Final Alignment',
+            env_check: GEMINI_KEY ? 'Key configured ✓' : 'Key MISSING ✗'
         });
     }
 
@@ -26,72 +26,58 @@ export default async function handler(req, res) {
 
         const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
 
-        // Strategy 1: Attempt via SDK with multiple models
-        console.log("Strategy 1: SDK");
-        const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-        const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"];
+        // The user's diagnostics confirmed these models are available for their key
+        const modelNamesToTry = [
+            "gemini-2.0-flash",
+            "gemini-2.5-flash",
+            "gemini-flash-latest",
+            "gemini-2.0-flash-lite"
+        ];
 
-        for (const modelName of modelsToTry) {
+        const genAI = new GoogleGenerativeAI(GEMINI_KEY);
+        let text = null;
+        let usedModel = null;
+        let lastError = null;
+
+        const prompt = "Analise este print de aposta. Extraia: Casa de Apostas, Valor Apostado (Stake), ODD, Evento/Jogo e Mercado. Se for um bônus ou lucro, identifique também. Retorne APENAS um texto curto com os dados encontrados.";
+
+        for (const modelName of modelNamesToTry) {
             try {
+                console.log(`Final Attempt: Trying ${modelName}`);
                 const model = genAI.getGenerativeModel({ model: modelName });
                 const result = await model.generateContent([
-                    "Analise este print de aposta. Extraia dados como Casa, Odd e Valor.",
-                    { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
+                    prompt,
+                    {
+                        inlineData: {
+                            data: base64Data,
+                            mimeType: "image/jpeg"
+                        }
+                    }
                 ]);
+
                 const response = await result.response;
-                return res.status(200).json({
-                    description: `Sucesso via SDK (${modelName})`,
-                    extractedText: response.text()
-                });
-            } catch (e) {
-                console.warn(`SDK ${modelName} failed: ${e.message}`);
-            }
-        }
-
-        // Strategy 2: Attempt via Direct REST API (Legacy/Version Fallback)
-        console.log("Strategy 2: REST API (v1 and v1beta)");
-        const apiVersions = ["v1", "v1beta"];
-        for (const ver of apiVersions) {
-            try {
-                const url = `https://generativelanguage.googleapis.com/${ver}/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
-                const resp = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [
-                                { text: "Analise este print de aposta. Extraia dados como Casa, Odd e Valor." },
-                                { inlineData: { mimeType: "image/jpeg", data: base64Data } }
-                            ]
-                        }]
-                    })
-                });
-
-                if (resp.ok) {
-                    const data = await resp.json();
-                    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                    return res.status(200).json({
-                        description: `Sucesso via REST (${ver})`,
-                        extractedText: text
-                    });
+                text = response.text();
+                if (text) {
+                    usedModel = modelName;
+                    break;
                 }
-            } catch (e) {
-                console.warn(`REST ${ver} failed: ${e.message}`);
+            } catch (error) {
+                lastError = error;
+                console.warn(`Model ${modelName} failed: ${error.message}`);
             }
         }
 
-        // ALL FAILED: Perform Final Diagnostic to help the developer
-        const listResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_KEY}`);
-        const listData = listResp.ok ? await listResp.json() : { error: "Failed to list models" };
-        const available = listData.models?.map(m => m.name.replace('models/', '')) || [];
+        if (!text) {
+            throw new Error(`Infelizmente a IA retornou erro mesmo com os nomes sugeridos pelo Google. Erro: ${lastError?.message}`);
+        }
 
-        return res.status(500).json({
-            error: "IA Indisponível (404). O seu projeto não parece ter acesso aos modelos padrão do Gemini.",
-            available_models_for_your_key: available,
-            diagnostic_tip: available.length > 0 ? `Tente usar um destes nomes: ${available.join(', ')}` : "Verifique se a API do Gemini está ativada no Google Cloud Console."
+        return res.status(200).json({
+            description: `Sucesso via ${usedModel}`,
+            extractedText: text
         });
 
     } catch (error) {
-        return res.status(500).json({ error: error.message });
+        console.error('Gemini API Error:', error);
+        return res.status(500).json({ error: `Erro na IA: ${error.message}` });
     }
 }
