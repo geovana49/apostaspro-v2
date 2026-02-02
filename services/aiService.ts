@@ -33,15 +33,15 @@ const HF_API_KEY = import.meta.env.VITE_HF_API_KEY || '';
  * @returns Structured bet information
  */
 export async function analyzeImage(imageBase64: string): Promise<AIAnalysisResult> {
-    if (!HF_API_KEY) {
-        throw new Error('API Key do Hugging Face não configurada. Configure VITE_HF_API_KEY no arquivo .env');
+    const keyPrefix = HF_API_KEY ? HF_API_KEY.substring(0, 5) : 'MISSING';
+    console.log(`[AI Service] Starting analysis. Key prefix: ${keyPrefix}...`);
+
+    if (!HF_API_KEY || HF_API_KEY === 'your_hf_token_here') {
+        throw new Error('API Key do Hugging Face não configurada ou inválida na Vercel.');
     }
 
     try {
-        // Extract base64 data
         const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-
-        // Convert base64 to blob
         const byteCharacters = atob(base64Data);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
@@ -50,47 +50,65 @@ export async function analyzeImage(imageBase64: string): Promise<AIAnalysisResul
         const byteArray = new Uint8Array(byteNumbers);
         const blob = new Blob([byteArray], { type: 'image/jpeg' });
 
-        // Use BLIP for image captioning (describes what's in the image)
-        const captionResponse = await fetch(
-            'https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large',
-            {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${HF_API_KEY}`,
-                    'X-Wait-For-Model': 'true'
-                },
-                body: blob
-            }
-        );
+        console.log(`[AI Service] Sending request to Captioning model... (Blob size: ${blob.size} bytes)`);
 
-        if (!captionResponse.ok) {
-            const error = await captionResponse.text();
-            throw new Error(`Hugging Face API Error: ${error}`);
+        // 1. Get Caption (Sequential to avoid rate limits)
+        let description = '';
+        try {
+            const captionResponse = await fetch(
+                'https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${HF_API_KEY}`,
+                        'X-Wait-For-Model': 'true'
+                    },
+                    body: blob
+                }
+            );
+
+            if (!captionResponse.ok) {
+                const errorText = await captionResponse.text();
+                console.warn(`[AI Service] Caption model warning: ${captionResponse.status} ${errorText}`);
+            } else {
+                const captionData = await captionResponse.json();
+                description = captionData[0]?.generated_text || '';
+                console.log(`[AI Service] Caption received: "${description}"`);
+            }
+        } catch (e) {
+            console.warn('[AI Service] Captioning fetch failed:', e);
         }
 
-        const captionData = await captionResponse.json();
-        const description = captionData[0]?.generated_text || '';
-
-        // Use TrOCR for text extraction
-        const ocrResponse = await fetch(
-            'https://api-inference.huggingface.co/models/microsoft/trocr-base-printed',
-            {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${HF_API_KEY}`,
-                    'X-Wait-For-Model': 'true'
-                },
-                body: blob
-            }
-        );
-
+        // 2. Get OCR (Sequential)
+        console.log('[AI Service] Sending request to OCR model...');
         let extractedText = '';
-        if (ocrResponse.ok) {
-            const ocrData = await ocrResponse.json();
-            extractedText = ocrData[0]?.generated_text || '';
+        try {
+            const ocrResponse = await fetch(
+                'https://api-inference.huggingface.co/models/microsoft/trocr-base-printed',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${HF_API_KEY}`,
+                        'X-Wait-For-Model': 'true'
+                    },
+                    body: blob
+                }
+            );
+
+            if (!ocrResponse.ok) {
+                const errorText = await ocrResponse.text();
+                console.warn(`[AI Service] OCR model warning: ${ocrResponse.status} ${errorText}`);
+            } else {
+                const ocrData = await ocrResponse.json();
+                extractedText = ocrData[0]?.generated_text || '';
+                console.log(`[AI Service] OCR text received: "${extractedText.substring(0, 50)}..."`);
+            }
+        } catch (e) {
+            console.warn('[AI Service] OCR fetch failed:', e);
+            if (!description) throw new Error('Falha total na conexão com o Hugging Face. Verifique sua chave e internet.');
         }
 
-        // Parse the extracted text to find bet information
+        // Parse result
         const parsedData = parseTextForBetInfo(extractedText, description);
 
         return {
@@ -102,8 +120,8 @@ export async function analyzeImage(imageBase64: string): Promise<AIAnalysisResul
         };
 
     } catch (error) {
-        console.error('Error analyzing image with Hugging Face:', error);
-        throw new Error(`Erro ao analisar imagem: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+        console.error('[AI Service] Analysis failed:', error);
+        throw new Error(`Erro na IA: ${error instanceof Error ? error.message : 'Erro de conexão'}`);
     }
 }
 
