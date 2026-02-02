@@ -46,7 +46,11 @@ export async function analyzeImage(imageBase64: string): Promise<AIAnalysisResul
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error || `Erro no servidor: ${response.status}`);
+            // If the server provides a detailed diagnostic object, stringify it for the user
+            const details = errorData.available_models_for_your_key
+                ? `\nModelos disponíveis: ${JSON.stringify(errorData.available_models_for_your_key)}\nDica: ${errorData.diagnostic_tip}`
+                : '';
+            throw new Error((errorData.error || `Erro no servidor: ${response.status}`) + details);
         }
 
         const { description, extractedText } = await response.json();
