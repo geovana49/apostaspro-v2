@@ -45,8 +45,8 @@ export async function analyzeImage(imageBase64: string): Promise<AIAnalysisResul
 
     try {
         // Get the generative model (vision model for images)
-        // Using 'gemini-1.5-flash-latest' to resolve 404 errors.
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+        // Using 'gemini-1.5-flash' as it's the correct standard model.
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
         // Extract mime type and data
         const matches = imageBase64.match(/^data:(image\/\w+);base64,(.+)$/);
