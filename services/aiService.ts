@@ -33,80 +33,26 @@ const HF_API_KEY = import.meta.env.VITE_HF_API_KEY || '';
  * @returns Structured bet information
  */
 export async function analyzeImage(imageBase64: string): Promise<AIAnalysisResult> {
-    const keyPrefix = HF_API_KEY ? HF_API_KEY.substring(0, 5) : 'MISSING';
-    console.log(`[AI Service] Starting analysis. Key prefix: ${keyPrefix}...`);
-
-    if (!HF_API_KEY || HF_API_KEY === 'your_hf_token_here') {
-        throw new Error('API Key do Hugging Face não configurada ou inválida na Vercel.');
-    }
+    console.log('[AI Service] Starting analysis via Proxy API...');
 
     try {
-        const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-        const byteCharacters = atob(base64Data);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'image/jpeg' });
+        const response = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ image: imageBase64 })
+        });
 
-        console.log(`[AI Service] Sending request to Captioning model... (Blob size: ${blob.size} bytes)`);
-
-        // 1. Get Caption (Sequential to avoid rate limits)
-        let description = '';
-        try {
-            const captionResponse = await fetch(
-                'https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large?wait_for_model=true',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${HF_API_KEY}`
-                    },
-                    body: blob
-                }
-            );
-
-            if (!captionResponse.ok) {
-                const errorText = await captionResponse.text();
-                console.warn(`[AI Service] Caption model warning: ${captionResponse.status} ${errorText}`);
-            } else {
-                const captionData = await captionResponse.json();
-                description = captionData[0]?.generated_text || '';
-                console.log(`[AI Service] Caption received: "${description}"`);
-            }
-        } catch (e) {
-            console.warn('[AI Service] Captioning fetch failed:', e);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Erro no servidor: ${response.status}`);
         }
 
-        // 2. Get OCR (Sequential)
-        console.log('[AI Service] Sending request to OCR model...');
-        let extractedText = '';
-        try {
-            const ocrResponse = await fetch(
-                'https://api-inference.huggingface.co/models/microsoft/trocr-base-printed?wait_for_model=true',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${HF_API_KEY}`
-                    },
-                    body: blob
-                }
-            );
+        const { description, extractedText } = await response.json();
+        console.log('[AI Service] Proxy response received.');
 
-            if (!ocrResponse.ok) {
-                const errorText = await ocrResponse.text();
-                console.warn(`[AI Service] OCR model warning: ${ocrResponse.status} ${errorText}`);
-            } else {
-                const ocrData = await ocrResponse.json();
-                extractedText = ocrData[0]?.generated_text || '';
-                console.log(`[AI Service] OCR text received: "${extractedText.substring(0, 50)}..."`);
-            }
-        } catch (e) {
-            console.warn('[AI Service] OCR fetch failed:', e);
-            if (!description) throw new Error('Falha total na conexão com o Hugging Face. Verifique sua chave e internet.');
-        }
-
-        // Parse result
+        // Parse result using existing logic
         const parsedData = parseTextForBetInfo(extractedText, description);
 
         return {
