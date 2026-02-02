@@ -1,6 +1,4 @@
-// AI Service using Google Gemini API for image analysis and automation
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
+// AI Service using OpenAI GPT-4o-mini for image analysis
 export interface AIAnalysisResult {
     type: 'bet' | 'gain' | 'unknown';
     confidence: number; // 0-1
@@ -27,27 +25,19 @@ export interface BookmakerExtraction {
     confidence: number;
 }
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-
-// Initialize the Gemini API client
-let genAI: GoogleGenerativeAI | null = null;
-if (GEMINI_API_KEY) {
-    genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-}
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || '';
 
 /**
- * Analyzes an image (screenshot) to extract bet or gain information
+ * Analyzes a bet screenshot using OpenAI GPT-4o-mini
+ * @param imageBase64 - Base64 encoded image (with or without data URI prefix)
+ * @returns Structured bet information
  */
 export async function analyzeImage(imageBase64: string): Promise<AIAnalysisResult> {
-    if (!genAI) {
-        throw new Error('API Key do Gemini não configurada. Configure VITE_GEMINI_API_KEY no arquivo .env');
+    if (!OPENAI_API_KEY) {
+        throw new Error('API Key da OpenAI não configurada. Configure VITE_OPENAI_API_KEY no arquivo .env');
     }
 
     try {
-        // Get the generative model (vision model for images)
-        // Using 'gemini-1.5-pro' as Flash variants are returning 404.
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
-
         // Extract mime type and data
         const matches = imageBase64.match(/^data:(image\/\w+);base64,(.+)$/);
         const mimeType = matches ? matches[1] : 'image/jpeg';
@@ -82,103 +72,92 @@ Responda APENAS em JSON neste formato exato:
 
 Se não conseguir identificar algo, omita o campo.`;
 
-        const result = await model.generateContent([
-            prompt,
-            {
-                inlineData: {
-                    mimeType: mimeType,
-                    data: base64Data
-                }
-            }
-        ]);
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [
+                    {
+                        role: 'user',
+                        content: [
+                            {
+                                type: 'text',
+                                text: prompt
+                            },
+                            {
+                                type: 'image_url',
+                                image_url: {
+                                    url: `data:${mimeType};base64,${base64Data}`
+                                }
+                            }
+                        ]
+                    }
+                ],
+                max_tokens: 1000,
+                temperature: 0.3
+            })
+        });
 
-        const response = await result.response;
-        const textResponse = response.text();
-
-        // Parse JSON from response
-        const jsonMatch = textResponse.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-            throw new Error('IA não retornou um JSON válido');
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`OpenAI API Error: ${errorData.error?.message || response.statusText}`);
         }
 
-        const parsedResult: AIAnalysisResult = JSON.parse(jsonMatch[0]);
+        const data = await response.json();
+        const content = data.choices[0]?.message?.content || '{}';
 
-        // Add suggestions based on confidence
-        if (parsedResult.confidence < 0.5) {
-            parsedResult.suggestions = ['⚠️ Confiança baixa. Revise os dados antes de salvar.'];
-        } else if (parsedResult.confidence < 0.7) {
-            parsedResult.suggestions = ['ℹ️ Alguns dados podem precisar de correção.'];
-        }
+        // Parse JSON response
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        const jsonStr = jsonMatch ? jsonMatch[0] : content;
+        const result = JSON.parse(jsonStr);
 
-        return parsedResult;
-    } catch (error: any) {
-        console.error('Error analyzing image:', error);
-        throw error;
-    }
-}
-
-/**
- * Extracts bookmaker information from a URL
- */
-export async function extractBookmakerFromURL(url: string): Promise<BookmakerExtraction> {
-    try {
-        // Normalize URL
-        const normalizedUrl = url.startsWith('http') ? url : `https://${url}`;
-        const urlObj = new URL(normalizedUrl);
-        const domain = urlObj.hostname.replace('www.', '');
-
-        // Extract name (first part before TLD)
-        const nameParts = domain.split('.');
-        const name = nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1);
-
-        // Try to get logo from Google's favicon service
-        const logo = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
-
+        // Validate and return
         return {
-            name,
-            domain,
-            logo,
-            confidence: 1.0
+            type: result.type || 'unknown',
+            confidence: result.confidence || 0.5,
+            data: result.data || {},
+            rawText: result.rawText || '',
+            suggestions: result.suggestions || []
         };
+
     } catch (error) {
-        console.error('Error extracting bookmaker from URL:', error);
-        throw new Error('URL inválida');
+        console.error('Error analyzing image with OpenAI:', error);
+        throw new Error(`Erro ao analisar imagem: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
 }
 
 /**
- * Sends a message to the AI Coach and gets a response
+ * Extract bookmaker information from text
  */
-export async function sendMessageToCoach(message: string, history: { role: 'user' | 'model', text: string }[] = []): Promise<string> {
-    if (!genAI) {
-        throw new Error('API Key do Gemini não configurada');
+export function extractBookmaker(text: string): BookmakerExtraction | null {
+    const bookmakers = [
+        { name: 'Bet365', domain: 'bet365.com', keywords: ['bet365', 'bet 365'] },
+        { name: 'Betano', domain: 'betano.com', keywords: ['betano'] },
+        { name: 'Sportingbet', domain: 'sportingbet.com', keywords: ['sportingbet', 'sporting bet'] },
+        { name: 'KTO', domain: 'kto.com', keywords: ['kto'] },
+        { name: 'Novibet', domain: 'novibet.com', keywords: ['novibet', 'novi bet'] },
+        { name: 'Betfair', domain: 'betfair.com', keywords: ['betfair', 'bet fair'] },
+        { name: '1xBet', domain: '1xbet.com', keywords: ['1xbet', '1x bet'] },
+        { name: 'Pixbet', domain: 'pixbet.com', keywords: ['pixbet', 'pix bet'] }
+    ];
+
+    const lowerText = text.toLowerCase();
+
+    for (const bookie of bookmakers) {
+        for (const keyword of bookie.keywords) {
+            if (lowerText.includes(keyword)) {
+                return {
+                    name: bookie.name,
+                    domain: bookie.domain,
+                    confidence: 0.9
+                };
+            }
+        }
     }
 
-    try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
-        // System instruction
-        const systemInstruction = `Você é o Coach IA do ApostasPro, um especialista em apostas esportivas e gestão de banca.
-Seu objetivo é ajudar o usuário a analisar suas apostas, dar dicas de gestão de banca e explicar conceitos de apostas.
-Seja direto, profissional e use emojis ocasionalmente.
-Responda em português do Brasil.
-Não dê conselhos financeiros irresponsáveis. Sempre incentive o jogo responsável.`;
-
-        // Simple prompt combining system instruction with user message
-        const fullPrompt = systemInstruction + "\n\nUsuário: " + message;
-
-        const result = await model.generateContent(fullPrompt);
-        const response = await result.response;
-        return response.text() || 'Desculpe, não consegui processar sua mensagem.';
-    } catch (error) {
-        console.error('Error sending message to coach:', error);
-        throw error;
-    }
-}
-
-/**
- * Validates if the Gemini API key is configured
- */
-export function isGeminiConfigured(): boolean {
-    return Boolean(GEMINI_API_KEY);
+    return null;
 }
