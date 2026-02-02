@@ -54,6 +54,8 @@ export async function analyzeImage(imageBase64: string): Promise<AIAnalysisResul
         }
 
         const { data } = await response.json();
+        if (!data) throw new Error("A IA respondeu mas os dados vieram vazios ou mal formatados.");
+
         console.log('[AI Service] Proxy structured response received:', data);
 
         // Map the structured data directly

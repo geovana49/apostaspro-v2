@@ -61,7 +61,11 @@ export default async function handler(req, res) {
                 { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
             ]);
 
-            const text = result.response.text();
+            let text = result.response.text();
+
+            // Clean markdown blocks if present (Gemini sometimes adds them despite the config)
+            text = text.replace(/```json\n?/, '').replace(/\n?```/, '').trim();
+
             return res.status(200).json({ source: modelName, data: JSON.parse(text) });
 
         } catch (error) {
@@ -71,10 +75,10 @@ export default async function handler(req, res) {
             let userFriendlyMsg = `Erro na IA: ${error.message}`;
 
             if (isQuota) {
-                userFriendlyMsg = 'O Google suspendeu temporariamente as requisições para a sua chave (Limite 429). Isso pode levar de 10 min a 1 hora para resetar. Tente novamente mais tarde ou verifique se o faturamente está ativo no Google AI Studio.';
+                userFriendlyMsg = 'O Google suspendeu temporariamente as requisições para a sua chave (Limite 429). Isso pode levar de 10 min a 1 hora para resetar. Tente novamente mais tarde.';
             }
 
-            return res.status(200).json({ error: userFriendlyMsg, quota_hit: isQuota });
+            return res.status(isQuota ? 429 : 500).json({ error: userFriendlyMsg, quota_hit: isQuota });
         }
 
     } catch (error) {
