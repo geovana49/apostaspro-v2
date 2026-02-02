@@ -9,21 +9,20 @@ export default async function handler(req, res) {
 
     const GEMINI_KEY = process.env.VITE_GEMINI_API_KEY;
 
-    // Diagnostic GET to check key health with a confirmed model
     if (req.method === 'GET') {
         if (!GEMINI_KEY) return res.status(500).json({ status: 'error', message: 'Key missing' });
         try {
             const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-            // Using 2.0-flash as it was confirmed in your diagnostic list
-            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+            // Try the absolute lightest model for fastest health check
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-8b" });
             const result = await model.generateContent("ping");
             return res.status(200).json({
                 status: 'ok',
-                model_used: 'gemini-2.0-flash',
-                message: 'A sua chave está ativa e respondendo perfeitamente!'
+                model_used: 'gemini-1.5-flash-8b',
+                message: 'A sua chave está ativa e liberada!'
             });
         } catch (e) {
-            return res.status(500).json({ status: 'error', message: e.message, hint: 'Tente verificar se o modelo gemini-2.0-flash está habilitado no seu console.' });
+            return res.status(500).json({ status: 'error', message: e.message });
         }
     }
 
@@ -37,8 +36,8 @@ export default async function handler(req, res) {
         const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
         const genAI = new GoogleGenerativeAI(GEMINI_KEY);
 
-        // We are using the model that SHOWED UP in your diagnostic list:
-        const modelName = "gemini-2.0-flash";
+        // SWITCH TO 1.5-FLASH-8B: This model has the highest quota limits on the free tier.
+        const modelName = "gemini-1.5-flash-8b";
 
         const prompt = `Analise este print de aposta e retorne APENAS um objeto JSON:
 {
@@ -69,13 +68,13 @@ export default async function handler(req, res) {
             console.error(`Gemini Error (${modelName}):`, error.message);
 
             const isQuota = error.message?.includes('429');
-            const is404 = error.message?.includes('404');
-
             let userFriendlyMsg = `Erro na IA: ${error.message}`;
-            if (isQuota) userFriendlyMsg = 'Limite de uso atingido. Aguarde 1 minuto.';
-            if (is404) userFriendlyMsg = `O modelo ${modelName} não foi encontrado na sua conta. Verifique o link de diagnóstico (GET).`;
 
-            return res.status(500).json({ error: userFriendlyMsg });
+            if (isQuota) {
+                userFriendlyMsg = 'O Google suspendeu temporariamente as requisições para a sua chave (Limite 429). Isso pode levar de 10 min a 1 hora para resetar. Tente novamente mais tarde ou verifique se o faturamente está ativo no Google AI Studio.';
+            }
+
+            return res.status(200).json({ error: userFriendlyMsg, quota_hit: isQuota });
         }
 
     } catch (error) {
