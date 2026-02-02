@@ -539,6 +539,49 @@ const Settings: React.FC<SettingsProps> = ({
                                 placeholder="Seu nome"
                             />
                         </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <Input
+                                label="Stake Padrão"
+                                prefix="R$"
+                                type="tel"
+                                value={appSettings.defaultStake ? (appSettings.defaultStake / 100).toFixed(2) : ''}
+                                onChange={(e) => {
+                                    const value = e.target.value.replace(/\D/g, '');
+                                    const numberValue = parseInt(value, 10);
+                                    setAppSettings({ ...appSettings, defaultStake: isNaN(numberValue) ? undefined : numberValue });
+                                }}
+                                onBlur={() => {
+                                    if (currentUser) FirestoreService.saveSettings(currentUser.uid, appSettings);
+                                }}
+                                placeholder="0,00"
+                            />
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Casa Padrão</label>
+                                <select
+                                    className="w-full bg-[#151b2e] border border-white/10 text-white rounded-lg p-2.5 text-sm outline-none focus:border-primary transition-colors appearance-none cursor-pointer"
+                                    value={appSettings.defaultBookmakerId || ''}
+                                    onChange={(e) => {
+                                        setAppSettings({ ...appSettings, defaultBookmakerId: e.target.value });
+                                        if (currentUser) {
+                                            // Small delay to ensure state is updated before save if doing immediate save
+                                            // But for select usually we can save immediately or use effect. 
+                                            // Ideally we save on blur or separate effect, but select doesn't always blur nicely.
+                                            // Let's rely on the user navigating away or explicit save if we had one, 
+                                            // but since other fields save on blur, let's just save.
+                                            // Actually, let's just update local state, and maybe add a useEffect for auto-save or just do it here.
+                                            const newSettings = { ...appSettings, defaultBookmakerId: e.target.value };
+                                            FirestoreService.saveSettings(currentUser.uid, newSettings);
+                                        }
+                                    }}
+                                >
+                                    <option value="">Nenhuma</option>
+                                    {bookmakers.map(b => (
+                                        <option key={b.id} value={b.id}>{b.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
                         <div className="pt-6 border-t border-white/5">
                             <h4 className="font-bold text-white mb-4 flex items-center gap-2">
                                 <Monitor size={18} className="text-primary" />

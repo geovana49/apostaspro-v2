@@ -3,10 +3,11 @@ import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer,
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
     Copy, MoreVertical, AlertCircle, ImageIcon, Ticket, ArrowUpRight, ArrowDownRight, Minus, DollarSign, Percent,
-    Loader2, Paperclip, StickyNote
+    Loader2, Paperclip, StickyNote, Sparkles
 } from 'lucide-react';
 import { Bet, Bookmaker, StatusItem, PromotionItem, AppSettings, Coverage, User } from '../types';
 import { FirestoreService } from '../services/firestoreService';
+import { analyzeImage } from '../services/aiService';
 import { compressImages, validateFirestoreSize } from '../utils/imageCompression';
 import { calculateBetStats } from '../utils/betCalculations';
 
@@ -34,6 +35,7 @@ interface FormState {
     coverages: Coverage[];
     notes: string;
     extraGain?: number;
+    isDoubleGreen?: boolean;
 }
 
 const initialFormState: FormState = {
@@ -43,7 +45,8 @@ const initialFormState: FormState = {
     promotionType: 'Nenhuma',
     status: 'Pendente',
     coverages: [],
-    notes: ''
+    notes: '',
+    isDoubleGreen: false
 };
 
 const formReducer = (state: FormState, action: any): FormState => {
@@ -89,6 +92,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const [formData, dispatch] = useReducer(formReducer, initialFormState);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [tempPhotos, setTempPhotos] = useState<{ url: string, file?: File }[]>([]);
 
     // Filter State
@@ -112,6 +116,80 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const [editingId, setEditingId] = useState<string | null>(null); // Format: `${betId}-${coverageId}-${field}`
     const [editingValue, setEditingValue] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const smartImportInputRef = useRef<HTMLInputElement>(null);
+
+    const handleSmartImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsAnalyzing(true);
+        try {
+            // Compress first
+            const compressedBase64 = await compressImages([file]);
+            const imageBase64 = compressedBase64[0];
+
+            // Analyze
+            const result = await analyzeImage(imageBase64);
+
+            if (result.type !== 'bet' && result.confidence < 0.6) {
+                alert("A IA não tem certeza se isso é uma aposta. Verifique os dados.");
+            }
+
+            const data = result.data;
+
+            // Map Bookmaker
+            const foundBookmaker = bookmakers.find(b =>
+                b.name.toLowerCase().includes(data.bookmaker?.toLowerCase() || '') ||
+                (data.bookmaker && b.name.toLowerCase().includes(data.bookmaker.toLowerCase()))
+            );
+
+            const bookmakerId = foundBookmaker?.id || settings.defaultBookmakerId || bookmakers[0]?.id || '';
+
+            // Map Status
+            let mappedStatus: any = 'Pendente';
+            if (data.status) {
+                const s = data.status.toLowerCase();
+                if (s.includes('green') || s.includes('ganhou') || s.includes('venceu')) mappedStatus = 'Green';
+                else if (s.includes('red') || s.includes('perdeu')) mappedStatus = 'Red';
+                else if (s.includes('anulad') || s.includes('devolv')) mappedStatus = 'Anulada';
+                else if (s.includes('cash')) mappedStatus = 'Cashout';
+            }
+
+            // Create Coverages
+            const newCoverage: Coverage = {
+                id: Date.now().toString(),
+                bookmakerId: bookmakerId,
+                market: data.market || data.description || 'Mercado Detectado',
+                odd: Number(data.odds) || 0,
+                stake: Number(data.value) || settings.defaultStake || 0,
+                status: mappedStatus
+            }
+
+            const newForm: FormState = {
+                id: undefined, // New ID will be generated on save
+                date: data.date ? new Date(data.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                mainBookmakerId: bookmakerId,
+                event: data.match || data.description || 'Evento Detectado',
+                promotionType: 'Nenhuma',
+                status: mappedStatus,
+                coverages: [newCoverage],
+                notes: `Importado via IA - Confiança: ${(result.confidence * 100).toFixed(0)}%`,
+                isDoubleGreen: false
+            };
+
+            setIsEditing(false);
+            dispatch({ type: 'SET_FORM', payload: newForm });
+            setTempPhotos([{ url: imageBase64 }]); // Attach the print automatically
+            setIsModalOpen(true);
+
+        } catch (error: any) {
+            console.error('Smart Import Error:', error);
+            alert(`Erro na importação inteligente: ${error.message}`);
+        } finally {
+            setIsAnalyzing(false);
+            if (smartImportInputRef.current) smartImportInputRef.current.value = '';
+        }
+    };
 
     // Process files for drag & drop
     const processFiles = useCallback(async (files: File[]) => {
@@ -861,14 +939,33 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                 </div>
 
                 <div>
-                    <Button
-                        onClick={handleOpenNew}
-                        className="w-full h-12 flex items-center justify-center gap-2 !rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.01] transition-all duration-300 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] font-bold text-base"
-                        title="Nova Aposta"
-                    >
-                        <Plus size={20} strokeWidth={3} />
-                        Nova Aposta
-                    </Button>
+                    <input
+                        type="file"
+                        ref={smartImportInputRef}
+                        onChange={handleSmartImport}
+                        accept="image/*"
+                        className="hidden"
+                    />
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={() => smartImportInputRef.current?.click()}
+                            className="flex-1 h-12 flex items-center justify-center gap-2 !rounded-xl shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-[1.01] transition-all duration-300 bg-gradient-to-br from-purple-600 to-indigo-600 text-white font-bold text-base"
+                            title="Importar Print via IA"
+                            disabled={isAnalyzing}
+                        >
+                            {isAnalyzing ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} strokeWidth={2} />}
+                            <span className="hidden sm:inline">Importar Print</span>
+                            <span className="sm:hidden">IA</span>
+                        </Button>
+                        <Button
+                            onClick={handleOpenNew}
+                            className="flex-[2] h-12 flex items-center justify-center gap-2 !rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.01] transition-all duration-300 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] font-bold text-base"
+                            title="Nova Aposta"
+                        >
+                            <Plus size={20} strokeWidth={3} />
+                            Nova Aposta
+                        </Button>
+                    </div>
                 </div>
             </div>
 
