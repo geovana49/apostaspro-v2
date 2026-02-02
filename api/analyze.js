@@ -24,51 +24,50 @@ export default async function handler(req, res) {
         const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
         const buffer = Buffer.from(base64Data, 'base64');
 
-        // New Endpoint Logic
+        // Robust request function that won't kill the process on a single failure
         const hfRequest = async (model) => {
-            // Trying the new router endpoint first, fallback to standard
-            const endpoints = [
-                `https://api-inference.huggingface.co/models/${model}`,
-                `https://router.huggingface.co/hf-inference/models/${model}`
-            ];
-
-            for (const url of endpoints) {
-                try {
-                    const resp = await fetch(`${url}?wait_for_model=true`, {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${HF_API_KEY}` },
-                        body: buffer
-                    });
-                    if (resp.ok) return await resp.json();
-                    if (resp.status === 410) continue; // Try next endpoint
-                    const err = await resp.text();
-                    throw new Error(`HF ${resp.status}: ${err}`);
-                } catch (e) {
-                    if (url === endpoints[endpoints.length - 1]) throw e;
-                }
+            const url = `https://api-inference.huggingface.co/models/${model}`;
+            try {
+                const resp = await fetch(`${url}?wait_for_model=true`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${HF_API_KEY}` },
+                    body: buffer,
+                    signal: AbortSignal.timeout(15000)
+                });
+                if (resp.ok) return await resp.json();
+                console.warn(`Model ${model} failed with status ${resp.status}`);
+                return null;
+            } catch (e) {
+                console.warn(`Model ${model} request failed: ${e.message}`);
+                return null;
             }
         };
 
-        console.log('Starting AI analysis...');
+        console.log('Starting parallel vision analysis...');
 
-        // Attempt OCR (Primary)
-        const ocrData = await hfRequest('microsoft/trocr-base-printed');
-        const text = Array.isArray(ocrData) ? ocrData[0]?.generated_text : ocrData.generated_text;
+        // Try multiple models in parallel - if any work, we are good!
+        const [blipData, gptData] = await Promise.all([
+            hfRequest('Salesforce/blip-image-captioning-large'),
+            hfRequest('nlpconnect/vit-gpt2-image-captioning')
+        ]);
 
-        // Optional Caption (Secondary - if fails, we still have text)
-        let description = '';
-        try {
-            const capData = await hfRequest('Salesforce/blip-image-captioning-large');
-            description = Array.isArray(capData) ? capData[0]?.generated_text : capData.generated_text;
-        } catch (e) { console.warn('Caption failed but OCR succeeded.'); }
+        const description = Array.isArray(blipData) ? blipData[0]?.generated_text : blipData?.generated_text;
+        const gptText = Array.isArray(gptData) ? gptData[0]?.generated_text : gptData?.generated_text;
+
+        const finalDescription = description || 'Transcrição automática';
+        const finalExtractedText = gptText || description || '';
+
+        if (!description && !gptText) {
+            return res.status(503).json({ error: 'Nenhum modelo de IA disponível no momento. Tente novamente em instantes.' });
+        }
 
         return res.status(200).json({
-            description: description || 'Transcrição automática',
-            extractedText: text || ''
+            description: finalDescription,
+            extractedText: finalExtractedText
         });
 
     } catch (error) {
         console.error('API Error:', error);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: 'Erro inesperado no servidor da IA.' });
     }
 }
