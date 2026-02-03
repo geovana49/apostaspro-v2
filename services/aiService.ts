@@ -66,7 +66,7 @@ export async function analyzeImage(imageBase64: string): Promise<AIAnalysisResul
                 bookmaker: data.bookmaker,
                 value: data.stake,
                 odds: data.odds,
-                date: data.date,
+                date: normalizeDate(data.date),
                 description: data.market,
                 market: data.market,
                 match: data.event,
@@ -134,6 +134,27 @@ function parseTextForBetInfo(text: string, description: string): {
             status
         }
     };
+}
+
+/**
+ * Normalizes date from AI (DD/MM/YYYY) to standard YYYY-MM-DD for form
+ */
+export function normalizeDate(dateStr?: string): string {
+    if (!dateStr) return new Date().toISOString().split('T')[0];
+
+    // Check for DD/MM/YYYY
+    const ddmmyyyy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (ddmmyyyy) {
+        let [_, day, month, year] = ddmmyyyy;
+        if (year.length === 2) year = '20' + year;
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
+    // Check for YYYY-MM-DD
+    const yyyymmdd = dateStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (yyyymmdd) return dateStr;
+
+    return new Date().toISOString().split('T')[0];
 }
 
 /**
