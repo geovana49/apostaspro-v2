@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from "openai";
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -8,21 +9,14 @@ export default async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     const GEMINI_KEY = process.env.VITE_GEMINI_API_KEY;
+    const OPENAI_KEY = process.env.VITE_OPENAI_API_KEY;
 
     if (req.method === 'GET') {
-        if (!GEMINI_KEY) return res.status(500).json({ status: 'error', message: 'Key missing' });
-        try {
-            const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-            const result = await model.generateContent("ping");
-            return res.status(200).json({
-                status: 'ok',
-                model_used: 'gemini-2.0-flash',
-                message: 'A sua chave está ativa e respondendo perfeitamente!'
-            });
-        } catch (e) {
-            return res.status(500).json({ status: 'error', message: e.message });
-        }
+        return res.status(200).json({
+            status: 'online',
+            gemini: !!GEMINI_KEY ? 'configurado' : 'ausente',
+            openai: !!OPENAI_KEY ? 'configurado' : 'ausente'
+        });
     }
 
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -30,84 +24,77 @@ export default async function handler(req, res) {
     try {
         const { image } = req.body || {};
         if (!image) return res.status(400).json({ error: 'Nenhuma imagem recebida.' });
-        if (!GEMINI_KEY) return res.status(500).json({ error: 'Chave do Gemini faltando na Vercel.' });
 
         const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
-        const genAI = new GoogleGenerativeAI(GEMINI_KEY);
 
-        // Multi-model fallback sequence for maximum reliability
-        const modelNames = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b"];
+        // --- STRATEGY 1: GOOGLE GEMINI (Multi-Model Fallback) ---
+        if (GEMINI_KEY) {
+            const genAI = new GoogleGenerativeAI(GEMINI_KEY);
+            const models = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash"];
 
-        const prompt = `Analise este print de comprovante de aposta esportiva com precisão cirúrgica. 
-        
-        Você deve identificar e extrair os seguintes dados:
-        1. Casa de Apostas: Nome da plataforma (Ex: Bet365, Betano, KTO, Sportingbet, Pixbet, etc).
-        2. Stake: Valor total apostado em dinheiro.
-        3. Odds: A cotação final da aposta (Ex: 1.50, 2.85).
-        4. Mercado: O tipo da aposta (Ex: Resultado Final, Ambas Marcam, Escanteios, Mais de 2.5 gols).
-        5. Evento: Os times ou atletas envolvidos (Ex: Flamengo x Palmeiras).
-        6. Data: A data em que a aposta foi feita ou do evento (DD/MM/AAAA).
+            for (const modelName of models) {
+                try {
+                    console.log(`[Proxy] Tentando Gemini: ${modelName}`);
+                    const model = genAI.getGenerativeModel({
+                        model: modelName,
+                        generationConfig: { responseMimeType: "application/json", temperature: 0.1 }
+                    });
 
-        Responda EXCLUSIVAMENTE um objeto JSON puro, sem formatação markdown, com esta estrutura:
-        {
-          "bookmaker": "Nome da Casa",
-          "stake": 10.00,
-          "odds": 1.50,
-          "market": "Mercado Detectado",
-          "event": "Time A vs Time B",
-          "date": "DD/MM/AAAA",
-          "type": "bet"
-        }
+                    const prompt = `Extraia os dados deste print de aposta esportiva (Bet). 
+                    Campos: bookmaker (casa), stake (valor), odds (cotação), market (mercado), event (times/jogo), date (data DD/MM/AAAA). 
+                    Retorne APENAS um JSON: {"bookmaker":"","stake":0,"odds":1.0,"market":"","event":"","date":"","type":"bet"}. 
+                    Se for lucro/bônus use "type":"gain".`;
 
-        NOTAS IMPORTANTES:
-        - Se for um comprovante de "Lucro", "Bônus" ou "Prêmio Extra", use "type": "gain".
-        - Se for uma aposta comum, use "type": "bet".
-        - Se um dado for numérico, retorne como número (float), não string.
-        - Se não encontrar um dado, retorne string vazia ou 0.
-        - NÃO adicione conversas, explicações ou blocos de código markdown (\`\`\`).`;
+                    const result = await model.generateContent([
+                        prompt,
+                        { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
+                    ]);
 
-        let lastError = null;
-        for (const modelName of modelNames) {
-            try {
-                console.log(`Trying model: ${modelName}`);
-                const model = genAI.getGenerativeModel({
-                    model: modelName,
-                    generationConfig: {
-                        responseMimeType: "application/json",
-                        temperature: 0.1
-                    }
-                });
+                    const text = result.response.text().replace(/```json\n?/, '').replace(/\n?```/, '').trim();
+                    const data = JSON.parse(text);
+                    return res.status(200).json({ source: `Gemini ${modelName}`, data });
 
-                const result = await model.generateContent([
-                    prompt,
-                    { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
-                ]);
-
-                let text = result.response.text();
-                // Safety cleanup
-                text = text.replace(/```json\n?/, '').replace(/\n?```/, '').trim();
-
-                const parsedData = JSON.parse(text);
-                return res.status(200).json({ source: modelName, data: parsedData });
-
-            } catch (error) {
-                console.error(`Error with model ${modelName}:`, error.message);
-                lastError = error;
-                // If it's a 429, we should probably stop or wait, but here we try the next model just in case it has a separate quota (sometimes happens with different tiers)
-                if (error.message?.includes('404')) continue;
-                if (error.message?.includes('429')) break;
+                } catch (err) {
+                    console.warn(`[Proxy] Gemini ${modelName} falhou: ${err.message}`);
+                    // Continue to next model unless it's a fatal error unrelated to quota/model-not-found
+                }
             }
         }
 
-        // If all models failed
-        const isQuota = lastError?.message?.includes('429');
-        const userFriendlyMsg = isQuota
-            ? 'O Google limitou o uso da IA temporariamente. Por favor, aguarde alguns minutos antes de tentar novamente.'
-            : `Erro na análise da IA: ${lastError?.message || 'Falha ao processar imagem'}`;
+        // --- STRATEGY 2: OPENAI (Silent Fallback) ---
+        if (OPENAI_KEY) {
+            try {
+                console.log(`[Proxy] Tentando OpenAI Fallback...`);
+                const openai = new OpenAI({ apiKey: OPENAI_KEY });
 
-        return res.status(isQuota ? 429 : 500).json({ error: userFriendlyMsg });
+                const response = await openai.chat.completions.create({
+                    model: "gpt-4o-mini", // Very fast and reliable for vision
+                    messages: [
+                        {
+                            role: "user",
+                            content: [
+                                { type: "text", text: "Analise o print da aposta e retorne APENAS o JSON: {\"bookmaker\":\"\",\"stake\":0,\"odds\":1.0,\"market\":\"\",\"event\":\"\",\"date\":\"\",\"type\":\"bet\"}. Se for lucro use type=gain." },
+                                { type: "image_url", image_url: { url: image } }
+                            ],
+                        },
+                    ],
+                    response_format: { type: "json_object" }
+                });
+
+                const data = JSON.parse(response.choices[0].message.content);
+                return res.status(200).json({ source: "OpenAI GPT-4o-mini", data });
+
+            } catch (err) {
+                console.error(`[Proxy] OpenAI falhou: ${err.message}`);
+            }
+        }
+
+        // --- FINAL FAILURE ---
+        return res.status(500).json({
+            error: "Todas as IAs falharam ou atingiram o limite (Erro 429). Por favor, aguarde 15 minutos e tente novamente."
+        });
 
     } catch (error) {
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: `Erro no servidor: ${error.message}` });
     }
 }
