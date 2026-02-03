@@ -58,19 +58,23 @@ export async function analyzeImage(imageBase64: string): Promise<AIAnalysisResul
 
         console.log('[AI Service] Proxy structured response received:', data);
 
+        // Helper to clean hallucinations like "Sucesso via..."
+        const clean = (val: string) => val?.replace(/Sucesso via.*/gi, '').trim() || '';
+
         // Map the structured data directly
         return {
             type: data.type === 'gain' ? 'gain' : 'bet',
-            confidence: 0.95, // High confidence for structured Gemini output
+            confidence: 0.95,
             data: {
-                bookmaker: data.bookmaker,
+                bookmaker: clean(data.bookmaker),
                 value: data.stake,
                 odds: data.odds,
                 date: normalizeDate(data.date),
-                description: data.market,
-                market: data.market,
-                match: data.event,
-                status: 'Yellow' // Pending by default
+                description: clean(data.market),
+                market: clean(data.market),
+                match: clean(data.event),
+                status: 'Yellow',
+                promotionType: data.promotion || 'Nenhuma'
             },
             rawText: JSON.stringify(data),
             suggestions: []

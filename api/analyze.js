@@ -27,23 +27,46 @@ export default async function handler(req, res) {
 
         const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
 
+        // --- ENHANCED PROMPT WITH SPECIFIC BRAZILIAN BETTING RULES ---
+        const prompt = `Analise este print de aposta esportiva com PRECISÃO TOTAL.
+        
+        REGRAS DE EXTRAÇÃO:
+        1. Bookmaker: Identifique o nome da plataforma (ex: Bet365, Betano, Br4.bet, Betnacional, Sportingbet).
+        2. Stake (VALOR): Procure o valor real apostado. NÃO confunda com "Ganho Potencial" ou "Retorno".
+        3. Odds (COTAÇÃO): Procure o multiplicador decimal (ex: 1.50, 4.20).
+        4. Evento: Os times ou jogo (ex: Corinthians vs Vasco).
+        5. Mercado: O tipo da aposta (ex: Resultado Final, Ambas Marcam).
+        6. Promoção: 
+           - SE houver um ícone de "Presente" (gift) E o texto "100%", classifique a promoção como "Conversão Freebet".
+           - SE NÃO houver presente mas houver indicação de bônus, pode ser "Freebet" ou "Super Odds".
+        
+        ESTRUTURA DE RESPOSTA (JSON PURO):
+        {
+          "bookmaker": "Nome da Casa",
+          "stake": 0.00,
+          "odds": 1.00,
+          "market": "Nome do Mercado",
+          "event": "Time A vs Time B",
+          "date": "DD/MM/AAAA",
+          "promotion": "Nenhuma" // ou "Conversão Freebet", "Freebet", "Super Odds"
+        }
+
+        PROIBIDO:
+        - NÃO adicione textos como "Sucesso via gpt-4" ou "Análise concluída".
+        - NÃO adicione blocos de código markdown (\`\`\`json).
+        - Os campos "market" e "event" devem conter APENAS o nome do jogo/mercado, sem avisos de sucesso.`;
+
         // --- STRATEGY 1: GOOGLE GEMINI (Multi-Model Fallback) ---
         if (GEMINI_KEY) {
             const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-            const models = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash"];
+            const models = ["gemini-1.5-flash", "gemini-2.0-flash"];
 
             for (const modelName of models) {
                 try {
-                    console.log(`[Proxy] Tentando Gemini: ${modelName}`);
                     const model = genAI.getGenerativeModel({
                         model: modelName,
                         generationConfig: { responseMimeType: "application/json", temperature: 0.1 }
                     });
-
-                    const prompt = `Extraia os dados deste print de aposta esportiva (Bet). 
-                    Campos: bookmaker (casa), stake (valor), odds (cotação), market (mercado), event (times/jogo), date (data DD/MM/AAAA). 
-                    Retorne APENAS um JSON: {"bookmaker":"","stake":0,"odds":1.0,"market":"","event":"","date":"","type":"bet"}. 
-                    Se for lucro/bônus use "type":"gain".`;
 
                     const result = await model.generateContent([
                         prompt,
@@ -52,11 +75,15 @@ export default async function handler(req, res) {
 
                     const text = result.response.text().replace(/```json\n?/, '').replace(/\n?```/, '').trim();
                     const data = JSON.parse(text);
+
+                    // Sanitize against any remaining hallucination
+                    if (data.event?.includes('via gemini')) data.event = data.event.split('via')[0].trim();
+                    if (data.market?.includes('via gemini')) data.market = data.market.split('via')[0].trim();
+
                     return res.status(200).json({ source: `Gemini ${modelName}`, data });
 
                 } catch (err) {
                     console.warn(`[Proxy] Gemini ${modelName} falhou: ${err.message}`);
-                    // Continue to next model unless it's a fatal error unrelated to quota/model-not-found
                 }
             }
         }
@@ -64,16 +91,14 @@ export default async function handler(req, res) {
         // --- STRATEGY 2: OPENAI (Silent Fallback) ---
         if (OPENAI_KEY) {
             try {
-                console.log(`[Proxy] Tentando OpenAI Fallback...`);
                 const openai = new OpenAI({ apiKey: OPENAI_KEY });
-
                 const response = await openai.chat.completions.create({
-                    model: "gpt-4o-mini", // Very fast and reliable for vision
+                    model: "gpt-4o-mini",
                     messages: [
                         {
                             role: "user",
                             content: [
-                                { type: "text", text: "Analise o print da aposta e retorne APENAS o JSON: {\"bookmaker\":\"\",\"stake\":0,\"odds\":1.0,\"market\":\"\",\"event\":\"\",\"date\":\"\",\"type\":\"bet\"}. Se for lucro use type=gain." },
+                                { type: "text", text: prompt },
                                 { type: "image_url", image_url: { url: image } }
                             ],
                         },
@@ -82,16 +107,15 @@ export default async function handler(req, res) {
                 });
 
                 const data = JSON.parse(response.choices[0].message.content);
-                return res.status(200).json({ source: "OpenAI GPT-4o-mini", data });
+                return res.status(200).json({ source: "OpenAI Fallback", data });
 
             } catch (err) {
                 console.error(`[Proxy] OpenAI falhou: ${err.message}`);
             }
         }
 
-        // --- FINAL FAILURE ---
         return res.status(500).json({
-            error: "Todas as IAs falharam ou atingiram o limite (Erro 429). Por favor, aguarde 15 minutos e tente novamente."
+            error: "Todas as IAs falharam ou atingiram o limite (Erro 429). Por favor, aguarde 15 minutos."
         });
 
     } catch (error) {
