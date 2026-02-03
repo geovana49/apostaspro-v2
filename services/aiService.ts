@@ -13,6 +13,7 @@ export interface AIAnalysisResult {
         match?: string;
         market?: string;
         sport?: string;
+        promotionType?: string;
     };
     rawText?: string;
     suggestions?: string[];

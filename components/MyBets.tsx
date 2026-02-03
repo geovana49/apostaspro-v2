@@ -212,7 +212,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                 date: mainData.date ? new Date(mainData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
                 mainBookmakerId: mainBookmakerId,
                 event: mainData.match || mainData.description || 'Evento Detectado',
-                promotionType: 'Nenhuma',
+                promotionType: mainData.promotionType || 'Nenhuma',
                 status: overallStatus,
                 coverages: newCoverages,
                 notes: `Importado via IA - ${validResults.length} imagens processadas`,
