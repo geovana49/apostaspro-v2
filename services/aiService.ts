@@ -142,7 +142,7 @@ export async function analyzeImage(imageBase64: string, context?: any): Promise<
             console.error(`[AI Service] Attempt ${attempts + 1} failed:`, error);
 
             // --- RECOVERY MODE: If AI fails perfectly but we have SOME OCR data, use it! ---
-            if (attempts >= maxAttempts - 1 && localData) {
+            if (localData) {
                 console.log('[AI Service] AI Failed, but recovering via Partial Local OCR.');
                 return {
                     type: 'bet',
@@ -156,13 +156,13 @@ export async function analyzeImage(imageBase64: string, context?: any): Promise<
                         date: localData.date || normalizeDate(),
                         promotionType: 'Nenhuma'
                     },
-                    rawText: JSON.stringify(localData),
-                    suggestions: ['⚠️ IA Indisponível - Dados recuperados localmente (Verifique!)']
+                    rawText: localData.raw || JSON.stringify(localData),
+                    suggestions: ['⚠️ Limite de IA atingido - Dados recuperados localmente (Verifique!)']
                 };
             }
 
             if (attempts >= maxAttempts - 1) {
-                throw new Error(`Limite de IA atingido. Tente novamente em alguns minutos.`);
+                throw new Error(`Limite de IA atingido e não foi possível ler o print localmente. Tente novamente em alguns minutos.`);
             }
             attempts++;
             await new Promise(r => setTimeout(r, 2000));

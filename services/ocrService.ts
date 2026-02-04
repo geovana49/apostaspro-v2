@@ -136,13 +136,13 @@ class OCRService {
                 data.market = foundMarkets[0].trim();
             }
 
-            // Final check: if we found AT LEAST some data, don't return null
-            if (data.stake || data.odds || data.market) {
-                console.log('[OCR] Extraction Success:', data);
+            // Final check: provide as much as we have, even if only raw text
+            if (text && text.length > 2) {
+                console.log('[OCR] Extraction Result (Heuristic):', data);
                 return data;
             }
 
-            console.warn('[OCR] Could not extract meaningful data patterns.');
+            console.warn('[OCR] No text found at all.');
             return null;
 
         } catch (error) {
