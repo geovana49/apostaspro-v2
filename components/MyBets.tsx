@@ -137,6 +137,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const [editingValue, setEditingValue] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const smartImportInputRef = useRef<HTMLInputElement>(null);
+    const coverageImportInputRef = useRef<HTMLInputElement>(null);
 
     const handleSmartImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []) as File[];
@@ -149,37 +150,52 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
 
             // Analyze images sequentially to avoid 429 rate limits
             const results = [];
+            let hadQuotaError = false;
+
             for (const base64 of compressedBase64s) {
-                // --- CONTEXTUAL AI: Base analysis on existing data ---
-                const recentBetsContext = bets.slice(0, 5).map(b => ({
-                    bookmaker: bookmakers.find(bm => bm.id === b.mainBookmakerId)?.name,
-                    event: b.event,
-                    market: b.market,
-                    stake: b.stake,
-                    odds: b.odds
-                }));
+                try {
+                    // --- CONTEXTUAL AI: Base analysis on existing data ---
+                    const recentBetsContext = bets.slice(0, 5).map(b => ({
+                        bookmaker: bookmakers.find(bm => bm.id === b.mainBookmakerId)?.name,
+                        event: b.event,
+                        market: b.market,
+                        stake: b.stake,
+                        odds: b.odds
+                    }));
 
-                const context = {
-                    recent_bets: recentBetsContext,
-                    available_bookmakers: bookmakers.map(bm => bm.name)
-                };
+                    const context = {
+                        recent_bets: recentBetsContext,
+                        available_bookmakers: bookmakers.map(bm => bm.name)
+                    };
 
-                const result = await analyzeImage(base64, context);
-                results.push(result);
+                    const result = await analyzeImage(base64, context);
+                    results.push(result);
 
-                // Optimized delay to avoid 429 errors (2.5 seconds between images)
-                if (compressedBase64s.length > 1) await new Promise(r => setTimeout(r, 2500));
+                    // Optimized delay to avoid 429 errors (2.5 seconds between images)
+                    if (compressedBase64s.length > 1) await new Promise(r => setTimeout(r, 2500));
+                } catch (err: any) {
+                    console.warn('[Smart Import] Failed to process one image:', err);
+                    if (err.message.includes('429') || err.message.includes('Limite')) {
+                        hadQuotaError = true;
+                    }
+                    // Continue to next image if some succeeded
+                }
             }
 
-            // Validate results
-            const validResults = results.filter(r => r.type === 'bet' || r.confidence > 0.4);
-            if (validResults.length === 0) {
-                alert("Não foi possível identificar apostas nas imagens. Tente novamente.");
+            if (results.length === 0) {
+                if (hadQuotaError) {
+                    if (window.confirm(`Todas as tentativas de IA falharam por limite de cota.\n\nDeseja carregar a versão mais recente e tentar reparar a conexão?`)) {
+                        localStorage.clear();
+                        window.location.reload();
+                    }
+                } else {
+                    alert("Não foi possível identificar apostas nas imagens. Tente novamente.");
+                }
                 return;
             }
 
             // Use the first valid result for common fields (Event, Date, Main Bookmaker)
-            const mainData = validResults[0].data;
+            const mainData = results[0].data;
 
             // Map Main Bookmaker
             const findBookmaker = (name: string) => {
@@ -193,7 +209,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             const mainBookmakerId = mainBookmaker?.id || settings.defaultBookmakerId || bookmakers[0]?.id || '';
 
             // Generate Coverages from ALL results
-            const newCoverages: Coverage[] = validResults.map((result, index) => {
+            const newCoverages: Coverage[] = results.map((result, index) => {
                 const data = result.data;
                 const bk = findBookmaker(data.bookmaker);
                 const bkId = bk?.id || (index === 0 ? mainBookmakerId : '');
@@ -229,7 +245,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                 promotionType: mainData.promotionType || 'Nenhuma',
                 status: overallStatus,
                 coverages: newCoverages,
-                notes: `Importado via IA - ${validResults.length} imagens processadas`,
+                notes: `Importado via IA - ${results.length} imagens processadas`,
                 isDoubleGreen: false
             };
 
@@ -257,6 +273,62 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         } finally {
             setIsAnalyzing(false);
             if (smartImportInputRef.current) smartImportInputRef.current.value = '';
+        }
+    };
+
+    const handleCoverageImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []) as File[];
+        if (files.length === 0) return;
+
+        setIsAnalyzing(true);
+        try {
+            const compressedBase64s = await compressImages(files);
+            const results = [];
+
+            const findBookmaker = (name: string) => {
+                return bookmakers.find(b =>
+                    b.name.toLowerCase().includes(name?.toLowerCase() || '') ||
+                    (name && b.name.toLowerCase().includes(name.toLowerCase()))
+                );
+            };
+
+            for (const base64 of compressedBase64s) {
+                try {
+                    const result = await analyzeImage(base64);
+                    results.push(result);
+                    if (compressedBase64s.length > 1) await new Promise(r => setTimeout(r, 2000));
+                } catch (err) {
+                    console.warn('[Coverage Import] Failed image:', err);
+                }
+            }
+
+            results.forEach((result, idx) => {
+                const data = result.data;
+                const bk = findBookmaker(data.bookmaker);
+
+                dispatch({
+                    type: 'ADD_COVERAGE',
+                    payload: {
+                        id: Date.now().toString() + idx + Math.random().toString(),
+                        bookmakerId: bk?.id || formData.mainBookmakerId || bookmakers[0].id,
+                        market: data.market || data.description || 'Cobertura Detectada',
+                        odd: Number(data.odds) || 0,
+                        stake: Number(data.value) || 0,
+                        status: 'Pendente'
+                    }
+                });
+            });
+
+            // Also add photos
+            const photoObjects = compressedBase64s.map(url => ({ url }));
+            setTempPhotos(prev => [...prev, ...photoObjects]);
+
+        } catch (error: any) {
+            console.error('Coverage Import Error:', error);
+            alert(`Erro na importação: ${error.message}`);
+        } finally {
+            setIsAnalyzing(false);
+            if (coverageImportInputRef.current) coverageImportInputRef.current.value = '';
         }
     };
 
@@ -1556,9 +1628,29 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                     <div>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-sm font-bold text-primary uppercase tracking-wider">Coberturas</h3>
-                            <Button size="sm" variant="neutral" onClick={addCoverage} className="text-xs h-8 px-3">
-                                <Plus size={14} /> Adicionar
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="file"
+                                    ref={coverageImportInputRef}
+                                    onChange={handleCoverageImport}
+                                    accept="image/*"
+                                    multiple
+                                    className="hidden"
+                                />
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => coverageImportInputRef.current?.click()}
+                                    className="text-[10px] h-8 px-3 border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
+                                    disabled={isAnalyzing}
+                                >
+                                    {isAnalyzing ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                    Importar Print
+                                </Button>
+                                <Button size="sm" variant="neutral" onClick={addCoverage} className="text-[10px] h-8 px-3">
+                                    <Plus size={14} /> Adicionar
+                                </Button>
+                            </div>
                         </div>
 
                         <div className="space-y-4">
