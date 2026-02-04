@@ -147,14 +147,28 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             // Compress all images
             const compressedBase64s = await compressImages(files);
 
-            // Analyze all images in parallel
             // Analyze images sequentially to avoid 429 rate limits
             const results = [];
             for (const base64 of compressedBase64s) {
-                const result = await analyzeImage(base64);
+                // --- CONTEXTUAL AI: Base analysis on existing data ---
+                const recentBetsContext = bets.slice(0, 5).map(b => ({
+                    bookmaker: bookmakers.find(bm => bm.id === b.mainBookmakerId)?.name,
+                    event: b.event,
+                    market: b.market,
+                    stake: b.stake,
+                    odds: b.odds
+                }));
+
+                const context = {
+                    recent_bets: recentBetsContext,
+                    available_bookmakers: bookmakers.map(bm => bm.name)
+                };
+
+                const result = await analyzeImage(base64, context);
                 results.push(result);
-                // Optimized delay to avoid 429 errors (2 seconds between images)
-                if (compressedBase64s.length > 1) await new Promise(r => setTimeout(r, 2000));
+
+                // Optimized delay to avoid 429 errors (2.5 seconds between images)
+                if (compressedBase64s.length > 1) await new Promise(r => setTimeout(r, 2500));
             }
 
             // Validate results

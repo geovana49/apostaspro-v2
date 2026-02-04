@@ -31,60 +31,79 @@ const HF_API_KEY = import.meta.env.VITE_HF_API_KEY || '';
 /**
  * Analyzes a bet screenshot using Hugging Face Vision Models
  * @param imageBase64 - Base64 encoded image (with or without data URI prefix)
+ * @param context - Optional context of recent bets to improve accuracy
  * @returns Structured bet information
  */
-export async function analyzeImage(imageBase64: string): Promise<AIAnalysisResult> {
-    console.log('[AI Service] Starting analysis via Proxy API...');
+export async function analyzeImage(imageBase64: string, context?: any): Promise<AIAnalysisResult> {
+    console.log('[AI Service] Starting analysis via Proxy API with context:', !!context);
 
-    try {
-        const response = await fetch('/api/analyze', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ image: imageBase64 })
-        });
+    let attempts = 0;
+    const maxAttempts = 2;
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            // If the server provides a detailed diagnostic object, stringify it for the user
-            const details = errorData.available_models_for_your_key
-                ? `\nModelos disponíveis: ${JSON.stringify(errorData.available_models_for_your_key)}\nDica: ${errorData.diagnostic_tip}`
-                : '';
-            throw new Error((errorData.error || `Erro no servidor: ${response.status}`) + details);
+    while (attempts < maxAttempts) {
+        try {
+            const response = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    image: imageBase64,
+                    context: context // Passing recent bets/bookmakers for few-shot learning
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+
+                // If it's a 429 on the first try, wait 3s and retry
+                if (response.status === 429 && attempts === 0) {
+                    console.warn('[AI Service] Quota hit (429). Retrying in 3s...');
+                    attempts++;
+                    await new Promise(r => setTimeout(r, 3000));
+                    continue;
+                }
+
+                throw new Error(errorData.error || `Erro no servidor: ${response.status}`);
+            }
+
+            const { data } = await response.json();
+            if (!data) throw new Error("A IA respondeu mas os dados vieram vazios ou mal formatados.");
+
+            console.log('[AI Service] Proxy structured response received:', data);
+
+            // Helper to clean hallucinations like "Sucesso via..."
+            const clean = (val: string) => val?.replace(/Sucesso via.*/gi, '').trim() || '';
+
+            // Map the structured data directly
+            return {
+                type: data.type === 'gain' ? 'gain' : 'bet',
+                confidence: 0.95,
+                data: {
+                    bookmaker: clean(data.bookmaker),
+                    value: data.stake,
+                    odds: data.odds,
+                    date: normalizeDate(data.date),
+                    description: clean(data.market),
+                    market: clean(data.market),
+                    match: clean(data.event),
+                    status: 'Yellow',
+                    promotionType: data.promotion || 'Nenhuma'
+                },
+                rawText: JSON.stringify(data),
+                suggestions: []
+            };
+
+        } catch (error) {
+            console.error(`[AI Service] Attempt ${attempts + 1} failed:`, error);
+            if (attempts >= maxAttempts - 1) {
+                throw new Error(`Erro na IA: ${error instanceof Error ? error.message : 'Erro de conexão'}`);
+            }
+            attempts++;
+            await new Promise(r => setTimeout(r, 2000));
         }
-
-        const { data } = await response.json();
-        if (!data) throw new Error("A IA respondeu mas os dados vieram vazios ou mal formatados.");
-
-        console.log('[AI Service] Proxy structured response received:', data);
-
-        // Helper to clean hallucinations like "Sucesso via..."
-        const clean = (val: string) => val?.replace(/Sucesso via.*/gi, '').trim() || '';
-
-        // Map the structured data directly
-        return {
-            type: data.type === 'gain' ? 'gain' : 'bet',
-            confidence: 0.95,
-            data: {
-                bookmaker: clean(data.bookmaker),
-                value: data.stake,
-                odds: data.odds,
-                date: normalizeDate(data.date),
-                description: clean(data.market),
-                market: clean(data.market),
-                match: clean(data.event),
-                status: 'Yellow',
-                promotionType: data.promotion || 'Nenhuma'
-            },
-            rawText: JSON.stringify(data),
-            suggestions: []
-        };
-
-    } catch (error) {
-        console.error('[AI Service] Analysis failed:', error);
-        throw new Error(`Erro na IA: ${error instanceof Error ? error.message : 'Erro de conexão'}`);
     }
+    throw new Error("Erro na IA: Falha após múltiplas tentativas.");
 }
 
 /**

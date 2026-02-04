@@ -22,13 +22,23 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
     try {
-        const { image } = req.body || {};
+        const { image, context } = req.body || {};
         if (!image) return res.status(400).json({ error: 'Nenhuma imagem recebida.' });
 
         const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
 
-        // --- ENHANCED PROMPT WITH SPECIFIC BRAZILIAN BETTING RULES ---
+        // --- ENHANCED PROMPT WITH CONTEXTUAL HISTORY (FEW-SHOT) ---
+        let contextInfo = "";
+        if (context && context.recent_bets && context.recent_bets.length > 0) {
+            contextInfo = `\nEXEMPLOS DE APOSTAS RECENTES DO USUÁRIO (Baseie-se nestes padrões):\n${JSON.stringify(context.recent_bets)}\n`;
+        }
+
+        if (context && context.available_bookmakers) {
+            contextInfo += `\nCASAS DE APOSTAS DISPONÍVEIS: ${context.available_bookmakers.join(', ')}\n`;
+        }
+
         const prompt = `Analise este print de aposta esportiva com PRECISÃO TOTAL.
+        ${contextInfo}
         
         REGRAS DE EXTRAÇÃO:
         1. Bookmaker: Identifique o nome da plataforma (ex: Bet365, Betano, Br4.bet, Betnacional, Sportingbet).
