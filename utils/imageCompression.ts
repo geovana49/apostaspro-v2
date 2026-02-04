@@ -66,7 +66,7 @@ export async function compressImage(
 
                     // Converter para base64 com compressão
                     let quality = opts.quality!;
-                    let base64 = canvas.toDataURL('image/webp', quality);
+                    let base64 = canvas.toDataURL('image/jpeg', quality);
 
                     // Se ainda estiver muito grande, reduzir qualidade progressivamente
                     const maxBytes = (opts.maxSizeMB! * 1024 * 1024);
@@ -74,7 +74,7 @@ export async function compressImage(
 
                     while (base64.length > maxBytes && quality > 0.5 && iterations < 5) {
                         quality -= 0.1;
-                        base64 = canvas.toDataURL('image/webp', quality);
+                        base64 = canvas.toDataURL('image/jpeg', quality);
                         iterations++;
                     }
 

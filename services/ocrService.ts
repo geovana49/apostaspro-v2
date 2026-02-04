@@ -21,9 +21,10 @@ class OCRService {
         if (!this.worker) {
             try {
                 console.log('[OCR v2.2] Initializing Tesseract worker...');
-                this.worker = await createWorker('por');
+                this.worker = await createWorker('por+eng', 1, {
+                    logger: m => console.log('[Tesseract Progress]', m.status, Math.round(m.progress * 100) + '%')
+                });
                 console.log('[OCR v2.2] Worker ready.');
-                // alert('Motor de Raio-X (OCR) iniciado com sucesso! Extraindo dados...');
             } catch (err) {
                 console.error('[OCR v2.2] Tesseract init failed:', err);
                 throw err;
@@ -43,6 +44,11 @@ class OCRService {
             const worker = await this.getWorker();
             const result = await worker.recognize(imageBuffer);
             const data = result.data;
+
+            console.log(`[OCR] Recognition complete. Conf: ${data.confidence}%. Text length: ${data.text.length}`);
+            if (data.text.length < 5) {
+                console.warn('[OCR] Warning: Very little text found. Raw:', data.text);
+            }
 
             return {
                 text: data.text,
