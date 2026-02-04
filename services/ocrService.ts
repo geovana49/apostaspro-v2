@@ -19,9 +19,9 @@ class OCRService {
 
     async getWorker() {
         if (!this.worker) {
-            console.log('[OCR] Initializing Tesseract worker (local)...');
-            this.worker = await createWorker('por'); // Portuguese + digits
-            console.log('[OCR] Worker ready.');
+            console.log('[OCR v2.1] Initializing Tesseract worker (local)...');
+            this.worker = await createWorker('por');
+            console.log('[OCR v2.1] Worker ready.');
         }
         return this.worker;
     }
