@@ -23,6 +23,7 @@ class OCRService {
                 console.log('[OCR v2.2] Initializing Tesseract worker...');
                 this.worker = await createWorker('por');
                 console.log('[OCR v2.2] Worker ready.');
+                // alert('Motor de Raio-X (OCR) iniciado com sucesso! Extraindo dados...');
             } catch (err) {
                 console.error('[OCR v2.2] Tesseract init failed:', err);
                 throw err;

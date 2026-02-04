@@ -158,7 +158,15 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         setIsAnalyzing(true);
         try {
             // Compress all images
+            console.log('[DEBUG] Files selected:', files.length);
             const compressedBase64s = await compressImages(files);
+            console.log('[DEBUG] Images compressed:', compressedBase64s.length);
+
+            if (compressedBase64s.length === 0) {
+                alert('Erro ao processar imagens. Verifique se os arquivos são válidos.');
+                setIsAnalyzing(false);
+                return;
+            }
 
             // Analyze images sequentially to avoid 429 rate limits
             const results = [];
@@ -181,6 +189,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     };
 
                     const result = await analyzeImage(base64, context);
+                    console.log('[DEBUG] Analysis Result:', result);
                     results.push(result);
 
                     // Optimized delay to avoid 429 errors (2.5 seconds between images)
@@ -198,8 +207,9 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             if (results.length === 0) {
                 const scaffold: FormState = {
                     ...initialFormState,
-                    notes: 'Falha na leitura automática. Por favor, preencha manualmente.',
+                    notes: 'Nenhum dado extraído. Tente um print mais nítido ou preencha manualmente.',
                 };
+                alert('Não conseguimos ler os dados do print. Abrindo formulário vazio.');
                 dispatch({ type: 'SET_FORM', payload: scaffold });
                 setIsModalOpen(true);
                 return;
@@ -252,11 +262,11 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                 id: undefined,
                 date: mainData.date ? new Date(mainData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
                 mainBookmakerId: mainBookmakerId,
-                event: mainData.match || mainData.description || 'Evento Detectado',
+                event: mainData.match || mainData.event || mainData.description || 'Evento Detectado',
                 promotionType: mainData.promotionType || 'Nenhuma',
                 status: overallStatus,
                 coverages: newCoverages,
-                notes: `Importado via IA - ${results.length} imagens processadas`,
+                notes: `[DEBUG] IA: ${results[0].source || 'Local'}\n[RAW]: ${results[0].rawText?.substring(0, 200)}...`,
                 isDoubleGreen: false
             };
 
