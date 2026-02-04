@@ -143,6 +143,14 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const smartImportInputRef = useRef<HTMLInputElement>(null);
     const coverageImportInputRef = useRef<HTMLInputElement>(null);
 
+    // LIVE PERSISTENCE: Save to localStorage while editing to protect against reloads
+    useEffect(() => {
+        if (isModalOpen) {
+            const draftData = { formData, tempPhotos };
+            localStorage.setItem('apostaspro_live_draft', JSON.stringify(draftData));
+        }
+    }, [formData, tempPhotos, isModalOpen]);
+
     const handleSmartImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []) as File[];
         if (files.length === 0) return;
@@ -483,11 +491,16 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
 
     const handleOpenNew = () => {
         setIsEditing(false);
-        // Check for generic draft
+        // Priority 1: Live persistence from reload
+        const liveDraft = localStorage.getItem('apostaspro_live_draft');
+        // Priority 2: Generic saved draft
         const savedDraft = localStorage.getItem('apostaspro_draft_mybets');
-        if (savedDraft) {
+
+        const draftToUse = liveDraft || savedDraft;
+
+        if (draftToUse) {
             try {
-                const { formData: savedForm, tempPhotos: savedPhotos } = JSON.parse(savedDraft);
+                const { formData: savedForm, tempPhotos: savedPhotos } = JSON.parse(draftToUse);
                 console.log('Restoring draft for MyBets');
                 dispatch({ type: 'SET_FORM', payload: savedForm });
                 setTempPhotos(savedPhotos || []);
@@ -853,6 +866,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             } else {
                 // User rejected saving: Clear EVERYTHING
                 localStorage.removeItem('apostaspro_draft_mybets');
+                localStorage.removeItem('apostaspro_live_draft');
                 dispatch({ type: 'SET_FORM', payload: initialFormState });
                 setTempPhotos([]);
                 setIsModalOpen(false);
@@ -860,6 +874,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         } else {
             // Already empty or safe to close
             localStorage.removeItem('apostaspro_draft_mybets');
+            localStorage.removeItem('apostaspro_live_draft');
             dispatch({ type: 'SET_FORM', payload: initialFormState });
             setTempPhotos([]);
             setIsModalOpen(false);
