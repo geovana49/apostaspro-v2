@@ -42,26 +42,31 @@ export async function analyzeImage(imageBase64: string, context?: any): Promise<
     try {
         console.log('[AI Service] Attempting Local OCR extraction...');
         const localData = await ocrService.extractData(imageBase64);
-        if (localData && localData.stake && localData.odds) {
+
+        // If we found at least one vital piece of information (Stake or Odds), use it!
+        if (localData && (localData.stake || localData.odds)) {
             console.log('[AI Service] Local OCR Success:', localData);
             return {
                 type: 'bet',
                 confidence: 1.0,
                 data: {
-                    bookmaker: localData.bookmaker,
-                    value: localData.stake,
-                    odds: localData.odds,
-                    market: localData.market,
-                    match: localData.event,
+                    bookmaker: localData.bookmaker || 'Casa via OCR',
+                    value: localData.stake || 0,
+                    odds: localData.odds || 1.0,
+                    market: localData.market || 'Mercado via OCR',
+                    match: localData.event || 'Evento via OCR',
+                    date: localData.date || normalizeDate(),
                     promotionType: localData.promotion || 'Nenhuma'
                 },
                 rawText: JSON.stringify(localData),
-                suggestions: ['Extraído localmente via OCR']
+                suggestions: ['Processado 100% Localmente (Sem Custos/IA)']
             };
         }
     } catch (e) {
         console.warn('[AI Service] Local OCR failed, falling back to AI Proxy:', e);
     }
+
+    console.log('[AI Service] Local OCR insufficient. Activating AI Proxy...');
 
     // Basic deduplication: Check session cache first
     if (analysisCache.has(imageBase64)) {
