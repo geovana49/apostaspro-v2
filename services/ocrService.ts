@@ -45,7 +45,8 @@ class OCRService {
                     { field: 'stake', anchor: 'aposta', regex: /\d+[.,]\d{2}/ },
                     { field: 'odds', anchor: 'odds super turbinadas', regex: /\d+[.,]\d{2}/ },
                     { field: 'market', anchor: 'resultado final' },
-                    { field: 'event', anchor: 'v' } // Often "Team A v Team B"
+                    { field: 'event', anchor: 'v' },
+                    { field: 'date', regex: /(\d{1,2}\/\d{1,2}(\/\d{2,4})?)|hoje|ontem/i }
                 ]
             },
             {
@@ -55,7 +56,8 @@ class OCRService {
                 rules: [
                     { field: 'stake', anchor: 'valor total de aposta', regex: /\d+[.,]\d{2}/ },
                     { field: 'odds', anchor: 'cotaes totais', regex: /\d+[.,]\d{2}/ },
-                    { field: 'market', anchor: 'vencedor do encontro' }
+                    { field: 'market', anchor: 'vencedor do encontro' },
+                    { field: 'date', regex: /(\d{1,2}\/\d{1,2}(\/\d{2,4})?)|hoje|ontem/i }
                 ]
             },
             {
@@ -65,7 +67,8 @@ class OCRService {
                 rules: [
                     { field: 'stake', anchor: 'aposta', regex: /\d+[.,]\d{2}/ },
                     { field: 'odds', anchor: 'potencial ganho', regex: /\d+[.,]\d{2}/ },
-                    { field: 'market', anchor: 'resultado final' }
+                    { field: 'market', anchor: 'resultado final' },
+                    { field: 'date', regex: /(\d{1,2}\/\d{1,2}(\/\d{2,4})?)|hoje|ontem/i }
                 ]
             }
         ];
@@ -76,11 +79,12 @@ class OCRService {
             this.worker = await createWorker('por'); // Portuguese
         }
 
-        const { data } = await this.worker.recognize(imageBuffer);
+        const result = await this.worker.recognize(imageBuffer);
+        const data = result.data;
 
         return {
             text: data.text,
-            words: data.words.map(w => ({
+            words: data.words.map((w: any) => ({
                 text: w.text,
                 bbox: w.bbox,
                 confidence: w.confidence
@@ -118,24 +122,32 @@ class OCRService {
                     } else {
                         // Text-based (like Market)
                         // Special rule for "Criar Aposta": join multiple markets with '+'
-                        if (rule.field === 'market') {
-                            const lines = data.text?.split('\n') || [];
-                            const markets = lines.filter((l: string) =>
-                                l.toLowerCase().includes('resultado') ||
-                                l.toLowerCase().includes('ambas') ||
-                                l.toLowerCase().includes('mais de')
-                            );
+                    }
+                } else if (rule.field === 'date' && rule.regex) {
+                    // Scan the whole text for date patterns if no anchor is set
+                    const match = text.match(rule.regex);
+                    if (match) {
+                        let dateVal = match[0].toLowerCase();
+                        const now = new Date();
 
-                            if (markets.length > 1) {
-                                data.market = markets.join(' + ');
-                            } else {
-                                data.market = rule.anchor; // Fallback to found anchor
-                            }
+                        if (dateVal.includes('hoje')) {
+                            data.date = now.toISOString().split('T')[0];
+                        } else if (dateVal.includes('ontem')) {
+                            const yesterday = new Date(now);
+                            yesterday.setDate(now.getDate() - 1);
+                            data.date = yesterday.toISOString().split('T')[0];
+                        } else {
+                            // Format DD/MM or DD/MM/YYYY
+                            let [day, month, year] = dateVal.split('/');
+                            if (!year) year = now.getFullYear().toString();
+                            if (year.length === 2) year = '20' + year;
+                            data.date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
                         }
                     }
                 }
             }
         }
+    }
 
         return data;
     }
