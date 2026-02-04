@@ -144,20 +144,22 @@ export async function analyzeImage(imageBase64: string, context?: any): Promise<
             // --- RECOVERY MODE: If AI fails perfectly but we have SOME OCR data, use it! ---
             if (localData) {
                 console.log('[AI Service] AI Failed, but recovering via Partial Local OCR.');
+                // Try to get a decent match/market from raw text if missing
+                const rawLines = localData.raw?.split('\n').filter((l: string) => l.length > 5) || [];
                 return {
                     type: 'bet',
                     confidence: 0.5,
                     data: {
-                        bookmaker: localData.bookmaker || 'Casa (Recuperada)',
+                        bookmaker: localData.bookmaker || (rawLines[0]?.substring(0, 20)) || 'Casa Automática',
                         value: localData.stake || 0,
                         odds: localData.odds || 1.0,
-                        market: localData.market || 'Mercado (Recuperado)',
-                        match: localData.event || 'Evento (Recuperado)',
+                        market: localData.market || (rawLines[1]?.substring(0, 40)) || 'Mercado via OCR',
+                        match: localData.event || (rawLines[2]?.substring(0, 40)) || 'Evento via OCR',
                         date: localData.date || normalizeDate(),
                         promotionType: 'Nenhuma'
                     },
                     rawText: localData.raw || JSON.stringify(localData),
-                    suggestions: ['⚠️ Limite de IA atingido - Dados recuperados localmente (Verifique!)']
+                    suggestions: ['⚠️ Limite de IA atingido - Dados originais carregados (Verifique!)']
                 };
             }
 

@@ -67,9 +67,10 @@ class OCRService {
             const text = ocr.text;
             const textLower = text.toLowerCase();
 
-            if (!text || text.length < 10) {
+            if (!text || text.length < 2) {
                 console.warn('[OCR] Not enough text found in image.');
-                return null;
+                // Return a shell with raw text anyway if possible
+                return text ? { raw: text, type: 'bet' } : null;
             }
 
             const data: any = {
@@ -157,7 +158,7 @@ class OCRService {
             }
 
             // Final check: provide as much as we have, even if only raw text
-            if (text && text.length > 2) {
+            if (text && text.length >= 1) {
                 console.log('[OCR] Extraction Result (Heuristic):', data);
                 return data;
             }
