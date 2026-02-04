@@ -19,9 +19,14 @@ class OCRService {
 
     async getWorker() {
         if (!this.worker) {
-            console.log('[OCR v2.1] Initializing Tesseract worker (local)...');
-            this.worker = await createWorker('por');
-            console.log('[OCR v2.1] Worker ready.');
+            try {
+                console.log('[OCR v2.2] Initializing Tesseract worker...');
+                this.worker = await createWorker('por');
+                console.log('[OCR v2.2] Worker ready.');
+            } catch (err) {
+                console.error('[OCR v2.2] Tesseract init failed:', err);
+                throw err;
+            }
         }
         return this.worker;
     }

@@ -182,15 +182,14 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                 }
             }
 
+            // Even if results is empty (shouldn't happen now), don't block
             if (results.length === 0) {
-                if (hadQuotaError) {
-                    if (window.confirm(`Todas as tentativas de IA falharam por limite de cota.\n\nDeseja carregar a versão mais recente e tentar reparar a conexão?`)) {
-                        localStorage.clear();
-                        window.location.reload();
-                    }
-                } else {
-                    alert("Não foi possível identificar apostas nas imagens. Tente novamente.");
-                }
+                const scaffold: FormState = {
+                    ...initialFormState,
+                    notes: 'Falha na leitura automática. Por favor, preencha manualmente.',
+                };
+                dispatch({ type: 'SET_FORM', payload: scaffold });
+                setIsModalOpen(true);
                 return;
             }
 

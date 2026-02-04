@@ -162,13 +162,33 @@ export async function analyzeImage(imageBase64: string, context?: any): Promise<
             }
 
             if (attempts >= maxAttempts - 1) {
-                throw new Error(`Limite de IA atingido e não foi possível ler o print localmente. Tente novamente em alguns minutos.`);
+                console.warn('[AI Service] All methods failed. Returning blank scaffold.');
+                return {
+                    type: 'bet',
+                    confidence: 0,
+                    data: {
+                        bookmaker: 'Casa (Preencha)',
+                        value: 0,
+                        odds: 1.0,
+                        market: 'Preencha',
+                        match: 'Preencha',
+                        date: normalizeDate(),
+                    },
+                    suggestions: ['⚠️ Não foi possível extrair dados automaticamente. Por favor, preencha manualmente.']
+                };
             }
             attempts++;
             await new Promise(r => setTimeout(r, 2000));
         }
     }
-    throw new Error("Erro na IA: Falha após múltiplas tentativas.");
+
+    // Final safety return
+    return {
+        type: 'bet',
+        confidence: 0,
+        data: { date: normalizeDate() },
+        suggestions: ['Erro inesperado. Tente preencher manualmente.']
+    };
 }
 
 /**
