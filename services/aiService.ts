@@ -28,6 +28,8 @@ export interface BookmakerExtraction {
 
 const HF_API_KEY = import.meta.env.VITE_HF_API_KEY || '';
 
+const analysisCache = new Map<string, AIAnalysisResult>();
+
 /**
  * Analyzes a bet screenshot using Hugging Face Vision Models
  * @param imageBase64 - Base64 encoded image (with or without data URI prefix)
@@ -35,6 +37,12 @@ const HF_API_KEY = import.meta.env.VITE_HF_API_KEY || '';
  * @returns Structured bet information
  */
 export async function analyzeImage(imageBase64: string, context?: any): Promise<AIAnalysisResult> {
+    // Basic deduplication: Check session cache first
+    if (analysisCache.has(imageBase64)) {
+        console.log('[AI Service] Returning cached analysis for identical image.');
+        return analysisCache.get(imageBase64)!;
+    }
+
     console.log('[AI Service] Starting analysis via Proxy API with context:', !!context);
 
     let attempts = 0;
@@ -76,7 +84,7 @@ export async function analyzeImage(imageBase64: string, context?: any): Promise<
             const clean = (val: string) => val?.replace(/Sucesso via.*/gi, '').trim() || '';
 
             // Map the structured data directly
-            return {
+            const result: AIAnalysisResult = {
                 type: data.type === 'gain' ? 'gain' : 'bet',
                 confidence: 0.95,
                 data: {
@@ -93,6 +101,10 @@ export async function analyzeImage(imageBase64: string, context?: any): Promise<
                 rawText: JSON.stringify(data),
                 suggestions: []
             };
+
+            // Cache for future identical requests in this session
+            analysisCache.set(imageBase64, result);
+            return result;
 
         } catch (error) {
             console.error(`[AI Service] Attempt ${attempts + 1} failed:`, error);
