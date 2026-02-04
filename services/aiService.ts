@@ -17,6 +17,7 @@ export interface AIAnalysisResult {
         promotionType?: string;
     };
     rawText?: string;
+    source?: string;
     suggestions?: string[];
 }
 
@@ -59,7 +60,8 @@ export async function analyzeImage(imageBase64: string, context?: any): Promise<
                     date: localData.date || normalizeDate(),
                     promotionType: localData.promotion || 'Nenhuma'
                 },
-                rawText: JSON.stringify(localData),
+                source: 'Local OCR',
+                rawText: localData.raw || JSON.stringify(localData),
                 suggestions: ['Processado Localmente (Instantâneo)']
             };
         }
@@ -135,6 +137,7 @@ export async function analyzeImage(imageBase64: string, context?: any): Promise<
             };
 
             // Cache for future identical requests in this session
+            result.source = data.source || 'AI Proxy';
             analysisCache.set(imageBase64, result);
             return result;
 
@@ -158,6 +161,7 @@ export async function analyzeImage(imageBase64: string, context?: any): Promise<
                         date: localData.date || normalizeDate(),
                         promotionType: 'Nenhuma'
                     },
+                    source: 'Local OCR (Recuperado)',
                     rawText: localData.raw || JSON.stringify(localData),
                     suggestions: ['⚠️ Limite de IA atingido - Dados originais carregados (Verifique!)']
                 };
@@ -176,6 +180,8 @@ export async function analyzeImage(imageBase64: string, context?: any): Promise<
                         match: 'Preencha',
                         date: normalizeDate(),
                     },
+                    source: localData ? 'Local OCR (Falha na Extração)' : 'Erro Total',
+                    rawText: localData?.raw || 'Nenhum texto detectado no print.',
                     suggestions: ['⚠️ Não foi possível extrair dados automaticamente. Por favor, preencha manualmente.']
                 };
             }
@@ -189,6 +195,8 @@ export async function analyzeImage(imageBase64: string, context?: any): Promise<
         type: 'bet',
         confidence: 0,
         data: { date: normalizeDate() },
+        source: 'Erro Inesperado',
+        rawText: 'Nenhum dado capturado devido a um erro inesperado.',
         suggestions: ['Erro inesperado. Tente preencher manualmente.']
     };
 }

@@ -20,14 +20,22 @@ class OCRService {
     async getWorker() {
         if (!this.worker) {
             try {
-                console.log('[OCR v2.2] Initializing Tesseract worker...');
+                console.log('[OCR v2.2] Initializing Tesseract worker (por+eng)...');
                 this.worker = await createWorker('por+eng', 1, {
-                    logger: m => console.log('[Tesseract Progress]', m.status, Math.round(m.progress * 100) + '%')
+                    logger: m => console.log('[Tesseract Progress]', m.status, Math.round(m.progress * 100) + '%'),
+                    workerPath: 'https://unpkg.com/tesseract.js@v5.1.0/dist/worker.min.js',
+                    corePath: 'https://unpkg.com/tesseract.js-core@v5.1.0/tesseract-core.wasm.js',
                 });
-                console.log('[OCR v2.2] Worker ready.');
+                console.log('[OCR v2.2] Worker ready (por+eng).');
             } catch (err) {
-                console.error('[OCR v2.2] Tesseract init failed:', err);
-                throw err;
+                console.warn('[OCR v2.2] por+eng failed, falling back to basic por...', err);
+                try {
+                    this.worker = await createWorker('por');
+                    console.log('[OCR v2.2] Worker ready (basic por).');
+                } catch (err2) {
+                    console.error('[OCR v2.2] All workers failed:', err2);
+                    throw err2;
+                }
             }
         }
         return this.worker;
@@ -35,13 +43,13 @@ class OCRService {
 
     async runOCR(imageBuffer: string): Promise<OCRResult> {
         if (this.isBusy) {
-            // Wait a bit or throw
             await new Promise(r => setTimeout(r, 1000));
         }
 
         this.isBusy = true;
         try {
             const worker = await this.getWorker();
+            console.log('[OCR] Processing image. Source length:', imageBuffer.length);
             const result = await worker.recognize(imageBuffer);
             const data = result.data;
 
@@ -74,9 +82,8 @@ class OCRService {
             const text = ocr.text;
             const textLower = text.toLowerCase();
 
-            if (!text || text.length < 2) {
+            if (!text || text.trim().length < 2) {
                 console.warn('[OCR] Not enough text found in image.');
-                // Return a shell with raw text anyway if possible
                 return text ? { raw: text, type: 'bet' } : null;
             }
 
@@ -117,7 +124,7 @@ class OCRService {
                 if (possibleOdds) data.odds = possibleOdds;
             }
 
-            // 4. Extract Date (Support for dots, dashes, and varied formats)
+            // 4. Extract Date
             const dateRegex = /(\d{1,2}[/-]\d{1,2}([/-]\d{2,4})?)|(\d{1,2}\s+(de\s+)?(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez))/i;
             const dateMatch = textLower.match(dateRegex);
             if (dateMatch) {
@@ -133,7 +140,7 @@ class OCRService {
                     data.date = `${year}-${month}-${day}`;
                 }
             } else {
-                data.date = new Date().toISOString().split('T')[0]; // Default to today instead of failing
+                data.date = new Date().toISOString().split('T')[0];
             }
 
             // 5. Extract Market & Event (Heuristic context)
@@ -164,14 +171,13 @@ class OCRService {
                 }
             }
 
-            // Final check: provide as much as we have, even if only raw text
-            if (text && text.length >= 1) {
+            if (text && text.trim().length >= 1) {
                 console.log('[OCR] Extraction Result (Heuristic):', data);
                 return data;
             }
 
-            console.warn('[OCR] No text found at all.');
-            return null;
+            console.warn('[OCR] No significant text found after extraction.');
+            return text ? { raw: text, type: 'bet' } : null;
 
         } catch (error) {
             console.error('[OCR Service] Error during extraction:', error);
