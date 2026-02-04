@@ -1,4 +1,5 @@
 // AI Service using Hugging Face Inference API for image analysis
+import { ocrService } from './ocrService';
 export interface AIAnalysisResult {
     type: 'bet' | 'gain' | 'unknown';
     confidence: number; // 0-1
@@ -37,6 +38,31 @@ const analysisCache = new Map<string, AIAnalysisResult>();
  * @returns Structured bet information
  */
 export async function analyzeImage(imageBase64: string, context?: any): Promise<AIAnalysisResult> {
+    // 0. Try Deterministic Local OCR First (Zero Cost, No Limits)
+    try {
+        console.log('[AI Service] Attempting Local OCR extraction...');
+        const localData = await ocrService.extractData(imageBase64);
+        if (localData && localData.stake && localData.odds) {
+            console.log('[AI Service] Local OCR Success:', localData);
+            return {
+                type: 'bet',
+                confidence: 1.0,
+                data: {
+                    bookmaker: localData.bookmaker,
+                    value: localData.stake,
+                    odds: localData.odds,
+                    market: localData.market,
+                    match: localData.event,
+                    promotionType: localData.promotion || 'Nenhuma'
+                },
+                rawText: JSON.stringify(localData),
+                suggestions: ['Extraído localmente via OCR']
+            };
+        }
+    } catch (e) {
+        console.warn('[AI Service] Local OCR failed, falling back to AI Proxy:', e);
+    }
+
     // Basic deduplication: Check session cache first
     if (analysisCache.has(imageBase64)) {
         console.log('[AI Service] Returning cached analysis for identical image.');

@@ -46,6 +46,8 @@ export default async function handler(req, res) {
         3. Odds (COTAÇÃO): Procure o multiplicador decimal (ex: 1.50, 4.20).
         4. Evento: Os times ou jogo (ex: Corinthians vs Vasco).
         5. Mercado: O tipo da aposta (ex: Resultado Final, Ambas Marcam).
+           - REGRA IMPORTANTE: Se for uma "Criar Aposta" ou múltipla com vários mercados, junte todos usando o símbolo "+". 
+           - EXEMPLO: "Empate + Ambas Marcam Não" ou "Mais de 2.5 Gols + Escanteios Over 9.5".
         6. Promoção: 
            - SE houver um ícone de "Presente" (gift) E o texto "100%", classifique a promoção como "Conversão Freebet".
            - SE NÃO houver presente mas houver indicação de bônus, pode ser "Freebet" ou "Super Odds".
