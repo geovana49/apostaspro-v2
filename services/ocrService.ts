@@ -78,28 +78,33 @@ class OCRService {
                 raw: text
             };
 
-            // 1. Detect Bookmaker (More comprehensive list and fuzzy matching)
+            // 1. Detect Bookmaker (Word Hunt Strategy)
             const houses = [
                 'betano', 'bet365', 'br4', 'nacional', 'sportingbet', 'kto', 'novibet', 'pixbet', 'estrela',
-                'superbet', 'parimatch', 'betway', 'dafabet', '1xbet', 'betfair', 'rivalo', 'playpix', 'shark', 'galera'
+                'superbet', 'parimatch', 'betway', 'dafabet', '1xbet', 'betfair', 'rivalo', 'playpix', 'shark', 'galera', 'r7', 'r7.bet'
             ];
-            const foundHouse = houses.find(h => textLower.includes(h));
-            data.bookmaker = foundHouse ? foundHouse.charAt(0).toUpperCase() + foundHouse.slice(1) : 'Casa Automática';
 
-            // 2. Extract Stake (Improved regex to catch multiple formats)
-            const stakeRegex = /(?:r\$|\$|valor|aposta|total|pago|stake)[:\s]*(\d+[,.]\d{2})/i;
+            let foundHouse = houses.find(h => textLower.includes(h));
+            if (!foundHouse) {
+                const textWords = textLower.split(/\s+/);
+                foundHouse = houses.find(h => textWords.some(w => w.includes(h) || h.includes(w) && w.length > 3));
+            }
+            data.bookmaker = foundHouse ? (foundHouse.includes('r7') ? 'R7.BET' : (foundHouse.charAt(0).toUpperCase() + foundHouse.slice(1))) : 'Casa Automática';
+
+            // 2. Extract Stake (Permissive Regex)
+            const stakeRegex = /(?:r\$|\$|valor|aposta|total|pago|stake|simples|investimento)[:\s]*(\d+[,.]\d{2})/i;
             const stakeMatch = textLower.match(stakeRegex);
             if (stakeMatch) {
                 data.stake = parseFloat(stakeMatch[1].replace(',', '.'));
             }
 
-            // 3. Extract Odds (Broader detection)
+            // 3. Extract Odds (Better Number Hunting)
             const oddsRegex = /(?:@|odd|cota[çtc]ao|multiplicador|x|odds)[:\s]*(\d+[.,]\d{2,3})/i;
             const oddsMatch = textLower.match(oddsRegex);
             if (oddsMatch) {
                 data.odds = parseFloat(oddsMatch[1].replace(',', '.'));
             } else {
-                const numbers = (textLower.match(/\d+[.,]\d{2}/g) || []).map(n => parseFloat(n.replace(',', '.')));
+                const numbers = (textLower.match(/\d+[.,]\d{2,3}/g) || []).map(n => parseFloat(n.replace(',', '.')));
                 const possibleOdds = numbers.find(n => n > 1.05 && n < 50 && n !== data.stake);
                 if (possibleOdds) data.odds = possibleOdds;
             }
@@ -123,32 +128,32 @@ class OCRService {
                 data.date = new Date().toISOString().split('T')[0]; // Default to today instead of failing
             }
 
-            // 5. Extract Market (Aggressive fallback)
+            // 5. Extract Market & Event (Heuristic context)
             const marketKeywords = [
                 'resultado', 'ambas', 'gols', 'escanteios', 'vencedor', 'mais de', 'menos de', 'empate',
-                'vence', 'casa', 'fora', 'draw', 'over', 'under', 'asian', 'handicap'
+                'vence', 'casa', 'fora', 'draw', 'over', 'under', 'asian', 'handicap', 'final'
             ];
+
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 3);
+            const teamPairRegex = /([A-Z0-9][a-z0-9]+\s?)+ (v|vs|x|-) ([A-Z0-9][a-z0-9]+\s?)+/i;
+            const possibleEvent = lines.find(l => teamPairRegex.test(l));
+            if (possibleEvent) data.event = possibleEvent;
 
             let foundMarkets = lines.filter(l =>
                 marketKeywords.some(kw => l.toLowerCase().includes(kw))
             );
 
-            if (foundMarkets.length === 0 && lines.length > 0) {
-                // FALLBACK: Pick the longest line between 10-50 chars (usually the event/market name)
-                const reasonableLines = lines.filter(l => l.length > 10 && l.length < 60);
+            if (foundMarkets.length > 0) {
+                data.market = foundMarkets.slice(0, 2).join(' / ');
+                if (!data.event) {
+                    const mIndex = lines.indexOf(foundMarkets[0]);
+                    if (mIndex > 0) data.event = lines[mIndex - 1];
+                }
+            } else if (lines.length > 0) {
+                const reasonableLines = lines.filter(l => l.length > 8 && l.length < 60 && !l.toLowerCase().includes(data.bookmaker.toLowerCase()));
                 if (reasonableLines.length > 0) {
                     data.market = reasonableLines[0];
                 }
-            } else if (foundMarkets.length > 0) {
-                data.market = foundMarkets.slice(0, 2).join(' / ');
-            }
-
-            // 6. Extract Event (Try to find something that looks like Team vs Team)
-            const vsRegex = /([A-Z][a-z]+\s?)+ (v|vs|x) ([A-Z][a-z]+\s?)+/;
-            const vsMatch = text.match(vsRegex);
-            if (vsMatch) {
-                data.event = vsMatch[0];
             }
 
             // Final check: provide as much as we have, even if only raw text
