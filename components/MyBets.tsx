@@ -244,7 +244,16 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
 
         } catch (error: any) {
             console.error('Smart Import Error:', error);
-            alert(`Erro na importação: ${error.message}`);
+            const isQuotaError = error.message.includes('429') || error.message.includes('Limite');
+
+            if (isQuotaError) {
+                if (window.confirm(`${error.message}\n\nDeseja carregar a versão mais recente e tentar reparar a conexão?`)) {
+                    localStorage.clear();
+                    window.location.reload();
+                }
+            } else {
+                alert(`Erro na importação: ${error.message}`);
+            }
         } finally {
             setIsAnalyzing(false);
             if (smartImportInputRef.current) smartImportInputRef.current.value = '';

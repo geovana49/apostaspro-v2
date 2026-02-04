@@ -37,137 +37,138 @@ const analysisCache = new Map<string, AIAnalysisResult>();
  * @param context - Optional context of recent bets to improve accuracy
  * @returns Structured bet information
  */
-// 0. Try Deterministic Local OCR First (Zero Cost, No Limits)
-let localData: any = null;
-try {
-    console.log('[AI v2.1] Attempting Local OCR extraction...');
-    localData = await ocrService.extractData(imageBase64);
-
-    // If we found HIGH QUALITY data (Stake AND Odds), return immediately!
-    if (localData && localData.stake && localData.odds) {
-        console.log('[AI Service] Local OCR High-Quality Success:', localData);
-        return {
-            type: 'bet',
-            confidence: 1.0,
-            data: {
-                bookmaker: localData.bookmaker || 'Casa via OCR',
-                value: localData.stake,
-                odds: localData.odds,
-                market: localData.market || 'Mercado via OCR',
-                match: localData.event || 'Evento via OCR',
-                date: localData.date || normalizeDate(),
-                promotionType: localData.promotion || 'Nenhuma'
-            },
-            rawText: JSON.stringify(localData),
-            suggestions: ['Processado Localmente (Instantâneo)']
-        };
-    }
-} catch (e) {
-    console.warn('[AI Service] Local OCR failed, falling back to AI Proxy:', e);
-}
-
-console.log('[AI Service] Local OCR insufficient or partial. Activating AI Proxy...');
-
-// Basic deduplication: Check session cache first
-if (analysisCache.has(imageBase64)) {
-    console.log('[AI Service] Returning cached analysis for identical image.');
-    return analysisCache.get(imageBase64)!;
-}
-
-console.log('[AI Service] Starting analysis via Proxy API with context:', !!context);
-
-let attempts = 0;
-const maxAttempts = 2;
-
-while (attempts < maxAttempts) {
+export async function analyzeImage(imageBase64: string, context?: any): Promise<AIAnalysisResult> {
+    // 0. Try Deterministic Local OCR First (Zero Cost, No Limits)
+    let localData: any = null;
     try {
-        const response = await fetch('/api/analyze', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                image: imageBase64,
-                context: context // Passing recent bets/bookmakers for few-shot learning
-            })
-        });
+        console.log('[AI v2.1] Attempting Local OCR extraction...');
+        localData = await ocrService.extractData(imageBase64);
 
-        if (!response.ok) {
-            const errorData = await response.json();
-
-            // If it's a 429 on the first try, wait 3s and retry
-            if (response.status === 429 && attempts === 0) {
-                console.warn('[AI Service] Quota hit (429). Retrying in 3s...');
-                attempts++;
-                await new Promise(r => setTimeout(r, 3000));
-                continue;
-            }
-
-            throw new Error(errorData.error || `Erro no servidor: ${response.status}`);
-        }
-
-        const { data } = await response.json();
-        if (!data) throw new Error("A IA respondeu mas os dados vieram vazios ou mal formatados.");
-
-        console.log('[AI Service] Proxy structured response received:', data);
-
-        // Helper to clean hallucinations like "Sucesso via..."
-        const clean = (val: string) => val?.replace(/Sucesso via.*/gi, '').trim() || '';
-
-        // Map the structured data directly
-        const result: AIAnalysisResult = {
-            type: data.type === 'gain' ? 'gain' : 'bet',
-            confidence: 0.95,
-            data: {
-                bookmaker: clean(data.bookmaker),
-                value: data.stake,
-                odds: data.odds,
-                date: normalizeDate(data.date),
-                description: clean(data.market),
-                market: clean(data.market),
-                match: clean(data.event),
-                status: 'Yellow',
-                promotionType: data.promotion || 'Nenhuma'
-            },
-            rawText: JSON.stringify(data),
-            suggestions: []
-        };
-
-        // Cache for future identical requests in this session
-        analysisCache.set(imageBase64, result);
-        return result;
-
-    } catch (error) {
-        console.error(`[AI Service] Attempt ${attempts + 1} failed:`, error);
-
-        // --- RECOVERY MODE: If AI fails perfectly but we have SOME OCR data, use it! ---
-        if (localData) {
-            console.log('[AI Service] AI Failed, but recovering via Partial Local OCR.');
+        // If we found HIGH QUALITY data (Stake AND Odds), return immediately!
+        if (localData && localData.stake && localData.odds) {
+            console.log('[AI Service] Local OCR High-Quality Success:', localData);
             return {
                 type: 'bet',
-                confidence: 0.5,
+                confidence: 1.0,
                 data: {
-                    bookmaker: localData.bookmaker || 'Casa (Recuperada)',
-                    value: localData.stake || 0,
-                    odds: localData.odds || 1.0,
-                    market: localData.market || 'Mercado (Recuperado)',
-                    match: localData.event || 'Evento (Recuperado)',
+                    bookmaker: localData.bookmaker || 'Casa via OCR',
+                    value: localData.stake,
+                    odds: localData.odds,
+                    market: localData.market || 'Mercado via OCR',
+                    match: localData.event || 'Evento via OCR',
                     date: localData.date || normalizeDate(),
-                    promotionType: 'Nenhuma'
+                    promotionType: localData.promotion || 'Nenhuma'
                 },
-                rawText: localData.raw || JSON.stringify(localData),
-                suggestions: ['⚠️ Limite de IA atingido - Dados recuperados localmente (Verifique!)']
+                rawText: JSON.stringify(localData),
+                suggestions: ['Processado Localmente (Instantâneo)']
             };
         }
-
-        if (attempts >= maxAttempts - 1) {
-            throw new Error(`Limite de IA atingido e não foi possível ler o print localmente. Tente novamente em alguns minutos.`);
-        }
-        attempts++;
-        await new Promise(r => setTimeout(r, 2000));
+    } catch (e) {
+        console.warn('[AI Service] Local OCR failed, falling back to AI Proxy:', e);
     }
-}
-throw new Error("Erro na IA: Falha após múltiplas tentativas.");
+
+    console.log('[AI Service] Local OCR insufficient or partial. Activating AI Proxy...');
+
+    // Basic deduplication: Check session cache first
+    if (analysisCache.has(imageBase64)) {
+        console.log('[AI Service] Returning cached analysis for identical image.');
+        return analysisCache.get(imageBase64)!;
+    }
+
+    console.log('[AI Service] Starting analysis via Proxy API with context:', !!context);
+
+    let attempts = 0;
+    const maxAttempts = 2;
+
+    while (attempts < maxAttempts) {
+        try {
+            const response = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    image: imageBase64,
+                    context: context // Passing recent bets/bookmakers for few-shot learning
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+
+                // If it's a 429 on the first try, wait 3s and retry
+                if (response.status === 429 && attempts === 0) {
+                    console.warn('[AI Service] Quota hit (429). Retrying in 3s...');
+                    attempts++;
+                    await new Promise(r => setTimeout(r, 3000));
+                    continue;
+                }
+
+                throw new Error(errorData.error || `Erro no servidor: ${response.status}`);
+            }
+
+            const { data } = await response.json();
+            if (!data) throw new Error("A IA respondeu mas os dados vieram vazios ou mal formatados.");
+
+            console.log('[AI Service] Proxy structured response received:', data);
+
+            // Helper to clean hallucinations like "Sucesso via..."
+            const clean = (val: string) => val?.replace(/Sucesso via.*/gi, '').trim() || '';
+
+            // Map the structured data directly
+            const result: AIAnalysisResult = {
+                type: data.type === 'gain' ? 'gain' : 'bet',
+                confidence: 0.95,
+                data: {
+                    bookmaker: clean(data.bookmaker),
+                    value: data.stake,
+                    odds: data.odds,
+                    date: normalizeDate(data.date),
+                    description: clean(data.market),
+                    market: clean(data.market),
+                    match: clean(data.event),
+                    status: 'Yellow',
+                    promotionType: data.promotion || 'Nenhuma'
+                },
+                rawText: JSON.stringify(data),
+                suggestions: []
+            };
+
+            // Cache for future identical requests in this session
+            analysisCache.set(imageBase64, result);
+            return result;
+
+        } catch (error) {
+            console.error(`[AI Service] Attempt ${attempts + 1} failed:`, error);
+
+            // --- RECOVERY MODE: If AI fails perfectly but we have SOME OCR data, use it! ---
+            if (localData) {
+                console.log('[AI Service] AI Failed, but recovering via Partial Local OCR.');
+                return {
+                    type: 'bet',
+                    confidence: 0.5,
+                    data: {
+                        bookmaker: localData.bookmaker || 'Casa (Recuperada)',
+                        value: localData.stake || 0,
+                        odds: localData.odds || 1.0,
+                        market: localData.market || 'Mercado (Recuperado)',
+                        match: localData.event || 'Evento (Recuperado)',
+                        date: localData.date || normalizeDate(),
+                        promotionType: 'Nenhuma'
+                    },
+                    rawText: localData.raw || JSON.stringify(localData),
+                    suggestions: ['⚠️ Limite de IA atingido - Dados recuperados localmente (Verifique!)']
+                };
+            }
+
+            if (attempts >= maxAttempts - 1) {
+                throw new Error(`Limite de IA atingido e não foi possível ler o print localmente. Tente novamente em alguns minutos.`);
+            }
+            attempts++;
+            await new Promise(r => setTimeout(r, 2000));
+        }
+    }
+    throw new Error("Erro na IA: Falha após múltiplas tentativas.");
 }
 
 /**
