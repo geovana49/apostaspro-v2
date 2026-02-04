@@ -39,34 +39,35 @@ const analysisCache = new Map<string, AIAnalysisResult>();
  */
 export async function analyzeImage(imageBase64: string, context?: any): Promise<AIAnalysisResult> {
     // 0. Try Deterministic Local OCR First (Zero Cost, No Limits)
+    let localData: any = null;
     try {
         console.log('[AI Service] Attempting Local OCR extraction...');
-        const localData = await ocrService.extractData(imageBase64);
+        localData = await ocrService.extractData(imageBase64);
 
-        // If we found at least one vital piece of information (Stake or Odds), use it!
-        if (localData && (localData.stake || localData.odds)) {
-            console.log('[AI Service] Local OCR Success:', localData);
+        // If we found HIGH QUALITY data (Stake AND Odds), return immediately!
+        if (localData && localData.stake && localData.odds) {
+            console.log('[AI Service] Local OCR High-Quality Success:', localData);
             return {
                 type: 'bet',
                 confidence: 1.0,
                 data: {
                     bookmaker: localData.bookmaker || 'Casa via OCR',
-                    value: localData.stake || 0,
-                    odds: localData.odds || 1.0,
+                    value: localData.stake,
+                    odds: localData.odds,
                     market: localData.market || 'Mercado via OCR',
                     match: localData.event || 'Evento via OCR',
                     date: localData.date || normalizeDate(),
                     promotionType: localData.promotion || 'Nenhuma'
                 },
                 rawText: JSON.stringify(localData),
-                suggestions: ['Processado 100% Localmente (Sem Custos/IA)']
+                suggestions: ['Processado Localmente (Instantâneo)']
             };
         }
     } catch (e) {
         console.warn('[AI Service] Local OCR failed, falling back to AI Proxy:', e);
     }
 
-    console.log('[AI Service] Local OCR insufficient. Activating AI Proxy...');
+    console.log('[AI Service] Local OCR insufficient or partial. Activating AI Proxy...');
 
     // Basic deduplication: Check session cache first
     if (analysisCache.has(imageBase64)) {
@@ -139,8 +140,29 @@ export async function analyzeImage(imageBase64: string, context?: any): Promise<
 
         } catch (error) {
             console.error(`[AI Service] Attempt ${attempts + 1} failed:`, error);
+
+            // --- RECOVERY MODE: If AI fails perfectly but we have SOME OCR data, use it! ---
+            if (attempts >= maxAttempts - 1 && localData) {
+                console.log('[AI Service] AI Failed, but recovering via Partial Local OCR.');
+                return {
+                    type: 'bet',
+                    confidence: 0.5,
+                    data: {
+                        bookmaker: localData.bookmaker || 'Casa (Recuperada)',
+                        value: localData.stake || 0,
+                        odds: localData.odds || 1.0,
+                        market: localData.market || 'Mercado (Recuperado)',
+                        match: localData.event || 'Evento (Recuperado)',
+                        date: localData.date || normalizeDate(),
+                        promotionType: 'Nenhuma'
+                    },
+                    rawText: JSON.stringify(localData),
+                    suggestions: ['⚠️ IA Indisponível - Dados recuperados localmente (Verifique!)']
+                };
+            }
+
             if (attempts >= maxAttempts - 1) {
-                throw new Error(`Erro na IA: ${error instanceof Error ? error.message : 'Erro de conexão'}`);
+                throw new Error(`Limite de IA atingido. Tente novamente em alguns minutos.`);
             }
             attempts++;
             await new Promise(r => setTimeout(r, 2000));
