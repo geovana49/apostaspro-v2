@@ -97,7 +97,11 @@ const formReducer = (state: FormState, action: any): FormState => {
             return {
                 ...initialFormState,
                 mainBookmakerId: defaults.bookmakerId || '',
-                coverages: initialCoverages
+                date: new Date().toISOString().split('T')[0],
+                coverages: initialCoverages,
+                event: '',
+                notes: '',
+                extraGain: undefined
             };
         }
         default: return state;
@@ -841,16 +845,23 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     };
 
     const handleCloseModal = () => {
-        // Check if there are unsaved changes
         const hasContent = formData.event || formData.notes || formData.coverages.length > 0 || tempPhotos.length > 0;
 
         if (hasContent && !isUploading) {
             if (window.confirm('Você tem alterações não salvas. Deseja salvar como rascunho para terminar depois?')) {
                 saveAsDraft();
             } else {
+                // User rejected saving: Clear EVERYTHING
+                localStorage.removeItem('apostaspro_draft_mybets');
+                dispatch({ type: 'SET_FORM', payload: initialFormState });
+                setTempPhotos([]);
                 setIsModalOpen(false);
             }
         } else {
+            // Already empty or safe to close
+            localStorage.removeItem('apostaspro_draft_mybets');
+            dispatch({ type: 'SET_FORM', payload: initialFormState });
+            setTempPhotos([]);
             setIsModalOpen(false);
         }
     };
