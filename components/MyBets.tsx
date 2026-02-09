@@ -356,7 +356,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     // Process files for drag & drop
     const processFiles = useCallback(async (files: File[]) => {
         if (files.length === 0) return;
-        const MAX_PHOTOS = 8;
+        const MAX_PHOTOS = 30;
 
         files.sort((a, b) => a.lastModified - b.lastModified);
 
@@ -725,10 +725,15 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     // 1. Process images (Async upload to Storage)
                     const photoUrls = await Promise.all(
                         tempPhotos.map(async (photo) => {
-                            if (photo.url.startsWith('data:')) {
-                                return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
+                            try {
+                                if (photo.url.startsWith('data:')) {
+                                    return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
+                                }
+                                return photo.url;
+                            } catch (err) {
+                                console.error("[Storage] Upload failed for a photo:", err);
+                                throw err;
                             }
-                            return photo.url;
                         })
                     );
 
@@ -810,10 +815,15 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             // Process images (Async upload to Storage)
             const photoUrls = await Promise.all(
                 tempPhotos.map(async (photo) => {
-                    if (photo.url.startsWith('data:')) {
-                        return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
+                    try {
+                        if (photo.url.startsWith('data:')) {
+                            return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
+                        }
+                        return photo.url;
+                    } catch (err) {
+                        console.error("[Storage] Draft upload failed:", err);
+                        throw err;
                     }
-                    return photo.url;
                 })
             );
 

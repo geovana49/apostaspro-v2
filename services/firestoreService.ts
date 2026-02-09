@@ -288,7 +288,8 @@ export const FirestoreService = {
             } catch (error) {
                 console.error("[Media] Erro no upload:", error);
                 clearTimeout(timeout);
-                resolve(base64);
+                // CRITICAL: Stop returning base64 as fallback to prevent Firestore 1MB limit crash
+                throw new Error("Erro ao enviar imagem para a nuvem. Verifique sua conexão.");
             }
         });
     },
