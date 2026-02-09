@@ -11,10 +11,10 @@ export interface CompressionOptions {
 }
 
 const DEFAULT_OPTIONS: CompressionOptions = {
-    maxWidth: 1080,
-    maxHeight: 1080,
-    quality: 0.6,
-    maxSizeMB: 0.4
+    maxWidth: 1280,
+    maxHeight: 1280,
+    quality: 0.8,
+    maxSizeMB: 0.5
 };
 
 /**
@@ -64,17 +64,18 @@ export async function compressImage(
                     // Desenhar imagem redimensionada
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // Converter para base64 com compressão
+                    // Converter para base64 com compressão WebP (muito superior para textos)
                     let quality = opts.quality!;
-                    let base64 = canvas.toDataURL('image/jpeg', quality);
+                    let base64 = canvas.toDataURL('image/webp', quality);
 
                     // Se ainda estiver muito grande, reduzir qualidade progressivamente
                     const maxBytes = (opts.maxSizeMB! * 1024 * 1024);
                     let iterations = 0;
 
-                    while (base64.length > maxBytes && quality > 0.5 && iterations < 5) {
-                        quality -= 0.1;
-                        base64 = canvas.toDataURL('image/jpeg', quality);
+                    // Mantemos a qualidade acima de 0.7 para não perder a legibilidade
+                    while (base64.length > maxBytes && quality > 0.7 && iterations < 5) {
+                        quality -= 0.05;
+                        base64 = canvas.toDataURL('image/webp', quality);
                         iterations++;
                     }
 
