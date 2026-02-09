@@ -1901,7 +1901,6 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                     style={{ display: 'none' }}
                                     onChange={handlePhotoSelect}
                                 />
-                                <span className="text-[10px] text-gray-600">Sem limite de tamanho</span>
                             </div>
 
                             {tempPhotos.length > 0 && (

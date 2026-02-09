@@ -1081,7 +1081,6 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                             onChange={handlePhotoSelect}
                                         />
                                     </label>
-                                    <span className="text-[10px] text-gray-600">Sem limite de tamanho</span>
                                 </div>
 
                                 {tempPhotos.length > 0 && (

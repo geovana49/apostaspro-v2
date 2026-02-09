@@ -954,7 +954,6 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                         style={{ display: 'none' }}
                                         onChange={handlePhotoSelect}
                                     />
-                                    <span className="text-[10px] text-gray-600">Sem limite de tamanho</span>
                                 </div>
                             </div>
 
