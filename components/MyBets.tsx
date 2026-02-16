@@ -3,7 +3,7 @@ import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer,
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
     Copy, MoreVertical, AlertCircle, ImageIcon, Ticket, ArrowUpRight, ArrowDownRight, Minus, DollarSign, Percent,
-    Loader2, Paperclip, StickyNote, Sparkles
+    Maximize, Minimize, Palette, Box, Ban, Loader2, Sparkles, Wand2, Paperclip, StickyNote, Trophy, Coins, Gamepad2, SearchX, Settings2, Infinity, Eye, EyeOff
 } from 'lucide-react';
 import { Bet, Bookmaker, StatusItem, PromotionItem, AppSettings, Coverage, User } from '../types';
 import { FirestoreService } from '../services/firestoreService';
@@ -140,6 +140,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const [editingId, setEditingId] = useState<string | null>(null); // Format: `${betId}-${coverageId}-${field}`
     const [editingValue, setEditingValue] = useState<any>(null);
     const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+    const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const smartImportInputRef = useRef<HTMLInputElement>(null);
     const coverageImportInputRef = useRef<HTMLInputElement>(null);
@@ -694,6 +695,24 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             return next;
         });
         setDraggedIdx(null);
+    };
+
+    const handlePhotoClick = (index: number) => {
+        if (selectedIdx === null) {
+            setSelectedIdx(index);
+        } else if (selectedIdx === index) {
+            setSelectedIdx(null);
+        } else {
+            // Swap
+            setTempPhotos(prev => {
+                const next = [...prev];
+                const temp = next[selectedIdx];
+                next[selectedIdx] = next[index];
+                next[index] = temp;
+                return next;
+            });
+            setSelectedIdx(null);
+        }
     };
 
     const bookmakerOptions = bookmakers.map(b => ({
@@ -1960,10 +1979,25 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                             onDragStart={() => handleDragStart(index)}
                                             onDragOver={(e) => e.preventDefault()}
                                             onDrop={() => handleDrop(index)}
-                                            onClick={() => openImageViewer(tempPhotos.map(p => p.url), index)}
-                                            className={`relative aspect-square rounded-lg overflow-hidden border transition-all duration-200 group bg-black/40 cursor-move ${draggedIdx === index ? 'opacity-40 scale-95 border-primary shadow-2xl' : 'border-white/10 hover:border-primary/50 hover:shadow-lg'}`}
+                                            onClick={() => handlePhotoClick(index)}
+                                            className={`relative aspect-square rounded-lg overflow-hidden border transition-all duration-300 group bg-black/40 cursor-move 
+                                                ${draggedIdx === index ? 'opacity-40 scale-95 border-primary shadow-2xl' :
+                                                    selectedIdx === index ? 'border-primary ring-2 ring-primary ring-offset-2 ring-offset-[#0d1121] scale-[1.05] z-20' :
+                                                        'border-white/10 hover:border-primary/50'}`}
                                         >
                                             <img src={photo.url} alt="Preview" className="w-full h-full object-cover" />
+
+                                            {/* Viewer Button */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openImageViewer(tempPhotos.map(p => p.url), index);
+                                                }}
+                                                className="absolute top-1 left-1 p-1 bg-black/60 text-white rounded-full hover:bg-primary transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100 z-10"
+                                                title="Ver foto"
+                                            >
+                                                <Maximize size={10} />
+                                            </button>
 
                                             {/* Delete Button */}
                                             <button

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Button, Input, Dropdown, Modal, SingleDatePickerModal, ImageViewer, MoneyDisplay } from './ui/UIComponents';
 import {
     Plus, Trash2, X, Calendar, Paperclip, Minus, Loader2, Copy, ChevronUp, ChevronDown, UploadCloud,
-    ChevronLeft, ChevronRight
+    ChevronLeft, ChevronRight, Maximize
 } from 'lucide-react';
 import { Bet, Bookmaker, StatusItem, PromotionItem, Coverage, User } from '../types';
 import { FirestoreService } from '../services/firestoreService';
@@ -101,6 +101,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
     const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+    const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
     // Auto-Save Draft (Debounced)
     useEffect(() => {
@@ -429,6 +430,24 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
             return next;
         });
         setDraggedIdx(null);
+    };
+
+    const handlePhotoClick = (index: number) => {
+        if (selectedIdx === null) {
+            setSelectedIdx(index);
+        } else if (selectedIdx === index) {
+            setSelectedIdx(null);
+        } else {
+            // Swap
+            setTempPhotos(prev => {
+                const next = [...prev];
+                const temp = next[selectedIdx];
+                next[selectedIdx] = next[index];
+                next[index] = temp;
+                return next;
+            });
+            setSelectedIdx(null);
+        }
     };
 
     const addCoverage = () => {
@@ -997,13 +1016,26 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                             onDragStart={() => handleDragStart(index)}
                                             onDragOver={(e) => e.preventDefault()}
                                             onDrop={() => handleDrop(index)}
-                                            onClick={() => {
-                                                setViewerStartIndex(index);
-                                                setIsViewerOpen(true);
-                                            }}
-                                            className={`relative aspect-square rounded-lg overflow-hidden border transition-all duration-200 group bg-black/40 cursor-move ${draggedIdx === index ? 'opacity-40 scale-95 border-primary shadow-2xl' : 'border-white/10 hover:border-primary/50 hover:shadow-lg'}`}
+                                            onClick={() => handlePhotoClick(index)}
+                                            className={`relative aspect-square rounded-lg overflow-hidden border transition-all duration-300 group bg-black/40 cursor-move 
+                                                ${draggedIdx === index ? 'opacity-40 scale-95 border-primary shadow-2xl' :
+                                                    selectedIdx === index ? 'border-primary ring-2 ring-primary ring-offset-2 ring-offset-[#0d1121] scale-[1.05] z-20' :
+                                                        'border-white/10 hover:border-primary/50'}`}
                                         >
                                             <img src={photo.url} alt="Preview" className="w-full h-full object-cover" />
+
+                                            {/* Viewer Button - Always visible on mobile to distinguish from reorder tap */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setViewerStartIndex(index);
+                                                    setIsViewerOpen(true);
+                                                }}
+                                                className="absolute top-1 left-1 p-1 bg-black/60 text-white rounded-full hover:bg-primary transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100 z-10"
+                                                title="Ver foto"
+                                            >
+                                                <Maximize size={10} />
+                                            </button>
 
                                             {/* Delete Button */}
                                             <button

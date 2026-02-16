@@ -272,26 +272,16 @@ export const FirestoreService = {
     uploadImage: async (userId: string, betId: string, base64: string): Promise<string> => {
         if (!base64.startsWith('data:')) return base64;
 
-        return new Promise(async (resolve) => {
-            const timeout = setTimeout(() => {
-                console.warn("[Media] Upload timeout. Fallback para base64.");
-                resolve(base64);
-            }, 12000);
-
-            try {
+        return withTimeout(
+            (async () => {
                 const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(7)}.webp`;
                 const storageRef = ref(storage, `users/${userId}/bets/${betId}/${fileName}`);
                 await uploadString(storageRef, base64, 'data_url');
-                const downloadURL = await getDownloadURL(storageRef);
-                clearTimeout(timeout);
-                resolve(downloadURL);
-            } catch (error) {
-                console.error("[Media] Erro no upload:", error);
-                clearTimeout(timeout);
-                // CRITICAL: Stop returning base64 as fallback to prevent Firestore 1MB limit crash
-                throw new Error("Erro ao enviar imagem para a nuvem. Verifique sua conexão.");
-            }
-        });
+                return await getDownloadURL(storageRef);
+            })(),
+            20000,
+            "Upload de Imagem (Firebase Storage)"
+        );
     },
 
     clearLocalCache: async () => {

@@ -3,7 +3,7 @@ import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer,
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronLeft, ChevronRight,
     Copy, MoreVertical, AlertCircle, ImageIcon, StickyNote, Trophy, Coins, Gamepad2, Paperclip, SearchX, Settings2,
-    Infinity, Eye, EyeOff, Maximize, Minimize, Palette, Box, Ban, Loader2, Ticket
+    Infinity, Eye, EyeOff, Maximize, Minimize, Palette, Box, Ban, Loader2, Ticket, Sparkles, Wand2
 } from 'lucide-react';
 import { ExtraGain, Bookmaker, StatusItem, OriginItem, AppSettings, User, PromotionItem } from '../types';
 import BetFormModal from './BetFormModal';
@@ -81,6 +81,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const [isFormDatePickerOpen, setIsFormDatePickerOpen] = useState(false);
     const [editingValue, setEditingValue] = useState<any>(null);
     const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+    const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
     // Analysis History
     const [isChoiceModalOpen, setIsChoiceModalOpen] = useState(false);
@@ -312,7 +313,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
 
     const getPeriodLabel = () => {
         if (periodType === 'all') return 'Total';
-        if (periodType === 'custom') return `${startDate.toLocaleDateString('pt-BR')} - ${endDate.toLocaleDateString('pt-BR')} `;
+        if (periodType === 'custom') return `${startDate.toLocaleDateString('pt-BR')} - ${endDate.toLocaleDateString('pt-BR')}`;
         if (periodType === 'year') return startDate.getFullYear().toString();
         return startDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
     };
@@ -365,6 +366,8 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
 
     const removePhoto = (index: number) => {
         setTempPhotos(prev => prev.filter((_, i) => i !== index));
+        if (selectedIdx === index) setSelectedIdx(null);
+        else if (selectedIdx !== null && selectedIdx > index) setSelectedIdx(selectedIdx - 1);
     };
 
     const movePhoto = (index: number, direction: 'left' | 'right') => {
@@ -375,6 +378,13 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             if (targetIndex >= 0 && targetIndex < next.length) {
                 const [movedPhoto] = next.splice(index, 1);
                 next.splice(targetIndex, 0, movedPhoto);
+
+                // Update selectedIdx if the selected photo was moved
+                if (selectedIdx === index) {
+                    setSelectedIdx(targetIndex);
+                } else if (selectedIdx === targetIndex) {
+                    setSelectedIdx(index);
+                }
             }
             return next;
         });
@@ -391,9 +401,34 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             const next = [...prev];
             const [movedPhoto] = next.splice(draggedIdx, 1);
             next.splice(targetIndex, 0, movedPhoto);
+
+            // Update selectedIdx if the selected photo was moved
+            if (selectedIdx === draggedIdx) {
+                setSelectedIdx(targetIndex);
+            } else if (selectedIdx === targetIndex) {
+                setSelectedIdx(draggedIdx);
+            }
             return next;
         });
         setDraggedIdx(null);
+    };
+
+    const handlePhotoClick = (index: number) => {
+        if (selectedIdx === null) {
+            setSelectedIdx(index);
+        } else if (selectedIdx === index) {
+            setSelectedIdx(null);
+        } else {
+            // Swap
+            setTempPhotos(prev => {
+                const next = [...prev];
+                const temp = next[selectedIdx];
+                next[selectedIdx] = next[index];
+                next[index] = temp;
+                return next;
+            });
+            setSelectedIdx(null); // Deselect after swap
+        }
     };
 
     // Filter Logic
@@ -432,7 +467,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const calculateTotal = (items: ExtraGain[]) => {
         console.log('📊 Calculating total for', items.length, 'items');
         return items.reduce((acc, gain) => {
-            console.log(`Item: ${gain.origin} | Status: ${gain.status} | Amount: ${gain.amount} | Valid ? ${validStatuses.includes(gain.status)} `);
+            console.log(`Item: ${gain.origin} | Status: ${gain.status} | Amount: ${gain.amount} | Valid ? ${validStatuses.includes(gain.status)}`);
             if (validStatuses.includes(gain.status)) {
                 return acc + gain.amount;
             }
@@ -516,7 +551,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
 
                     const rawGainData: ExtraGain = {
                         ...formData, id: betId, notes: formData.notes, photos: photoUrls,
-                        date: formData.date.includes('T') ? formData.date : `${formData.date} T12:00:00.000Z`,
+                        date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
                     };
 
                     const gainData = JSON.parse(JSON.stringify(rawGainData, (k, v) => v === undefined ? null : v));
@@ -538,7 +573,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 id: optimBetId,
                 notes: formData.notes,
                 photos: tempPhotos.map(p => p.url),
-                date: formData.date.includes('T') ? formData.date : `${formData.date} T12:00:00.000Z`,
+                date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
             };
 
             setGains(prev => {
@@ -1125,10 +1160,25 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                                 onDragStart={() => handleDragStart(index)}
                                                 onDragOver={(e) => e.preventDefault()}
                                                 onDrop={() => handleDrop(index)}
-                                                onClick={() => openImageViewer(tempPhotos.map(p => p.url), index)}
-                                                className={`relative aspect-square rounded-lg overflow-hidden border transition-all duration-200 group bg-black/40 cursor-move ${draggedIdx === index ? 'opacity-40 scale-95 border-primary shadow-2xl' : 'border-white/10 hover:border-primary/50 hover:shadow-lg'}`}
+                                                onClick={() => handlePhotoClick(index)}
+                                                className={`relative aspect-square rounded-lg overflow-hidden border transition-all duration-300 group bg-black/40 cursor-move 
+                                                ${draggedIdx === index ? 'opacity-40 scale-95 border-primary shadow-2xl' :
+                                                        selectedIdx === index ? 'border-primary ring-2 ring-primary ring-offset-2 ring-offset-[#0d1121] scale-[1.05] z-20' :
+                                                            'border-white/10 hover:border-primary/50'}`}
                                             >
                                                 <img src={photo.url} alt="Preview" className="w-full h-full object-cover" />
+
+                                                {/* Viewer Button */}
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        openImageViewer(tempPhotos.map(p => p.url), index);
+                                                    }}
+                                                    className="absolute top-1 left-1 p-1 bg-black/60 text-white rounded-full hover:bg-primary transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100 z-10"
+                                                    title="Ver foto"
+                                                >
+                                                    <Maximize size={10} />
+                                                </button>
 
                                                 {/* Delete Button */}
                                                 <button
@@ -1153,6 +1203,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                                         className={`p-1 bg-black/40 text-white rounded hover:bg-primary transition-colors ${index === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
                                                         title="Mover para esquerda"
                                                     >
+                                                        <span className="sr-only">Esquerda</span>
                                                         <ChevronLeft size={12} />
                                                     </button>
                                                     <button
@@ -1164,6 +1215,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                                         className={`p-1 bg-black/40 text-white rounded hover:bg-primary transition-colors ${index === tempPhotos.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}
                                                         title="Mover para direita"
                                                     >
+                                                        <span className="sr-only">Direita</span>
                                                         <ChevronRight size={12} />
                                                     </button>
                                                 </div>
