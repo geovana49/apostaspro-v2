@@ -698,16 +698,18 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     };
 
     const handlePhotoClick = (index: number) => {
-        if (selectedIdx === null) {
-            setSelectedIdx(index);
-        } else if (selectedIdx === index) {
+        if (selectedIdx === index) {
+            // Se já estiver selecionado, abre o visualizador
+            openImageViewer(tempPhotos.map(p => p.url), index);
             setSelectedIdx(null);
+        } else if (selectedIdx === null) {
+            setSelectedIdx(index);
         } else {
             // Swap
             setTempPhotos(prev => {
                 const next = [...prev];
-                const temp = next[selectedIdx];
-                next[selectedIdx] = next[index];
+                const temp = next[selectedIdx!];
+                next[selectedIdx!] = next[index];
                 next[index] = temp;
                 return next;
             });
@@ -1993,10 +1995,10 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                                     e.stopPropagation();
                                                     openImageViewer(tempPhotos.map(p => p.url), index);
                                                 }}
-                                                className="absolute top-1 left-1 p-1 bg-black/60 text-white rounded-full hover:bg-primary transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100 z-10"
+                                                className="absolute top-2 left-2 p-2 bg-black/70 text-white rounded-full hover:bg-primary transition-all shadow-lg active:scale-90 z-20"
                                                 title="Ver foto"
                                             >
-                                                <Maximize size={10} />
+                                                <Maximize size={16} />
                                             </button>
 
                                             {/* Delete Button */}
