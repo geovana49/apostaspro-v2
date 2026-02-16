@@ -11,10 +11,10 @@ export interface CompressionOptions {
 }
 
 const DEFAULT_OPTIONS: CompressionOptions = {
-    maxWidth: 1280,
-    maxHeight: 1280,
-    quality: 0.8,
-    maxSizeMB: 0.5
+    maxWidth: 1920,
+    maxHeight: 1920,
+    quality: 0.9,
+    maxSizeMB: 1.0
 };
 
 /**
@@ -72,9 +72,9 @@ export async function compressImage(
                     const maxBytes = (opts.maxSizeMB! * 1024 * 1024);
                     let iterations = 0;
 
-                    // Mantemos a qualidade acima de 0.7 para não perder a legibilidade
-                    while (base64.length > maxBytes && quality > 0.7 && iterations < 5) {
-                        quality -= 0.05;
+                    // Mantemos a qualidade acima de 0.85 para não perder a legibilidade
+                    while (base64.length > maxBytes && quality > 0.85 && iterations < 5) {
+                        quality -= 0.02;
                         base64 = canvas.toDataURL('image/webp', quality);
                         iterations++;
                     }
