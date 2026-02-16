@@ -2,11 +2,12 @@ import React, { useState, useReducer, useEffect, useLayoutEffect, useRef, useCal
 import { createPortal } from 'react-dom';
 import { Button, Input, Dropdown, Modal, SingleDatePickerModal, ImageViewer, MoneyDisplay } from './ui/UIComponents';
 import {
-    Plus, Trash2, X, Calendar, Paperclip, Minus, Loader2, Copy, ChevronUp, ChevronDown, UploadCloud
+    Plus, Trash2, X, Calendar, Paperclip, Minus, Loader2, Copy, ChevronUp, ChevronDown, UploadCloud,
+    ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { Bet, Bookmaker, StatusItem, PromotionItem, Coverage, User } from '../types';
 import { FirestoreService } from '../services/firestoreService';
-import { compressImages, validateFirestoreSize } from '../utils/imageCompression';
+import { compressImages } from '../utils/imageCompression';
 import { calculateBetStats } from '../utils/betCalculations';
 
 interface BetFormModalProps {
@@ -99,6 +100,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
+    const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
 
     // Auto-Save Draft (Debounced)
     useEffect(() => {
@@ -398,6 +400,35 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
     const removePhoto = (index: number) => {
         setTempPhotos(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const movePhoto = (index: number, direction: 'left' | 'right') => {
+        setTempPhotos(prev => {
+            const next = [...prev];
+            const targetIndex = direction === 'left' ? index - 1 : index + 1;
+
+            if (targetIndex >= 0 && targetIndex < next.length) {
+                const [movedPhoto] = next.splice(index, 1);
+                next.splice(targetIndex, 0, movedPhoto);
+            }
+            return next;
+        });
+    };
+
+    const handleDragStart = (index: number) => {
+        setDraggedIdx(index);
+    };
+
+    const handleDrop = (targetIndex: number) => {
+        if (draggedIdx === null || draggedIdx === targetIndex) return;
+
+        setTempPhotos(prev => {
+            const next = [...prev];
+            const [movedPhoto] = next.splice(draggedIdx, 1);
+            next.splice(targetIndex, 0, movedPhoto);
+            return next;
+        });
+        setDraggedIdx(null);
     };
 
     const addCoverage = () => {
@@ -962,22 +993,55 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                     {tempPhotos.map((photo, index) => (
                                         <div
                                             key={index}
+                                            draggable
+                                            onDragStart={() => handleDragStart(index)}
+                                            onDragOver={(e) => e.preventDefault()}
+                                            onDrop={() => handleDrop(index)}
                                             onClick={() => {
                                                 setViewerStartIndex(index);
                                                 setIsViewerOpen(true);
                                             }}
-                                            className="relative aspect-square rounded-lg overflow-hidden border border-white/10 group bg-black/40 cursor-pointer"
+                                            className={`relative aspect-square rounded-lg overflow-hidden border transition-all duration-200 group bg-black/40 cursor-move ${draggedIdx === index ? 'opacity-40 scale-95 border-primary shadow-2xl' : 'border-white/10 hover:border-primary/50 hover:shadow-lg'}`}
                                         >
                                             <img src={photo.url} alt="Preview" className="w-full h-full object-cover" />
+
+                                            {/* Delete Button */}
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     removePhoto(index);
                                                 }}
-                                                className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full hover:bg-danger transition-colors opacity-0 group-hover:opacity-100"
+                                                className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full hover:bg-danger transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100 z-10"
+                                                title="Remover foto"
                                             >
                                                 <X size={10} />
                                             </button>
+
+                                            {/* Reorder Buttons */}
+                                            <div className="absolute inset-x-0 bottom-0 flex justify-between p-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-gradient-to-t from-black/60 to-transparent">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        movePhoto(index, 'left');
+                                                    }}
+                                                    disabled={index === 0}
+                                                    className={`p-1 bg-black/40 text-white rounded hover:bg-primary transition-colors ${index === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                                    title="Mover para esquerda"
+                                                >
+                                                    <ChevronLeft size={12} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        movePhoto(index, 'right');
+                                                    }}
+                                                    disabled={index === tempPhotos.length - 1}
+                                                    className={`p-1 bg-black/40 text-white rounded hover:bg-primary transition-colors ${index === tempPhotos.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                                    title="Mover para direita"
+                                                >
+                                                    <ChevronRight size={12} />
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

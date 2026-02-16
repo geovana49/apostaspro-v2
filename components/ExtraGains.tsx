@@ -78,6 +78,11 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isBetModalOpen, setIsBetModalOpen] = useState(false);
     const [editingBet, setEditingBet] = useState<any>(null);
+    const [isFormDatePickerOpen, setIsFormDatePickerOpen] = useState(false);
+    const [editingValue, setEditingValue] = useState<any>(null);
+    const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+
+    // Analysis History
     const [isChoiceModalOpen, setIsChoiceModalOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [tempPhotos, setTempPhotos] = useState<{ url: string, file?: File }[]>([]);
@@ -168,7 +173,6 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const [startDate, setStartDate] = useState<Date>(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
     const [endDate, setEndDate] = useState<Date>(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0, 23, 59, 59, 999));
     const [isDateRangeModalOpen, setIsDateRangeModalOpen] = useState(false);
-    const [isFormDatePickerOpen, setIsFormDatePickerOpen] = useState(false);
     const [localPrivacyMode, setLocalPrivacyMode] = useState(appSettings.privacyMode);
     const [originFilter, setOriginFilter] = useState('all');
     const [expandedGains, setExpandedGains] = useState<Set<string>>(new Set());
@@ -308,7 +312,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
 
     const getPeriodLabel = () => {
         if (periodType === 'all') return 'Total';
-        if (periodType === 'custom') return `${startDate.toLocaleDateString('pt-BR')} - ${endDate.toLocaleDateString('pt-BR')}`;
+        if (periodType === 'custom') return `${startDate.toLocaleDateString('pt-BR')} - ${endDate.toLocaleDateString('pt-BR')} `;
         if (periodType === 'year') return startDate.getFullYear().toString();
         return startDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
     };
@@ -327,7 +331,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
 
     const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            const MAX_PHOTOS = 8;
+            const MAX_PHOTOS = 30;
             const files = Array.from(e.target.files) as File[];
             files.sort((a, b) => a.lastModified - b.lastModified);
 
@@ -361,6 +365,35 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
 
     const removePhoto = (index: number) => {
         setTempPhotos(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const movePhoto = (index: number, direction: 'left' | 'right') => {
+        setTempPhotos(prev => {
+            const next = [...prev];
+            const targetIndex = direction === 'left' ? index - 1 : index + 1;
+
+            if (targetIndex >= 0 && targetIndex < next.length) {
+                const [movedPhoto] = next.splice(index, 1);
+                next.splice(targetIndex, 0, movedPhoto);
+            }
+            return next;
+        });
+    };
+
+    const handleDragStart = (index: number) => {
+        setDraggedIdx(index);
+    };
+
+    const handleDrop = (targetIndex: number) => {
+        if (draggedIdx === null || draggedIdx === targetIndex) return;
+
+        setTempPhotos(prev => {
+            const next = [...prev];
+            const [movedPhoto] = next.splice(draggedIdx, 1);
+            next.splice(targetIndex, 0, movedPhoto);
+            return next;
+        });
+        setDraggedIdx(null);
     };
 
     // Filter Logic
@@ -399,7 +432,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const calculateTotal = (items: ExtraGain[]) => {
         console.log('📊 Calculating total for', items.length, 'items');
         return items.reduce((acc, gain) => {
-            console.log(`Item: ${gain.origin} | Status: ${gain.status} | Amount: ${gain.amount} | Valid? ${validStatuses.includes(gain.status)}`);
+            console.log(`Item: ${gain.origin} | Status: ${gain.status} | Amount: ${gain.amount} | Valid ? ${validStatuses.includes(gain.status)} `);
             if (validStatuses.includes(gain.status)) {
                 return acc + gain.amount;
             }
@@ -483,7 +516,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
 
                     const rawGainData: ExtraGain = {
                         ...formData, id: betId, notes: formData.notes, photos: photoUrls,
-                        date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
+                        date: formData.date.includes('T') ? formData.date : `${formData.date} T12:00:00.000Z`,
                     };
 
                     const gainData = JSON.parse(JSON.stringify(rawGainData, (k, v) => v === undefined ? null : v));
@@ -505,7 +538,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 id: optimBetId,
                 notes: formData.notes,
                 photos: tempPhotos.map(p => p.url),
-                date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
+                date: formData.date.includes('T') ? formData.date : `${formData.date} T12:00:00.000Z`,
             };
 
             setGains(prev => {
@@ -523,7 +556,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             setEditingId(null);
         } catch (error: any) {
             console.error("Error initiating save:", error);
-            alert(`Erro ao iniciar salvamento: ${error.message || error}`);
+            alert(`Erro ao iniciar salvamento: ${error.message || error} `);
             setIsUploading(false);
             clearTimeout(safetyTimeout);
         }
@@ -769,7 +802,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                 <div className="flex flex-col md:flex-row md:items-center gap-4 hover:bg-white/5 transition-colors -mx-4 -mt-4 p-4 rounded-t-xl">
                                     <div className="flex items-center gap-3 flex-1">
                                         <div className="flex flex-col items-center gap-1 shrink-0">
-                                            <div className="w-10 h-10 rounded-lg flex items-center justify-center border border-white/5 shadow-inner overflow-hidden shrink-0" style={{ backgroundColor: originBg ? originBg : `${originColor}15`, color: originColor, borderColor: originBg ? 'transparent' : undefined }}>
+                                            <div className="w-10 h-10 rounded-lg flex items-center justify-center border border-white/5 shadow-inner overflow-hidden shrink-0" style={{ backgroundColor: originBg ? originBg : `${originColor} 15`, color: originColor, borderColor: originBg ? 'transparent' : undefined }}>
                                                 <RenderIcon iconSource={originItem?.icon} size={20} />
                                             </div>
                                             <span className="text-[8px] font-bold uppercase tracking-wide text-center max-w-[60px] truncate" style={{ color: originColor }}>{gain.origin}</span>
@@ -811,7 +844,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                                 <p className={`font-bold text-base ${gain.amount < 0 ? 'text-red-500' : 'text-[#acff7a]'}`}>
                                                     <MoneyDisplay value={gain.amount} />
                                                 </p>
-                                                <span style={{ backgroundColor: `${statusColor}1A`, color: statusColor, borderColor: `${statusColor}33` }} className="text-[10px] sm:text-xs font-medium px-2.5 py-1 rounded-full inline-block border">{gain.status}</span>
+                                                <span style={{ backgroundColor: `${statusColor} 1A`, color: statusColor, borderColor: `${statusColor} 33` }} className="text-[10px] sm:text-xs font-medium px-2.5 py-1 rounded-full inline-block border">{gain.status}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -835,7 +868,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                                                         </div>
                                                                         <span className="text-sm font-medium text-white">{coverage.market}</span>
                                                                     </div>
-                                                                    <span style={{ backgroundColor: `${coverageStatusColor}1A`, color: coverageStatusColor, borderColor: `${coverageStatusColor}33` }} className="text-[10px] font-medium px-2 py-0.5 rounded-full border">
+                                                                    <span style={{ backgroundColor: `${coverageStatusColor} 1A`, color: coverageStatusColor, borderColor: `${coverageStatusColor} 33` }} className="text-[10px] font-medium px-2 py-0.5 rounded-full border">
                                                                         {coverage.status}
                                                                     </span>
                                                                 </div>
@@ -915,7 +948,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                             <div className="space-y-6">
                                 <div className="bg-[#0d1121] p-4 rounded-xl border border-white/5 space-y-4">
                                     <div className="flex items-center gap-4 p-3 bg-white/5 rounded-lg border border-white/5">
-                                        <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border border-white/10 overflow-hidden" style={{ backgroundColor: newCategoryBgColor || `${newCategoryColor}20`, color: newCategoryColor }}> <RenderIcon iconSource={newCategoryIcon} size={24} /> </div>
+                                        <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border border-white/10 overflow-hidden" style={{ backgroundColor: newCategoryBgColor || `${newCategoryColor} 20`, color: newCategoryColor }}> <RenderIcon iconSource={newCategoryIcon} size={24} /> </div>
                                         <div className="flex-1">
                                             <Input placeholder="Nome da Origem" value={newCategoryName} onChange={e => { setNewCategoryName(e.target.value); if (configError) setConfigError(null); }} className={`mb-0 border-transparent bg-transparent focus:bg-[#090c19] ${configError ? 'border-danger focus:border-danger' : ''}`} />
                                             {configError && (<div className="flex items-center gap-1.5 mt-1 animate-in slide-in-from-left-2 text-danger"> <AlertCircle size={10} /> <span className="text-[10px] font-bold">{configError}</span> </div>)}
@@ -945,7 +978,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                 </div>
                                 <div>
                                     <h5 className="text-xs font-bold text-textMuted uppercase mb-3">Existentes</h5>
-                                    <div className="space-y-2"> {origins.map(origin => (<div key={origin.id} className="flex items-center justify-between p-3 bg-[#0d1121] border border-white/5 rounded-lg group"> <div className="flex items-center gap-3"> <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm border border-white/5 overflow-hidden" style={{ backgroundColor: origin.backgroundColor || `${origin.color}20`, color: origin.color }}> <RenderIcon iconSource={origin.icon} size={14} /> </div> <span className="font-medium text-white text-sm">{origin.name}</span> </div> <button onClick={() => handleRemoveCategory(origin.id)} className="p-2 text-gray-500 hover:text-danger hover:bg-danger/10 rounded-md transition-colors"> <Trash2 size={16} /> </button> </div>))} </div>
+                                    <div className="space-y-2"> {origins.map(origin => (<div key={origin.id} className="flex items-center justify-between p-3 bg-[#0d1121] border border-white/5 rounded-lg group"> <div className="flex items-center gap-3"> <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm border border-white/5 overflow-hidden" style={{ backgroundColor: origin.backgroundColor || `${origin.color} 20`, color: origin.color }}> <RenderIcon iconSource={origin.icon} size={14} /> </div> <span className="font-medium text-white text-sm">{origin.name}</span> </div> <button onClick={() => handleRemoveCategory(origin.id)} className="p-2 text-gray-500 hover:text-danger hover:bg-danger/10 rounded-md transition-colors"> <Trash2 size={16} /> </button> </div>))} </div>
                                 </div>
                             </div>
                         ) : (
@@ -1032,7 +1065,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                             status: v as any,
                                             notes: formData.notes,
                                             photos: tempPhotos.map(p => p.url),
-                                            date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
+                                            date: formData.date.includes('T') ? formData.date : `${formData.date} T12:00:00.000Z`,
                                         };
                                         await FirestoreService.saveGain(currentUser.uid, gainData);
                                         console.log('✅ Status auto-saved!');
@@ -1088,19 +1121,52 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                         {tempPhotos.map((photo, index) => (
                                             <div
                                                 key={index}
+                                                draggable
+                                                onDragStart={() => handleDragStart(index)}
+                                                onDragOver={(e) => e.preventDefault()}
+                                                onDrop={() => handleDrop(index)}
                                                 onClick={() => openImageViewer(tempPhotos.map(p => p.url), index)}
-                                                className="relative aspect-square rounded-lg overflow-hidden border border-white/10 group bg-black/40 cursor-pointer"
+                                                className={`relative aspect-square rounded-lg overflow-hidden border transition-all duration-200 group bg-black/40 cursor-move ${draggedIdx === index ? 'opacity-40 scale-95 border-primary shadow-2xl' : 'border-white/10 hover:border-primary/50 hover:shadow-lg'}`}
                                             >
                                                 <img src={photo.url} alt="Preview" className="w-full h-full object-cover" />
+
+                                                {/* Delete Button */}
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         removePhoto(index);
                                                     }}
-                                                    className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full hover:bg-danger transition-colors opacity-0 group-hover:opacity-100"
+                                                    className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full hover:bg-danger transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100 z-10"
+                                                    title="Remover foto"
                                                 >
                                                     <X size={10} />
                                                 </button>
+
+                                                {/* Reorder Buttons */}
+                                                <div className="absolute inset-x-0 bottom-0 flex justify-between p-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-gradient-to-t from-black/60 to-transparent">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            movePhoto(index, 'left');
+                                                        }}
+                                                        disabled={index === 0}
+                                                        className={`p-1 bg-black/40 text-white rounded hover:bg-primary transition-colors ${index === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                                        title="Mover para esquerda"
+                                                    >
+                                                        <ChevronLeft size={12} />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            movePhoto(index, 'right');
+                                                        }}
+                                                        disabled={index === tempPhotos.length - 1}
+                                                        className={`p-1 bg-black/40 text-white rounded hover:bg-primary transition-colors ${index === tempPhotos.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                                        title="Mover para direita"
+                                                    >
+                                                        <ChevronRight size={12} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>

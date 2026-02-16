@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { analyzeImage, extractBookmakerFromURL, isGeminiConfigured, AIAnalysisResult, BookmakerExtraction } from '../services/aiService';
 import { Bookmaker, Bet, ExtraGain, StatusItem, OriginItem, AIAnalysisHistory } from '../types';
+import TeachAIModal from './TeachAIModal';
 
 interface AIAssistantProps {
     bookmakers: Bookmaker[];
@@ -43,8 +44,8 @@ const AIAssistant: React.FC<AIAssistantProps> = ({
     // History
     const [history, setHistory] = useState<AIAnalysisHistory[]>([]);
 
-    // Edit Modal
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isTeachModalOpen, setIsTeachModalOpen] = useState(false);
     const [editedData, setEditedData] = useState<any>(null);
 
     // Chat State
@@ -152,6 +153,22 @@ const AIAssistant: React.FC<AIAssistantProps> = ({
         if (!analysisResult) return;
         setEditedData({ ...analysisResult.data, type: analysisResult.type });
         setIsEditModalOpen(true);
+    };
+
+    const handleSaveMapping = (mappedData: any) => {
+        if (!analysisResult) return;
+
+        setAnalysisResult({
+            ...analysisResult,
+            data: {
+                ...analysisResult.data,
+                ...mappedData
+            },
+            confidence: 1.0, // Manual mapping is 100% confident
+            source: 'Manual (Mapeado pelo Usuário)',
+            analysisType: 'local' // Treat as local since no cloud AI was used for these specific fields
+        });
+        setIsTeachModalOpen(false);
     };
 
     const handleSaveEdited = () => {
@@ -341,7 +358,10 @@ const AIAssistant: React.FC<AIAssistantProps> = ({
                                         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
                                             <div className="p-4 bg-primary/10 rounded-xl border border-primary/20">
                                                 <div className="flex items-center justify-between mb-3">
-                                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Resultado da Análise</span>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Resultado da Análise</span>
+                                                        <span className="text-[10px] text-primary/70 font-medium">Extraído via {analysisResult.source || 'IA'}</span>
+                                                    </div>
                                                     <span className={`px-3 py-1 rounded-lg font-bold text-sm flex items-center gap-2 ${analysisResult.type === 'bet' ? 'bg-blue-600/20 text-blue-400' :
                                                         analysisResult.type === 'gain' ? 'bg-green-600/20 text-green-400' :
                                                             'bg-gray-600/20 text-gray-400'
@@ -400,19 +420,37 @@ const AIAssistant: React.FC<AIAssistantProps> = ({
 
                                                 <div className="mt-3 pt-3 border-t border-white/10">
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-xs text-gray-500">Nível de Confiança:</span>
-                                                        <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                                                            <div
-                                                                className={`h-full ${analysisResult.confidence >= 0.7 ? 'bg-green-500' :
-                                                                    analysisResult.confidence >= 0.5 ? 'bg-yellow-500' : 'bg-red-500'
-                                                                    }`}
-                                                                style={{ width: `${analysisResult.confidence * 100}%` }}
-                                                            />
+                                                        <div className="flex-1">
+                                                            <span className="text-[10px] text-gray-500 block mb-1">Nível de Confiança (IA):</span>
+                                                            <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className={`h-full ${analysisResult.confidence >= 0.7 ? 'bg-green-500' :
+                                                                        analysisResult.confidence >= 0.5 ? 'bg-yellow-500' : 'bg-red-500'
+                                                                        }`}
+                                                                    style={{ width: `${analysisResult.confidence * 100}%` }}
+                                                                />
+                                                            </div>
                                                         </div>
-                                                        <span className="text-xs font-bold text-white">{(analysisResult.confidence * 100).toFixed(0)}%</span>
+                                                        <span className="text-xs font-bold text-white self-end">{(analysisResult.confidence * 100).toFixed(0)}%</span>
                                                     </div>
                                                 </div>
                                             </div>
+
+                                            {analysisResult.analysisType === 'partial' && (
+                                                <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg flex items-start gap-3">
+                                                    <AlertCircle size={16} className="text-yellow-500 mt-0.5 shrink-0" />
+                                                    <div className="flex-1">
+                                                        <p className="text-xs text-yellow-200 font-medium">Layout Desconhecido</p>
+                                                        <p className="text-[10px] text-yellow-500/80">O OCR genérico foi utilizado. Se os dados estiverem incorretos, você pode ensinar a IA.</p>
+                                                    </div>
+                                                    <button
+                                                        className="text-[10px] font-bold text-primary hover:underline uppercase"
+                                                        onClick={() => setIsTeachModalOpen(true)}
+                                                    >
+                                                        Mapear
+                                                    </button>
+                                                </div>
+                                            )}
 
                                             <div className="flex gap-3">
                                                 <Button variant="neutral" onClick={handleCancelResult} className="flex-1">
@@ -671,6 +709,14 @@ const AIAssistant: React.FC<AIAssistantProps> = ({
                     </div>
                 )}
             </Modal>
+            {/* Manual Mapping Modal (Teach AI) */}
+            <TeachAIModal
+                isOpen={isTeachModalOpen}
+                onClose={() => setIsTeachModalOpen(false)}
+                image={selectedImage}
+                words={analysisResult?.words}
+                onSaveMapping={handleSaveMapping}
+            />
         </div>
     );
 };

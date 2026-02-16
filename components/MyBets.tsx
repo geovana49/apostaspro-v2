@@ -139,6 +139,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const touchStartPos = useRef<{ x: number; y: number } | null>(null);
     const [editingId, setEditingId] = useState<string | null>(null); // Format: `${betId}-${coverageId}-${field}`
     const [editingValue, setEditingValue] = useState<any>(null);
+    const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const smartImportInputRef = useRef<HTMLInputElement>(null);
     const coverageImportInputRef = useRef<HTMLInputElement>(null);
@@ -628,7 +629,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
 
     const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            const MAX_PHOTOS = 8;
+            const MAX_PHOTOS = 30;
             const files = Array.from(e.target.files) as File[];
 
             // Sort files by date (oldest to newest)
@@ -664,6 +665,35 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
 
     const removePhoto = (index: number) => {
         setTempPhotos(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const movePhoto = (index: number, direction: 'left' | 'right') => {
+        setTempPhotos(prev => {
+            const next = [...prev];
+            const targetIndex = direction === 'left' ? index - 1 : index + 1;
+
+            if (targetIndex >= 0 && targetIndex < next.length) {
+                const [movedPhoto] = next.splice(index, 1);
+                next.splice(targetIndex, 0, movedPhoto);
+            }
+            return next;
+        });
+    };
+
+    const handleDragStart = (index: number) => {
+        setDraggedIdx(index);
+    };
+
+    const handleDrop = (targetIndex: number) => {
+        if (draggedIdx === null || draggedIdx === targetIndex) return;
+
+        setTempPhotos(prev => {
+            const next = [...prev];
+            const [movedPhoto] = next.splice(draggedIdx, 1);
+            next.splice(targetIndex, 0, movedPhoto);
+            return next;
+        });
+        setDraggedIdx(null);
     };
 
     const bookmakerOptions = bookmakers.map(b => ({
@@ -1548,6 +1578,24 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                             </div>
                                         )}
 
+                                        {isAnalyzing && (
+                                            <div className="fixed inset-0 bg-[#090c19]/60 backdrop-blur-sm z-[100000] flex items-center justify-center p-4">
+                                                <div className="bg-[#151b2e] border border-white/10 rounded-2xl p-8 flex flex-col items-center gap-4 text-center max-w-sm animate-in zoom-in-95 duration-300 shadow-2xl">
+                                                    <div className="relative">
+                                                        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+                                                        <Sparkles className="absolute -top-1 -right-1 w-5 h-5 text-secondary animate-pulse" />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <h3 className="text-xl font-bold text-white">Importação Inteligente</h3>
+                                                        <p className="text-sm text-gray-400">
+                                                            Extraindo dados dos seus prints... <br />
+                                                            <span className="text-primary/70 text-[10px] font-bold uppercase tracking-widest mt-1 block">Processando Localmente & Cloud</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {bet.photos && bet.photos.length > 0 && (
                                             <div className="mt-4">
                                                 <div className="flex items-center gap-2 mb-2 text-primary text-xs font-bold">
@@ -1908,19 +1956,52 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                     {tempPhotos.map((photo, index) => (
                                         <div
                                             key={index}
+                                            draggable
+                                            onDragStart={() => handleDragStart(index)}
+                                            onDragOver={(e) => e.preventDefault()}
+                                            onDrop={() => handleDrop(index)}
                                             onClick={() => openImageViewer(tempPhotos.map(p => p.url), index)}
-                                            className="relative aspect-square rounded-lg overflow-hidden border border-white/10 group bg-black/40 cursor-pointer"
+                                            className={`relative aspect-square rounded-lg overflow-hidden border transition-all duration-200 group bg-black/40 cursor-move ${draggedIdx === index ? 'opacity-40 scale-95 border-primary shadow-2xl' : 'border-white/10 hover:border-primary/50 hover:shadow-lg'}`}
                                         >
                                             <img src={photo.url} alt="Preview" className="w-full h-full object-cover" />
+
+                                            {/* Delete Button */}
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     removePhoto(index);
                                                 }}
-                                                className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full hover:bg-danger transition-colors opacity-0 group-hover:opacity-100"
+                                                className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full hover:bg-danger transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100 z-10"
+                                                title="Remover foto"
                                             >
                                                 <X size={10} />
                                             </button>
+
+                                            {/* Reorder Buttons */}
+                                            <div className="absolute inset-x-0 bottom-0 flex justify-between p-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-gradient-to-t from-black/60 to-transparent">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        movePhoto(index, 'left');
+                                                    }}
+                                                    disabled={index === 0}
+                                                    className={`p-1 bg-black/40 text-white rounded hover:bg-primary transition-colors ${index === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                                    title="Mover para esquerda"
+                                                >
+                                                    <ChevronLeft size={12} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        movePhoto(index, 'right');
+                                                    }}
+                                                    disabled={index === tempPhotos.length - 1}
+                                                    className={`p-1 bg-black/40 text-white rounded hover:bg-primary transition-colors ${index === tempPhotos.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                                    title="Mover para direita"
+                                                >
+                                                    <ChevronRight size={12} />
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

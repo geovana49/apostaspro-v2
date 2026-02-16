@@ -107,67 +107,98 @@ class OCRService {
             data.bookmaker = foundHouse ? (foundHouse.includes('r7') ? 'R7.BET' : (foundHouse.charAt(0).toUpperCase() + foundHouse.slice(1))) : 'Casa Automática';
 
             // 2. Extract Stake (Permissive Regex)
-            const stakeRegex = /(?:r\$|\$|valor|aposta|total|pago|stake|simples|investimento)[:\s]*(\d+[,.]\d{2})/i;
+            const stakeKeywords = ['r$', '$', 'valor', 'aposta', 'total', 'pago', 'stake', 'simples', 'investimento', 'montante', 'importe'];
+            const stakeRegex = new RegExp(`(?:${stakeKeywords.join('|')})[:\\s]*(\\d+[,.]\\d{2})`, 'i');
             const stakeMatch = textLower.match(stakeRegex);
             if (stakeMatch) {
                 data.stake = parseFloat(stakeMatch[1].replace(',', '.'));
+            } else {
+                // Secondary fallback: find the strongest "Value-like" pattern
+                const valuePatterns = textLower.match(/(\d+[,.]\d{2})/g) || [];
+                const possibleStakes = valuePatterns.map(v => parseFloat(v.replace(',', '.'))).filter(v => v >= 1);
+                if (possibleStakes.length > 0) {
+                    // Usually the stake is one of the larger numbers that isn't the total return
+                    data.stake = Math.min(...possibleStakes);
+                }
             }
 
             // 3. Extract Odds (Better Number Hunting)
-            const oddsRegex = /(?:@|odd|cota[çtc]ao|multiplicador|x|odds)[:\s]*(\d+[.,]\d{2,3})/i;
+            const oddsKeywords = ['@', 'odd', 'cota[çtc]ao', 'multiplicador', 'x', 'odds', 'pre[çtc]o'];
+            const oddsRegex = new RegExp(`(?:${oddsKeywords.join('|')})[:\\s]*(\\d+[.,]\\d{2,3})`, 'i');
             const oddsMatch = textLower.match(oddsRegex);
             if (oddsMatch) {
                 data.odds = parseFloat(oddsMatch[1].replace(',', '.'));
             } else {
                 const numbers = (textLower.match(/\d+[.,]\d{2,3}/g) || []).map(n => parseFloat(n.replace(',', '.')));
-                const possibleOdds = numbers.find(n => n > 1.05 && n < 50 && n !== data.stake);
+                const possibleOdds = numbers.find(n => n > 1.01 && n < 100 && n !== data.stake);
                 if (possibleOdds) data.odds = possibleOdds;
             }
 
             // 4. Extract Date
-            const dateRegex = /(\d{1,2}[/-]\d{1,2}([/-]\d{2,4})?)|(\d{1,2}\s+(de\s+)?(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez))/i;
-            const dateMatch = textLower.match(dateRegex);
-            if (dateMatch) {
-                let dateStr = dateMatch[0];
-                const now = new Date();
-                if (dateStr.includes('/') || dateStr.includes('-')) {
-                    const sep = dateStr.includes('/') ? '/' : '-';
-                    let parts = dateStr.split(sep);
-                    let day = parts[0].padStart(2, '0');
-                    let month = parts[1].padStart(2, '0');
-                    let year = parts[2] || now.getFullYear().toString();
-                    if (year.length === 2) year = '20' + year;
-                    data.date = `${year}-${month}-${day}`;
-                }
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+
+            if (textLower.includes('hoje')) {
+                data.date = today.toISOString().split('T')[0];
+            } else if (textLower.includes('ontem')) {
+                data.date = yesterday.toISOString().split('T')[0];
             } else {
-                data.date = new Date().toISOString().split('T')[0];
+                const dateRegex = /(\d{1,2}[/-]\d{1,2}([/-]\d{2,4})?)|(\d{1,2}\s+(de\s+)?(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez))/i;
+                const dateMatch = textLower.match(dateRegex);
+                if (dateMatch) {
+                    let dateStr = dateMatch[0];
+                    if (dateStr.includes('/') || dateStr.includes('-')) {
+                        const sep = dateStr.includes('/') ? '/' : '-';
+                        let parts = dateStr.split(sep);
+                        let day = parts[0].padStart(2, '0');
+                        let month = parts[1].padStart(2, '0');
+                        let year = parts[2] || today.getFullYear().toString();
+                        if (year.length === 2) year = '20' + year;
+                        data.date = `${year}-${month}-${day}`;
+                    }
+                }
             }
+            if (!data.date) data.date = today.toISOString().split('T')[0];
 
             // 5. Extract Market & Event (Heuristic context)
             const marketKeywords = [
                 'resultado', 'ambas', 'gols', 'escanteios', 'vencedor', 'mais de', 'menos de', 'empate',
-                'vence', 'casa', 'fora', 'draw', 'over', 'under', 'asian', 'handicap', 'final'
+                'vence', 'casa', 'fora', 'draw', 'over', 'under', 'asian', 'handicap', 'final', 'vitoria',
+                'cart[õo]es', 'escanteio', 'minutos', 'intervalo'
             ];
 
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 3);
-            const teamPairRegex = /([A-Z0-9][a-z0-9]+\s?)+ (v|vs|x|-) ([A-Z0-9][a-z0-9]+\s?)+/i;
-            const possibleEvent = lines.find(l => teamPairRegex.test(l));
+
+            // Look for patterns like "Team A x Team B" or "Team A vs Team B"
+            const teamPairRegex = /([A-Z0-9].*)\s+(v|vs|x|-|para)\s+([A-Z0-9].*)/i;
+            const possibleEvent = lines.find(l => teamPairRegex.test(l) && l.length < 60);
             if (possibleEvent) data.event = possibleEvent;
 
             let foundMarkets = lines.filter(l =>
-                marketKeywords.some(kw => l.toLowerCase().includes(kw))
+                marketKeywords.some(kw => new RegExp(kw, 'i').test(l))
             );
 
             if (foundMarkets.length > 0) {
                 data.market = foundMarkets.slice(0, 2).join(' / ');
                 if (!data.event) {
                     const mIndex = lines.indexOf(foundMarkets[0]);
-                    if (mIndex > 0) data.event = lines[mIndex - 1];
+                    if (mIndex > 0) {
+                        // Usually the event line is right above the market line
+                        data.event = lines[mIndex - 1];
+                    }
                 }
             } else if (lines.length > 0) {
-                const reasonableLines = lines.filter(l => l.length > 8 && l.length < 60 && !l.toLowerCase().includes(data.bookmaker.toLowerCase()));
+                // Fallback: use reasonable looking lines
+                const reasonableLines = lines.filter(l =>
+                    l.length > 8 &&
+                    l.length < 50 &&
+                    !l.toLowerCase().includes(data.bookmaker.toLowerCase()) &&
+                    !/\d/.test(l.substring(0, 1)) // Shouldn't start with a number (likely stake/odds)
+                );
                 if (reasonableLines.length > 0) {
-                    data.market = reasonableLines[0];
+                    data.event = reasonableLines[0];
+                    if (reasonableLines.length > 1) data.market = reasonableLines[1];
                 }
             }
 

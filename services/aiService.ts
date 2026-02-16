@@ -1,5 +1,5 @@
 // AI Service v2.1 - Hybrid OCR + AI Fallback
-import { ocrService } from './ocrService';
+import { ocrService, OCRResult } from './ocrService';
 export interface AIAnalysisResult {
     type: 'bet' | 'gain' | 'unknown';
     confidence: number; // 0-1
@@ -18,7 +18,9 @@ export interface AIAnalysisResult {
     };
     rawText?: string;
     source?: string;
+    analysisType?: 'local' | 'remote' | 'partial';
     suggestions?: string[];
+    words?: OCRResult['words'];
 }
 
 export interface BookmakerExtraction {
@@ -28,7 +30,7 @@ export interface BookmakerExtraction {
     confidence: number;
 }
 
-const HF_API_KEY = import.meta.env.VITE_HF_API_KEY || '';
+const HF_API_KEY = (import.meta as any).env.VITE_HF_API_KEY || '';
 
 const analysisCache = new Map<string, AIAnalysisResult>();
 
@@ -61,7 +63,9 @@ export async function analyzeImage(imageBase64: string, context?: any): Promise<
                     promotionType: localData.promotion || 'Nenhuma'
                 },
                 source: 'Local OCR',
+                analysisType: 'local',
                 rawText: localData.raw || JSON.stringify(localData),
+                words: localData.words,
                 suggestions: ['Processado Localmente (Instantâneo)']
             };
         }
@@ -133,11 +137,12 @@ export async function analyzeImage(imageBase64: string, context?: any): Promise<
                     promotionType: data.promotion || 'Nenhuma'
                 },
                 rawText: JSON.stringify(data),
+                source: data.source || 'AI Proxy',
+                analysisType: 'remote',
                 suggestions: []
             };
 
             // Cache for future identical requests in this session
-            result.source = data.source || 'AI Proxy';
             analysisCache.set(imageBase64, result);
             return result;
 
@@ -162,7 +167,9 @@ export async function analyzeImage(imageBase64: string, context?: any): Promise<
                         promotionType: 'Nenhuma'
                     },
                     source: 'Local OCR (Recuperado)',
+                    analysisType: 'partial',
                     rawText: localData.raw || JSON.stringify(localData),
+                    words: localData.words,
                     suggestions: ['⚠️ Limite de IA atingido - Dados originais carregados (Verifique!)']
                 };
             }
@@ -181,6 +188,7 @@ export async function analyzeImage(imageBase64: string, context?: any): Promise<
                         date: normalizeDate(),
                     },
                     source: localData ? 'Local OCR (Falha na Extração)' : 'Erro Total',
+                    analysisType: localData ? 'partial' : 'remote',
                     rawText: localData?.raw || 'Nenhum texto detectado no print.',
                     suggestions: ['⚠️ Não foi possível extrair dados automaticamente. Por favor, preencha manualmente.']
                 };
@@ -307,3 +315,17 @@ export function extractBookmaker(text: string): BookmakerExtraction | null {
 
     return null;
 }
+
+// Check if API keys are configured
+export const isGeminiConfigured = () => {
+    return HF_API_KEY !== ''; // In this v2.1, we use HF but the UI expects this name
+};
+
+// Alias for compatibility
+export const extractBookmakerFromURL = extractBookmaker;
+
+// Simple Coach Message Handler (Placeholder or basic implementation)
+export const sendMessageToCoach = async (message: string, history: any[]) => {
+    // For now, return a simple response or use HF if possible
+    return "Como seu Coach de Apostas, posso ajudar a analisar seus reds e sugerir gestões de banca. No momento, estou focado em ler seus prints com perfeição! 🤖📈";
+};
