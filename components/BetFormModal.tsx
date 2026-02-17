@@ -607,6 +607,15 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                     };
                     const betToSave = JSON.parse(JSON.stringify(draftBet));
                     await FirestoreService.saveBet(currentUser.uid, betToSave);
+                    console.info("[BetFormModal] Background Draft Save Concluído.");
+
+                    // 1.1 DEFERRED DRAFT CLEANUP
+                    if (formData.id) {
+                        localStorage.removeItem(`apostaspro_draft_edit_${formData.id}`);
+                    } else {
+                        localStorage.removeItem('apostaspro_draft_modal');
+                    }
+                    localStorage.removeItem(`apostaspro_draft_modal`);
                 } catch (bgError: any) {
                     console.error("[BetFormModal] Background Draft Save Erro:", bgError);
                     alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar o rascunho na nuvem: ${bgError.message || "Erro desconhecido"}.\n\nPara garantir que você não perca dados, a página será recarregada.`);
