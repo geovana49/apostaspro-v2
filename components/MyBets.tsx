@@ -854,54 +854,73 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
 
         setIsUploading(true);
 
-        // Safety timeout for draft
+        // Safety timeout for draft: 20s
         const safetyTimeout = setTimeout(() => {
             console.warn("[MyBets] Draft save operation force-unlocked.");
             setIsUploading(false);
         }, 20000);
 
         try {
-            const betId = formData.id || Date.now().toString();
+            // NEW: Background Task Logic for Drafts
+            (async () => {
+                const betId = formData.id || Date.now().toString();
+                try {
+                    // 1. Process images (Async upload to Storage)
+                    const photoUrls = await Promise.all(
+                        tempPhotos.map(async (photo) => {
+                            try {
+                                if (photo.url.startsWith('data:')) {
+                                    return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
+                                }
+                                return photo.url;
+                            } catch (err) {
+                                console.error("[Storage] Draft upload failed:", err);
+                                throw err;
+                            }
+                        })
+                    );
 
-            // Process images (Async upload to Storage)
-            const photoUrls = await Promise.all(
-                tempPhotos.map(async (photo) => {
-                    try {
-                        if (photo.url.startsWith('data:')) {
-                            return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
-                        }
-                        return photo.url;
-                    } catch (err) {
-                        console.error("[Storage] Draft upload failed:", err);
-                        throw err;
-                    }
-                })
-            );
+                    const draftBet: Bet = {
+                        ...formData,
+                        id: betId,
+                        status: 'Rascunho',
+                        event: formData.event || `Rascunho - ${new Date().toLocaleDateString('pt-BR')}`,
+                        photos: photoUrls,
+                        date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`
+                    };
 
-            const draftBet: Bet = {
-                ...formData,
-                id: betId,
-                status: 'Rascunho',
-                event: formData.event || `Rascunho - ${new Date().toLocaleDateString('pt-BR')}`,
-                photos: photoUrls,
-            };
+                    const betToSave = JSON.parse(JSON.stringify(draftBet));
+                    await FirestoreService.saveBet(currentUser.uid, betToSave);
+                    console.info("[MyBets] Background Draft Save Concluído.");
+                } catch (bgError: any) {
+                    console.error("[MyBets] Background Draft Save Erro:", bgError);
+                    alert(`FALHA NO RASCUNHO!\n\nOcorreu um erro ao salvar o rascunho na nuvem: ${bgError.message || "Erro desconhecido"}.\n\nA página será recarregada.`);
+                    window.location.reload();
+                } finally {
+                    clearTimeout(safetyTimeout);
+                }
+            })();
 
-            const betToSave = JSON.parse(JSON.stringify(draftBet));
-            await FirestoreService.saveBet(currentUser.uid, betToSave);
-
-            // Navigate to the month of the saved bet
+            // 2. Immediate UI Closure
             const betDate = parseDate(formData.date);
             setCurrentDate(betDate);
             setPickerYear(betDate.getFullYear());
 
-            setIsUploading(false); // Reset state
-            setIsModalOpen(false);
-        } catch (error) {
-            console.error("Error saving draft:", error);
-            alert("Erro ao salvar rascunho.");
-        } finally {
-            clearTimeout(safetyTimeout);
             setIsUploading(false);
+            setIsModalOpen(false);
+
+            // 3. Clear local drafts
+            localStorage.removeItem('apostaspro_draft_mybets');
+            localStorage.removeItem('apostaspro_live_draft');
+            if (formData.id) {
+                localStorage.removeItem(`apostaspro_draft_edit_${formData.id}`);
+            }
+
+        } catch (error) {
+            console.error("Error initiating draft save:", error);
+            alert("Erro ao iniciar salvamento do rascunho.");
+            setIsUploading(false);
+            clearTimeout(safetyTimeout);
         }
     };
 
