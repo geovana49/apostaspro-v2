@@ -1034,10 +1034,10 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                                     setViewerStartIndex(index);
                                                     setIsViewerOpen(true);
                                                 }}
-                                                className="absolute top-2 left-2 p-2 bg-black/70 text-white rounded-full hover:bg-primary transition-all shadow-lg active:scale-90 z-20"
+                                                className="absolute top-1.5 left-1.5 p-1.5 bg-black/70 text-white rounded-full hover:bg-primary transition-all shadow-lg active:scale-90 z-20 sm:p-2"
                                                 title="Ver foto"
                                             >
-                                                <Maximize size={16} />
+                                                <Maximize size={14} className="sm:w-4 sm:h-4" />
                                             </button>
 
                                             {/* Delete Button */}
@@ -1046,14 +1046,14 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                                     e.stopPropagation();
                                                     removePhoto(index);
                                                 }}
-                                                className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full hover:bg-danger transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100 z-10"
+                                                className="absolute top-1.5 right-1.5 p-1.5 bg-black/70 text-white rounded-full hover:bg-danger transition-all shadow-lg active:scale-90 z-20 sm:p-2"
                                                 title="Remover foto"
                                             >
-                                                <X size={10} />
+                                                <X size={14} className="sm:w-4 sm:h-4" />
                                             </button>
 
-                                            {/* Reorder Buttons */}
-                                            <div className="absolute inset-x-0 bottom-0 flex justify-between p-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-gradient-to-t from-black/60 to-transparent">
+                                            {/* Reorder Buttons - Hidden on mobile, shown on desktop hover */}
+                                            <div className="absolute inset-x-0 bottom-0 hidden sm:flex justify-between p-1 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-t from-black/60 to-transparent">
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
