@@ -489,18 +489,15 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
         setIsUploading(true);
 
-        // Safety timeout: 20 seconds - MUST be first to guarantee unlocking UI
+        // Safety timeout: 60 seconds - MUST be first to guarantee unlocking UI
         const safetyTimeout = setTimeout(() => {
-            console.warn("[BetFormModal] Save operation force-unlocked by safety limit.");
+            console.warn("[BetFormModal] Save operation force-unlocked by safety limit (60s).");
             setIsUploading(false);
-        }, 20000);
+        }, 60000);
 
         try {
             console.info("[BetFormModal] Iniciando handleSave...");
             // NEW: Background Task Logic
-            // We initiate image processing and data saving in the background
-            // and close the modal IMMEDIATELY to give an 'instant' experience.
-
             (async () => {
                 const betId = formData.id || Date.now().toString();
                 try {
@@ -514,7 +511,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                 return photo.url;
                             } catch (err) {
                                 console.error("[Storage] Upload failed for a photo:", err);
-                                throw err; // Re-throw to trigger the parent catch block
+                                throw err;
                             }
                         })
                     );
@@ -542,22 +539,22 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                         await FirestoreService.saveBet(currentUser.uid, betToSave);
                     }
                     console.info("[BetFormModal] Background Save Concluído.");
+
+                    // 1.1 DEFERRED DRAFT CLEANUP: Only clear if save was successful
+                    if (initialData && initialData.id) {
+                        localStorage.removeItem(`apostaspro_draft_edit_${initialData.id}`);
+                    } else {
+                        localStorage.removeItem('apostaspro_draft_modal');
+                    }
+                    localStorage.removeItem(`apostaspro_draft_modal`); // Cleanup generic too
                 } catch (bgError: any) {
                     console.error("[BetFormModal] Background Save Erro:", bgError);
                     alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar seus dados na nuvem: ${bgError.message || "Erro desconhecido"}.\n\nPara garantir que você não perca dados, a página será recarregada para mostrar o estado real.`);
                     window.location.reload();
                 } finally {
                     clearTimeout(safetyTimeout);
-                    // No need to set setIsUploading(false) here as modal is already closed
                 }
             })();
-
-            // 2. Clear locally stored drafts immediately
-            if (initialData && initialData.id) {
-                localStorage.removeItem(`apostaspro_draft_edit_${initialData.id}`);
-            } else {
-                localStorage.removeItem('apostaspro_draft_modal');
-            }
 
             // 3. Inform parent and close modal immediately
             const betDate = parseDate(formData.date);
@@ -578,11 +575,11 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
         setIsUploading(true);
 
-        // Safety timeout for draft
+        // Safety timeout for draft: 60s
         const safetyTimeout = setTimeout(() => {
-            console.warn("[BetFormModal] Draft save operation force-unlocked.");
+            console.warn("[BetFormModal] Draft save operation force-unlocked (60s).");
             setIsUploading(false);
-        }, 20000);
+        }, 60000);
 
         try {
             (async () => {

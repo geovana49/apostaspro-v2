@@ -767,11 +767,11 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
 
         setIsUploading(true);
 
-        // Safety timeout: 20 seconds - MUST be first to guarantee unlocking UI
+        // Safety timeout: 60 seconds - MUST be first to guarantee unlocking UI
         const safetyTimeout = setTimeout(() => {
-            console.warn("[MyBets] Save operation force-unlocked by safety limit.");
+            console.warn("[MyBets] Save operation force-unlocked by safety limit (60s).");
             setIsUploading(false);
-        }, 20000);
+        }, 60000);
 
         console.info("[MyBets] Iniciando handleSave...");
 
@@ -804,6 +804,14 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     const cleanData = JSON.parse(JSON.stringify(rawBet, (k, v) => v === undefined ? null : v));
                     await FirestoreService.saveBet(currentUser.uid, cleanData);
                     console.info("[MyBets] Background Save Concluído.");
+
+                    // 1.1 DEFERRED DRAFT CLEANUP: Only clear if save was successful
+                    if (isEditing && formData.id) {
+                        localStorage.removeItem(`apostaspro_draft_edit_${formData.id}`);
+                    } else {
+                        localStorage.removeItem('apostaspro_draft_mybets');
+                    }
+                    localStorage.removeItem('apostaspro_live_draft');
                 } catch (bgError: any) {
                     console.error("[MyBets] Background Save Erro:", bgError);
                     alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar seus dados na nuvem: ${bgError.message || "Erro desconhecido"}.\n\nPara garantir que você não perca dados, a página será recarregada para mostrar o estado real.`);
@@ -842,12 +850,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             setIsUploading(false); // Reset state so next open is fresh
             setIsModalOpen(false);
 
-            // 3. Clear drafts
-            if (isEditing && formData.id) {
-                localStorage.removeItem(`apostaspro_draft_edit_${formData.id}`);
-            } else {
-                localStorage.removeItem('apostaspro_draft_mybets');
-            }
+            // 3. Clear drafts - REMOVED from here, now deferred to background success
         } catch (error: any) {
             console.error("Error initiating save:", error);
             alert(`Erro ao iniciar salvamento: ${error.message || error}`);
@@ -861,11 +864,11 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
 
         setIsUploading(true);
 
-        // Safety timeout for draft: 20s
+        // Safety timeout for draft: 60s
         const safetyTimeout = setTimeout(() => {
-            console.warn("[MyBets] Draft save operation force-unlocked.");
+            console.warn("[MyBets] Draft save operation force-unlocked (60s).");
             setIsUploading(false);
-        }, 20000);
+        }, 60000);
 
         try {
             // NEW: Background Task Logic for Drafts
@@ -899,6 +902,13 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     const betToSave = JSON.parse(JSON.stringify(draftBet));
                     await FirestoreService.saveBet(currentUser.uid, betToSave);
                     console.info("[MyBets] Background Draft Save Concluído.");
+
+                    // 1.1 DEFERRED DRAFT CLEANUP
+                    localStorage.removeItem('apostaspro_draft_mybets');
+                    localStorage.removeItem('apostaspro_live_draft');
+                    if (formData.id) {
+                        localStorage.removeItem(`apostaspro_draft_edit_${formData.id}`);
+                    }
                 } catch (bgError: any) {
                     console.error("[MyBets] Background Draft Save Erro:", bgError);
                     alert(`FALHA NO RASCUNHO!\n\nOcorreu um erro ao salvar o rascunho na nuvem: ${bgError.message || "Erro desconhecido"}.\n\nA página será recarregada.`);
@@ -916,12 +926,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             setIsUploading(false);
             setIsModalOpen(false);
 
-            // 3. Clear local drafts
-            localStorage.removeItem('apostaspro_draft_mybets');
-            localStorage.removeItem('apostaspro_live_draft');
-            if (formData.id) {
-                localStorage.removeItem(`apostaspro_draft_edit_${formData.id}`);
-            }
+            // 3. Clear local drafts - REMOVED from here, now deferred to background success
 
         } catch (error) {
             console.error("Error initiating draft save:", error);

@@ -538,11 +538,11 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
 
         setIsUploading(true);
 
-        // Safety timeout: 20 seconds
+        // Safety timeout: 60 seconds
         const safetyTimeout = setTimeout(() => {
-            console.warn("[ExtraGains] Save operation force-unlocked.");
+            console.warn("[ExtraGains] Save operation force-unlocked (60s).");
             setIsUploading(false);
-        }, 20000);
+        }, 60000);
 
         try {
             // Optimistic UI: Close modal immediately
