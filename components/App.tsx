@@ -13,6 +13,7 @@ import LandingPage from './components/LandingPage';
 import { auth, db } from './firebase';
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import { FirestoreService } from './services/firestoreService';
 
 const DEFAULT_SETTINGS: AppSettings = {
   showProfileInHeader: true,
@@ -67,11 +68,12 @@ const App: React.FC = () => {
     stateRef.current = { bets, gains, bookmakers, statuses, promotions, origins, settings };
   }, [bets, gains, bookmakers, statuses, promotions, origins, settings]);
 
-  // --- Auth Listener & Data Fetching ---
+  // --- Auth & Real-time Data Listeners ---
   useEffect(() => {
+    let unsubStats: (() => void)[] = [];
+
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // User is signed in
         const userData: User = {
           uid: firebaseUser.uid,
           username: firebaseUser.displayName || 'Usuário',
@@ -80,128 +82,63 @@ const App: React.FC = () => {
         setCurrentUser(userData);
         setIsLoggedIn(true);
 
-        // Fetch Data Once
-        const userDocRef = doc(db, "users", firebaseUser.uid);
-        try {
-          const docSnap = await getDoc(userDocRef);
+        // --- Real-time Subscriptions ---
+        // 1. Listen for Bets
+        const unsubBets = FirestoreService.subscribeToBets(firebaseUser.uid, (data) => {
+          setBets(data);
+        });
 
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            const newState = {
-              bets: data.bets || [],
-              gains: data.gains || [],
-              bookmakers: data.bookmakers || INITIAL_BOOKMAKERS,
-              statuses: data.statuses || INITIAL_STATUSES,
-              promotions: data.promotions || INITIAL_PROMOTIONS,
-              origins: data.origins || INITIAL_ORIGINS,
-              settings: data.settings ? { ...DEFAULT_SETTINGS, ...data.settings, email: firebaseUser.email, username: firebaseUser.displayName } : { ...DEFAULT_SETTINGS, email: firebaseUser.email, username: firebaseUser.displayName }
-            };
+        // 2. Listen for Extra Gains
+        const unsubGains = FirestoreService.subscribeToGains(firebaseUser.uid, (data) => {
+          setGains(data);
+        });
 
-            setBets(newState.bets);
-            setGains(newState.gains);
-            setBookmakers(newState.bookmakers);
-            setStatuses(newState.statuses);
-            setPromotions(newState.promotions);
-            setOrigins(newState.origins);
-            setSettings(newState.settings);
-
-            setIsDataLoaded(true);
-          } else {
-            // New User -> Initialize defaults
-            if (!isDataLoaded) {
-              setBookmakers(INITIAL_BOOKMAKERS);
-              setStatuses(INITIAL_STATUSES);
-              setPromotions(INITIAL_PROMOTIONS);
-              setOrigins(INITIAL_ORIGINS);
-              setSettings({ ...DEFAULT_SETTINGS, email: firebaseUser.email, username: firebaseUser.displayName });
-              setIsDataLoaded(true);
-            }
+        // 3. Listen for Settings
+        const unsubSettings = FirestoreService.subscribeToSettings(firebaseUser.uid, (data) => {
+          if (data) {
+            setSettings(prev => ({
+              ...DEFAULT_SETTINGS,
+              ...data,
+              email: firebaseUser.email || prev.email,
+              username: firebaseUser.displayName || prev.username
+            }));
           }
-        } catch (error) {
-          console.error("Erro ao buscar dados:", error);
-        }
+        });
+
+        // 4. Listen for Basic Configurations
+        const unsubBooks = FirestoreService.subscribeToCollection<Bookmaker>(firebaseUser.uid, "bookmakers", setBookmakers);
+        const unsubStatus = FirestoreService.subscribeToCollection<StatusItem>(firebaseUser.uid, "statuses", setStatuses);
+        const unsubPromos = FirestoreService.subscribeToCollection<PromotionItem>(firebaseUser.uid, "promotions", setPromotions);
+        const unsubOrigins = FirestoreService.subscribeToCollection<OriginItem>(firebaseUser.uid, "origins", setOrigins);
+
+        unsubStats = [unsubBets, unsubGains, unsubSettings, unsubBooks, unsubStatus, unsubPromos, unsubOrigins];
+        setIsDataLoaded(true);
+
+        // Verify/Initialize defaults if needed
+        FirestoreService.initializeUserData(firebaseUser.uid, {
+          bookmakers: INITIAL_BOOKMAKERS,
+          statuses: INITIAL_STATUSES,
+          promotions: INITIAL_PROMOTIONS,
+          origins: INITIAL_ORIGINS,
+          settings: DEFAULT_SETTINGS
+        });
 
       } else {
-        // User is signed out
+        // User is signed out - Cleanup
         setIsLoggedIn(false);
         setCurrentUser(null);
         setBets([]);
         setGains([]);
-        setSettings(DEFAULT_SETTINGS);
         setIsDataLoaded(false);
+        unsubStats.forEach(unsub => unsub());
       }
     });
 
     return () => {
       unsubscribeAuth();
+      unsubStats.forEach(unsub => unsub());
     };
   }, []); // Run once on mount
-
-  // --- Auto-Save Logic ---
-  const saveDataToFirestore = () => {
-    if (!currentUser || !isDataLoaded) return;
-
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-
-    saveTimeoutRef.current = setTimeout(async () => {
-      try {
-        const userDocRef = doc(db, "users", currentUser.uid);
-
-        // Helper to filter out base64 strings
-        const isHttpUrl = (str: string | undefined) => str && str.startsWith('https');
-
-        const dataToSave = {
-          bets: bets.map(({ photos, ...bet }) => ({
-            ...bet,
-            photos: photos?.filter(isHttpUrl) || []
-          })),
-          gains: gains.map(({ photos, ...gain }) => ({
-            ...gain,
-            photos: photos?.filter(isHttpUrl) || []
-          })),
-          bookmakers: bookmakers.map(({ logo, ...bookmaker }) => ({
-            ...bookmaker,
-            logo: isHttpUrl(logo) ? logo : undefined
-          })),
-          statuses,
-          promotions,
-          origins: origins.map(({ icon, ...origin }) => ({
-            ...origin,
-            icon: isHttpUrl(icon) ? icon : icon
-          })),
-          settings: {
-            ...settings,
-            profileImage: isHttpUrl(settings.profileImage) ? settings.profileImage : undefined,
-            username: currentUser.username,
-            email: currentUser.email
-          },
-          lastUpdated: new Date().toISOString()
-        };
-
-        // Final sanity check before saving
-        if (safeStringify(dataToSave).includes('data:image')) {
-          console.error("FATAL: Tentativa de salvar dados de imagem base64 no Firestore após a filtragem!");
-          alert("Ocorreu um erro crítico ao tentar salvar. Alguns dados de imagem podem não ter sido processados corretamente.");
-          return;
-        }
-
-        await setDoc(userDocRef, dataToSave, { merge: true });
-
-      } catch (error: any) {
-        console.error("Erro ao salvar no Firestore:", error);
-        if (error.message.includes('exceeds the maximum allowed size')) {
-          alert("Erro Crítico: Seus dados excederam o limite de armazenamento. Isso pode ocorrer se imagens antigas não foram migradas. O salvamento automático foi pausado para evitar perda de dados. Contate o suporte.");
-        }
-      }
-    }, 2000); // Debounce 2 seconds
-  };
-
-  // Trigger save on data change
-  useEffect(() => {
-    if (isLoggedIn && isDataLoaded) saveDataToFirestore();
-  }, [bets, gains, bookmakers, statuses, promotions, origins, settings, isLoggedIn, isDataLoaded]);
 
 
   const handleNavigate = (page: Page, tab?: SettingsTab) => {
