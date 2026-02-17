@@ -115,13 +115,19 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                     timestamp: Date.now()
                 };
 
-                if (initialData && initialData.id) {
-                    localStorage.setItem(`apostaspro_draft_edit_${initialData.id}`, JSON.stringify(draft));
-                } else if (!initialData) {
-                    localStorage.setItem('apostaspro_draft_modal', JSON.stringify(draft));
+                const key = initialData && initialData.id
+                    ? `apostaspro_draft_edit_${initialData.id}`
+                    : 'apostaspro_draft_modal';
+
+                try {
+                    localStorage.setItem(key, JSON.stringify(draft));
+                } catch (quotaError) {
+                    console.warn('LocalStorage full (Modal), attempting light draft:', quotaError);
+                    const lightDraft = { ...draft, tempPhotos: [] };
+                    localStorage.setItem(key, JSON.stringify(lightDraft));
                 }
             } catch (error) {
-                console.warn('LocalStorage draft save failed (possibly full):', error);
+                console.error('Critical failure saving modal draft:', error);
             }
         }, 1500);
 

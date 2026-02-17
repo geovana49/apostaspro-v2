@@ -557,15 +557,22 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     timestamp: Date.now()
                 };
 
-                if (isEditing && formData.id) {
-                    localStorage.setItem(`apostaspro_draft_edit_${formData.id}`, JSON.stringify(draft));
-                } else if (!isEditing) {
-                    localStorage.setItem('apostaspro_draft_mybets', JSON.stringify(draft));
+                const key = isEditing && formData.id
+                    ? `apostaspro_draft_edit_${formData.id}`
+                    : 'apostaspro_draft_mybets';
+
+                try {
+                    localStorage.setItem(key, JSON.stringify(draft));
+                } catch (quotaError) {
+                    console.warn('LocalStorage full, attempting light draft (no photos):', quotaError);
+                    // Fallback: Save text data only to ensure critical info isn't lost
+                    const lightDraft = { ...draft, tempPhotos: [] };
+                    localStorage.setItem(key, JSON.stringify(lightDraft));
                 }
             } catch (error) {
-                console.warn('LocalStorage draft save failed (possibly full):', error);
+                console.error('Critical failure saving draft:', error);
             }
-        }, 1500); // 1.5s debounce to save main thread
+        }, 1500);
 
         return () => clearTimeout(timeout);
     }, [formData, tempPhotos, isModalOpen, isEditing]);
