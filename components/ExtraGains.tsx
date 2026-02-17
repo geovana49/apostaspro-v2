@@ -522,6 +522,13 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         }
     };
 
+    const handleCloseModal = () => {
+        dispatch({ type: 'SET_FORM', payload: initialFormState });
+        setTempPhotos([]);
+        setIsModalOpen(false);
+        setEditingId(null);
+    };
+
     // ... (handlePhotoSelect, removePhoto remain the same)
 
     const handleSave = async () => {
@@ -1044,7 +1051,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 </div>
             </Modal>
             {isModalOpen && (
-                <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Editar Ganho" : "Novo Ganho Extra"} footer={<div className="flex justify-between gap-3 w-full"> {editingId && (<button onClick={() => setIsDeleting(true)} className="p-3 text-gray-500 hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"> <Trash2 size={20} /> </button>)} <div className="flex gap-3 ml-auto"> <Button variant="neutral" onClick={() => setIsModalOpen(false)} disabled={isUploading}>Cancelar</Button> {isDeleting ? (<Button variant="danger" onClick={handleDeleteModal}>Confirmar Exclusão</Button>) : (<Button onClick={handleSave} disabled={isUploading}> {isUploading ? (<> <Loader2 size={16} className="animate-spin" /> <span>Salvando...</span> </>) : ("Salvar")} </Button>)} </div> </div>}>
+                <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={editingId ? "Editar Ganho" : "Novo Ganho Extra"} footer={<div className="flex justify-between gap-3 w-full"> {editingId && (<button onClick={() => setIsDeleting(true)} className="p-3 text-gray-500 hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"> <Trash2 size={20} /> </button>)} <div className="flex gap-3 ml-auto"> <Button variant="neutral" onClick={handleCloseModal} disabled={isUploading}>Cancelar</Button> {isDeleting ? (<Button variant="danger" onClick={handleDeleteModal}>Confirmar Exclusão</Button>) : (<Button onClick={handleSave} disabled={isUploading}> {isUploading ? (<> <Loader2 size={16} className="animate-spin" /> <span>Salvando...</span> </>) : ("Salvar")} </Button>)} </div> </div>}>
                     <div className="space-y-5">
                         <div className="bg-[#0d1121] p-4 rounded-xl border border-white/5 flex flex-col items-center justify-center mb-2">
                             <label className="text-[10px] text-textMuted uppercase font-bold mb-2">Valor do Ganho</label>

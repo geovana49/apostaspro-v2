@@ -489,7 +489,14 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                 console.log('Restoring EDIT draft for MyBets:', bet.id);
                 // Force ID to match bet.id to be safe
                 formPayload = { ...savedForm, id: bet.id };
-                photosPayload = savedPhotos || [];
+
+                // CRITICAL FIX: If draft exists but photos are empty, keep the original database photos
+                if (savedPhotos && savedPhotos.length > 0) {
+                    photosPayload = savedPhotos;
+                } else {
+                    console.log('Draft has no photos, keeping original photos from database.');
+                    // photosPayload remains initialized with bet.photos from step 1
+                }
             } catch (e) {
                 console.error('Error parsing edit draft:', e);
             }
@@ -957,6 +964,9 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                 // User rejected saving: Clear EVERYTHING
                 localStorage.removeItem('apostaspro_draft_mybets');
                 localStorage.removeItem('apostaspro_live_draft');
+                if (formData.id) {
+                    localStorage.removeItem(`apostaspro_draft_edit_${formData.id}`);
+                }
                 dispatch({ type: 'SET_FORM', payload: initialFormState });
                 setTempPhotos([]);
                 setIsModalOpen(false);
@@ -965,6 +975,9 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             // Already empty or safe to close
             localStorage.removeItem('apostaspro_draft_mybets');
             localStorage.removeItem('apostaspro_live_draft');
+            if (formData.id) {
+                localStorage.removeItem(`apostaspro_draft_edit_${formData.id}`);
+            }
             dispatch({ type: 'SET_FORM', payload: initialFormState });
             setTempPhotos([]);
             setIsModalOpen(false);
