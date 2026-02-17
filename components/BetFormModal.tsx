@@ -1052,18 +1052,18 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                                 <X size={14} className="sm:w-4 sm:h-4" />
                                             </button>
 
-                                            {/* Reorder Buttons - Hidden on mobile, shown on desktop hover */}
-                                            <div className="absolute inset-x-0 bottom-0 hidden sm:flex justify-between p-1 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-t from-black/60 to-transparent">
+                                            {/* Reorder Buttons - Always visible, but clean layout */}
+                                            <div className="absolute inset-x-0 bottom-0 flex justify-between p-1 transition-opacity bg-gradient-to-t from-black/60 to-transparent">
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         movePhoto(index, 'left');
                                                     }}
                                                     disabled={index === 0}
-                                                    className={`p-1 bg-black/40 text-white rounded hover:bg-primary transition-colors ${index === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                                    className={`p-1.5 bg-black/40 text-white rounded hover:bg-primary transition-colors ${index === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
                                                     title="Mover para esquerda"
                                                 >
-                                                    <ChevronLeft size={12} />
+                                                    <ChevronLeft size={14} />
                                                 </button>
                                                 <button
                                                     onClick={(e) => {
@@ -1071,10 +1071,10 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                                         movePhoto(index, 'right');
                                                     }}
                                                     disabled={index === tempPhotos.length - 1}
-                                                    className={`p-1 bg-black/40 text-white rounded hover:bg-primary transition-colors ${index === tempPhotos.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                                    className={`p-1.5 bg-black/40 text-white rounded hover:bg-primary transition-colors ${index === tempPhotos.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}
                                                     title="Mover para direita"
                                                 >
-                                                    <ChevronRight size={12} />
+                                                    <ChevronRight size={14} />
                                                 </button>
                                             </div>
                                         </div>
