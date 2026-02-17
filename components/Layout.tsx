@@ -266,20 +266,20 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate, setti
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative z-10">
 
-        {/* Top Header - Always Visible now */}
-        <header className="h-16 flex items-center justify-between gap-4 px-5 sticky top-0 z-30 bg-[#090c19] border-b border-white/5 lg:border-none shrink-0">
-          <div className="flex items-center gap-4">
+        {/* Top Header - Optimized for Mobile */}
+        <header className="h-16 flex items-center justify-between gap-2 px-3 sm:px-5 sticky top-0 z-30 bg-[#090c19] border-b border-white/5 lg:border-none shrink-0">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="text-white hover:text-primary transition-colors p-1 -ml-1 lg:hidden"
+              className="text-white hover:text-primary transition-colors p-1 -ml-1 lg:hidden shrink-0"
             >
               <Menu size={24} />
             </button>
-            <h2 className="text-lg font-bold text-white tracking-tight">{getPageTitle(activePage)}</h2>
+            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight truncate">{getPageTitle(activePage)}</h2>
 
-            {/* Sync / Offline Status Indicator */}
+            {/* Sync / Offline Status Indicator - Labels hidden on small mobile */}
             <div
-              className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/5 animate-in fade-in transition-all cursor-pointer hover:bg-white/10 active:scale-95"
+              className="flex items-center gap-2 px-2 sm:px-3 py-1 rounded-full bg-white/5 border border-white/5 animate-in fade-in transition-all cursor-pointer hover:bg-white/10 active:scale-95 shrink-0"
               onClick={() => {
                 if (confirm("Deseja recarregar a página para forçar uma sincronização?")) {
                   window.location.reload();
@@ -290,17 +290,17 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate, setti
               {!isOnline ? (
                 <>
                   <CloudOff size={14} className="text-danger" />
-                  <span className="text-[10px] font-bold text-danger uppercase tracking-wider">Offline</span>
+                  <span className="text-[10px] font-bold text-danger uppercase tracking-wider hidden sm:inline">Offline</span>
                 </>
               ) : isSyncing ? (
                 <>
                   <RefreshCw size={14} className="text-primary animate-spin" />
-                  <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Sincronizando...</span>
+                  <span className="text-[10px] font-bold text-primary uppercase tracking-wider hidden sm:inline">Sincronizando...</span>
                 </>
               ) : (
                 <>
                   <Cloud size={14} className="text-primary/60" />
-                  <span className="text-[10px] font-bold text-primary/60 uppercase tracking-wider">Sincronizado</span>
+                  <span className="text-[10px] font-bold text-primary/60 uppercase tracking-wider hidden sm:inline">Sincronizado</span>
                 </>
               )}
             </div>

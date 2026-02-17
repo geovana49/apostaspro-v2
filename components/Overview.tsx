@@ -397,44 +397,41 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             {/* Main Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                {/* Hero Card - Net Profit - 3D Effect with Colored Shadow */}
+                {/* Hero Card - Net Profit - 3D Effect with Responsive Padding */}
                 <div className={`
-            col-span-1 md:col-span-3 rounded-2xl p-6 lg:p-8 text-[#090c19] 
-            transition-all duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) relative overflow-hidden group
-            hover:-translate-y-2 hover:scale-[1.01]
-            ${netProfit >= 0
+                col-span-1 md:col-span-3 rounded-2xl p-5 sm:p-6 lg:p-8 text-[#090c19] 
+                transition-all duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275) relative overflow-hidden group
+                hover:-translate-y-2 hover:scale-[1.01]
+                ${netProfit >= 0
                         ? 'bg-gradient-to-br from-[#17baa4] to-[#129683] shadow-[0_10px_30px_-5px_rgba(23,186,164,0.4)] hover:shadow-[0_25px_60px_-10px_rgba(23,186,164,0.6)]'
                         : 'bg-gradient-to-br from-[#FF5252] to-[#E04040] shadow-[0_10px_30px_-5px_rgba(255,82,82,0.4)] hover:shadow-[0_25px_60px_-10px_rgba(255,82,82,0.6)]'
                     }
-        `}>
-                    {/* Sheen Effect - Light passing through */}
+            `}>
+                    {/* Sheen Effect */}
                     <div className="absolute top-0 -left-[100%] w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-15deg] animate-sheen pointer-events-none" />
 
-                    {/* 3D Light Reflection */}
-                    <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-white/20 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none transition-transform duration-700 group-hover:translate-x-10 group-hover:translate-y-10" />
-
-                    <div className="relative z-10 flex flex-col h-full justify-between min-h-[180px]">
-                        <div className="flex justify-between items-start">
-                            <div className="space-y-1">
+                    <div className="relative z-10 flex flex-col h-full justify-between min-h-[160px] sm:min-h-[180px]">
+                        <div className="flex justify-between items-start gap-4">
+                            <div className="space-y-1 min-w-0">
                                 <div className="flex items-center gap-2 opacity-80">
-                                    <Wallet size={18} className="animate-pulse-scale" />
-                                    <span className="font-bold text-xs uppercase tracking-wider text-[#090c19]">Lucro Líquido</span>
+                                    <Wallet size={16} className="animate-pulse-scale" />
+                                    <span className="font-bold text-[10px] sm:text-xs uppercase tracking-wider text-[#090c19]">Lucro Líquido</span>
                                 </div>
-                                <div className="flex items-center gap-2 sm:gap-4">
-                                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter py-1 sm:py-2 text-[#090c19] drop-shadow-sm whitespace-nowrap">
+                                <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+                                    <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tighter py-1 sm:py-2 text-[#090c19] drop-shadow-sm truncate">
                                         <MoneyDisplay
                                             value={Math.abs(netProfit)}
                                             privacyMode={settings.privacyMode}
                                             prefix="R$"
                                         />
                                     </h2>
-                                    {/* Privacy Toggle - Moved near the number */}
+                                    {/* Privacy Toggle */}
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setSettings(prev => ({ ...prev, privacyMode: !prev.privacyMode })); }}
-                                        className="p-1.5 sm:p-2 rounded-full hover:bg-[#090c19]/10 text-[#090c19] transition-all cursor-pointer z-20 relative shrink-0"
+                                        className="p-1.5 rounded-full hover:bg-[#090c19]/10 text-[#090c19] transition-all cursor-pointer z-20 relative shrink-0"
                                         title={settings.privacyMode ? "Mostrar Valores" : "Ocultar Valores"}
                                     >
-                                        {settings.privacyMode ? <EyeOff size={20} className="sm:w-6 sm:h-6" /> : <Eye size={20} className="sm:w-6 sm:h-6" />}
+                                        {settings.privacyMode ? <EyeOff size={18} className="sm:w-6 sm:h-6" /> : <Eye size={18} className="sm:w-6 sm:h-6" />}
                                     </button>
                                 </div>
                             </div>
