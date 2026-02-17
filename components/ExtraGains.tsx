@@ -167,6 +167,36 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             }
         };
     }, []);
+    // Auto-Save Draft (Debounced)
+    useEffect(() => {
+        if (!isModalOpen) return;
+
+        const timeout = setTimeout(() => {
+            try {
+                const draft = {
+                    formData,
+                    tempPhotos,
+                    timestamp: Date.now()
+                };
+
+                const key = editingId
+                    ? `apostaspro_draft_gain_edit_${editingId}`
+                    : 'apostaspro_draft_gains';
+
+                try {
+                    localStorage.setItem(key, JSON.stringify(draft));
+                } catch (quotaError) {
+                    console.warn('LocalStorage full (Gains), attempting light draft:', quotaError);
+                    const lightDraft = { ...draft, tempPhotos: [] };
+                    localStorage.setItem(key, JSON.stringify(lightDraft));
+                }
+            } catch (error) {
+                console.error('Critical failure saving gains draft:', error);
+            }
+        }, 1500);
+
+        return () => clearTimeout(timeout);
+    }, [formData, tempPhotos, isModalOpen, editingId]);
 
     // Filter State
     const [searchTerm, setSearchTerm] = useState('');
@@ -224,20 +254,34 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         } else {
             // Regular gain - open simple gain modal
             setEditingId(gain.id);
-            dispatch({
-                type: 'SET_FORM',
-                payload: {
-                    id: gain.id,
-                    amount: gain.amount,
-                    date: gain.date.split('T')[0],
-                    status: gain.status as any,
-                    origin: gain.origin,
-                    bookmakerId: gain.bookmakerId || '',
-                    game: gain.game || '',
-                    notes: gain.notes || ''
+
+            let formPayload = {
+                id: gain.id,
+                amount: gain.amount,
+                date: gain.date.split('T')[0],
+                status: gain.status as any,
+                origin: gain.origin,
+                bookmakerId: gain.bookmakerId || '',
+                game: gain.game || '',
+                notes: gain.notes || ''
+            };
+            let photosPayload = gain.photos ? gain.photos.map(url => ({ url })) : [];
+
+            // Check for edit draft
+            const editDraft = localStorage.getItem(`apostaspro_draft_gain_edit_${gain.id}`);
+            if (editDraft) {
+                try {
+                    const { formData: savedForm, tempPhotos: savedPhotos } = JSON.parse(editDraft);
+                    console.log('Restoring GAIN edit draft:', gain.id);
+                    formPayload = { ...savedForm, id: gain.id };
+                    if (savedPhotos && savedPhotos.length > 0) photosPayload = savedPhotos;
+                } catch (e) {
+                    console.error('Error parsing gain edit draft:', e);
                 }
-            });
-            setTempPhotos(gain.photos ? gain.photos.map(url => ({ url })) : []);
+            }
+
+            dispatch({ type: 'SET_FORM', payload: formPayload });
+            setTempPhotos(photosPayload);
             setIsModalOpen(true);
             setIsDeleting(false);
         }
@@ -253,13 +297,30 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         if (type === 'gain') {
             console.log('Opening gain modal');
             setEditingId(null);
-            dispatch({ type: 'RESET_FORM' });
-            setTempPhotos([]);
+
+            // Check for generic draft
+            const savedDraft = localStorage.getItem('apostaspro_draft_gains');
+            if (savedDraft) {
+                try {
+                    const { formData: savedForm, tempPhotos: savedPhotos } = JSON.parse(savedDraft);
+                    console.log('Restoring generic gain draft');
+                    dispatch({ type: 'SET_FORM', payload: savedForm });
+                    setTempPhotos(savedPhotos || []);
+                } catch (e) {
+                    console.error('Error parsing gain draft:', e);
+                    dispatch({ type: 'RESET_FORM' });
+                    setTempPhotos([]);
+                }
+            } else {
+                dispatch({ type: 'RESET_FORM' });
+                setTempPhotos([]);
+            }
             setIsBetModalOpen(false); // Ensure bet modal is closed
             setIsModalOpen(true);
             setIsDeleting(false);
         } else {
             console.log('Opening bet modal');
+            setEditingBet(null);
             // Close gain modal first, then open bet modal after a short delay
             setIsModalOpen(false);
             setTimeout(() => {
