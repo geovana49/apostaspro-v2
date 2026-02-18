@@ -1363,7 +1363,6 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                                     {bet.event}
                                                     {isDraft && <span className="text-[9px] bg-yellow-500/20 text-yellow-500 border border-yellow-500/30 px-1.5 py-0.5 rounded ml-2 font-bold tracking-wider">RASCUNHO</span>}
                                                     {isDoubleGreen && <span className="text-[9px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded ml-2 font-bold tracking-wider flex items-center gap-1"><Copy size={8} /> 2X</span>}
-                                                    {bet.photos && bet.photos.length > 0 && <ImageIcon size={14} className="text-secondary animate-pulse" title="Tem fotos" />}
                                                 </h4>
                                                 <div className="flex items-center gap-2 mt-1">
                                                     <span className="text-xs text-textMuted">{new Date(bet.date).toLocaleDateString('pt-BR')}</span>

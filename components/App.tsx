@@ -97,21 +97,34 @@ const App: React.FC = () => {
         setCurrentUser(userData);
         setIsLoggedIn(true);
 
-        const updateSyncStatus = (isSyncingVal: boolean) => {
-          setIsSyncing(isSyncingVal);
+        const syncStates = {
+          bets: false,
+          gains: false,
+          settings: false,
+          bookmakers: false,
+          statuses: false,
+          promotions: false,
+          origins: false,
+          manual: false
+        };
+
+        const updateSyncStatus = (source: keyof typeof syncStates, val: boolean) => {
+          syncStates[source] = val;
+          const isAnythingSyncing = Object.values(syncStates).some(v => v === true);
+          setIsSyncing(isAnythingSyncing);
         };
 
         // --- Real-time Subscriptions ---
         // 1. Listen for Bets
         const unsubBets = FirestoreService.subscribeToBets(firebaseUser.uid, (data, syncing) => {
           setBets(data);
-          updateSyncStatus(syncing);
+          updateSyncStatus('bets', syncing);
         });
 
         // 2. Listen for Extra Gains
         const unsubGains = FirestoreService.subscribeToGains(firebaseUser.uid, (data, syncing) => {
           setGains(data);
-          updateSyncStatus(syncing);
+          updateSyncStatus('gains', syncing);
         });
 
         // 3. Listen for Settings
@@ -124,25 +137,25 @@ const App: React.FC = () => {
               username: firebaseUser.displayName || prev.username
             }));
           }
-          updateSyncStatus(syncing);
+          updateSyncStatus('settings', syncing);
         });
 
         // 4. Listen for Basic Configurations
         const unsubBooks = FirestoreService.subscribeToCollection<Bookmaker>(firebaseUser.uid, "bookmakers", (data, syncing) => {
           setBookmakers(data);
-          updateSyncStatus(syncing);
+          updateSyncStatus('bookmakers', syncing);
         });
         const unsubStatus = FirestoreService.subscribeToCollection<StatusItem>(firebaseUser.uid, "statuses", (data, syncing) => {
           setStatuses(data);
-          updateSyncStatus(syncing);
+          updateSyncStatus('statuses', syncing);
         });
         const unsubPromos = FirestoreService.subscribeToCollection<PromotionItem>(firebaseUser.uid, "promotions", (data, syncing) => {
           setPromotions(data);
-          updateSyncStatus(syncing);
+          updateSyncStatus('promotions', syncing);
         });
         const unsubOrigins = FirestoreService.subscribeToCollection<OriginItem>(firebaseUser.uid, "origins", (data, syncing) => {
           setOrigins(data);
-          updateSyncStatus(syncing);
+          updateSyncStatus('origins', syncing);
         });
 
         unsubStats = [unsubBets, unsubGains, unsubSettings, unsubBooks, unsubStatus, unsubPromos, unsubOrigins];

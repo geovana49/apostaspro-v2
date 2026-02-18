@@ -290,8 +290,10 @@ const Layout: React.FC<LayoutProps> = ({
 
             {/* Sync / Offline Status Indicator - Labels hidden on small mobile */}
             <div
-              className={`flex items-center gap-2 px-2 sm:px-3 py-1 rounded-full bg-white/5 border border-white/5 animate-in fade-in transition-all cursor-pointer hover:bg-white/10 active:scale-95 shrink-0
-                ${!isOnline ? 'border-danger/30 text-danger' : ''}`}
+              className={`flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-full bg-white/5 border transition-all cursor-pointer hover:bg-white/10 active:scale-95 shrink-0
+                ${!isOnline ? 'border-danger/30 text-danger shadow-[0_0_10px_rgba(239,68,68,0.1)]' :
+                  isSyncing ? 'border-primary/40 text-primary shadow-[0_0_10px_rgba(59,130,246,0.1)]' :
+                    'border-primary/20 text-primary/80'}`}
               onClick={() => {
                 if (onForceSync) {
                   onForceSync();
@@ -303,18 +305,18 @@ const Layout: React.FC<LayoutProps> = ({
             >
               {!isOnline ? (
                 <>
-                  <CloudOff size={14} className="text-danger" />
+                  <CloudOff size={16} className="text-danger" />
                   <span className="text-[10px] font-bold text-danger uppercase tracking-wider hidden sm:inline">Offline</span>
                 </>
               ) : isSyncing ? (
                 <>
-                  <RefreshCw size={14} className="text-primary animate-spin" />
+                  <Cloud size={16} className="text-primary animate-spin" />
                   <span className="text-[10px] font-bold text-primary uppercase tracking-wider hidden sm:inline">Sincronizando...</span>
                 </>
               ) : (
                 <>
-                  <Cloud size={14} className="text-primary/60" />
-                  <span className="text-[10px] font-bold text-primary/60 uppercase tracking-wider hidden sm:inline">Sincronizado</span>
+                  <Cloud size={16} className="text-primary" />
+                  <span className="text-[10px] font-bold text-primary uppercase tracking-wider hidden sm:inline">Sincronizado</span>
                 </>
               )}
             </div>

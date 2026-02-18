@@ -916,7 +916,6 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                         <div>
                                             <h4 className="font-semibold text-white text-base flex items-center gap-2">
                                                 {gain.game || gain.origin}
-                                                {gain.photos && gain.photos.length > 0 && <ImageIcon size={14} className="text-secondary animate-pulse" title="Tem fotos" />}
                                             </h4>
                                             <div className="flex items-center gap-2 mt-1">
                                                 <span className="flex items-center gap-1 text-xs text-textMuted">
