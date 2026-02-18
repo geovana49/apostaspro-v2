@@ -196,3 +196,32 @@ export function validateFirestoreSize(base64Strings: string[]): {
         limitMB: FIRESTORE_LIMIT_MB
     };
 }
+
+/**
+ * Converte Base64 para Blob (Binário)
+ * Reduz o tamanho do payload em ~33% em comparação ao Base64
+ */
+export function base64ToBlob(base64: string): Blob {
+    const parts = base64.split(';base64,');
+    const contentType = parts[0].split(':')[1];
+    const raw = window.atob(parts[1]);
+    const rawLength = raw.length;
+    const uInt8Array = new Uint8Array(rawLength);
+
+    for (let i = 0; i < rawLength; ++i) {
+        uInt8Array[i] = raw.charCodeAt(i);
+    }
+
+    return new Blob([uInt8Array], { type: contentType });
+}
+
+/**
+ * Comprime uma imagem diretamente para Blob
+ */
+export async function compressImageToBlob(
+    file: File,
+    options: CompressionOptions = {}
+): Promise<Blob> {
+    const base64 = await compressImage(file, options);
+    return base64ToBlob(base64);
+}

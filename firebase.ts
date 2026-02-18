@@ -22,13 +22,12 @@ console.info("[Firebase] Inicializando cache single-tab para projeto:", firebase
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 
-// [STABLE] Usa Long Polling para compatibilidade mobile e Single-Tab para evitar travas de lock
+// [STABLE] Usa protocolos modernos para velocidade e Single-Tab para evitar travas de lock
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({
     tabManager: persistentSingleTabManager(),
-    cacheSizeBytes: 50 * 1024 * 1024 // 50MB limit
-  }),
-  experimentalForceLongPolling: true,
+    cacheSizeBytes: 100 * 1024 * 1024 // 100MB limit for better mobile performance
+  })
 });
 
 export default app;

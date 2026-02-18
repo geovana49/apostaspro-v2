@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { Bet, Bookmaker, StatusItem, PromotionItem, Coverage, User } from '../types';
 import { FirestoreService } from '../services/firestoreService';
-import { compressImages } from '../utils/imageCompression';
+import { compressImages, base64ToBlob } from '../utils/imageCompression';
 import { calculateBetStats } from '../utils/betCalculations';
 
 interface BetFormModalProps {
@@ -102,6 +102,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
     const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
     const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+    const [uploadProgress, setUploadProgress] = useState<string>('');
 
     // Auto-Save Draft (Debounced)
     useEffect(() => {
@@ -211,7 +212,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
     const processFiles = useCallback(async (files: File[]) => {
         if (files.length === 0) return;
-        const MAX_PHOTOS = 30;
+        const MAX_PHOTOS = 10;
 
         // Sort files by date (oldest to newest)
         files.sort((a, b) => a.lastModified - b.lastModified);
@@ -495,11 +496,12 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
         setIsUploading(true);
 
-        // Safety timeout: 60 seconds - MUST be first to guarantee unlocking UI
+        // Safety timeout: 10 minutes (600s) - Allow time for complex binary uploads
         const safetyTimeout = setTimeout(() => {
-            console.warn("[BetFormModal] Save operation force-unlocked by safety limit (60s).");
+            console.warn("[BetFormModal] Save operation force-unlocked by safety limit (600s).");
             setIsUploading(false);
-        }, 60000);
+            setUploadProgress('');
+        }, 600000);
 
         try {
             console.info("[BetFormModal] Iniciando handleSave...");
@@ -507,20 +509,26 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
             (async () => {
                 const betId = formData.id || Date.now().toString();
                 try {
-                    // 1. Process images (Async upload to Storage)
-                    const photoUrls = await Promise.all(
-                        tempPhotos.map(async (photo) => {
-                            try {
-                                if (photo.url.startsWith('data:')) {
-                                    return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
-                                }
-                                return photo.url;
-                            } catch (err) {
-                                console.error("[Storage] Upload failed for a photo:", err);
-                                throw err;
+                    // 1. Process images (Sequential upload with progress)
+                    const photoUrls: string[] = [];
+                    let count = 0;
+                    for (const photo of tempPhotos) {
+                        count++;
+                        setUploadProgress(`Foto ${count}/${tempPhotos.length}`);
+                        try {
+                            if (photo.url.startsWith('data:')) {
+                                // Efficient binary upload (Blob)
+                                const blob = base64ToBlob(photo.url);
+                                const url = await FirestoreService.uploadImage(currentUser.uid, betId, blob);
+                                photoUrls.push(url);
+                            } else {
+                                photoUrls.push(photo.url);
                             }
-                        })
-                    );
+                        } catch (err) {
+                            console.error("[Storage] Upload failed for a photo:", err);
+                            throw err;
+                        }
+                    }
 
                     if (saveAsGain) {
                         const tempBet: Bet = { ...formData, id: betId, date: formData.date, notes: formData.notes || '', photos: [] };
@@ -554,13 +562,15 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                     }
                     localStorage.removeItem(`apostaspro_draft_modal`); // Cleanup generic too
                 } catch (bgError: any) {
+                    const errorMessage = bgError.message || "Erro desconhecido";
                     console.error("[BetFormModal] Background Save Erro:", bgError);
-                    if (errorMessage.includes("Timeout")) {
-                        alert(`CONEXÃO LENTA DETECTADA!\n\nO upload das imagens demorou mais de 5 minutos e foi interrompido.\n\nSugestões:\n1. Tente enviar menos fotos por vez.\n2. Use uma conexão Wi-Fi mais rápida.\n3. Reduza o tamanho das imagens antes de enviar.\n\nA página será recarregada para garantir a integridade dos dados.`);
+
+                    if (errorMessage.includes("limite de tempo") || errorMessage.includes("Timeout")) {
+                        alert(`SINCRONISMO LENTO!\n\nSeu upload está demorando mais que o normal devido à conexão lenta.\n\nO app continuará tentando no fundo, mas para garantir que nada trave, o app será recarregado.`);
+                        window.location.reload();
                     } else {
-                        alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar seus dados na nuvem: ${errorMessage}.\n\nPara garantir que você não perca dados, a página será recarregada para mostrar o estado real.`);
+                        alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar seus dados na nuvem: ${errorMessage}.\n\nTente novamente.`);
                     }
-                    window.location.reload();
                 } finally {
                     clearTimeout(safetyTimeout);
                 }
@@ -585,29 +595,33 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
         setIsUploading(true);
 
-        // Safety timeout for draft: 60s
+        // Safety timeout for draft: 10 minutes (600s)
         const safetyTimeout = setTimeout(() => {
-            console.warn("[BetFormModal] Draft save operation force-unlocked (60s).");
+            console.warn("[BetFormModal] Draft save operation force-unlocked (600s).");
             setIsUploading(false);
-        }, 60000);
+            setUploadProgress('');
+        }, 600000);
 
         try {
             (async () => {
                 const betId = formData.id || Date.now().toString();
                 try {
-                    const photoUrls = await Promise.all(
-                        tempPhotos.map(async (photo) => {
-                            try {
-                                if (photo.url.startsWith('data:')) {
-                                    return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
-                                }
-                                return photo.url;
-                            } catch (err) {
-                                console.error("[Storage] Draft upload failed:", err);
-                                throw err;
+                    // 1. Process images (Sequential upload for draft)
+                    const photoUrls: string[] = [];
+                    for (const photo of tempPhotos) {
+                        try {
+                            if (photo.url.startsWith('data:')) {
+                                const blob = base64ToBlob(photo.url);
+                                const url = await FirestoreService.uploadImage(currentUser.uid, betId, blob);
+                                photoUrls.push(url);
+                            } else {
+                                photoUrls.push(photo.url);
                             }
-                        })
-                    );
+                        } catch (err) {
+                            console.error("[Storage] Draft upload failed:", err);
+                            throw err;
+                        }
+                    }
 
                     const draftBet: Bet = {
                         ...formData, id: betId, status: 'Rascunho',
@@ -627,13 +641,13 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                     }
                     localStorage.removeItem(`apostaspro_draft_modal`);
                 } catch (bgError: any) {
-                    console.error("[BetFormModal] Background Draft Save Erro:", bgError);
                     const errorMessage = bgError.message || "Erro desconhecido";
+                    console.error("[BetFormModal] Background Draft Save Erro:", bgError);
 
-                    if (errorMessage.includes("Timeout")) {
-                        alert(`CONEXÃO LENTA (RASCUNHO)!\n\nO salvamento demorou muito. Verifique sua internet.\n\nA página será recarregada.`);
+                    if (errorMessage.includes("limite de tempo") || errorMessage.includes("Timeout")) {
+                        alert(`SINCRONISMO LENTO (RASCUNHO)!\n\nO salvamento demorou mais que o esperado. Verifique sua rede móvel.\n\nA página será recarregada.`);
                     } else {
-                        alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar o rascunho na nuvem: ${errorMessage}.\n\nPara garantir que você não perca dados, a página será recarregada.`);
+                        alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar o rascunho: ${errorMessage}.\n\nTente novamente.`);
                     }
                     window.location.reload();
                 } finally {
@@ -720,7 +734,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                             {isUploading ? (
                                 <>
                                     <Loader2 size={16} className="animate-spin" />
-                                    <span>Salvando...</span>
+                                    <span>{uploadProgress || 'Salvando...'}</span>
                                 </>
                             ) : (
                                 initialData ? "Salvar Alterações" : "Adicionar Aposta"

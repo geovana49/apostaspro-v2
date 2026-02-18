@@ -8,7 +8,7 @@ import {
 import { Bet, Bookmaker, StatusItem, PromotionItem, AppSettings, Coverage, User } from '../types';
 import { FirestoreService } from '../services/firestoreService';
 import { analyzeImage } from '../services/aiService';
-import { compressImages, validateFirestoreSize } from '../utils/imageCompression';
+import { compressImages, validateFirestoreSize, base64ToBlob } from '../utils/imageCompression';
 import { calculateBetStats } from '../utils/betCalculations';
 
 const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -780,11 +780,13 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         setUploadProgress('Iniciando...');
         (window as any).setManualSyncing?.(true);
 
-        // Safety timeout: 60 seconds - MUST be first to guarantee unlocking UI
+        // Safety timeout: 10 minutes (600s) - Allow time for complex binary uploads
         const safetyTimeout = setTimeout(() => {
-            console.warn("[MyBets] Save operation force-unlocked by safety limit (60s).");
+            console.warn("[MyBets] Save operation force-unlocked by safety limit (600s).");
             setIsUploading(false);
-        }, 60000);
+            setUploadProgress('');
+            saveLockRef.current = false;
+        }, 600000);
 
         console.info("[MyBets] Iniciando handleSave...");
 
@@ -801,11 +803,9 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                         setUploadProgress(`Foto ${count}/${tempPhotos.length}`);
                         try {
                             if (photo.url.startsWith('data:')) {
-                                // Compress before upload
-                                const compressedBase64 = await import('../utils/imageCompression').then(mod =>
-                                    mod.compressBase64(photo.url, { maxSizeMB: 0.2, maxWidth: 1024, quality: 0.7 })
-                                );
-                                const url = await FirestoreService.uploadImage(currentUser.uid, betId, compressedBase64);
+                                // Efficient binary upload (Blob)
+                                const blob = base64ToBlob(photo.url);
+                                const url = await FirestoreService.uploadImage(currentUser.uid, betId, blob);
                                 photoUrls.push(url);
                             } else {
                                 photoUrls.push(photo.url);
@@ -849,15 +849,10 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     const errorMessage = bgError.message || "Erro desconhecido";
 
                     if (errorMessage.includes("limite de tempo") || errorMessage.includes("Timeout")) {
-                        const shouldClear = confirm(`CONEXÃO TRAVADA!\n\nO envio está travado. Isso acontece quando uploads anteriores entopem a fila ou a internet caiu.\n\nDeseja LIMPAR a fila de uploads para destravar o app?\n(Isso cancelará envios pendentes, mas o app voltará a funcionar).`);
-                        if (shouldClear) {
-                            await FirestoreService.clearLocalCache();
-                        } else {
-                            window.location.reload();
-                        }
-                    } else {
-                        alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar seus dados na nuvem: ${errorMessage}.\n\nPara garantir que você não perca dados, a página será recarregada para mostrar o estado real.`);
+                        alert(`SINCRONISMO LENTO!\n\nSeu upload está demorando mais que o normal devido à conexão lenta.\n\nO app continuará tentando no fundo, mas para garantir que nada trave, o app será recarregado.`);
                         window.location.reload();
+                    } else {
+                        alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar seus dados na nuvem: ${errorMessage}.\n\nTente novamente.`);
                     }
                 } finally {
                     clearTimeout(safetyTimeout);

@@ -14,7 +14,7 @@ import {
     clearIndexedDbPersistence,
     terminate
 } from "firebase/firestore";
-import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, uploadString, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase";
 import { Bet, ExtraGain, AppSettings, Bookmaker, StatusItem, PromotionItem, OriginItem } from "../types";
 
@@ -269,18 +269,40 @@ export const FirestoreService = {
     },
 
     // --- Media ---
-    uploadImage: async (userId: string, betId: string, base64: string): Promise<string> => {
-        if (!base64.startsWith('data:')) return base64;
+    uploadImage: async (userId: string, betId: string, data: Blob | string): Promise<string> => {
+        // Se já for uma URL (ex: carregando aposta existente), não faz nada
+        if (typeof data === 'string' && data.startsWith('http')) return data;
+
+        const uploadWithRetry = async (retryCount = 0): Promise<string> => {
+            try {
+                const fileName = `img_${Date.now()}_${Math.max(0, Math.floor(Math.random() * 1000000))}.webp`;
+                const storageRef = ref(storage, `users/${userId}/bets/${betId}/${fileName}`);
+
+                if (data instanceof Blob) {
+                    await uploadBytes(storageRef, data);
+                } else if (typeof data === 'string' && data.startsWith('data:')) {
+                    await uploadString(storageRef, data, 'data_url');
+                } else {
+                    console.error("[Firestore] Tipo de dado inválido para upload:", typeof data);
+                    throw new Error("Formato de imagem inválido");
+                }
+
+                return await getDownloadURL(storageRef);
+            } catch (error: any) {
+                if (retryCount < 2) {
+                    console.warn(`[Firestore] Falha no upload (tentativa ${retryCount + 1}). Tentando novamente...`, error.message);
+                    // Espera 1s antes de tentar de novo
+                    await new Promise(r => setTimeout(r, 1000));
+                    return uploadWithRetry(retryCount + 1);
+                }
+                throw error;
+            }
+        };
 
         return withTimeout(
-            (async () => {
-                const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(7)}.webp`;
-                const storageRef = ref(storage, `users/${userId}/bets/${betId}/${fileName}`);
-                await uploadString(storageRef, base64, 'data_url');
-                return await getDownloadURL(storageRef);
-            })(),
-            60000,
-            "Upload de Imagem"
+            uploadWithRetry(),
+            120000, // 2 minutos por imagem
+            "Sincronismo de Foto"
         );
     },
 

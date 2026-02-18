@@ -8,7 +8,7 @@ import {
 import { ExtraGain, Bookmaker, StatusItem, OriginItem, AppSettings, User, PromotionItem } from '../types';
 import BetFormModal from './BetFormModal';
 import { FirestoreService } from '../services/firestoreService';
-import { compressImages } from '../utils/imageCompression';
+import { compressImages, base64ToBlob } from '../utils/imageCompression';
 import { calculateBetStats } from '../utils/betCalculations';
 
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e', '#64748b', '#000000', '#FFFFFF'];
@@ -608,13 +608,13 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
 
         const betId = editingId || formData.id || Date.now().toString();
 
-        // Safety timeout: 60 seconds
+        // Safety timeout: 10 minutes (600s) - Allow time for complex binary uploads
         const safetyTimeout = setTimeout(() => {
-            console.warn("[ExtraGains] Save operation force-unlocked (60s).");
+            console.warn("[ExtraGains] Save operation force-unlocked by safety limit (600s).");
             setIsUploading(false);
             setUploadProgress('');
             saveLockRef.current = false;
-        }, 60000);
+        }, 600000);
 
         try {
             // 1. Process images (Sequential upload with progress)
@@ -625,11 +625,9 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 setUploadProgress(`Foto ${count}/${tempPhotos.length}`);
                 try {
                     if (photo.url.startsWith('data:')) {
-                        // Compress before upload
-                        const compressedBase64 = await import('../utils/imageCompression').then(mod =>
-                            mod.compressBase64(photo.url, { maxSizeMB: 0.2, maxWidth: 1024, quality: 0.7 })
-                        );
-                        const url = await FirestoreService.uploadImage(currentUser.uid, betId, compressedBase64);
+                        // Efficient binary upload (Blob)
+                        const blob = base64ToBlob(photo.url);
+                        const url = await FirestoreService.uploadImage(currentUser.uid, betId, blob);
                         photoUrls.push(url);
                     } else {
                         photoUrls.push(photo.url);
@@ -667,12 +665,8 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             const errorMessage = error.message || "Erro desconhecido";
 
             if (errorMessage.includes("limite de tempo") || errorMessage.includes("Timeout")) {
-                const shouldClear = confirm(`CONEXÃO TRAVADA!\n\nO envio está travado. Isso acontece quando uploads anteriores entopem a fila ou a internet caiu.\n\nDeseja LIMPAR a fila de uploads para destravar o app?\n(Isso cancelará envios pendentes, mas o app voltará a funcionar).`);
-                if (shouldClear) {
-                    await FirestoreService.clearLocalCache();
-                } else {
-                    window.location.reload();
-                }
+                alert(`SINCRONISMO LENTO!\n\nSeu upload está demorando mais que o normal devido à conexão lenta.\n\nO app continuará tentando no fundo, mas para garantir que nada trave, o app será recarregado.`);
+                window.location.reload();
             } else {
                 alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar: ${errorMessage}.\n\nTente novamente.`);
             }
