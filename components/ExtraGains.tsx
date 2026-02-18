@@ -598,6 +598,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         if (!currentUser) return alert('Você precisa estar logado para salvar.');
 
         setIsUploading(true);
+        (window as any).setManualSyncing?.(true);
 
         // Safety timeout: 60 seconds
         const safetyTimeout = setTimeout(() => {
@@ -648,6 +649,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     window.location.reload();
                 } finally {
                     clearTimeout(safetyTimeout);
+                    (window as any).setManualSyncing?.(false);
                 }
             })();
 

@@ -773,6 +773,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         if (!currentUser) return alert('Você precisa estar logado para salvar.');
 
         setIsUploading(true);
+        (window as any).setManualSyncing?.(true);
 
         // Safety timeout: 60 seconds - MUST be first to guarantee unlocking UI
         const safetyTimeout = setTimeout(() => {
@@ -840,6 +841,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     }
                 } finally {
                     clearTimeout(safetyTimeout);
+                    (window as any).setManualSyncing?.(false);
                 }
             })();
 
@@ -885,6 +887,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         if (!currentUser) return;
 
         setIsUploading(true);
+        (window as any).setManualSyncing?.(true);
 
         // Safety timeout for draft: 60s
         const safetyTimeout = setTimeout(() => {
@@ -947,6 +950,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     window.location.reload();
                 } finally {
                     clearTimeout(safetyTimeout);
+                    (window as any).setManualSyncing?.(false);
                 }
             })();
 

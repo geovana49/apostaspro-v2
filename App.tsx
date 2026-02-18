@@ -148,6 +148,9 @@ const App: React.FC = () => {
           setIsSyncing(isAnythingSyncing);
         };
 
+        // Expose manual sync trigger for components
+        (window as any).setManualSyncing = (val: boolean) => updateSyncStatus('manual', val);
+
         const unsubBets = FirestoreService.subscribeToBets(user.uid, (data, syncing) => {
           console.log("Bets updated from Firestore:", data.length);
           setBets(data);
