@@ -792,7 +792,11 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                         tempPhotos.map(async (photo) => {
                             try {
                                 if (photo.url.startsWith('data:')) {
-                                    return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
+                                    // Compress before upload
+                                    const compressedBase64 = await import('../utils/imageCompression').then(mod =>
+                                        mod.compressBase64(photo.url, { maxSizeMB: 0.5, maxWidth: 1024, quality: 0.75 })
+                                    );
+                                    return await FirestoreService.uploadImage(currentUser.uid, betId, compressedBase64);
                                 }
                                 return photo.url;
                             } catch (err) {
@@ -824,11 +828,16 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     const errorMessage = bgError.message || "Erro desconhecido";
 
                     if (errorMessage.includes("Timeout")) {
-                        alert(`CONEXÃO LENTA DETECTADA!\n\nO salvamento demorou mais de 5 minutos. Verifique sua conexão.\n\nA página será recarregada.`);
+                        const shouldClear = confirm(`CONEXÃO TRAVADA!\n\nO envio está travado há mais de 5 minutos. Isso acontece quando uploads anteriores (fotos grandes) entopem a fila.\n\nDeseja LIMPAR a fila de uploads para destravar o app?\n(Isso cancelará envios pendentes, mas o app voltará a funcionar).`);
+                        if (shouldClear) {
+                            await FirestoreService.clearLocalCache();
+                        } else {
+                            window.location.reload();
+                        }
                     } else {
                         alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar seus dados na nuvem: ${errorMessage}.\n\nPara garantir que você não perca dados, a página será recarregada para mostrar o estado real.`);
+                        window.location.reload();
                     }
-                    window.location.reload();
                 } finally {
                     clearTimeout(safetyTimeout);
                 }
@@ -893,7 +902,11 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                         tempPhotos.map(async (photo) => {
                             try {
                                 if (photo.url.startsWith('data:')) {
-                                    return await FirestoreService.uploadImage(currentUser.uid, betId, photo.url);
+                                    // Compress before upload
+                                    const compressedBase64 = await import('../utils/imageCompression').then(mod =>
+                                        mod.compressBase64(photo.url, { maxSizeMB: 0.5, maxWidth: 1024, quality: 0.75 })
+                                    );
+                                    return await FirestoreService.uploadImage(currentUser.uid, betId, compressedBase64);
                                 }
                                 return photo.url;
                             } catch (err) {

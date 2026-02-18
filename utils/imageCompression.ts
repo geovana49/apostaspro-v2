@@ -11,10 +11,10 @@ export interface CompressionOptions {
 }
 
 const DEFAULT_OPTIONS: CompressionOptions = {
-    maxWidth: 1200, // Reduced from 1920
-    maxHeight: 1200, // Reduced from 1920
-    quality: 0.85, // Reduced from 0.9
-    maxSizeMB: 0.8 // Reduced from 1.0
+    maxWidth: 1024, // Reduced from 1200
+    maxHeight: 1024, // Reduced from 1200
+    quality: 0.75, // Reduced from 0.85
+    maxSizeMB: 0.5 // Reduced from 0.8
 };
 
 /**
@@ -112,6 +112,63 @@ export async function compressImages(
     }
 
     return compressed;
+}
+
+/**
+ * Comprime uma string Base64
+ */
+export async function compressBase64(
+    base64: string,
+    options: CompressionOptions = {}
+): Promise<string> {
+    const opts = { ...DEFAULT_OPTIONS, ...options };
+
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('Erro ao carregar imagem base64'));
+
+        img.onload = () => {
+            try {
+                // Dimensões
+                let { width, height } = img;
+                if (width > opts.maxWidth! || height > opts.maxHeight!) {
+                    const ratio = Math.min(opts.maxWidth! / width, opts.maxHeight! / height);
+                    width = Math.floor(width * ratio);
+                    height = Math.floor(height * ratio);
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    reject(new Error('Contexto canvas falhou'));
+                    return;
+                }
+
+                ctx.drawImage(img, 0, 0, width, height);
+
+                let quality = opts.quality!;
+                let newBase64 = canvas.toDataURL('image/webp', quality);
+
+                // Compressão progressiva
+                const maxBytes = (opts.maxSizeMB! * 1024 * 1024);
+                let iterations = 0;
+                while (newBase64.length > maxBytes && quality > 0.6 && iterations < 5) {
+                    quality -= 0.1;
+                    newBase64 = canvas.toDataURL('image/webp', quality);
+                    iterations++;
+                }
+
+                resolve(newBase64);
+            } catch (e) {
+                reject(e);
+            }
+        };
+
+        img.src = base64;
+    });
 }
 
 /**
