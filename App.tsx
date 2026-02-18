@@ -68,7 +68,10 @@ const App: React.FC = () => {
 
     const addLog = (type: string, ...args: any[]) => {
       const msg = `[${new Date().toLocaleTimeString()}] [${type}] ${args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ')}`;
-      setDebugLogs(prev => [msg, ...prev].slice(0, 100));
+      // DEFER state update to avoid React Error 520 (updating during render)
+      setTimeout(() => {
+        setDebugLogs(prev => [msg, ...prev].slice(0, 100));
+      }, 0);
     };
 
     console.log = (...args) => { originalLog(...args); addLog('LOG', ...args); };
@@ -307,12 +310,20 @@ const App: React.FC = () => {
         <AlertCircle size={48} className="text-danger mb-4" />
         <h1 className="text-xl font-bold mb-2">Ops! Algo deu errado.</h1>
         <p className="text-gray-400 text-sm max-w-md">{errorMessage}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-6 px-6 py-2 bg-primary text-background rounded-lg font-bold"
-        >
-          Recarregar App
-        </button>
+        <div className="flex flex-col sm:flex-row gap-3 mt-6">
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 bg-primary text-background rounded-lg font-bold"
+          >
+            Recarregar App
+          </button>
+          <button
+            onClick={() => setErrorMessage(null)}
+            className="px-6 py-2 bg-white/10 text-white rounded-lg font-medium hover:bg-white/20 transition-colors"
+          >
+            Ignorar e Continuar
+          </button>
+        </div>
       </div>
     );
   }
