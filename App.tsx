@@ -55,8 +55,26 @@ const App: React.FC = () => {
   const [isOnline, setIsOnline] = useState(window.navigator.onLine);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Global Error Listener
+  // -- Debug Logs --
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+  const [showDebug, setShowDebug] = useState(false);
+
+  // Global Error Listener & Console Capture
   useEffect(() => {
+    const originalLog = console.log;
+    const originalInfo = console.info;
+    const originalWarn = console.warn;
+    const originalError = console.error;
+
+    const addLog = (type: string, ...args: any[]) => {
+      const msg = `[${new Date().toLocaleTimeString()}] [${type}] ${args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ')}`;
+      setDebugLogs(prev => [msg, ...prev].slice(0, 100));
+    };
+
+    console.log = (...args) => { originalLog(...args); addLog('LOG', ...args); };
+    console.info = (...args) => { originalInfo(...args); addLog('INFO', ...args); };
+    console.warn = (...args) => { originalWarn(...args); addLog('WARN', ...args); };
+    console.error = (...args) => { originalError(...args); addLog('ERROR', ...args); };
     const handleError = (event: ErrorEvent) => {
       setErrorMessage(`Error: ${event.message} at ${event.filename}:${event.lineno}`);
     };
@@ -247,12 +265,32 @@ const App: React.FC = () => {
 
     try {
       setIsLoading(true);
-      await FirestoreService.factoryReset(currentUser.uid);
-      window.location.reload();
-    } catch (error) {
-      console.error("Error resetting data:", error);
-      alert("Erro ao resetar dados. Tente novamente.");
-      setIsLoading(false);
+    }
+  };
+
+  const handleForceEmergencyReset = async () => {
+    if (confirm("ATENÇÃO: Isso irá deslogar você, limpar todo o cache local e forçar o app a baixar tudo da nuvem novamente. Nenhum dado salvo na nuvem será perdido. Deseja continuar?")) {
+      try {
+        console.warn("Iniciando Emergency Reset...");
+        localStorage.clear();
+        sessionStorage.clear();
+
+        // Clear IndexedDB (Firestore)
+        await FirestoreService.clearLocalCache();
+
+        // Try to clear Service Workers
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for (const registration of registrations) {
+            await registration.unregister();
+          }
+        }
+
+        window.location.reload();
+      } catch (err) {
+        console.error("Erro no Emergency Reset:", err);
+        alert("Erro ao limpar dados. Tente fechar e abrir o navegador manualmente.");
+      }
     }
   };
 
@@ -351,6 +389,36 @@ const App: React.FC = () => {
               )}
             </Suspense>
           </Layout>
+        )}
+
+        {/* Floating Debug Toggle (Hidden by default, can be toggled via secret or just always visible for now) */}
+        <button
+          onClick={() => setShowDebug(!showDebug)}
+          className="fixed bottom-20 right-4 z-[9999] bg-yellow-500 text-black px-2 py-1 rounded-md text-[10px] font-bold opacity-30 hover:opacity-100 transition-opacity"
+        >
+          DEBUG
+        </button>
+
+        {/* Debug Console Modal */}
+        {showDebug && (
+          <div className="fixed inset-0 z-[10000] bg-black/90 text-white font-mono text-[10px] p-4 flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center mb-4 border-b border-white/20 pb-2">
+              <h3 className="font-bold text-yellow-500">PAINEL DE DIAGNÓSTICO</h3>
+              <div className="flex gap-2">
+                <button onClick={handleForceEmergencyReset} className="bg-danger px-2 py-1 rounded text-white font-bold">LIMPAR TUDO</button>
+                <button onClick={() => setShowDebug(false)} className="bg-white/20 px-3 py-1 rounded">FECHAR</button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto space-y-1">
+              <p className="text-gray-500 italic mb-2">Logs do sistema (mais recentes primeiro):</p>
+              {debugLogs.length === 0 && <p className="text-gray-600">Nenhum log capturado ainda...</p>}
+              {debugLogs.map((log, i) => (
+                <div key={i} className={`py-1 border-b border-white/5 ${log.includes('[ERROR]') ? 'text-danger' : log.includes('[WARN]') ? 'text-yellow-200' : 'text-gray-300'}`}>
+                  {log}
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </Suspense>
