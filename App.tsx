@@ -74,6 +74,12 @@ const App: React.FC = () => {
     };
   }, []);
 
+  const handleForceSync = async () => {
+    if (confirm("Isso irá recarregar a página e limpar o cache local para forçar uma nova sincronização com a nuvem. Deseja continuar?")) {
+      await FirestoreService.clearLocalCache();
+    }
+  };
+
   // --- Auth & Data Synchronization ---
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -124,10 +130,28 @@ const App: React.FC = () => {
           });
         }, 8000); // 8 seconds timeout
 
+
+        const syncStates = {
+          bets: false,
+          gains: false,
+          settings: false,
+          bookmakers: false,
+          statuses: false,
+          promotions: false,
+          origins: false,
+          manual: false
+        };
+
+        const updateSyncStatus = (source: keyof typeof syncStates, val: boolean) => {
+          syncStates[source] = val;
+          const isAnythingSyncing = Object.values(syncStates).some(v => v === true);
+          setIsSyncing(isAnythingSyncing);
+        };
+
         const unsubBets = FirestoreService.subscribeToBets(user.uid, (data, syncing) => {
           console.log("Bets updated from Firestore:", data.length);
           setBets(data);
-          setIsSyncing(syncing);
+          updateSyncStatus('bets', syncing);
           if (!initialBetsLoaded) {
             initialBetsLoaded = true;
             checkDataLoaded("Bets");
@@ -136,7 +160,7 @@ const App: React.FC = () => {
 
         const unsubGains = FirestoreService.subscribeToGains(user.uid, (data, syncing) => {
           setGains(data);
-          setIsSyncing(syncing);
+          updateSyncStatus('gains', syncing);
           if (!initialGainsLoaded) {
             initialGainsLoaded = true;
             checkDataLoaded("Gains");
@@ -145,7 +169,7 @@ const App: React.FC = () => {
 
         const unsubSettings = FirestoreService.subscribeToSettings(user.uid, (newSettings, syncing) => {
           if (newSettings) setSettings(newSettings);
-          setIsSyncing(syncing);
+          updateSyncStatus('settings', syncing);
           if (!initialSettingsLoaded) {
             initialSettingsLoaded = true;
             checkDataLoaded("Settings");
@@ -153,10 +177,25 @@ const App: React.FC = () => {
         }, (err) => console.error("Error subscribing to settings:", err));
 
         // Subscribe to Configurations (Non-blocking for isLoading)
-        const unsubBookmakers = FirestoreService.subscribeToCollection<Bookmaker>(user.uid, "bookmakers", setBookmakers, (err) => console.error("Error subscribing to bookmakers:", err));
-        const unsubStatuses = FirestoreService.subscribeToCollection<StatusItem>(user.uid, "statuses", setStatuses, (err) => console.error("Error subscribing to statuses:", err));
-        const unsubPromotions = FirestoreService.subscribeToCollection<PromotionItem>(user.uid, "promotions", setPromotions, (err) => console.error("Error subscribing to promotions:", err));
-        const unsubOrigins = FirestoreService.subscribeToCollection<OriginItem>(user.uid, "origins", setOrigins, (err) => console.error("Error subscribing to origins:", err));
+        const unsubBookmakers = FirestoreService.subscribeToCollection<Bookmaker>(user.uid, "bookmakers", (data, syncing) => {
+          setBookmakers(data);
+          updateSyncStatus('bookmakers', syncing);
+        }, (err) => console.error("Error subscribing to bookmakers:", err));
+
+        const unsubStatuses = FirestoreService.subscribeToCollection<StatusItem>(user.uid, "statuses", (data, syncing) => {
+          setStatuses(data);
+          updateSyncStatus('statuses', syncing);
+        }, (err) => console.error("Error subscribing to statuses:", err));
+
+        const unsubPromotions = FirestoreService.subscribeToCollection<PromotionItem>(user.uid, "promotions", (data, syncing) => {
+          setPromotions(data);
+          updateSyncStatus('promotions', syncing);
+        }, (err) => console.error("Error subscribing to promotions:", err));
+
+        const unsubOrigins = FirestoreService.subscribeToCollection<OriginItem>(user.uid, "origins", (data, syncing) => {
+          setOrigins(data);
+          updateSyncStatus('origins', syncing);
+        }, (err) => console.error("Error subscribing to origins:", err));
 
         // Cleanup subscriptions on logout/unmount
         return () => {
@@ -245,6 +284,7 @@ const App: React.FC = () => {
             onLogout={handleLogout}
             isOnline={isOnline}
             isSyncing={isSyncing}
+            onForceSync={handleForceSync}
           >
             <Suspense fallback={<PageLoader />}>
               {activePage === Page.OVERVIEW && <Overview bets={bets} gains={gains} settings={settings} setSettings={setSettings} bookmakers={bookmakers} />}
