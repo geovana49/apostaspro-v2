@@ -291,6 +291,22 @@ const App: React.FC = () => {
     }
   };
 
+  const handleTestConnection = async () => {
+    if (!currentUser) return;
+    console.info("[Firestore] Iniciando teste de conexão manual...");
+    try {
+      const { getDocs, collection, query, limit } = await import('firebase/firestore');
+      const { db } = await import('./firebase');
+      const q = query(collection(db, "users", currentUser.uid, "bets"), limit(1));
+      const snap = await getDocs(q);
+      console.log(`[Firestore] Teste OK! Recebido snapshot one-shot com ${snap.size} docs.`);
+      alert("Conexão OK! O servidor respondeu ao pedido manual.");
+    } catch (err) {
+      console.error("[Firestore] Falha no teste de conexão:", err);
+      alert("Conexão FALHOU. O servidor não respondeu ao pedido manual.");
+    }
+  };
+
   const handleForceEmergencyReset = async () => {
     if (confirm("ATENÇÃO: Isso irá deslogar você, limpar todo o cache local e forçar o app a baixar tudo da nuvem novamente. Nenhum dado salvo na nuvem será perdido. Deseja continuar?")) {
       try {
@@ -440,7 +456,7 @@ const App: React.FC = () => {
           <div className="fixed inset-0 z-[10000] bg-black/90 text-white font-mono text-[10px] p-4 flex flex-col overflow-hidden">
             <div className="flex justify-between items-center mb-4 border-b border-white/20 pb-2">
               <h3 className="font-bold text-yellow-500">PAINEL DE DIAGNÓSTICO</h3>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={handleForceEmergencyReset}
                   disabled={isResetting}
@@ -459,6 +475,12 @@ const App: React.FC = () => {
                   className="bg-primary/20 hover:bg-primary/40 px-2 py-1 rounded text-primary font-bold text-[9px]"
                 >
                   RECARREGAR DO ZERO
+                </button>
+                <button
+                  onClick={handleTestConnection}
+                  className="bg-blue-500/20 hover:bg-blue-500/40 px-2 py-1 rounded text-blue-400 font-bold text-[9px]"
+                >
+                  TESTE CONEXÃO
                 </button>
                 <button onClick={() => setShowDebug(false)} className="bg-white/20 px-3 py-1 rounded text-[9px]">FECHAR</button>
               </div>

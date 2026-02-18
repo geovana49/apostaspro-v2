@@ -21,12 +21,10 @@ console.info("[Firebase] Inicializando cache single-tab para projeto:", firebase
 // Initialize Firebase services
 export const auth = getAuth(app);
 export const storage = getStorage(app);
+
+// [DIAGNOSTIC] Desativando cache local temporariamente para descartar travas de hardware/IndexedDB
 export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({
-    tabManager: persistentSingleTabManager(),
-    cacheSizeBytes: 50 * 1024 * 1024 // 50MB limit
-  }),
-  experimentalForceLongPolling: true,
+  experimentalAutoDetectLongPolling: true,
 });
 
 export default app;
