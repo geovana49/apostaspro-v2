@@ -285,13 +285,25 @@ export const FirestoreService = {
     },
 
     clearLocalCache: async () => {
+        console.warn("[Firestore] Iniciando limpeza de cache local...");
+
+        // Timeout de segurança: Se o Firebase travar, recarregamos de qualquer jeito após 3s
+        const safetyTimeout = setTimeout(() => {
+            console.error("[Firestore] Limpeza travou. Forçando recarregamento...");
+            window.location.reload();
+        }, 3000);
+
         try {
+            console.log("[Firestore] Terminando instância...");
             await terminate(db);
+            console.log("[Firestore] Limpando IndexedDB...");
             await clearIndexedDbPersistence(db);
-            console.log("Persistence cleared successfully.");
+            console.log("[Firestore] Cache limpo com sucesso!");
+            clearTimeout(safetyTimeout);
             window.location.reload();
         } catch (error) {
-            console.error("Error clearing persistence:", error);
+            console.error("[Firestore] Erro ao limpar cache:", error);
+            clearTimeout(safetyTimeout);
             window.location.reload();
         }
     }

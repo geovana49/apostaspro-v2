@@ -179,7 +179,7 @@ const App: React.FC = () => {
         (window as any).setManualSyncing = (val: boolean) => updateSyncStatus('manual', val);
 
         const unsubBets = FirestoreService.subscribeToBets(user.uid, (data, syncing) => {
-          console.log("Bets updated from Firestore:", data.length);
+          console.log(`[Snapshot] Bets recebidas: ${data.length} itens.`);
           setBets(data);
           updateSyncStatus('bets', syncing);
           if (!initialBetsLoaded) {
@@ -189,6 +189,7 @@ const App: React.FC = () => {
         }, (err) => console.error("Error subscribing to bets:", err));
 
         const unsubGains = FirestoreService.subscribeToGains(user.uid, (data, syncing) => {
+          console.log(`[Snapshot] Gains recebidas: ${data.length} itens.`);
           setGains(data);
           updateSyncStatus('gains', syncing);
           if (!initialGainsLoaded) {
@@ -198,7 +199,10 @@ const App: React.FC = () => {
         }, (err) => console.error("Error subscribing to gains:", err));
 
         const unsubSettings = FirestoreService.subscribeToSettings(user.uid, (newSettings, syncing) => {
-          if (newSettings) setSettings(newSettings);
+          if (newSettings) {
+            console.log(`[Snapshot] Settings recebidas.`);
+            setSettings(newSettings);
+          }
           updateSyncStatus('settings', syncing);
           if (!initialSettingsLoaded) {
             initialSettingsLoaded = true;
@@ -208,21 +212,25 @@ const App: React.FC = () => {
 
         // Subscribe to Configurations (Non-blocking for isLoading)
         const unsubBookmakers = FirestoreService.subscribeToCollection<Bookmaker>(user.uid, "bookmakers", (data, syncing) => {
+          console.log(`[Snapshot] Bookmakers: ${data.length}`);
           setBookmakers(data);
           updateSyncStatus('bookmakers', syncing);
         }, (err) => console.error("Error subscribing to bookmakers:", err));
 
         const unsubStatuses = FirestoreService.subscribeToCollection<StatusItem>(user.uid, "statuses", (data, syncing) => {
+          console.log(`[Snapshot] Statuses: ${data.length}`);
           setStatuses(data);
           updateSyncStatus('statuses', syncing);
         }, (err) => console.error("Error subscribing to statuses:", err));
 
         const unsubPromotions = FirestoreService.subscribeToCollection<PromotionItem>(user.uid, "promotions", (data, syncing) => {
+          console.log(`[Snapshot] Promotions: ${data.length}`);
           setPromotions(data);
           updateSyncStatus('promotions', syncing);
         }, (err) => console.error("Error subscribing to promotions:", err));
 
         const unsubOrigins = FirestoreService.subscribeToCollection<OriginItem>(user.uid, "origins", (data, syncing) => {
+          console.log(`[Snapshot] Origins: ${data.length}`);
           setOrigins(data);
           updateSyncStatus('origins', syncing);
         }, (err) => console.error("Error subscribing to origins:", err));
@@ -286,10 +294,13 @@ const App: React.FC = () => {
       try {
         setIsResetting(true);
         console.warn("Iniciando Emergency Reset...");
+
+        // Limpeza imediata de dados locais simples
         localStorage.clear();
         sessionStorage.clear();
+        console.log("LocalStorage e SessionStorage limpos.");
 
-        // Clear IndexedDB (Firestore)
+        // Clear IndexedDB (Firestore) - Esta parte pode travar
         await FirestoreService.clearLocalCache();
 
         // Try to clear Service Workers
@@ -303,7 +314,8 @@ const App: React.FC = () => {
         window.location.reload();
       } catch (err) {
         console.error("Erro no Emergency Reset:", err);
-        alert("Erro ao limpar dados. Tente fechar e abrir o navegador manualmente.");
+        alert("Erro ao limpar dados. O app será recarregado para tentar recuperar.");
+        window.location.reload();
       }
     }
   };
