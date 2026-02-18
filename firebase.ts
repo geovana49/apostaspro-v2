@@ -22,9 +22,9 @@ console.info("[Firebase] Inicializando cache single-tab para projeto:", firebase
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 
-// [DIAGNOSTIC] Desativando cache local temporariamente para descartar travas de hardware/IndexedDB
+// [DIAGNOSTIC] Forçando Long Polling e desativando cache para descartar bloqueios de rede/hardware
 export const db = initializeFirestore(app, {
-  experimentalAutoDetectLongPolling: true,
+  experimentalForceLongPolling: true,
 });
 
 export default app;

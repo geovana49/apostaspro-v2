@@ -293,17 +293,31 @@ const App: React.FC = () => {
 
   const handleTestConnection = async () => {
     if (!currentUser) return;
-    console.info("[Firestore] Iniciando teste de conexão manual...");
+    console.info("[Firestore] Iniciando teste de rede total...");
+
+    // Passo 1: Ping direto no domínio do Google para ver se as operadoras bloquearam o DNS/Firewall
+    console.log("[Network] Testando alcance de firestore.googleapis.com...");
+    try {
+      const pingRes = await fetch('https://firestore.googleapis.com/google.firestore.v1.Firestore/ListDocuments/projects/minhasapostaspro', { mode: 'no-cors' });
+      console.log("[Network] Alcance do domínio: OK (recebido resposta opaca)");
+    } catch (err) {
+      console.error("[Network] Domínio firestore.googleapis.com INACESSÍVEL:", err);
+      alert("ERRO DE REDE: O celular não consegue nem 'pingar' o servidor do Google Firestore. Verifique se há algum Firewall ou se você está em modo de economia de dados.");
+      return;
+    }
+
+    // Passo 2: Teste via SDK (Long Polling agora forçado)
     try {
       const { getDocs, collection, query, limit } = await import('firebase/firestore');
       const { db } = await import('./firebase');
       const q = query(collection(db, "users", currentUser.uid, "bets"), limit(1));
       const snap = await getDocs(q);
-      console.log(`[Firestore] Teste OK! Recebido snapshot one-shot com ${snap.size} docs.`);
-      alert("Conexão OK! O servidor respondeu ao pedido manual.");
-    } catch (err) {
-      console.error("[Firestore] Falha no teste de conexão:", err);
-      alert("Conexão FALHOU. O servidor não respondeu ao pedido manual.");
+      console.log(`[Firestore] Teste SDK OK! Snapshot manual com ${snap.size} docs.`);
+      alert("Conexão OK! O servidor respondeu ao pedido manual (Long Polling). Se os dados não aparecerem, recarregue a aba.");
+    } catch (err: any) {
+      console.error("[Firestore] Falha no teste de conexão SDK:", err);
+      const errorMsg = err?.message || JSON.stringify(err);
+      alert(`Conexão SDK FALHOU: ${errorMsg}`);
     }
   };
 
