@@ -87,6 +87,8 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const [isChoiceModalOpen, setIsChoiceModalOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [tempPhotos, setTempPhotos] = useState<{ url: string, file?: File }[]>([]);
+    const [uploadProgress, setUploadProgress] = useState<string>('');
+    const saveLockRef = useRef(false);
 
     // Config State
     const [newCategoryName, setNewCategoryName] = useState('');
@@ -393,7 +395,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
 
     const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            const MAX_PHOTOS = 30;
+            const MAX_PHOTOS = 10;
             const files = Array.from(e.target.files) as File[];
             files.sort((a, b) => a.lastModified - b.lastModified);
 
@@ -597,90 +599,85 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         if (!formData.bookmakerId) return alert('Selecione a casa de aposta');
         if (!currentUser) return alert('Você precisa estar logado para salvar.');
 
+        if (saveLockRef.current) return;
+
+        saveLockRef.current = true;
         setIsUploading(true);
+        setUploadProgress('Iniciando...');
         (window as any).setManualSyncing?.(true);
+
+        const betId = editingId || formData.id || Date.now().toString();
 
         // Safety timeout: 60 seconds
         const safetyTimeout = setTimeout(() => {
             console.warn("[ExtraGains] Save operation force-unlocked (60s).");
             setIsUploading(false);
+            setUploadProgress('');
+            saveLockRef.current = false;
         }, 60000);
 
         try {
-            // Optimistic UI: Close modal immediately
-            (async () => {
-                const betId = editingId || formData.id || Date.now().toString();
+            // 1. Process images (Sequential upload with progress)
+            const photoUrls: string[] = [];
+            let count = 0;
+            for (const photo of tempPhotos) {
+                count++;
+                setUploadProgress(`Foto ${count}/${tempPhotos.length}`);
                 try {
-                    const photoUrls = await Promise.all(
-                        tempPhotos.map(async (photo) => {
-                            if (photo.url.startsWith('data:')) {
-                                // Compress before upload
-                                const compressedBase64 = await import('../utils/imageCompression').then(mod =>
-                                    mod.compressBase64(photo.url, { maxSizeMB: 0.5, maxWidth: 1024, quality: 0.75 })
-                                );
-                                return await FirestoreService.uploadImage(currentUser.uid, betId, compressedBase64);
-                            }
-                            return photo.url;
-                        })
-                    );
-
-                    const rawGainData: ExtraGain = {
-                        ...formData, id: betId, notes: formData.notes, photos: photoUrls,
-                        date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
-                    };
-
-                    const gainData = JSON.parse(JSON.stringify(rawGainData, (k, v) => v === undefined ? null : v));
-                    await FirestoreService.saveGain(currentUser.uid, gainData);
-                    console.info("[ExtraGains] Background Save Concluído.");
-                } catch (bgError: any) {
-                    console.error("[ExtraGains] Background Save Erro:", bgError);
-                    const errorMessage = bgError.message || "Erro desconhecido";
-
-                    if (errorMessage.includes("Timeout")) {
-                        const shouldClear = confirm(`CONEXÃO TRAVADA!\n\nO envio está travado há mais de 5 minutos. Isso acontece quando uploads anteriores (fotos grandes) entopem a fila.\n\nDeseja LIMPAR a fila de uploads para destravar o app?\n(Isso cancelará envios pendentes, mas o app voltará a funcionar).`);
-                        if (shouldClear) {
-                            await FirestoreService.clearLocalCache();
-                        } else {
-                            window.location.reload();
-                        }
+                    if (photo.url.startsWith('data:')) {
+                        // Compress before upload
+                        const compressedBase64 = await import('../utils/imageCompression').then(mod =>
+                            mod.compressBase64(photo.url, { maxSizeMB: 0.2, maxWidth: 1024, quality: 0.7 })
+                        );
+                        const url = await FirestoreService.uploadImage(currentUser.uid, betId, compressedBase64);
+                        photoUrls.push(url);
                     } else {
-                        alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar seus dados na nuvem: ${errorMessage}.\n\nPara garantir que você não perca dados, a página será recarregada para mostrar o estado real.`);
+                        photoUrls.push(photo.url);
                     }
-                    window.location.reload();
-                } finally {
-                    clearTimeout(safetyTimeout);
-                    (window as any).setManualSyncing?.(false);
+                } catch (err) {
+                    console.error("[ExtraGains] Photo upload failed:", err);
+                    throw err;
                 }
-            })();
+            }
 
-            // Optimistic State Update
-            const optimBetId = editingId || formData.id || Date.now().toString();
-            const optimisticGain: ExtraGain = {
-                ...formData,
-                id: optimBetId,
-                notes: formData.notes,
-                photos: tempPhotos.map(p => p.url),
+            setUploadProgress('Sincronizando Dados...');
+            const rawGainData: ExtraGain = {
+                ...formData, id: betId, notes: formData.notes, photos: photoUrls,
                 date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
             };
 
-            setGains(prev => {
-                const index = prev.findIndex(g => g.id === optimBetId);
-                if (index !== -1) {
-                    const next = [...prev];
-                    next[index] = optimisticGain;
-                    return next;
-                }
-                return [optimisticGain, ...prev];
-            });
+            const gainData = JSON.parse(JSON.stringify(rawGainData, (k, v) => v === undefined ? null : v));
+            await FirestoreService.saveGain(currentUser.uid, gainData);
+            console.info("[ExtraGains] Save Concluído.");
 
-            setIsUploading(false);
-            setIsModalOpen(false);
-            setEditingId(null);
-        } catch (error: any) {
-            console.error("Error initiating save:", error);
-            alert(`Erro ao iniciar salvamento: ${error.message || error} `);
-            setIsUploading(false);
+            // Success Cleanup
             clearTimeout(safetyTimeout);
+            setIsUploading(false);
+            setUploadProgress('');
+            saveLockRef.current = false;
+            handleCloseModal();
+
+        } catch (error: any) {
+            console.error("[ExtraGains] Save Erro:", error);
+            clearTimeout(safetyTimeout);
+            saveLockRef.current = false;
+            setIsUploading(false);
+            setUploadProgress('');
+
+            const errorMessage = error.message || "Erro desconhecido";
+
+            if (errorMessage.includes("limite de tempo") || errorMessage.includes("Timeout")) {
+                const shouldClear = confirm(`CONEXÃO TRAVADA!\n\nO envio está travado. Isso acontece quando uploads anteriores entopem a fila ou a internet caiu.\n\nDeseja LIMPAR a fila de uploads para destravar o app?\n(Isso cancelará envios pendentes, mas o app voltará a funcionar).`);
+                if (shouldClear) {
+                    await FirestoreService.clearLocalCache();
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar: ${errorMessage}.\n\nTente novamente.`);
+            }
+        } finally {
+            (window as any).setManualSyncing?.(false);
         }
     };
 
@@ -1128,189 +1125,188 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     </div>
                 </div>
             </Modal>
-            {isModalOpen && (
-                <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={editingId ? "Editar Ganho" : "Novo Ganho Extra"} footer={<div className="flex justify-between gap-3 w-full"> {editingId && (<button onClick={() => setIsDeleting(true)} className="p-3 text-gray-500 hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"> <Trash2 size={20} /> </button>)} <div className="flex gap-3 ml-auto"> <Button variant="neutral" onClick={handleCloseModal} disabled={isUploading}>Cancelar</Button> {isDeleting ? (<Button variant="danger" onClick={handleDeleteModal}>Confirmar Exclusão</Button>) : (<Button onClick={handleSave} disabled={isUploading}> {isUploading ? (<> <Loader2 size={16} className="animate-spin" /> <span>Salvando...</span> </>) : ("Salvar")} </Button>)} </div> </div>}>
-                    <div className="space-y-5">
-                        <div className="bg-[#0d1121] p-4 rounded-xl border border-white/5 flex flex-col items-center justify-center mb-2">
-                            <label className="text-[10px] text-textMuted uppercase font-bold mb-2">Valor do Ganho</label>
-                            <div className="relative flex items-center">
-                                <span className="text-xl font-bold text-gray-500">R$</span>
-                                <input type="text" inputMode="numeric" className="bg-transparent text-center text-4xl font-bold text-white w-48 focus:outline-none placeholder-gray-700" placeholder="0,00" value={formData.amount ? formData.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : ''} onChange={e => { const value = e.target.value.replace(/[^0-9]/g, ''); dispatch({ type: 'UPDATE_FIELD', field: 'amount', value: value ? parseInt(value, 10) / 100 : 0 }); }} autoFocus />
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Data</label>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        console.log('Botão de data clicado!');
-                                        setIsFormDatePickerOpen(true);
-                                        console.log('isFormDatePickerOpen definido como true');
-                                    }}
-                                    className="w-full bg-[#0d1121] border border-white/10 focus:border-primary text-white rounded-lg py-3 px-4 text-left hover:bg-[#151b2e] transition-colors flex items-center justify-between group"
-                                >
-                                    <span className="text-sm">{formData.date ? new Date(formData.date + 'T12:00:00').toLocaleDateString('pt-BR') : 'Selecione a data'}</span>
-                                    <Calendar size={16} className="text-gray-500 group-hover:text-primary transition-colors" />
-                                </button>
-                                <SingleDatePickerModal
-                                    isOpen={isFormDatePickerOpen}
-                                    onClose={() => setIsFormDatePickerOpen(false)}
-                                    date={formData.date ? parseDate(formData.date) : new Date()}
-                                    onSelect={(date) => {
-                                        const year = date.getFullYear();
-                                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                                        const day = String(date.getDate()).padStart(2, '0');
-                                        const dateStr = `${year}-${month}-${day}`;
-
-                                        dispatch({ type: 'UPDATE_FIELD', field: 'date', value: dateStr });
-                                        setIsFormDatePickerOpen(false);
-
-                                        // Auto-save logic if needed, but the original code only had auto-save on Status change
-                                        if (editingId && currentUser) {
-                                            // We could consider auto-saving date too, but maybe safer to wait for explicit save?
-                                            // The existing status dropdown has auto-save.
-                                            // Let's stick to just updating state for now.
-                                        }
-                                    }}
-                                />
-                            </div>
-                            <Dropdown label="Status" options={statusOptionsForForm} value={formData.status || 'Recebido'} onChange={async (v) => {
-                                dispatch({ type: 'UPDATE_FIELD', field: 'status', value: v as any });
-
-                                // Auto-save if editing existing gain
-                                if (editingId && currentUser) {
-                                    try {
-                                        const gainData: ExtraGain = {
-                                            ...formData,
-                                            id: editingId,
-                                            status: v as any,
-                                            notes: formData.notes,
-                                            photos: tempPhotos.map(p => p.url),
-                                            date: formData.date.includes('T') ? formData.date : `${formData.date} T12:00:00.000Z`,
-                                        };
-                                        await FirestoreService.saveGain(currentUser.uid, gainData);
-                                        console.log('✅ Status auto-saved!');
-
-                                        // Close modal to refresh data and update balance
-                                        setIsModalOpen(false);
-                                        setEditingId(null);
-                                    } catch (error) {
-                                        console.error('Error auto-saving status:', error);
-                                    }
-                                }
-                            }} />
-                        </div>
-                        <Dropdown label="Origem" options={origins.map(o => ({ label: o.name, value: o.name, icon: <RenderIcon iconSource={o.icon} size={16} /> }))} value={formData.origin || ''} onChange={v => dispatch({ type: 'UPDATE_FIELD', field: 'origin', value: v })} />
-                        <Dropdown
-                            label="Casa de Aposta"
-                            options={bookmakerOptions}
-                            value={formData.bookmakerId || ''}
-                            onChange={v => dispatch({ type: 'UPDATE_FIELD', field: 'bookmakerId', value: v })}
-                            placeholder="Selecione a Casa"
-                            isSearchable={true}
-                            searchPlaceholder="Buscar casa..."
-                        />
-                        <Input label="Jogo / Detalhe (Opcional)" placeholder="Ex: Gates of Olympus, Roda da Sorte..." value={formData.game || ''} onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'game', value: e.target.value })} icon={<Gamepad2 size={16} />} />
-
-                        <div className="space-y-3">
-                            <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Anotações & Mídia</label>
-
-                            <textarea
-                                className="w-full bg-[#0d1121] border border-white/10 focus:border-primary text-white rounded-lg py-3 px-4 placeholder-gray-600 focus:outline-none transition-colors text-sm min-h-[100px] resize-none shadow-inner"
-                                placeholder="Detalhes extras..."
-                                value={formData.notes}
-                                onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'notes', value: e.target.value })}
-                            />
-
-                            <div className="p-4 bg-[#0d1121] border border-dashed border-white/10 rounded-xl">
-                                <div className="flex justify-between items-center mb-3">
-                                    <label className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase cursor-pointer hover:text-white transition-colors">
-                                        <div className="p-2 bg-white/5 rounded-full"><Paperclip size={14} /></div>
-                                        <span>Adicionar Fotos</span>
-                                        <input
-                                            type="file"
-                                            multiple
-                                            accept="image/*"
-                                            className="hidden"
-                                            onChange={handlePhotoSelect}
-                                        />
-                                    </label>
-                                </div>
-
-                                {tempPhotos.length > 0 && (
-                                    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3 mt-2">
-                                        {tempPhotos.map((photo, index) => (
-                                            <div
-                                                key={index}
-                                                draggable
-                                                onDragStart={() => handleDragStart(index)}
-                                                onDragOver={(e) => e.preventDefault()}
-                                                onDrop={() => handleDrop(index)}
-                                                onClick={() => handlePhotoClick(index)}
-                                                className={`relative aspect-square rounded-lg overflow-hidden border transition-all duration-300 group bg-black/40 cursor-move 
-                                                ${draggedIdx === index ? 'opacity-40 scale-95 border-primary shadow-2xl' :
-                                                        selectedIdx === index ? 'border-primary ring-2 ring-primary ring-offset-2 ring-offset-[#0d1121] scale-[1.05] z-20' :
-                                                            'border-white/10 hover:border-primary/50'}`}
-                                            >
-                                                <img src={photo.url} alt="Preview" className="w-full h-full object-cover" />
-
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        openImageViewer(tempPhotos.map(p => p.url), index);
-                                                    }}
-                                                    className="absolute top-1.5 left-1.5 p-1.5 bg-black/70 text-white rounded-full hover:bg-primary transition-all shadow-lg active:scale-90 z-20 sm:p-2"
-                                                    title="Ver foto"
-                                                >
-                                                    <Maximize size={14} className="sm:w-4 sm:h-4" />
-                                                </button>
-
-                                                {/* Delete Button */}
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        removePhoto(index);
-                                                    }}
-                                                    className="absolute top-1.5 right-1.5 p-1.5 bg-black/70 text-white rounded-full hover:bg-danger transition-all shadow-lg active:scale-90 z-20 sm:p-2"
-                                                    title="Remover foto"
-                                                >
-                                                    <X size={14} className="sm:w-4 sm:h-4" />
-                                                </button>
-
-                                                {/* Reorder Buttons - Always visible */}
-                                                <div className="absolute inset-x-0 bottom-0 flex justify-between p-1 transition-opacity bg-gradient-to-t from-black/60 to-transparent">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            movePhoto(index, 'left');
-                                                        }}
-                                                        disabled={index === 0}
-                                                        className={`p-1.5 bg-black/40 text-white rounded hover:bg-primary transition-colors ${index === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
-                                                        title="Mover para esquerda"
-                                                    >
-                                                        <ChevronLeft size={14} />
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            movePhoto(index, 'right');
-                                                        }}
-                                                        disabled={index === tempPhotos.length - 1}
-                                                        className={`p-1.5 bg-black/40 text-white rounded hover:bg-primary transition-colors ${index === tempPhotos.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}
-                                                        title="Mover para direita"
-                                                    >
-                                                        <ChevronRight size={14} />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+            <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={editingId ? "Editar Ganho" : "Novo Ganho Extra"} footer={<div className="flex justify-between gap-3 w-full"> {editingId && (<button onClick={() => setIsDeleting(true)} className="p-3 text-gray-500 hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"> <Trash2 size={20} /> </button>)} <div className="flex gap-3 ml-auto"> <Button variant="neutral" onClick={handleCloseModal} disabled={isUploading}>Cancelar</Button> {isDeleting ? (<Button variant="danger" onClick={handleDeleteModal}>Confirmar Exclusão</Button>) : (<Button onClick={handleSave} disabled={isUploading}> {isUploading ? (<> <Loader2 size={16} className="animate-spin" /> <span>{uploadProgress || 'Salvando...'}</span> </>) : ("Salvar")} </Button>)} </div> </div>}>
+                <div className="space-y-5">
+                    <div className="bg-[#0d1121] p-4 rounded-xl border border-white/5 flex flex-col items-center justify-center mb-2">
+                        <label className="text-[10px] text-textMuted uppercase font-bold mb-2">Valor do Ganho</label>
+                        <div className="relative flex items-center">
+                            <span className="text-xl font-bold text-gray-500">R$</span>
+                            <input type="text" inputMode="numeric" className="bg-transparent text-center text-4xl font-bold text-white w-48 focus:outline-none placeholder-gray-700" placeholder="0,00" value={formData.amount ? formData.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : ''} onChange={e => { const value = e.target.value.replace(/[^0-9]/g, ''); dispatch({ type: 'UPDATE_FIELD', field: 'amount', value: value ? parseInt(value, 10) / 100 : 0 }); }} autoFocus />
                         </div>
                     </div>
-                </Modal>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Data</label>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    console.log('Botão de data clicado!');
+                                    setIsFormDatePickerOpen(true);
+                                    console.log('isFormDatePickerOpen definido como true');
+                                }}
+                                className="w-full bg-[#0d1121] border border-white/10 focus:border-primary text-white rounded-lg py-3 px-4 text-left hover:bg-[#151b2e] transition-colors flex items-center justify-between group"
+                            >
+                                <span className="text-sm">{formData.date ? new Date(formData.date + 'T12:00:00').toLocaleDateString('pt-BR') : 'Selecione a data'}</span>
+                                <Calendar size={16} className="text-gray-500 group-hover:text-primary transition-colors" />
+                            </button>
+                            <SingleDatePickerModal
+                                isOpen={isFormDatePickerOpen}
+                                onClose={() => setIsFormDatePickerOpen(false)}
+                                date={formData.date ? parseDate(formData.date) : new Date()}
+                                onSelect={(date) => {
+                                    const year = date.getFullYear();
+                                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                                    const day = String(date.getDate()).padStart(2, '0');
+                                    const dateStr = `${year}-${month}-${day}`;
+
+                                    dispatch({ type: 'UPDATE_FIELD', field: 'date', value: dateStr });
+                                    setIsFormDatePickerOpen(false);
+
+                                    // Auto-save logic if needed, but the original code only had auto-save on Status change
+                                    if (editingId && currentUser) {
+                                        // We could consider auto-saving date too, but maybe safer to wait for explicit save?
+                                        // The existing status dropdown has auto-save.
+                                        // Let's stick to just updating state for now.
+                                    }
+                                }}
+                            />
+                        </div>
+                        <Dropdown label="Status" options={statusOptionsForForm} value={formData.status || 'Recebido'} onChange={async (v) => {
+                            dispatch({ type: 'UPDATE_FIELD', field: 'status', value: v as any });
+
+                            // Auto-save if editing existing gain
+                            if (editingId && currentUser) {
+                                try {
+                                    const gainData: ExtraGain = {
+                                        ...formData,
+                                        id: editingId,
+                                        status: v as any,
+                                        notes: formData.notes,
+                                        photos: tempPhotos.map(p => p.url),
+                                        date: formData.date.includes('T') ? formData.date : `${formData.date} T12:00:00.000Z`,
+                                    };
+                                    await FirestoreService.saveGain(currentUser.uid, gainData);
+                                    console.log('✅ Status auto-saved!');
+
+                                    // Close modal to refresh data and update balance
+                                    setIsModalOpen(false);
+                                    setEditingId(null);
+                                } catch (error) {
+                                    console.error('Error auto-saving status:', error);
+                                }
+                            }
+                        }} />
+                    </div>
+                    <Dropdown label="Origem" options={origins.map(o => ({ label: o.name, value: o.name, icon: <RenderIcon iconSource={o.icon} size={16} /> }))} value={formData.origin || ''} onChange={v => dispatch({ type: 'UPDATE_FIELD', field: 'origin', value: v })} />
+                    <Dropdown
+                        label="Casa de Aposta"
+                        options={bookmakerOptions}
+                        value={formData.bookmakerId || ''}
+                        onChange={v => dispatch({ type: 'UPDATE_FIELD', field: 'bookmakerId', value: v })}
+                        placeholder="Selecione a Casa"
+                        isSearchable={true}
+                        searchPlaceholder="Buscar casa..."
+                    />
+                    <Input label="Jogo / Detalhe (Opcional)" placeholder="Ex: Gates of Olympus, Roda da Sorte..." value={formData.game || ''} onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'game', value: e.target.value })} icon={<Gamepad2 size={16} />} />
+
+                    <div className="space-y-3">
+                        <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Anotações & Mídia</label>
+
+                        <textarea
+                            className="w-full bg-[#0d1121] border border-white/10 focus:border-primary text-white rounded-lg py-3 px-4 placeholder-gray-600 focus:outline-none transition-colors text-sm min-h-[100px] resize-none shadow-inner"
+                            placeholder="Detalhes extras..."
+                            value={formData.notes}
+                            onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'notes', value: e.target.value })}
+                        />
+
+                        <div className="p-4 bg-[#0d1121] border border-dashed border-white/10 rounded-xl">
+                            <div className="flex justify-between items-center mb-3">
+                                <label className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase cursor-pointer hover:text-white transition-colors">
+                                    <div className="p-2 bg-white/5 rounded-full"><Paperclip size={14} /></div>
+                                    <span>Adicionar Fotos</span>
+                                    <input
+                                        type="file"
+                                        multiple
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={handlePhotoSelect}
+                                    />
+                                </label>
+                            </div>
+
+                            {tempPhotos.length > 0 && (
+                                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3 mt-2">
+                                    {tempPhotos.map((photo, index) => (
+                                        <div
+                                            key={index}
+                                            draggable
+                                            onDragStart={() => handleDragStart(index)}
+                                            onDragOver={(e) => e.preventDefault()}
+                                            onDrop={() => handleDrop(index)}
+                                            onClick={() => handlePhotoClick(index)}
+                                            className={`relative aspect-square rounded-lg overflow-hidden border transition-all duration-300 group bg-black/40 cursor-move 
+                                                ${draggedIdx === index ? 'opacity-40 scale-95 border-primary shadow-2xl' :
+                                                    selectedIdx === index ? 'border-primary ring-2 ring-primary ring-offset-2 ring-offset-[#0d1121] scale-[1.05] z-20' :
+                                                        'border-white/10 hover:border-primary/50'}`}
+                                        >
+                                            <img src={photo.url} alt="Preview" className="w-full h-full object-cover" />
+
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openImageViewer(tempPhotos.map(p => p.url), index);
+                                                }}
+                                                className="absolute top-1.5 left-1.5 p-1.5 bg-black/70 text-white rounded-full hover:bg-primary transition-all shadow-lg active:scale-90 z-20 sm:p-2"
+                                                title="Ver foto"
+                                            >
+                                                <Maximize size={14} className="sm:w-4 sm:h-4" />
+                                            </button>
+
+                                            {/* Delete Button */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    removePhoto(index);
+                                                }}
+                                                className="absolute top-1.5 right-1.5 p-1.5 bg-black/70 text-white rounded-full hover:bg-danger transition-all shadow-lg active:scale-90 z-20 sm:p-2"
+                                                title="Remover foto"
+                                            >
+                                                <X size={14} className="sm:w-4 sm:h-4" />
+                                            </button>
+
+                                            {/* Reorder Buttons - Always visible */}
+                                            <div className="absolute inset-x-0 bottom-0 flex justify-between p-1 transition-opacity bg-gradient-to-t from-black/60 to-transparent">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        movePhoto(index, 'left');
+                                                    }}
+                                                    disabled={index === 0}
+                                                    className={`p-1.5 bg-black/40 text-white rounded hover:bg-primary transition-colors ${index === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                                    title="Mover para esquerda"
+                                                >
+                                                    <ChevronLeft size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        movePhoto(index, 'right');
+                                                    }}
+                                                    disabled={index === tempPhotos.length - 1}
+                                                    className={`p-1.5 bg-black/40 text-white rounded hover:bg-primary transition-colors ${index === tempPhotos.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                                    title="Mover para direita"
+                                                >
+                                                    <ChevronRight size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </Modal>
             )}
 
             {/* Date Range Picker Modal */}

@@ -11,10 +11,10 @@ export interface CompressionOptions {
 }
 
 const DEFAULT_OPTIONS: CompressionOptions = {
-    maxWidth: 1024, // Reduced from 1200
-    maxHeight: 1024, // Reduced from 1200
-    quality: 0.75, // Reduced from 0.85
-    maxSizeMB: 0.5 // Reduced from 0.8
+    maxWidth: 1024,
+    maxHeight: 1024,
+    quality: 0.7, // Reduced from 0.75
+    maxSizeMB: 0.4 // Reduced from 0.5
 };
 
 /**
@@ -155,7 +155,7 @@ export async function compressBase64(
                 // Compressão progressiva
                 const maxBytes = (opts.maxSizeMB! * 1024 * 1024);
                 let iterations = 0;
-                while (newBase64.length > maxBytes && quality > 0.6 && iterations < 5) {
+                while (newBase64.length > maxBytes && quality > 0.5 && iterations < 5) {
                     quality -= 0.1;
                     newBase64 = canvas.toDataURL('image/webp', quality);
                     iterations++;

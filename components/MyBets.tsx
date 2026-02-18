@@ -118,6 +118,8 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const [isUploading, setIsUploading] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [tempPhotos, setTempPhotos] = useState<{ url: string, file?: File }[]>([]);
+    const [uploadProgress, setUploadProgress] = useState<string>('');
+    const saveLockRef = useRef(false);
 
     // Filter State
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -358,7 +360,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     // Process files for drag & drop
     const processFiles = useCallback(async (files: File[]) => {
         if (files.length === 0) return;
-        const MAX_PHOTOS = 30;
+        const MAX_PHOTOS = 10;
 
         files.sort((a, b) => a.lastModified - b.lastModified);
 
@@ -644,7 +646,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
 
     const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            const MAX_PHOTOS = 30;
+            const MAX_PHOTOS = 10;
             const files = Array.from(e.target.files) as File[];
 
             // Sort files by date (oldest to newest)
@@ -771,8 +773,11 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const handleSave = async () => {
         if (!formData.event) return alert('Informe o evento');
         if (!currentUser) return alert('Você precisa estar logado para salvar.');
+        if (saveLockRef.current) return;
 
+        saveLockRef.current = true;
         setIsUploading(true);
+        setUploadProgress('Iniciando...');
         (window as any).setManualSyncing?.(true);
 
         // Safety timeout: 60 seconds - MUST be first to guarantee unlocking UI
@@ -788,25 +793,30 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             (async () => {
                 const betId = formData.id || Date.now().toString();
                 try {
-                    // 1. Process images (Async upload to Storage)
-                    const photoUrls = await Promise.all(
-                        tempPhotos.map(async (photo) => {
-                            try {
-                                if (photo.url.startsWith('data:')) {
-                                    // Compress before upload
-                                    const compressedBase64 = await import('../utils/imageCompression').then(mod =>
-                                        mod.compressBase64(photo.url, { maxSizeMB: 0.5, maxWidth: 1024, quality: 0.75 })
-                                    );
-                                    return await FirestoreService.uploadImage(currentUser.uid, betId, compressedBase64);
-                                }
-                                return photo.url;
-                            } catch (err) {
-                                console.error("[Storage] Upload failed for a photo:", err);
-                                throw err;
+                    // 1. Process images (Sequential upload with progress)
+                    const photoUrls: string[] = [];
+                    let count = 0;
+                    for (const photo of tempPhotos) {
+                        count++;
+                        setUploadProgress(`Foto ${count}/${tempPhotos.length}`);
+                        try {
+                            if (photo.url.startsWith('data:')) {
+                                // Compress before upload
+                                const compressedBase64 = await import('../utils/imageCompression').then(mod =>
+                                    mod.compressBase64(photo.url, { maxSizeMB: 0.2, maxWidth: 1024, quality: 0.7 })
+                                );
+                                const url = await FirestoreService.uploadImage(currentUser.uid, betId, compressedBase64);
+                                photoUrls.push(url);
+                            } else {
+                                photoUrls.push(photo.url);
                             }
-                        })
-                    );
+                        } catch (err) {
+                            console.error("[Storage] Upload failed for a photo:", err);
+                            throw err;
+                        }
+                    }
 
+                    setUploadProgress('Sincronizando Dados...');
                     const rawBet: Bet = {
                         ...formData, id: betId, notes: formData.notes, photos: photoUrls,
                         date: formData.date.includes('T') ? formData.date : `${formData.date}T12:00:00.000Z`,
@@ -817,7 +827,13 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     await FirestoreService.saveBet(currentUser.uid, cleanData);
                     console.info("[MyBets] Background Save Concluído.");
 
-                    // 1.1 DEFERRED DRAFT CLEANUP: Only clear if save was successful
+                    // Success: Close modal and reset state
+                    setIsUploading(false);
+                    setUploadProgress('');
+                    handleCloseModal();
+                    saveLockRef.current = false;
+
+                    // 1.1 DEFERRED DRAFT CLEANUP
                     if (isEditing && formData.id) {
                         localStorage.removeItem(`apostaspro_draft_edit_${formData.id}`);
                     } else {
@@ -826,10 +842,14 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     localStorage.removeItem('apostaspro_live_draft');
                 } catch (bgError: any) {
                     console.error("[MyBets] Background Save Erro:", bgError);
+                    saveLockRef.current = false;
+                    setIsUploading(false);
+                    setUploadProgress('');
+
                     const errorMessage = bgError.message || "Erro desconhecido";
 
-                    if (errorMessage.includes("Timeout")) {
-                        const shouldClear = confirm(`CONEXÃO TRAVADA!\n\nO envio está travado há mais de 5 minutos. Isso acontece quando uploads anteriores (fotos grandes) entopem a fila.\n\nDeseja LIMPAR a fila de uploads para destravar o app?\n(Isso cancelará envios pendentes, mas o app voltará a funcionar).`);
+                    if (errorMessage.includes("limite de tempo") || errorMessage.includes("Timeout")) {
+                        const shouldClear = confirm(`CONEXÃO TRAVADA!\n\nO envio está travado. Isso acontece quando uploads anteriores entopem a fila ou a internet caiu.\n\nDeseja LIMPAR a fila de uploads para destravar o app?\n(Isso cancelará envios pendentes, mas o app voltará a funcionar).`);
                         if (shouldClear) {
                             await FirestoreService.clearLocalCache();
                         } else {
@@ -1745,7 +1765,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                             {isUploading ? (
                                 <>
                                     <Loader2 size={16} className="animate-spin" />
-                                    <span>Salvando...</span>
+                                    <span>{uploadProgress || 'Salvando...'}</span>
                                 </>
                             ) : (
                                 isEditing ? "Salvar Alterações" : "Adicionar Aposta"

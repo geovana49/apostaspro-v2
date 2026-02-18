@@ -31,7 +31,7 @@ const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, operationName: s
     return Promise.race([
         promise,
         new Promise<T>((_, reject) =>
-            setTimeout(() => reject(new Error(`Timeout: ${operationName} demorou mais de ${timeoutMs / 1000}s`)), timeoutMs)
+            setTimeout(() => reject(new Error(`O ${operationName} excedeu o limite de tempo (${timeoutMs / 1000}s). Verifique sua conexão.`)), timeoutMs)
         )
     ]);
 };
@@ -279,8 +279,8 @@ export const FirestoreService = {
                 await uploadString(storageRef, base64, 'data_url');
                 return await getDownloadURL(storageRef);
             })(),
-            300000,
-            "Upload de Imagem (Firebase Storage)"
+            60000,
+            "Upload de Imagem"
         );
     },
 

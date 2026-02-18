@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [
     react(),
     mkcert(),
-    VitePWA({ // v1.2.2 - Force Cache Invalidation for Sync Stability
+    VitePWA({ // v1.2.3 - Firebase Storage Caching Fix
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'robots.txt'],
       workbox: {
@@ -64,6 +64,21 @@ export default defineConfig({
               expiration: {
                 maxEntries: 10,
                 maxAgeSeconds: 60 * 60 * 24 * 365
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            // NEW: Cache images from Firebase Storage
+            urlPattern: /^https:\/\/firebasestorage\.googleapis\.com\/.*/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'firebase-storage-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
               },
               cacheableResponse: {
                 statuses: [0, 200]
