@@ -303,20 +303,23 @@ const Layout: React.FC<LayoutProps> = ({
               }}
               title={onForceSync ? "Clique para reparar sincronização" : "Clique para recarregar"}
             >
-              <CloudOff size={16} className="text-danger" />
-              <span className="text-[10px] font-bold text-danger uppercase sm:tracking-wider">Offline</span>
-            </>
-            ) : isSyncing ? (
-            <>
-              <Cloud size={16} className="text-secondary animate-spin" />
-              <span className="text-[10px] font-bold text-secondary uppercase sm:tracking-wider">Sincronizando...</span>
-            </>
-            ) : (
-            <>
-              <Cloud size={16} className="text-primary" />
-              <span className="text-[10px] font-bold text-primary uppercase sm:tracking-wider">Sincronizado</span>
-            </>
+              {!isOnline ? (
+                <>
+                  <CloudOff size={16} className="text-danger" />
+                  <span className="text-[10px] font-bold text-danger uppercase sm:tracking-wider">Offline</span>
+                </>
+              ) : isSyncing ? (
+                <>
+                  <Cloud size={16} className="text-secondary animate-spin" />
+                  <span className="text-[10px] font-bold text-secondary uppercase sm:tracking-wider">Sincronizando...</span>
+                </>
+              ) : (
+                <>
+                  <Cloud size={16} className="text-primary" />
+                  <span className="text-[10px] font-bold text-primary uppercase sm:tracking-wider">Sincronizado</span>
+                </>
               )}
+            </div>
           </div>
         </div>
 
