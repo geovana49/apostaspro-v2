@@ -286,39 +286,39 @@ const Layout: React.FC<LayoutProps> = ({
             >
               <Menu size={24} />
             </button>
-            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight truncate">{getPageTitle(activePage)}</h2>
-
-            {/* Sync / Offline Status Indicator - Labels hidden on small mobile */}
-            <div
-              className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-full bg-white/5 border transition-all cursor-pointer hover:bg-white/10 active:scale-95 shrink-0
-                ${!isOnline ? 'border-danger/30 text-danger shadow-[0_0_10px_rgba(239,68,68,0.1)]' :
-                  isSyncing ? 'border-primary/40 text-primary shadow-[0_0_10px_rgba(59,130,246,0.1)]' :
-                    'border-primary/20 text-primary/80'}`}
-              onClick={() => {
-                if (onForceSync) {
-                  onForceSync();
-                } else if (confirm("Deseja recarregar a página para forçar uma sincronização?")) {
-                  window.location.reload();
-                }
-              }}
-              title={onForceSync ? "Clique para reparar sincronização" : "Clique para recarregar"}
-            >
-              {!isOnline ? (
-                <>
-                  <CloudOff size={16} className="text-danger" />
-                  <span className="text-[10px] font-bold text-danger uppercase sm:tracking-wider">Offline</span>
-                </>
-              ) : isSyncing ? (
-                <>
-                  <Cloud size={16} className="text-secondary animate-spin" />
-                  <span className="text-[10px] font-bold text-secondary uppercase sm:tracking-wider">Sincronizando...</span>
-                </>
-              ) : (
-                <>
-                  <Cloud size={16} className="text-primary" />
-                  <span className="text-[10px] font-bold text-primary uppercase sm:tracking-wider">Sincronizado</span>
-                </>
-              )}
+            <div className="flex flex-col min-w-0">
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight truncate">{getPageTitle(activePage)}</h2>
+              <div
+                className={`flex items-center gap-1 cursor-pointer transition-all active:scale-95 w-fit
+                  ${!isOnline ? 'text-danger' :
+                    isSyncing ? 'text-secondary' :
+                      'text-primary/70'}`}
+                onClick={() => {
+                  if (onForceSync) {
+                    onForceSync();
+                  } else if (confirm("Deseja recarregar a página para forçar uma sincronização?")) {
+                    window.location.reload();
+                  }
+                }}
+                title={onForceSync ? "Clique para reparar sincronização" : "Clique para recarregar"}
+              >
+                {!isOnline ? (
+                  <>
+                    <CloudOff size={12} />
+                    <span className="text-[9px] font-bold uppercase">Offline</span>
+                  </>
+                ) : isSyncing ? (
+                  <>
+                    <Cloud size={12} className="animate-spin" />
+                    <span className="text-[9px] font-bold uppercase">Sincronizando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Cloud size={12} />
+                    <span className="text-[9px] font-bold uppercase">Sincronizado</span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
