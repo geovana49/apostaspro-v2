@@ -70,7 +70,7 @@ export const FirestoreService = {
 
             await withTimeout(
                 setDoc(betRef, dataToSave, { merge: true }),
-                30000,
+                300000,
                 "Salvamento de Aposta (setDoc)"
             );
 
@@ -114,7 +114,7 @@ export const FirestoreService = {
 
             await withTimeout(
                 setDoc(gainRef, dataToSave, { merge: true }),
-                30000,
+                300000,
                 "Salvamento de Ganho (setDoc)"
             );
 
@@ -279,7 +279,7 @@ export const FirestoreService = {
                 await uploadString(storageRef, base64, 'data_url');
                 return await getDownloadURL(storageRef);
             })(),
-            120000,
+            300000,
             "Upload de Imagem (Firebase Storage)"
         );
     },

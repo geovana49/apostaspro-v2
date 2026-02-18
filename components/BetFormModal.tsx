@@ -555,7 +555,11 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                     localStorage.removeItem(`apostaspro_draft_modal`); // Cleanup generic too
                 } catch (bgError: any) {
                     console.error("[BetFormModal] Background Save Erro:", bgError);
-                    alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar seus dados na nuvem: ${bgError.message || "Erro desconhecido"}.\n\nPara garantir que você não perca dados, a página será recarregada para mostrar o estado real.`);
+                    if (errorMessage.includes("Timeout")) {
+                        alert(`CONEXÃO LENTA DETECTADA!\n\nO upload das imagens demorou mais de 5 minutos e foi interrompido.\n\nSugestões:\n1. Tente enviar menos fotos por vez.\n2. Use uma conexão Wi-Fi mais rápida.\n3. Reduza o tamanho das imagens antes de enviar.\n\nA página será recarregada para garantir a integridade dos dados.`);
+                    } else {
+                        alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar seus dados na nuvem: ${errorMessage}.\n\nPara garantir que você não perca dados, a página será recarregada para mostrar o estado real.`);
+                    }
                     window.location.reload();
                 } finally {
                     clearTimeout(safetyTimeout);
@@ -624,7 +628,13 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                     localStorage.removeItem(`apostaspro_draft_modal`);
                 } catch (bgError: any) {
                     console.error("[BetFormModal] Background Draft Save Erro:", bgError);
-                    alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar o rascunho na nuvem: ${bgError.message || "Erro desconhecido"}.\n\nPara garantir que você não perca dados, a página será recarregada.`);
+                    const errorMessage = bgError.message || "Erro desconhecido";
+
+                    if (errorMessage.includes("Timeout")) {
+                        alert(`CONEXÃO LENTA (RASCUNHO)!\n\nO salvamento demorou muito. Verifique sua internet.\n\nA página será recarregada.`);
+                    } else {
+                        alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar o rascunho na nuvem: ${errorMessage}.\n\nPara garantir que você não perca dados, a página será recarregada.`);
+                    }
                     window.location.reload();
                 } finally {
                     clearTimeout(safetyTimeout);

@@ -629,7 +629,13 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     console.info("[ExtraGains] Background Save Concluído.");
                 } catch (bgError: any) {
                     console.error("[ExtraGains] Background Save Erro:", bgError);
-                    alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar seus dados na nuvem: ${bgError.message || "Erro desconhecido"}.\n\nPara garantir que você não perca dados, a página será recarregada para mostrar o estado real.`);
+                    const errorMessage = bgError.message || "Erro desconhecido";
+
+                    if (errorMessage.includes("Timeout")) {
+                        alert(`CONEXÃO LENTA DETECTADA!\n\nO salvamento demorou mais de 5 minutos. Verifique sua conexão.\n\nA página será recarregada.`);
+                    } else {
+                        alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar seus dados na nuvem: ${errorMessage}.\n\nPara garantir que você não perca dados, a página será recarregada para mostrar o estado real.`);
+                    }
                     window.location.reload();
                 } finally {
                     clearTimeout(safetyTimeout);
