@@ -310,8 +310,8 @@ const Layout: React.FC<LayoutProps> = ({
                 </>
               ) : isSyncing ? (
                 <>
-                  <Cloud size={16} className="text-primary animate-spin" />
-                  <span className="text-[10px] font-bold text-primary uppercase tracking-wider hidden sm:inline">Sincronizando...</span>
+                  <Cloud size={16} className="text-secondary animate-spin" />
+                  <span className="text-[10px] font-bold text-secondary uppercase tracking-wider hidden sm:inline">Enviando...</span>
                 </>
               ) : (
                 <>
