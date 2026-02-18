@@ -290,7 +290,7 @@ const Layout: React.FC<LayoutProps> = ({
 
             {/* Sync / Offline Status Indicator - Labels hidden on small mobile */}
             <div
-              className={`flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-full bg-white/5 border transition-all cursor-pointer hover:bg-white/10 active:scale-95 shrink-0
+              className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-full bg-white/5 border transition-all cursor-pointer hover:bg-white/10 active:scale-95 shrink-0
                 ${!isOnline ? 'border-danger/30 text-danger shadow-[0_0_10px_rgba(239,68,68,0.1)]' :
                   isSyncing ? 'border-primary/40 text-primary shadow-[0_0_10px_rgba(59,130,246,0.1)]' :
                     'border-primary/20 text-primary/80'}`}
@@ -303,133 +303,131 @@ const Layout: React.FC<LayoutProps> = ({
               }}
               title={onForceSync ? "Clique para reparar sincronização" : "Clique para recarregar"}
             >
-              {!isOnline ? (
-                <>
-                  <CloudOff size={16} className="text-danger" />
-                  <span className="text-[10px] font-bold text-danger uppercase tracking-wider hidden sm:inline">Offline</span>
-                </>
-              ) : isSyncing ? (
-                <>
-                  <Cloud size={16} className="text-secondary animate-spin" />
-                  <span className="text-[10px] font-bold text-secondary uppercase tracking-wider hidden sm:inline">Enviando...</span>
-                </>
-              ) : (
-                <>
-                  <Cloud size={16} className="text-primary" />
-                  <span className="text-[10px] font-bold text-primary uppercase tracking-wider hidden sm:inline">Sincronizado</span>
-                </>
+              <CloudOff size={16} className="text-danger" />
+              <span className="text-[10px] font-bold text-danger uppercase sm:tracking-wider">Offline</span>
+            </>
+            ) : isSyncing ? (
+            <>
+              <Cloud size={16} className="text-secondary animate-spin" />
+              <span className="text-[10px] font-bold text-secondary uppercase sm:tracking-wider">Sincronizando...</span>
+            </>
+            ) : (
+            <>
+              <Cloud size={16} className="text-primary" />
+              <span className="text-[10px] font-bold text-primary uppercase sm:tracking-wider">Sincronizado</span>
+            </>
               )}
-            </div>
-          </div>
-
-          {/* Right Actions */}
-          <div className="flex items-center gap-3">
-            {/* Profile Badge (Top Right) */}
-            {settings.showProfileInHeader && (
-              <div className="relative">
-                <div
-                  ref={profileButtonRef}
-                  className="flex items-center gap-3 bg-[#151b2e] border border-white/10 rounded-full p-1.5 pr-4 shadow-sm hover:border-white/20 transition-colors cursor-pointer group"
-                  onClick={() => setIsProfileMenuOpen(prev => !prev)}
-                >
-                  <div className="w-8 h-8 rounded-full bg-[#0d1121] flex items-center justify-center border border-white/5 overflow-hidden">
-                    {settings.profileImage ? (
-                      <img src={settings.profileImage} alt="Profile" className="w-full h-full object-cover" />
-                    ) : (
-                      <User size={14} className="text-gray-400 group-hover:text-white" />
-                    )}
-                  </div>
-                  {settings.showUsername && (
-                    <span className="text-sm font-bold text-white">{settings.username || 'Usuário'}</span>
-                  )}
-                </div>
-
-                {/* Profile Dropdown Menu */}
-                {isProfileMenuOpen && (
-                  <div
-                    ref={profileMenuRef}
-                    className="absolute top-full right-0 mt-3 w-56 bg-[#1c2438] border border-white/10 rounded-xl shadow-2xl z-50 p-2 animate-in fade-in zoom-in-95"
-                  >
-                    <div className="flex items-center gap-3 p-2 border-b border-white/5 mb-2">
-                      <div className="w-9 h-9 rounded-full bg-[#0d1121] flex items-center justify-center border border-white/5 overflow-hidden">
-                        {settings.profileImage ? (
-                          <img src={settings.profileImage} alt="Profile" className="w-full h-full object-cover" />
-                        ) : (
-                          <User size={16} className="text-gray-400" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-white truncate">{settings.username || 'Usuário'}</p>
-                        <p className="text-xs text-gray-500 truncate">{settings.email || ''}</p>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => {
-                        onNavigate(Page.SETTINGS, 'general');
-                        setIsProfileMenuOpen(false);
-                      }}
-                      className="w-full text-left flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white rounded-md transition-colors"
-                    >
-                      <Settings size={16} />
-                      <span>Meu Perfil</span>
-                    </button>
-
-                    <div className="h-px bg-white/5 my-1" />
-
-                    <button
-                      onClick={() => {
-                        onLogout();
-                        setIsProfileMenuOpen(false);
-                      }}
-                      className="w-full text-left flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-danger/10 hover:text-danger rounded-md transition-colors"
-                    >
-                      <LogOut size={16} />
-                      <span>Sair da Conta</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </header>
-
-        {/* Page Content */}
-        <div
-          ref={scrollRef}
-          onScroll={handleScroll}
-          className="flex-1 overflow-y-auto p-4 lg:p-8 scroll-smooth relative"
-        >
-          <div className="max-w-6xl mx-auto pb-20 space-y-8">
-            {children}
-          </div>
-
-          {/* Floating Scroll Buttons */}
-          <div className={`fixed bottom-6 right-6 z-50 flex flex-col gap-3 transition-all duration-500 ${isFabVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
-            {/* Scroll Top Button */}
-            {showTopBtn && (
-              <button
-                onClick={scrollToTop}
-                className="pointer-events-auto p-3 rounded-full bg-primary text-[#090c19] shadow-lg shadow-primary/20 hover:scale-110 hover:shadow-primary/40 transition-all duration-300 animate-in fade-in slide-in-from-bottom-4"
-                title="Voltar ao topo"
-              >
-                <ArrowUp size={20} strokeWidth={3} />
-              </button>
-            )}
-
-            {showBottomBtn && (
-              <button
-                onClick={scrollToBottom}
-                className="pointer-events-auto p-3 rounded-full bg-[#151b2e] border border-white/10 text-white shadow-lg hover:scale-110 hover:bg-white/5 transition-all duration-300 animate-in fade-in slide-in-from-bottom-4"
-                title="Ir para o final"
-              >
-                <ArrowDown size={20} strokeWidth={3} />
-              </button>
-            )}
           </div>
         </div>
-      </main>
-    </div>
+
+        {/* Right Actions */}
+        <div className="flex items-center gap-3">
+          {/* Profile Badge (Top Right) */}
+          {settings.showProfileInHeader && (
+            <div className="relative">
+              <div
+                ref={profileButtonRef}
+                className="flex items-center gap-3 bg-[#151b2e] border border-white/10 rounded-full p-1.5 pr-4 shadow-sm hover:border-white/20 transition-colors cursor-pointer group"
+                onClick={() => setIsProfileMenuOpen(prev => !prev)}
+              >
+                <div className="w-8 h-8 rounded-full bg-[#0d1121] flex items-center justify-center border border-white/5 overflow-hidden">
+                  {settings.profileImage ? (
+                    <img src={settings.profileImage} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <User size={14} className="text-gray-400 group-hover:text-white" />
+                  )}
+                </div>
+                {settings.showUsername && (
+                  <span className="text-sm font-bold text-white">{settings.username || 'Usuário'}</span>
+                )}
+              </div>
+
+              {/* Profile Dropdown Menu */}
+              {isProfileMenuOpen && (
+                <div
+                  ref={profileMenuRef}
+                  className="absolute top-full right-0 mt-3 w-56 bg-[#1c2438] border border-white/10 rounded-xl shadow-2xl z-50 p-2 animate-in fade-in zoom-in-95"
+                >
+                  <div className="flex items-center gap-3 p-2 border-b border-white/5 mb-2">
+                    <div className="w-9 h-9 rounded-full bg-[#0d1121] flex items-center justify-center border border-white/5 overflow-hidden">
+                      {settings.profileImage ? (
+                        <img src={settings.profileImage} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <User size={16} className="text-gray-400" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-white truncate">{settings.username || 'Usuário'}</p>
+                      <p className="text-xs text-gray-500 truncate">{settings.email || ''}</p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      onNavigate(Page.SETTINGS, 'general');
+                      setIsProfileMenuOpen(false);
+                    }}
+                    className="w-full text-left flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white rounded-md transition-colors"
+                  >
+                    <Settings size={16} />
+                    <span>Meu Perfil</span>
+                  </button>
+
+                  <div className="h-px bg-white/5 my-1" />
+
+                  <button
+                    onClick={() => {
+                      onLogout();
+                      setIsProfileMenuOpen(false);
+                    }}
+                    className="w-full text-left flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-danger/10 hover:text-danger rounded-md transition-colors"
+                  >
+                    <LogOut size={16} />
+                    <span>Sair da Conta</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* Page Content */}
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto p-4 lg:p-8 scroll-smooth relative"
+      >
+        <div className="max-w-6xl mx-auto pb-20 space-y-8">
+          {children}
+        </div>
+
+        {/* Floating Scroll Buttons */}
+        <div className={`fixed bottom-6 right-6 z-50 flex flex-col gap-3 transition-all duration-500 ${isFabVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
+          {/* Scroll Top Button */}
+          {showTopBtn && (
+            <button
+              onClick={scrollToTop}
+              className="pointer-events-auto p-3 rounded-full bg-primary text-[#090c19] shadow-lg shadow-primary/20 hover:scale-110 hover:shadow-primary/40 transition-all duration-300 animate-in fade-in slide-in-from-bottom-4"
+              title="Voltar ao topo"
+            >
+              <ArrowUp size={20} strokeWidth={3} />
+            </button>
+          )}
+
+          {showBottomBtn && (
+            <button
+              onClick={scrollToBottom}
+              className="pointer-events-auto p-3 rounded-full bg-[#151b2e] border border-white/10 text-white shadow-lg hover:scale-110 hover:bg-white/5 transition-all duration-300 animate-in fade-in slide-in-from-bottom-4"
+              title="Ir para o final"
+            >
+              <ArrowDown size={20} strokeWidth={3} />
+            </button>
+          )}
+        </div>
+      </div>
+    </main>
+    </div >
   );
 };
 
