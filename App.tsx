@@ -90,6 +90,7 @@ const App: React.FC = () => {
           username: firebaseUser.displayName || 'Usuário',
           email: firebaseUser.email || '',
         };
+        console.info("[Auth] Usuário logado:", user.uid, user.email);
         setCurrentUser(user);
         setIsLoggedIn(true);
 
@@ -146,6 +147,7 @@ const App: React.FC = () => {
           syncStates[source] = val;
           const isAnythingSyncing = Object.values(syncStates).some(v => v === true);
           setIsSyncing(isAnythingSyncing);
+          if (val) console.debug(`[Sync] Ativado por: ${source}`);
         };
 
         // Expose manual sync trigger for components
