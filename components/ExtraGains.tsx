@@ -1307,7 +1307,6 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     </div>
                 </div>
             </Modal>
-            )}
 
             {/* Date Range Picker Modal */}
             <DateRangePickerModal
