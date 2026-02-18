@@ -54,10 +54,28 @@ const App: React.FC = () => {
   const [origins, setOrigins] = useState<OriginItem[]>([]);
   const [gains, setGains] = useState<ExtraGain[]>([]);
 
+  // Sync & Connection State
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isSyncing, setIsSyncing] = useState(false);
+
   // Current User
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+
+  // --- Connection Monitor ---
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // --- Debounce Save & Sync Refs ---
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -82,19 +100,25 @@ const App: React.FC = () => {
         setCurrentUser(userData);
         setIsLoggedIn(true);
 
+        const updateSyncStatus = (isSyncingVal: boolean) => {
+          setIsSyncing(isSyncingVal);
+        };
+
         // --- Real-time Subscriptions ---
         // 1. Listen for Bets
-        const unsubBets = FirestoreService.subscribeToBets(firebaseUser.uid, (data) => {
+        const unsubBets = FirestoreService.subscribeToBets(firebaseUser.uid, (data, syncing) => {
           setBets(data);
+          updateSyncStatus(syncing);
         });
 
         // 2. Listen for Extra Gains
-        const unsubGains = FirestoreService.subscribeToGains(firebaseUser.uid, (data) => {
+        const unsubGains = FirestoreService.subscribeToGains(firebaseUser.uid, (data, syncing) => {
           setGains(data);
+          updateSyncStatus(syncing);
         });
 
         // 3. Listen for Settings
-        const unsubSettings = FirestoreService.subscribeToSettings(firebaseUser.uid, (data) => {
+        const unsubSettings = FirestoreService.subscribeToSettings(firebaseUser.uid, (data, syncing) => {
           if (data) {
             setSettings(prev => ({
               ...DEFAULT_SETTINGS,
@@ -103,13 +127,26 @@ const App: React.FC = () => {
               username: firebaseUser.displayName || prev.username
             }));
           }
+          updateSyncStatus(syncing);
         });
 
         // 4. Listen for Basic Configurations
-        const unsubBooks = FirestoreService.subscribeToCollection<Bookmaker>(firebaseUser.uid, "bookmakers", setBookmakers);
-        const unsubStatus = FirestoreService.subscribeToCollection<StatusItem>(firebaseUser.uid, "statuses", setStatuses);
-        const unsubPromos = FirestoreService.subscribeToCollection<PromotionItem>(firebaseUser.uid, "promotions", setPromotions);
-        const unsubOrigins = FirestoreService.subscribeToCollection<OriginItem>(firebaseUser.uid, "origins", setOrigins);
+        const unsubBooks = FirestoreService.subscribeToCollection<Bookmaker>(firebaseUser.uid, "bookmakers", (data, syncing) => {
+          setBookmakers(data);
+          updateSyncStatus(syncing);
+        });
+        const unsubStatus = FirestoreService.subscribeToCollection<StatusItem>(firebaseUser.uid, "statuses", (data, syncing) => {
+          setStatuses(data);
+          updateSyncStatus(syncing);
+        });
+        const unsubPromos = FirestoreService.subscribeToCollection<PromotionItem>(firebaseUser.uid, "promotions", (data, syncing) => {
+          setPromotions(data);
+          updateSyncStatus(syncing);
+        });
+        const unsubOrigins = FirestoreService.subscribeToCollection<OriginItem>(firebaseUser.uid, "origins", (data, syncing) => {
+          setOrigins(data);
+          updateSyncStatus(syncing);
+        });
 
         unsubStats = [unsubBets, unsubGains, unsubSettings, unsubBooks, unsubStatus, unsubPromos, unsubOrigins];
         setIsDataLoaded(true);
@@ -177,6 +214,8 @@ const App: React.FC = () => {
       settings={settings}
       setSettings={setSettings}
       onLogout={handleLogout}
+      isOnline={isOnline}
+      isSyncing={isSyncing}
     >
       {activePage === Page.OVERVIEW && <Overview bets={bets} gains={gains} settings={settings} setSettings={setSettings} />}
 

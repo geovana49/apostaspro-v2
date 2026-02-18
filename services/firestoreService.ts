@@ -152,11 +152,11 @@ export const FirestoreService = {
 
     // --- Configurations ---
 
-    subscribeToCollection: <T>(userId: string, collectionName: string, callback: (items: T[]) => void, onError?: (err: any) => void) => {
+    subscribeToCollection: <T>(userId: string, collectionName: string, callback: (items: T[], isSyncing: boolean) => void, onError?: (err: any) => void) => {
         const q = query(collection(db, "users", userId, collectionName));
         return onSnapshot(q, (snapshot) => {
             const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as unknown as T));
-            callback(items);
+            callback(items, snapshot.metadata.hasPendingWrites);
         }, (error) => {
             console.error(`Snapshot error (${collectionName}):`, error);
             if (onError) onError(error);
