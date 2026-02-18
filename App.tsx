@@ -55,33 +55,8 @@ const App: React.FC = () => {
   const [isOnline, setIsOnline] = useState(window.navigator.onLine);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // -- Debug Logs --
-  const [debugLogs, setDebugLogs] = useState<string[]>([]);
-  const [showDebug, setShowDebug] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
-
-  // Global Error Listener & Console Capture
+  // Global Online/Offline Listener
   useEffect(() => {
-    const originalLog = console.log;
-    const originalInfo = console.info;
-    const originalWarn = console.warn;
-    const originalError = console.error;
-
-    const addLog = (type: string, ...args: any[]) => {
-      // Avoid console flooding that could happen if logs trigger renders that trigger logs
-      const msg = `[${new Date().toLocaleTimeString()}] [${type}] ${args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ')}`;
-      setTimeout(() => {
-        setDebugLogs(prev => {
-          if (prev.length > 0 && prev[0].includes(msg.substring(0, 30))) return prev; // Avoid duplicate-ish spam
-          return [msg, ...prev].slice(0, 50); // Keep only 50
-        });
-      }, 0);
-    };
-
-    console.log = (...args) => { originalLog(...args); addLog('LOG', ...args); };
-    console.info = (...args) => { originalInfo(...args); addLog('INFO', ...args); };
-    console.warn = (...args) => { originalWarn(...args); addLog('WARN', ...args); };
-    console.error = (...args) => { originalError(...args); addLog('ERROR', ...args); };
     const handleError = (event: ErrorEvent) => {
       setErrorMessage(`Error: ${event.message} at ${event.filename}:${event.lineno}`);
     };
@@ -425,71 +400,6 @@ const App: React.FC = () => {
               )}
             </Suspense>
           </Layout>
-        )}
-
-        {/* Floating Debug Toggle */}
-        <button
-          onClick={() => setShowDebug(!showDebug)}
-          className="fixed bottom-20 right-4 z-[9999] bg-yellow-500 text-black px-3 py-2 rounded-lg text-sm font-bold shadow-lg opacity-100 hover:scale-110 active:scale-95 transition-all"
-        >
-          DEBUG 🛠️
-        </button>
-
-        {/* Debug Console Modal */}
-        {showDebug && (
-          <div className="fixed inset-0 z-[10000] bg-black/90 text-white font-mono text-[10px] p-4 flex flex-col overflow-hidden">
-            <div className="flex justify-between items-center mb-4 border-b border-white/20 pb-2">
-              <h3 className="font-bold text-yellow-500">PAINEL DE DIAGNÓSTICO</h3>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={handleForceEmergencyReset}
-                  disabled={isResetting}
-                  className={`${isResetting ? 'bg-gray-500' : 'bg-danger animate-pulse'} px-3 py-1 rounded text-white font-bold text-[9px]`}
-                >
-                  {isResetting ? 'LIMPANDO...' : 'LIMPAR TUDO'}
-                </button>
-                <button
-                  onClick={async () => {
-                    if ('serviceWorker' in navigator) {
-                      const regs = await navigator.serviceWorker.getRegistrations();
-                      for (let r of regs) await r.unregister();
-                    }
-                    window.location.href = window.location.origin + '?v=' + Date.now();
-                  }}
-                  className="bg-primary/20 hover:bg-primary/40 px-2 py-1 rounded text-primary font-bold text-[9px]"
-                >
-                  RECARREGAR DO ZERO
-                </button>
-                <button onClick={() => setShowDebug(false)} className="bg-white/20 px-3 py-1 rounded text-[9px]">FECHAR</button>
-              </div>
-            </div>
-
-            {/* Quick Status */}
-            <div className="bg-white/5 p-2 rounded mb-4 space-y-1 text-[10px] text-gray-400">
-              <p>Usuário: <span className="text-white">{currentUser?.email || 'N/A'}</span></p>
-              <p>ID Projeto: <span className="text-white">minhasapostaspro</span></p>
-              <p>Sua Conta (UID): <span className="text-white break-all">{currentUser?.uid || 'Deslogado'}</span></p>
-              <p>Rede: <span className={isOnline ? 'text-green-500' : 'text-danger'}>{isOnline ? 'ONLINE' : 'OFFLINE'}</span></p>
-              <p>Total Apostas: <span className="text-white">{bets.length}</span></p>
-            </div>
-
-            {/* Empty Data Warning */}
-            {!isLoading && bets.length === 0 && activePage === Page.BETS && (
-              <div className="bg-yellow-500/20 border border-yellow-500 p-2 rounded mb-4 text-yellow-500 text-xs">
-                ⚠️ Dados não apareceram? Se no seu notebook eles estão lá, clique em <b>LIMPAR TUDO</b> acima para resetar esta aba.
-              </div>
-            )}
-
-            <div className="flex-1 overflow-y-auto space-y-1">
-              <p className="text-gray-500 italic mb-2">Logs do sistema (mais recentes primeiro):</p>
-              {debugLogs.length === 0 && <p className="text-gray-600">Nenhum log capturado ainda...</p>}
-              {debugLogs.map((log, i) => (
-                <div key={i} className={`py-1 border-b border-white/5 ${log.includes('[ERROR]') ? 'text-danger' : log.includes('[WARN]') ? 'text-yellow-200' : 'text-gray-300'}`}>
-                  {log}
-                </div>
-              ))}
-            </div>
-          </div>
         )}
       </div>
     </Suspense>
