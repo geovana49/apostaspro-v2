@@ -183,22 +183,6 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
 
         const betPromotionsCount = filteredBets.filter(b => b.promotionType && b.promotionType !== 'Nenhuma').length;
 
-        // Debug: Check all bets regardless of filter
-        const allBetsWithPromotions = bets.filter(b => b.promotionType && b.promotionType !== 'Nenhuma');
-        const now = new Date();
-        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-
-        console.log('🔍 Debug Promotions Counter:', {
-            selectedPeriod: period,
-            currentMonth: `${now.getMonth() + 1}/${now.getFullYear()}`,
-            lastMonth: `${lastMonth.getMonth() + 1}/${lastMonth.getFullYear()}`,
-            totalBets: bets.length,
-            totalFilteredBets: filteredBets.length,
-            betsWithPromotions: betPromotionsCount,
-            allBetsWithPromotions: allBetsWithPromotions.length,
-            allBetsWithPromotionsDates: allBetsWithPromotions.map(b => ({ date: b.date, event: b.event, promotion: b.promotionType })),
-            sampleFilteredBets: filteredBets.slice(0, 3).map(b => ({ date: b.date, hasPromotion: !!(b.promotionType && b.promotionType !== 'Nenhuma'), promotion: b.promotionType }))
-        });
         const totalPromotionsCount = betPromotionsCount;
         const doubleGreenBets = filteredBets.filter(b => calculateBetStats(b).isDoubleGreen);
 

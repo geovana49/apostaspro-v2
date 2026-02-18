@@ -58,6 +58,7 @@ const App: React.FC = () => {
   // -- Debug Logs --
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const [showDebug, setShowDebug] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   // Global Error Listener & Console Capture
   useEffect(() => {
@@ -67,10 +68,13 @@ const App: React.FC = () => {
     const originalError = console.error;
 
     const addLog = (type: string, ...args: any[]) => {
+      // Avoid console flooding that could happen if logs trigger renders that trigger logs
       const msg = `[${new Date().toLocaleTimeString()}] [${type}] ${args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ')}`;
-      // DEFER state update to avoid React Error 520 (updating during render)
       setTimeout(() => {
-        setDebugLogs(prev => [msg, ...prev].slice(0, 100));
+        setDebugLogs(prev => {
+          if (prev.length > 0 && prev[0].includes(msg.substring(0, 30))) return prev; // Avoid duplicate-ish spam
+          return [msg, ...prev].slice(0, 50); // Keep only 50
+        });
       }, 0);
     };
 
@@ -280,6 +284,7 @@ const App: React.FC = () => {
   const handleForceEmergencyReset = async () => {
     if (confirm("ATENÇÃO: Isso irá deslogar você, limpar todo o cache local e forçar o app a baixar tudo da nuvem novamente. Nenhum dado salvo na nuvem será perdido. Deseja continuar?")) {
       try {
+        setIsResetting(true);
         console.warn("Iniciando Emergency Reset...");
         localStorage.clear();
         sessionStorage.clear();
@@ -422,7 +427,13 @@ const App: React.FC = () => {
             <div className="flex justify-between items-center mb-4 border-b border-white/20 pb-2">
               <h3 className="font-bold text-yellow-500">PAINEL DE DIAGNÓSTICO</h3>
               <div className="flex gap-2">
-                <button onClick={handleForceEmergencyReset} className="bg-danger px-3 py-1 rounded text-white font-bold animate-pulse">LIMPAR TUDO</button>
+                <button
+                  onClick={handleForceEmergencyReset}
+                  disabled={isResetting}
+                  className={`${isResetting ? 'bg-gray-500' : 'bg-danger animate-pulse'} px-3 py-1 rounded text-white font-bold`}
+                >
+                  {isResetting ? 'LIMPANDO...' : 'LIMPAR TUDO'}
+                </button>
                 <button onClick={() => setShowDebug(false)} className="bg-white/20 px-3 py-1 rounded">FECHAR</button>
               </div>
             </div>
