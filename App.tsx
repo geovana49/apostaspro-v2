@@ -149,7 +149,7 @@ const App: React.FC = () => {
         const loadingTimeout = setTimeout(() => {
           setIsLoading(prev => {
             if (prev) {
-              console.warn("Loading timeout reached. Forcing app to show.");
+              console.warn("[Firestore] Loading timeout reached (8s). Forçando exibição.");
               return false;
             }
             return prev;
@@ -177,6 +177,8 @@ const App: React.FC = () => {
 
         // Expose manual sync trigger for components
         (window as any).setManualSyncing = (val: boolean) => updateSyncStatus('manual', val);
+
+        console.log("[Firestore] Iniciando ouvintes (onSnapshot)...");
 
         const unsubBets = FirestoreService.subscribeToBets(user.uid, (data, syncing) => {
           console.log(`[Snapshot] Bets recebidas: ${data.length} itens.`);

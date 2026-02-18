@@ -12,18 +12,18 @@ const firebaseConfig = {
   appId: "1:502045078642:web:b5366b7a43f91911f87eeb"
 };
 
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache, persistentSingleTabManager } from "firebase/firestore";
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-console.info("[Firebase] Inicializado no projeto:", firebaseConfig.projectId);
+console.info("[Firebase] Inicializando cache single-tab para projeto:", firebaseConfig.projectId);
 
 // Initialize Firebase services
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager(),
+    tabManager: persistentSingleTabManager(),
     cacheSizeBytes: 50 * 1024 * 1024 // 50MB limit
   }),
   experimentalForceLongPolling: true,
