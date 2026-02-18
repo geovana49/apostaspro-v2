@@ -442,16 +442,29 @@ const App: React.FC = () => {
                 <button
                   onClick={handleForceEmergencyReset}
                   disabled={isResetting}
-                  className={`${isResetting ? 'bg-gray-500' : 'bg-danger animate-pulse'} px-3 py-1 rounded text-white font-bold`}
+                  className={`${isResetting ? 'bg-gray-500' : 'bg-danger animate-pulse'} px-3 py-1 rounded text-white font-bold text-[9px]`}
                 >
                   {isResetting ? 'LIMPANDO...' : 'LIMPAR TUDO'}
                 </button>
-                <button onClick={() => setShowDebug(false)} className="bg-white/20 px-3 py-1 rounded">FECHAR</button>
+                <button
+                  onClick={async () => {
+                    if ('serviceWorker' in navigator) {
+                      const regs = await navigator.serviceWorker.getRegistrations();
+                      for (let r of regs) await r.unregister();
+                    }
+                    window.location.href = window.location.origin + '?v=' + Date.now();
+                  }}
+                  className="bg-primary/20 hover:bg-primary/40 px-2 py-1 rounded text-primary font-bold text-[9px]"
+                >
+                  RECARREGAR DO ZERO
+                </button>
+                <button onClick={() => setShowDebug(false)} className="bg-white/20 px-3 py-1 rounded text-[9px]">FECHAR</button>
               </div>
             </div>
 
             {/* Quick Status */}
-            <div className="bg-white/5 p-2 rounded mb-4 space-y-1 text-gray-400">
+            <div className="bg-white/5 p-2 rounded mb-4 space-y-1 text-[10px] text-gray-400">
+              <p>Usuário: <span className="text-white">{currentUser?.email || 'N/A'}</span></p>
               <p>ID Projeto: <span className="text-white">minhasapostaspro</span></p>
               <p>Sua Conta (UID): <span className="text-white break-all">{currentUser?.uid || 'Deslogado'}</span></p>
               <p>Rede: <span className={isOnline ? 'text-green-500' : 'text-danger'}>{isOnline ? 'ONLINE' : 'OFFLINE'}</span></p>
