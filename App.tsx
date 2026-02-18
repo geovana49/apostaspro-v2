@@ -397,12 +397,12 @@ const App: React.FC = () => {
           </Layout>
         )}
 
-        {/* Floating Debug Toggle (Hidden by default, can be toggled via secret or just always visible for now) */}
+        {/* Floating Debug Toggle */}
         <button
           onClick={() => setShowDebug(!showDebug)}
-          className="fixed bottom-20 right-4 z-[9999] bg-yellow-500 text-black px-2 py-1 rounded-md text-[10px] font-bold opacity-30 hover:opacity-100 transition-opacity"
+          className="fixed bottom-20 right-4 z-[9999] bg-yellow-500 text-black px-3 py-2 rounded-lg text-sm font-bold shadow-lg opacity-100 hover:scale-110 active:scale-95 transition-all"
         >
-          DEBUG
+          DEBUG 🛠️
         </button>
 
         {/* Debug Console Modal */}
@@ -411,10 +411,26 @@ const App: React.FC = () => {
             <div className="flex justify-between items-center mb-4 border-b border-white/20 pb-2">
               <h3 className="font-bold text-yellow-500">PAINEL DE DIAGNÓSTICO</h3>
               <div className="flex gap-2">
-                <button onClick={handleForceEmergencyReset} className="bg-danger px-2 py-1 rounded text-white font-bold">LIMPAR TUDO</button>
+                <button onClick={handleForceEmergencyReset} className="bg-danger px-3 py-1 rounded text-white font-bold animate-pulse">LIMPAR TUDO</button>
                 <button onClick={() => setShowDebug(false)} className="bg-white/20 px-3 py-1 rounded">FECHAR</button>
               </div>
             </div>
+
+            {/* Quick Status */}
+            <div className="bg-white/5 p-2 rounded mb-4 space-y-1 text-gray-400">
+              <p>ID Projeto: <span className="text-white">minhasapostaspro</span></p>
+              <p>Sua Conta (UID): <span className="text-white break-all">{currentUser?.uid || 'Deslogado'}</span></p>
+              <p>Rede: <span className={isOnline ? 'text-green-500' : 'text-danger'}>{isOnline ? 'ONLINE' : 'OFFLINE'}</span></p>
+              <p>Total Apostas: <span className="text-white">{bets.length}</span></p>
+            </div>
+
+            {/* Empty Data Warning */}
+            {!isLoading && bets.length === 0 && activePage === Page.BETS && (
+              <div className="bg-yellow-500/20 border border-yellow-500 p-2 rounded mb-4 text-yellow-500 text-xs">
+                ⚠️ Dados não apareceram? Se no seu notebook eles estão lá, clique em <b>LIMPAR TUDO</b> acima para resetar esta aba.
+              </div>
+            )}
+
             <div className="flex-1 overflow-y-auto space-y-1">
               <p className="text-gray-500 italic mb-2">Logs do sistema (mais recentes primeiro):</p>
               {debugLogs.length === 0 && <p className="text-gray-600">Nenhum log capturado ainda...</p>}

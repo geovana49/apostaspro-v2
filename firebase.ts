@@ -16,6 +16,7 @@ import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+console.info("[Firebase] Inicializado no projeto:", firebaseConfig.projectId);
 
 // Initialize Firebase services
 export const auth = getAuth(app);
