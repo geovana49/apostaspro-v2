@@ -4,12 +4,12 @@ import { getStorage } from "firebase/storage";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCgUrOfbvQj9SoL8gjrRzb5MXTi6pZEkzA",
-  authDomain: "minhasapostaspro.firebaseapp.com",
-  projectId: "minhasapostaspro",
-  storageBucket: "minhasapostaspro.firebasestorage.app",
-  messagingSenderId: "502045078642",
-  appId: "1:502045078642:web:b5366b7a43f91911f87eeb"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
