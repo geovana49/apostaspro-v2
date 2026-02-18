@@ -265,6 +265,12 @@ const App: React.FC = () => {
 
     try {
       setIsLoading(true);
+      await FirestoreService.factoryReset(currentUser.uid);
+      window.location.reload();
+    } catch (error) {
+      console.error("Error resetting data:", error);
+      alert("Erro ao resetar dados. Tente novamente.");
+      setIsLoading(false);
     }
   };
 
