@@ -291,36 +291,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleTestConnection = async () => {
-    if (!currentUser) return;
-    console.info("[Firestore] Iniciando teste de rede total...");
-
-    // Passo 1: Ping direto no domínio do Google para ver se as operadoras bloquearam o DNS/Firewall
-    console.log("[Network] Testando alcance de firestore.googleapis.com...");
-    try {
-      const pingRes = await fetch('https://firestore.googleapis.com/google.firestore.v1.Firestore/ListDocuments/projects/minhasapostaspro', { mode: 'no-cors' });
-      console.log("[Network] Alcance do domínio: OK (recebido resposta opaca)");
-    } catch (err) {
-      console.error("[Network] Domínio firestore.googleapis.com INACESSÍVEL:", err);
-      alert("ERRO DE REDE: O celular não consegue nem 'pingar' o servidor do Google Firestore. Verifique se há algum Firewall ou se você está em modo de economia de dados.");
-      return;
-    }
-
-    // Passo 2: Teste via SDK (Long Polling agora forçado)
-    try {
-      const { getDocs, collection, query, limit } = await import('firebase/firestore');
-      const { db } = await import('./firebase');
-      const q = query(collection(db, "users", currentUser.uid, "bets"), limit(1));
-      const snap = await getDocs(q);
-      console.log(`[Firestore] Teste SDK OK! Snapshot manual com ${snap.size} docs.`);
-      alert("Conexão OK! O servidor respondeu ao pedido manual (Long Polling). Se os dados não aparecerem, recarregue a aba.");
-    } catch (err: any) {
-      console.error("[Firestore] Falha no teste de conexão SDK:", err);
-      const errorMsg = err?.message || JSON.stringify(err);
-      alert(`Conexão SDK FALHOU: ${errorMsg}`);
-    }
-  };
-
   const handleForceEmergencyReset = async () => {
     if (confirm("ATENÇÃO: Isso irá deslogar você, limpar todo o cache local e forçar o app a baixar tudo da nuvem novamente. Nenhum dado salvo na nuvem será perdido. Deseja continuar?")) {
       try {
@@ -489,12 +459,6 @@ const App: React.FC = () => {
                   className="bg-primary/20 hover:bg-primary/40 px-2 py-1 rounded text-primary font-bold text-[9px]"
                 >
                   RECARREGAR DO ZERO
-                </button>
-                <button
-                  onClick={handleTestConnection}
-                  className="bg-blue-500/20 hover:bg-blue-500/40 px-2 py-1 rounded text-blue-400 font-bold text-[9px]"
-                >
-                  TESTE CONEXÃO
                 </button>
                 <button onClick={() => setShowDebug(false)} className="bg-white/20 px-3 py-1 rounded text-[9px]">FECHAR</button>
               </div>
