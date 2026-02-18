@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [
     react(),
     mkcert(),
-    VitePWA({ // v1.2.1 - Force Update for Sync Fixes
+    VitePWA({ // v1.2.2 - Force Cache Invalidation for Sync Stability
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'robots.txt'],
       workbox: {
