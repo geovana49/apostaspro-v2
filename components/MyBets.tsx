@@ -849,8 +849,9 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     const errorMessage = bgError.message || "Erro desconhecido";
 
                     if (errorMessage.includes("limite de tempo") || errorMessage.includes("Timeout")) {
-                        alert(`SINCRONISMO LENTO!\n\nSeu upload está demorando mais que o normal devido à conexão lenta.\n\nO app continuará tentando no fundo, mas para garantir que nada trave, o app será recarregado.`);
-                        window.location.reload();
+                        console.warn("[MyBets] Sincronização lenta detectada. Continuando em background...");
+                        // Não recarrega mais automaticamente para não matar o processo de upload
+                        // Apenas informa o usuário se for critico, ou deixa o indicador de progresso agir
                     } else {
                         alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar seus dados na nuvem: ${errorMessage}.\n\nTente novamente.`);
                     }

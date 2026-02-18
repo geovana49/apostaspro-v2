@@ -566,8 +566,8 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                     console.error("[BetFormModal] Background Save Erro:", bgError);
 
                     if (errorMessage.includes("limite de tempo") || errorMessage.includes("Timeout")) {
-                        alert(`SINCRONISMO LENTO!\n\nSeu upload está demorando mais que o normal devido à conexão lenta.\n\nO app continuará tentando no fundo, mas para garantir que nada trave, o app será recarregado.`);
-                        window.location.reload();
+                        console.warn("[BetFormModal] Sincronização lenta detectada. Continuando em background...");
+                        // Não recarrega mais automaticamente
                     } else {
                         alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar seus dados na nuvem: ${errorMessage}.\n\nTente novamente.`);
                     }
@@ -645,11 +645,11 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                     console.error("[BetFormModal] Background Draft Save Erro:", bgError);
 
                     if (errorMessage.includes("limite de tempo") || errorMessage.includes("Timeout")) {
-                        alert(`SINCRONISMO LENTO (RASCUNHO)!\n\nO salvamento demorou mais que o esperado. Verifique sua rede móvel.\n\nA página será recarregada.`);
+                        console.warn("[BetFormModal] Sincronização de rascunho lenta. Continuando em background...");
                     } else {
                         alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar o rascunho: ${errorMessage}.\n\nTente novamente.`);
                     }
-                    window.location.reload();
+                    // Removemos o window.location.reload() daqui para não interromper
                 } finally {
                     clearTimeout(safetyTimeout);
                 }

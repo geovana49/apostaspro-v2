@@ -14,7 +14,7 @@ import {
     clearIndexedDbPersistence,
     terminate
 } from "firebase/firestore";
-import { ref, uploadBytes, uploadString, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytesResumable, uploadString, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase";
 import { Bet, ExtraGain, AppSettings, Bookmaker, StatusItem, PromotionItem, OriginItem } from "../types";
 
@@ -279,20 +279,37 @@ export const FirestoreService = {
                 const storageRef = ref(storage, `users/${userId}/bets/${betId}/${fileName}`);
 
                 if (data instanceof Blob) {
-                    await uploadBytes(storageRef, data);
+                    // [RESUMABLE] Mais resiliente a quedas de conexão
+                    const uploadTask = uploadBytesResumable(storageRef, data);
+
+                    return new Promise((resolve, reject) => {
+                        uploadTask.on('state_changed',
+                            (snapshot) => {
+                                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                if (progress % 20 === 0) console.log(`[Storage] Upload: ${progress.toFixed(0)}%`);
+                            },
+                            (error) => {
+                                console.error("[Storage] Resumable upload error code:", error.code);
+                                reject(error);
+                            },
+                            async () => {
+                                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                                resolve(downloadURL);
+                            }
+                        );
+                    });
                 } else if (typeof data === 'string' && data.startsWith('data:')) {
                     await uploadString(storageRef, data, 'data_url');
+                    return await getDownloadURL(storageRef);
                 } else {
                     console.error("[Firestore] Tipo de dado inválido para upload:", typeof data);
                     throw new Error("Formato de imagem inválido");
                 }
-
-                return await getDownloadURL(storageRef);
             } catch (error: any) {
-                if (retryCount < 2) {
-                    console.warn(`[Firestore] Falha no upload (tentativa ${retryCount + 1}). Tentando novamente...`, error.message);
-                    // Espera 1s antes de tentar de novo
-                    await new Promise(r => setTimeout(r, 1000));
+                const errorCode = error.code || 'unknown';
+                if (retryCount < 2 && (errorCode.includes('network') || errorCode.includes('retry') || errorCode.includes('request-terminated'))) {
+                    console.warn(`[Firestore] Falha recuperável no upload (tentativa ${retryCount + 1}). Retrying...`, error.message);
+                    await new Promise(r => setTimeout(r, 2000));
                     return uploadWithRetry(retryCount + 1);
                 }
                 throw error;
@@ -301,7 +318,7 @@ export const FirestoreService = {
 
         return withTimeout(
             uploadWithRetry(),
-            120000, // 2 minutos por imagem
+            300000, // 5 minutos por imagem (Aumentado de 120s)
             "Sincronismo de Foto"
         );
     },

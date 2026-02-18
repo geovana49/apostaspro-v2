@@ -665,8 +665,8 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             const errorMessage = error.message || "Erro desconhecido";
 
             if (errorMessage.includes("limite de tempo") || errorMessage.includes("Timeout")) {
-                alert(`SINCRONISMO LENTO!\n\nSeu upload está demorando mais que o normal devido à conexão lenta.\n\nO app continuará tentando no fundo, mas para garantir que nada trave, o app será recarregado.`);
-                window.location.reload();
+                console.warn("[ExtraGains] Sincronização lenta detectada. Continuando em background...");
+                // Não recarrega mais automaticamente para não matar o processo de upload
             } else {
                 alert(`FALHA NO SALVAMENTO!\n\nOcorreu um erro ao salvar: ${errorMessage}.\n\nTente novamente.`);
             }

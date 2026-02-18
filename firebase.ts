@@ -23,11 +23,13 @@ export const auth = getAuth(app);
 export const storage = getStorage(app);
 
 // [STABLE] Usa protocolos modernos para velocidade e Single-Tab para evitar travas de lock
+// Nota: ForceLongPolling ativado para maior resiliência em redes móveis instáveis
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({
     tabManager: persistentSingleTabManager(),
     cacheSizeBytes: 100 * 1024 * 1024 // 100MB limit for better mobile performance
-  })
+  }),
+  experimentalForceLongPolling: true
 });
 
 export default app;
