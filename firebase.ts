@@ -25,7 +25,6 @@ export const db = initializeFirestore(app, {
     tabManager: persistentMultipleTabManager(),
     cacheSizeBytes: 50 * 1024 * 1024 // 50MB limit
   }),
-  experimentalForceLongPolling: true, // Bypass mobile network WebSocket blocks
 });
 
 export default app;
