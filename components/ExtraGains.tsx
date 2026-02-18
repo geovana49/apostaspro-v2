@@ -916,6 +916,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                         <div>
                                             <h4 className="font-semibold text-white text-base flex items-center gap-2">
                                                 {gain.game || gain.origin}
+                                                {gain.photos && gain.photos.length > 0 && <ImageIcon size={14} className="text-secondary animate-pulse" title="Tem fotos" />}
                                             </h4>
                                             <div className="flex items-center gap-2 mt-1">
                                                 <span className="flex items-center gap-1 text-xs text-textMuted">
@@ -1007,7 +1008,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                             <div>
                                                 <label className="text-xs font-bold text-textMuted uppercase tracking-wider flex items-center gap-2 mb-2"><ImageIcon size={12} /> Fotos</label>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {gain.photos.map((photo, idx) => (
+                                                    {gain.photos.filter(p => !!p).map((photo, idx) => (
                                                         <div key={idx} onClick={(e) => { e.stopPropagation(); openImageViewer(gain.photos || [], idx); }} className="w-16 h-16 rounded border border-white/10 overflow-hidden cursor-zoom-in hover:scale-110 transition-transform hover:border-primary bg-black/50">
                                                             <img src={photo} alt="thumb" className="w-full h-full object-cover" />
                                                         </div>

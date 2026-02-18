@@ -15,9 +15,20 @@ interface LayoutProps {
   onLogout: () => void;
   isOnline: boolean;
   isSyncing: boolean;
+  onForceSync?: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate, settings, setSettings, onLogout, isOnline, isSyncing }) => {
+const Layout: React.FC<LayoutProps> = ({
+  children,
+  activePage,
+  onNavigate,
+  settings,
+  setSettings,
+  onLogout,
+  isOnline,
+  isSyncing,
+  onForceSync
+}) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
@@ -279,13 +290,16 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate, setti
 
             {/* Sync / Offline Status Indicator - Labels hidden on small mobile */}
             <div
-              className="flex items-center gap-2 px-2 sm:px-3 py-1 rounded-full bg-white/5 border border-white/5 animate-in fade-in transition-all cursor-pointer hover:bg-white/10 active:scale-95 shrink-0"
+              className={`flex items-center gap-2 px-2 sm:px-3 py-1 rounded-full bg-white/5 border border-white/5 animate-in fade-in transition-all cursor-pointer hover:bg-white/10 active:scale-95 shrink-0
+                ${!isOnline ? 'border-danger/30 text-danger' : ''}`}
               onClick={() => {
-                if (confirm("Deseja recarregar a página para forçar uma sincronização?")) {
+                if (onForceSync) {
+                  onForceSync();
+                } else if (confirm("Deseja recarregar a página para forçar uma sincronização?")) {
                   window.location.reload();
                 }
               }}
-              title="Clique para recarregar e forçar sincronização"
+              title={onForceSync ? "Clique para reparar sincronização" : "Clique para recarregar"}
             >
               {!isOnline ? (
                 <>

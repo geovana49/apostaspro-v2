@@ -77,14 +77,11 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // --- Debounce Save & Sync Refs ---
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Keep track of current state in ref for comparison in onSnapshot without dependency issues
-  const stateRef = useRef({ bets, gains, bookmakers, statuses, promotions, origins, settings });
-
-  useEffect(() => {
-    stateRef.current = { bets, gains, bookmakers, statuses, promotions, origins, settings };
-  }, [bets, gains, bookmakers, statuses, promotions, origins, settings]);
+  const handleForceSync = async () => {
+    if (confirm("Isso irá recarregar a página e limpar o cache local para forçar uma nova sincronização com a nuvem. Deseja continuar?")) {
+      await FirestoreService.clearLocalCache();
+    }
+  };
 
   // --- Auth & Real-time Data Listeners ---
   useEffect(() => {
@@ -216,6 +213,7 @@ const App: React.FC = () => {
       onLogout={handleLogout}
       isOnline={isOnline}
       isSyncing={isSyncing}
+      onForceSync={handleForceSync}
     >
       {activePage === Page.OVERVIEW && <Overview bets={bets} gains={gains} settings={settings} setSettings={setSettings} />}
 
