@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import {
     HelpCircle, ChevronDown, Check, Trash2, Share2, History, Users, ClipboardList,
     Target, Zap, Gift, ShieldAlert, TrendingUp, AlertTriangle, Divide,
@@ -53,7 +54,7 @@ const AccordionItem: React.FC<AccordionItemProps> = ({ icon, title, children, ic
 const TutorialModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const [tutorialTab, setTutorialTab] = useState<'arbpro' | 'freepro'>('arbpro');
 
-    return (
+    const content = (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 overflow-y-auto">
             <div className="min-h-screen py-8 px-4">
                 <div className="max-w-4xl mx-auto">
@@ -206,6 +207,8 @@ const TutorialModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             </div>
         </div>
     );
+
+    return ReactDOM.createPortal(content, document.body);
 };
 
 // --- Main Component ---
