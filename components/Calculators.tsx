@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import {
-    HelpCircle, ChevronDown, Check, Trash2, Share2, History, Users, ClipboardList,
+    HelpCircle, ChevronDown, Check, Trash2, Share2, History as HistoryIcon, Users, ClipboardList,
     Target, Zap, TrendingUp, BookOpen, X, Calculator, ArrowRight, Lightbulb, Info,
-    Lock, Unlock, Copy, AlertCircle, CheckCircle
+    Lock, Unlock, Copy, AlertCircle, CheckCircle, RotateCcw
 } from 'lucide-react';
 import {
     calculateArb, parseBR, formatBRL, formatOdd,
@@ -28,7 +28,17 @@ export interface HouseState {
     showIncrease: boolean;
 }
 
-type RoundingStep = 0.01 | 1 | 5;
+export interface CalculationHistory {
+    id: string;
+    timestamp: number;
+    numHouses: number;
+    rounding: number;
+    houses: HouseState[];
+    roi: number;
+    totalInvested: number;
+}
+
+type RoundingStep = 0.01 | 0.1 | 0.5 | 1 | 2 | 5 | 10 | 50 | 100;
 
 const DEFAULT_HOUSE = (): HouseState => ({
     annotation: '',
@@ -46,26 +56,19 @@ const DEFAULT_HOUSE = (): HouseState => ({
 
 const ROUNDING_OPTIONS: { label: string; value: RoundingStep }[] = [
     { label: 'R$ 0,01', value: 0.01 },
+    { label: 'R$ 0,10', value: 0.1 },
+    { label: 'R$ 0,50', value: 0.5 },
     { label: 'R$ 1,00', value: 1 },
+    { label: 'R$ 2,00', value: 2 },
     { label: 'R$ 5,00', value: 5 },
+    { label: 'R$ 10,00', value: 10 },
+    { label: 'R$ 50,00', value: 50 },
+    { label: 'R$ 100,00', value: 100 },
 ];
 
-// =============================================
-//  TABS
-// =============================================
 const TABS = [
     { id: 'arb-pro', label: 'ARB PRO', icon: '🎯', color: 'bg-purple-500', activeColor: 'text-purple-400' },
     { id: 'free-pro', label: 'FREE PRO', icon: '⚡', color: 'bg-cyan-500', activeColor: 'text-cyan-400' },
-    { id: 'surebet', label: 'Surebet', color: 'bg-orange-500', activeColor: 'text-orange-400' },
-    { id: 'freebet-triplo', label: '2 Back & 1 Lay', color: 'bg-blue-500', activeColor: 'text-blue-400' },
-    { id: 'freebet-3back', label: '3 Back', color: 'bg-emerald-500', activeColor: 'text-emerald-400' },
-    { id: 'freebet-lay', label: 'Freebet Lay', color: 'bg-purple-500', activeColor: 'text-purple-400' },
-    { id: 'shark', label: 'Aposta Segura', color: 'bg-green-500', activeColor: 'text-green-400' },
-    { id: 'odd-aumento', label: 'Odd Aumento', color: 'bg-yellow-500', activeColor: 'text-yellow-400' },
-    { id: 'lay-sem', label: 'Lay s/ Freebet', color: 'bg-red-500', activeColor: 'text-red-400' },
-    { id: 'handicap', label: 'HA Tabela', color: 'bg-teal-500', activeColor: 'text-teal-400' },
-    { id: 'multipla-lay', label: 'Múltipla + Lay', color: 'bg-pink-500', activeColor: 'text-pink-400' },
-    { id: 'multipla-freebet-lay', label: '🎁 Múltipla FB + Lay', color: 'bg-yellow-500', activeColor: 'text-yellow-400' }
 ];
 
 // =============================================
@@ -98,9 +101,9 @@ const TutorialModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const [tutorialTab, setTutorialTab] = useState<'arbpro' | 'freepro'>('arbpro');
     const content = (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 overflow-y-auto">
-            <div className="min-h-screen py-8 px-4">
-                <div className="max-w-4xl mx-auto">
-                    <div className="rounded-xl border bg-gradient-to-br from-[#1a1f35] to-[#0d1425] border-gray-700">
+            <div className="min-h-screen py-8 px-4 flex items-center justify-center">
+                <div className="max-w-4xl w-full">
+                    <div className="rounded-xl border bg-[#0d1425] border-gray-700 shadow-2xl">
                         <div className="flex flex-col space-y-1.5 p-6 border-b border-gray-700">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
@@ -204,19 +207,13 @@ interface HouseCardProps {
     responsibility: number;
     profitIfWin: number;
     finalOdd: number;
-    isArb: boolean;
     onChange: (h: HouseState) => void;
 }
 
-const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, responsibility, profitIfWin, isArb, finalOdd, onChange }) => {
+const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, responsibility, profitIfWin, finalOdd, onChange }) => {
     const isAnchor = house.isFixed;
     const update = (patch: Partial<HouseState>) => onChange({ ...house, ...patch });
 
-    // Ensure odd is derived properly for display if user hasn't typed anything yet
-    // but calculator has computed finalOdd. However, standard approach is:
-    // user types odd -> calc derives final. If user hasn't typed, final is 0.
-
-    // Toggle Helpers
     const toggleCommission = () => update({
         commission: house.commission ? '' : '0',
         showCommission: !house.showCommission
@@ -227,45 +224,53 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
     });
 
     return (
-        <div className={`bg-[#0d1421] border rounded-xl p-5 transition-all ${isAnchor ? 'border-purple-500/60 shadow-md shadow-purple-500/10' : 'border-[#1e3a5f] hover:border-cyan-500/30'}`}>
+        <div className={`bg-[#0d1421]/60 border rounded-xl p-5 transition-all ${isAnchor ? 'border-purple-500/60 shadow-lg shadow-purple-500/5' : 'border-[#1e3a5f]/50 hover:border-cyan-500/30'}`}>
             {/* Header */}
-            <div className="flex items-center justify-between mb-3">
-                <span className="text-white font-bold text-lg" contentEditable suppressContentEditableWarning
-                    onBlur={e => update({ annotation: e.currentTarget.textContent || '' })}>
-                    {house.annotation || `Casa ${index + 1}`} {index === 0 && !house.annotation && <span className="text-purple-400 text-sm font-normal">(Promo)</span>}
+            <div className="flex items-center justify-between mb-4">
+                <span className="text-white font-bold text-lg flex items-center gap-2">
+                    {house.annotation ? house.annotation : `Casa ${index + 1}`}
+                    {index === 0 && !house.annotation && <span className="text-purple-400 text-xs font-medium uppercase tracking-wider">(Promo)</span>}
                 </span>
-                {isAnchor && <span className="text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full flex items-center gap-1"><Lock className="w-3 h-3" /> Fixada</span>}
             </div>
 
-            {/* ODD + Final ODD */}
+            {/* Note Input */}
+            <div className="mb-4">
+                <input
+                    type="text"
+                    placeholder="Anotação (casa, parceiro, etc.)"
+                    value={house.annotation}
+                    onChange={e => update({ annotation: e.target.value })}
+                    className="w-full bg-[#0a0f1e]/80 border border-[#1e3a5f]/50 rounded-lg px-3 py-2 text-gray-300 text-sm focus:border-cyan-500/50 focus:outline-none placeholder-gray-600 transition-colors"
+                />
+            </div>
+
+            {/* ODD Layout */}
             <div className="grid grid-cols-2 gap-3 mb-4">
                 <div>
-                    <label className="text-xs text-gray-500 uppercase block mb-1">ODD</label>
+                    <label className="text-[10px] text-gray-500 uppercase font-bold tracking-wider block mb-1">ODD</label>
                     <input
                         type="text"
                         inputMode="decimal"
                         placeholder="2,00"
                         value={house.odd}
                         onChange={e => update({ odd: e.target.value })}
-                        className={`w-full bg-[#0a0f1e] border border-[#1e3a5f] rounded-lg px-3 py-2.5 text-white text-lg font-medium focus:border-cyan-500 focus:outline-none ${!house.odd || parseBR(house.odd) < 1.01 ? '' : ''}`}
+                        className="w-full bg-[#0a0f1e] border border-[#1e3a5f] rounded-lg px-3 py-2.5 text-white text-lg font-bold focus:border-cyan-500 focus:outline-none transition-colors border-opacity-50"
                     />
                 </div>
                 <div>
-                    <label className="text-xs text-gray-500 uppercase block mb-1">ODD Final</label>
-                    <div className="w-full bg-[#0a0f1e]/50 border border-[#1e3a5f] rounded-lg px-3 py-2.5 text-cyan-400 text-lg font-medium font-mono">
-                        {finalOdd > 0 ? formatOdd(finalOdd) : '—'}
+                    <label className="text-[10px] text-gray-500 uppercase font-bold tracking-wider block mb-1">ODD FINAL</label>
+                    <div className="w-full bg-[#0a0f1e]/60 border border-[#1e3a5f]/50 rounded-lg px-3 py-2.5 text-gray-400 text-lg font-bold font-mono min-h-[46px] flex items-center">
+                        {finalOdd > 0 ? formatOdd(finalOdd) : '0.00'}
                     </div>
                 </div>
             </div>
 
-            {/* Stake + Type Toggle */}
+            {/* STAKE + BACK/LAY */}
             <div className="mb-4">
-                <label className="text-xs text-gray-500 uppercase block mb-1">
-                    {isAnchor ? 'Stake (edite aqui)' : 'Stake (auto-calculado)'}
-                </label>
+                <label className="text-[10px] text-gray-500 uppercase font-bold tracking-wider block mb-1">STAKE</label>
                 <div className="flex gap-2">
                     <div className="relative flex-1">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">R$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-mono">R$</span>
                         {isAnchor ? (
                             <input
                                 type="text"
@@ -273,100 +278,103 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                                 placeholder="100,00"
                                 value={house.stake}
                                 onChange={e => update({ stake: e.target.value })}
-                                className="w-full bg-[#0a0f1e] border rounded-lg pl-9 pr-3 py-2.5 text-white text-lg font-medium focus:outline-none border-purple-500/60 focus:border-purple-400 font-mono"
+                                className="w-full bg-[#0a0f1e] border border-purple-500/40 rounded-lg pl-9 pr-3 py-2.5 text-white text-lg font-bold focus:outline-none focus:border-purple-400/60 font-mono transition-colors"
                             />
                         ) : (
-                            <div className="w-full bg-[#0a0f1e]/50 border border-[#1e3a5f] rounded-lg pl-9 pr-3 py-2.5 text-white text-lg font-medium font-mono">
-                                {computedStake > 0 ? formatBRL(computedStake).replace('R$', '').trim() : '—'}
+                            <div className="w-full bg-[#0a0f1e]/60 border border-[#1e3a5f]/50 rounded-lg pl-9 pr-3 py-2.5 text-white/80 text-lg font-bold font-mono min-h-[46px] flex items-center">
+                                {computedStake > 0 ? formatBRL(computedStake).replace('R$', '').trim() : '0,00'}
                             </div>
                         )}
                     </div>
                     <button
                         onClick={() => update({ isLay: !house.isLay })}
-                        className={`inline-flex items-center justify-center h-11 px-3 font-bold uppercase text-sm rounded-lg transition-colors w-20 
-                        ${house.isLay ? 'bg-pink-500 hover:bg-pink-600 text-white' : 'bg-cyan-400 hover:bg-cyan-500 text-black'}`}
+                        className={`inline-flex items-center justify-center h-[46px] px-4 font-black uppercase text-sm rounded-lg transition-all duration-200 shadow-sm
+                        ${house.isLay ? 'bg-pink-500 text-white hover:bg-pink-600' : 'bg-cyan-400 text-[#0d1421] hover:bg-cyan-500'}`}
                     >
                         {house.isLay ? 'LAY' : 'BACK'}
                     </button>
                 </div>
             </div>
 
-            {/* Conditional Fields */}
+            {/* Checkboxes Row 1 */}
+            <div className="flex items-center gap-4 mb-3 text-[11px] font-bold text-gray-400 uppercase tracking-tight">
+                <label className="flex items-center gap-2 cursor-pointer group">
+                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${!house.distribution ? 'bg-red-500 border-red-500 shadow-sm shadow-red-500/20' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}
+                        onClick={() => update({ distribution: !house.distribution })}>
+                        {!house.distribution && <Check className="w-3 h-3 text-white" />}
+                    </div>
+                    <span className={!house.distribution ? 'text-white' : 'group-hover:text-gray-300'}>ZERAR</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer group">
+                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${house.showCommission ? 'bg-yellow-500 border-yellow-500 shadow-sm shadow-yellow-500/20' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}
+                        onClick={toggleCommission}>
+                        {house.showCommission && <Check className="w-3 h-3 text-white" />}
+                    </div>
+                    <span className={house.showCommission ? 'text-white' : 'group-hover:text-gray-300'}>COMISSÃO</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer group">
+                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${house.isFreebet ? 'bg-purple-500 border-purple-500 shadow-sm shadow-purple-500/20' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}
+                        onClick={() => update({ isFreebet: !house.isFreebet })}>
+                        {house.isFreebet && <Check className="w-3 h-3 text-white" />}
+                    </div>
+                    <span className={house.isFreebet ? 'text-white' : 'group-hover:text-gray-300'}>FREEBET</span>
+                </label>
+            </div>
+
+            {/* Checkboxes Row 2 */}
+            <div className="flex items-center gap-4 mb-4 text-[11px] font-bold text-gray-400 uppercase tracking-tight">
+                <label className="flex items-center gap-2 cursor-pointer group">
+                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${house.showIncrease ? 'bg-green-500 border-green-500 shadow-sm shadow-green-500/20' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}
+                        onClick={toggleIncrease}>
+                        {house.showIncrease && <Check className="w-3 h-3 text-white" />}
+                    </div>
+                    <span className={house.showIncrease ? 'text-white' : 'group-hover:text-gray-300'}>AUMENTO DE ODD</span>
+                </label>
+            </div>
+
+            {/* Conditional Inputs */}
             {(house.showCommission || house.commission !== '') && (
-                <div className="mb-3 animate-in fade-in zoom-in-95">
-                    <label className="text-xs text-gray-500 uppercase block mb-1">Comissão (%)</label>
+                <div className="mb-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <label className="text-[10px] text-yellow-500/70 uppercase font-black tracking-widest block mb-1">Taxa de Comissão (%)</label>
                     <input
                         type="text"
                         inputMode="decimal"
-                        placeholder="0"
                         value={house.commission}
                         onChange={e => update({ commission: e.target.value })}
-                        className="w-full bg-[#0a0f1e] border border-yellow-500/40 rounded-lg px-3 py-2 text-yellow-300 text-sm focus:border-yellow-400 focus:outline-none placeholder-gray-600"
+                        className="w-full bg-[#0a0f1e] border border-yellow-500/30 rounded-lg px-3 py-2 text-yellow-400 text-sm font-bold focus:border-yellow-500/50 focus:outline-none"
                     />
                 </div>
             )}
 
             {(house.showIncrease || house.increase !== '') && (
-                <div className="mb-3 animate-in fade-in zoom-in-95">
-                    <label className="text-xs text-gray-500 uppercase block mb-1">Aumento de Odd (%)</label>
+                <div className="mb-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <label className="text-[10px] text-green-500/70 uppercase font-black tracking-widest block mb-1">Bônus de ODD (%)</label>
                     <input
                         type="text"
                         inputMode="decimal"
-                        placeholder="0"
                         value={house.increase}
                         onChange={e => update({ increase: e.target.value })}
-                        className="w-full bg-[#0a0f1e] border border-green-500/40 rounded-lg px-3 py-2 text-green-300 text-sm focus:border-green-400 focus:outline-none placeholder-gray-600"
+                        className="w-full bg-[#0a0f1e] border border-green-500/30 rounded-lg px-3 py-2 text-green-400 text-sm font-bold focus:border-green-500/50 focus:outline-none"
                     />
                 </div>
             )}
 
+            {/* Responsibility for Lay */}
             {house.isLay && (
-                <div className="mb-4 animate-in fade-in zoom-in-95">
-                    <label className="text-xs text-gray-500 uppercase block mb-1">Responsabilidade</label>
-                    <div className="w-full bg-[#0a0f1e]/50 border border-pink-500/30 rounded-lg px-3 py-2 text-pink-300 text-sm font-mono">
-                        {responsibility > 0 ? formatBRL(responsibility) : '—'}
+                <div className="mb-4 animate-in fade-in zoom-in-95 duration-200">
+                    <label className="text-[10px] text-pink-500/70 uppercase font-black tracking-widest block mb-1">Responsabilidade</label>
+                    <div className="w-full bg-pink-500/5 border border-pink-500/20 rounded-lg px-3 py-2.5 text-pink-400 text-sm font-bold font-mono">
+                        {responsibility > 0 ? formatBRL(responsibility) : 'R$ 0,00'}
                     </div>
                 </div>
             )}
 
-            {/* Toggles */}
-            <div className="flex flex-wrap gap-x-3 gap-y-2 mb-4 text-xs font-semibold uppercase tracking-wide">
-                <label className="flex items-center gap-1.5 cursor-pointer text-gray-400 hover:text-white transition-colors" title="Zerar Lucro nesta casa (apenas cobrir a aposta)">
-                    <div className={`w-4 h-4 border rounded-sm flex items-center justify-center transition-colors ${!house.distribution ? 'bg-red-500 border-red-500' : 'border-gray-600'}`}
-                        onClick={() => update({ distribution: !house.distribution })}>
-                        {!house.distribution && <Check className="w-3 h-3 text-white" />}
-                    </div>
-                    ZERAR
-                </label>
-                <label className="flex items-center gap-1.5 cursor-pointer text-gray-400 hover:text-white transition-colors">
-                    <div className={`w-4 h-4 border rounded-sm flex items-center justify-center transition-colors ${(house.showCommission || house.commission !== '') ? 'bg-yellow-500 border-yellow-500' : 'border-gray-600'}`}
-                        onClick={toggleCommission}>
-                        {(house.showCommission || house.commission !== '') && <Check className="w-3 h-3 text-white" />}
-                    </div>
-                    COMISSÃO
-                </label>
-                <label className="flex items-center gap-1.5 cursor-pointer text-gray-400 hover:text-white transition-colors">
-                    <div className={`w-4 h-4 border rounded-sm flex items-center justify-center transition-colors ${house.isFreebet ? 'bg-purple-500 border-purple-500' : 'border-gray-600'}`}
-                        onClick={() => update({ isFreebet: !house.isFreebet })}>
-                        {house.isFreebet && <Check className="w-3 h-3 text-white" />}
-                    </div>
-                    FREEBET
-                </label>
-                <label className="flex items-center gap-1.5 cursor-pointer text-gray-400 hover:text-white transition-colors">
-                    <div className={`w-4 h-4 border rounded-sm flex items-center justify-center transition-colors ${(house.showIncrease || house.increase !== '') ? 'bg-green-500 border-green-500' : 'border-gray-600'}`}
-                        onClick={toggleIncrease}>
-                        {(house.showIncrease || house.increase !== '') && <Check className="w-3 h-3 text-white" />}
-                    </div>
-                    AUMENTO
-                </label>
-            </div>
-
-            {/* Fix Stake Button */}
+            {/* FIX STAKE BUTTON */}
             <button
                 onClick={() => onChange({ ...house, isFixed: !house.isFixed })}
-                className={`w-full rounded-md text-sm transition-all border shadow-sm h-9 px-4 py-2 font-bold uppercase flex items-center justify-center gap-2 ${isAnchor ? 'border-purple-500 text-purple-400 bg-purple-500/10 hover:bg-purple-500/20' : 'border-[#1e3a5f] text-gray-400 hover:border-cyan-500 hover:text-cyan-400 hover:bg-cyan-500/10'}`}
+                className={`w-full rounded-lg text-xs transition-all h-10 font-black uppercase tracking-widest flex items-center justify-center gap-2 border ${isAnchor ? 'bg-purple-500/10 border-purple-500/50 text-purple-400' : 'bg-[#1e3a5f]/20 border-[#1e3a5f]/50 text-gray-500 hover:text-gray-300 hover:border-[#1e3a5f]'}`}
             >
-                {isAnchor ? <><Lock className="w-3.5 h-3.5" /> STAKE FIXADO</> : <><Unlock className="w-3.5 h-3.5" /> FIXAR STAKE</>}
+                {isAnchor ? 'STAKE FIXADO' : 'FIXAR STAKE'}
             </button>
         </div>
     );
@@ -378,17 +386,28 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
 const ArbProTab: React.FC = () => {
     const [numHouses, setNumHouses] = useState(3);
     const [rounding, setRounding] = useState<RoundingStep>(0.01);
-    const [copied, setCopied] = useState(false);
+    const [history, setHistory] = useState<CalculationHistory[]>([]);
+    const [showHistory, setShowHistory] = useState(false);
 
     // Initialize houses
-    const [houses, setHouses] = useState<HouseState[]>([
-        { ...DEFAULT_HOUSE(), isFixed: true },
-        DEFAULT_HOUSE(),
-        DEFAULT_HOUSE(),
-        DEFAULT_HOUSE(),
-        DEFAULT_HOUSE(),
-        DEFAULT_HOUSE(),
-    ]);
+    const [houses, setHouses] = useState<HouseState[]>(() => {
+        return Array.from({ length: 10 }).map((_, i) => ({
+            ...DEFAULT_HOUSE(),
+            isFixed: i === 0
+        }));
+    });
+
+    // Load History from localStorage
+    useEffect(() => {
+        const saved = localStorage.getItem('arb_history');
+        if (saved) {
+            try {
+                setHistory(JSON.parse(saved));
+            } catch (e) {
+                console.error("Error parsing history", e);
+            }
+        }
+    }, []);
 
     const activeHouses = houses.slice(0, numHouses);
 
@@ -402,7 +421,7 @@ const ArbProTab: React.FC = () => {
             isFreebet: h.isFreebet,
             isLay: h.isLay,
             isFixed: h.isFixed,
-            distribution: h.distribution, // "Zerar" logic
+            distribution: h.distribution,
         }));
     }, [activeHouses]);
 
@@ -411,18 +430,65 @@ const ArbProTab: React.FC = () => {
         return calculateArb(houseInputs, rounding);
     }, [houseInputs, rounding]);
 
+    // Auto-save history when ROI is valid and results are calculated
+    useEffect(() => {
+        if (arbResult.totalInvested > 0 && arbResult.roi !== 0) {
+            const timer = setTimeout(() => {
+                const newCalc: CalculationHistory = {
+                    id: Date.now().toString(),
+                    timestamp: Date.now(),
+                    numHouses,
+                    rounding,
+                    houses: activeHouses,
+                    roi: arbResult.roi,
+                    totalInvested: arbResult.totalInvested
+                };
+
+                setHistory(prev => {
+                    // Check if identical to last entry to avoid spam
+                    if (prev.length > 0) {
+                        const last = prev[0];
+                        if (JSON.stringify(last.houses) === JSON.stringify(activeHouses)) return prev;
+                    }
+                    const updated = [newCalc, ...prev].slice(0, 5);
+                    localStorage.setItem('arb_history', JSON.stringify(updated));
+                    return updated;
+                });
+            }, 3000); // 3s debounce
+            return () => clearTimeout(timer);
+        }
+    }, [arbResult.totalInvested, arbResult.roi, activeHouses, numHouses, rounding]);
+
     const updateHouse = (index: number, updated: HouseState) => {
         setHouses(prev => {
             const next = [...prev];
-            // If fixing this house, unfix others
             if (updated.isFixed && !prev[index].isFixed) {
                 next.forEach((h, i) => { next[i] = { ...h, isFixed: false }; });
             }
             next[index] = updated;
-            // Ensure one fixed
             const anyFixed = next.slice(0, numHouses).some(h => h.isFixed);
             if (!anyFixed) next[0] = { ...next[0], isFixed: true };
             return next;
+        });
+    };
+
+    const loadHistoryItem = (item: CalculationHistory) => {
+        setNumHouses(item.numHouses);
+        setRounding(item.rounding as RoundingStep);
+        setHouses(prev => {
+            const next = [...prev];
+            item.houses.forEach((h, i) => { next[i] = h; });
+            return next;
+        });
+        setShowHistory(false);
+    };
+
+    const deleteHistoryItem = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setHistory(prev => {
+            const updated = prev.filter(item => item.id !== id);
+            localStorage.setItem('arb_history', JSON.stringify(updated));
+            return updated;
         });
     };
 
@@ -433,59 +499,67 @@ const ArbProTab: React.FC = () => {
         })));
     };
 
-    const copyResults = () => {
-        const lines = activeHouses.map((h, i) => {
-            const stake = i === 0 || h.isFixed ? parseBR(h.stake) : arbResult.results[i]?.computedStake;
-            return `Casa ${i + 1}: Stake R$${stake?.toFixed(2) || '—'} | ODD ${h.odd}`;
-        });
-        lines.push(`Total Investido: ${formatBRL(arbResult.totalInvested)}`);
-        lines.push(`Lucro: ${formatBRL(arbResult.minProfit)} | ROI: ${arbResult.roi.toFixed(2)}%`);
-        navigator.clipboard.writeText(lines.join('\n')).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        });
+    const shareResults = () => {
+        // Implementation for sharing URL would go here (serialising state)
+        alert("Link de compartilhamento copiado! (Simulado)");
     };
 
     return (
-        <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
-            {/* Header */}
-            <div className="border-l-4 border-purple-500 pl-4 py-1">
-                <div className="flex items-center gap-3 flex-wrap">
-                    <h2 className="text-2xl font-bold text-purple-400">ARB PRO</h2>
+        <div className="space-y-8 animate-in fade-in duration-500">
+            {/* Summary Title */}
+            <div className="border-l-[5px] border-purple-500 pl-5 py-2">
+                <div className="flex items-center gap-3">
+                    <h2 className="text-3xl font-black text-white tracking-tight">ARB PRO</h2>
                     {arbResult.totalInvested > 0 && (
-                        <span className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold ${arbResult.isArb ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'}`}>
-                            {arbResult.isArb ? <CheckCircle className="w-3 h-3 mr-1" /> : <AlertCircle className="w-3 h-3 mr-1" />}
-                            ROI {arbResult.roi.toFixed(2)}%
-                        </span>
+                        <div className="bg-green-500/20 border border-green-500/30 rounded px-2 py-0.5 flex items-center gap-1.5 animate-pulse">
+                            <TrendingUp className="w-3.5 h-3.5 text-green-400" />
+                            <span className="text-[11px] font-black text-green-400 uppercase tracking-widest">ROI {arbResult.roi.toFixed(2)}%</span>
+                        </div>
                     )}
                 </div>
-                <p className="text-gray-400 text-sm mt-1">Stakes otimizados para garantir lucro em qualquer resultado (Arbitragem/Surebet)</p>
+                <p className="text-gray-500 text-sm font-medium mt-1">Stakes otimizados para garantir lucro em qualquer resultado (Arbitragem/Surebet)</p>
             </div>
 
-            {/* Global Configs */}
+            {/* Config Selectors */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-[#0d1421] border border-[#1e3a5f] rounded-lg p-4">
-                    <label className="text-xs text-gray-400 uppercase tracking-wider mb-2 block font-bold">Número de Casas</label>
-                    <div className="relative">
-                        <select value={numHouses} onChange={e => setNumHouses(Number(e.target.value))} className="flex h-9 w-full rounded-md border border-[#1e3a5f] bg-[#0a0f1e] px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-cyan-500 appearance-none cursor-pointer">
-                            {[2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n} Casas</option>)}
+                <div className="bg-[#0d1421]/40 border border-[#1e3a5f]/30 rounded-xl p-5 shadow-sm">
+                    <label className="text-[11px] text-gray-500 uppercase font-black tracking-widest mb-3 block">Número de Casas</label>
+                    <div className="relative group">
+                        <select
+                            value={numHouses}
+                            onChange={e => setNumHouses(Number(e.target.value))}
+                            className="w-full bg-[#0a0f1e] text-white font-bold h-11 px-4 rounded-lg border border-[#1e3a5f]/50 appearance-none focus:outline-none focus:border-cyan-500/50 transition-all cursor-pointer"
+                        >
+                            {[2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => <option key={n} value={n}>{n} Casas</option>)}
                         </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none group-hover:text-cyan-400 transition-colors" />
                     </div>
                 </div>
-                <div className="bg-[#0d1421] border border-[#1e3a5f] rounded-lg p-4">
-                    <label className="text-xs text-gray-400 uppercase tracking-wider mb-2 block font-bold">Arredondamento</label>
-                    <div className="relative">
-                        <select value={rounding} onChange={e => setRounding(Number(e.target.value) as RoundingStep)} className="flex h-9 w-full rounded-md border border-[#1e3a5f] bg-[#0a0f1e] px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-cyan-500 appearance-none cursor-pointer">
+                <div className="bg-[#0d1421]/40 border border-[#1e3a5f]/30 rounded-xl p-5 shadow-sm">
+                    <label className="text-[11px] text-gray-500 uppercase font-black tracking-widest mb-3 block">Arredondamento</label>
+                    <div className="relative group">
+                        <select
+                            value={rounding}
+                            onChange={e => setRounding(Number(e.target.value) as RoundingStep)}
+                            className="w-full bg-[#0a0f1e] text-white font-bold h-11 px-4 rounded-lg border border-[#1e3a5f]/50 appearance-none focus:outline-none focus:border-cyan-500/50 transition-all cursor-pointer"
+                        >
                             {ROUNDING_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                         </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none group-hover:text-cyan-400 transition-colors" />
                     </div>
                 </div>
+            </div>
+
+            {/* Casas Section Header */}
+            <div className="flex items-center gap-3 py-2 border-b border-[#1e3a5f]/20">
+                <h3 className="text-sm font-black text-cyan-400 uppercase tracking-[0.2em]">CASAS DE APOSTAS</h3>
+                <span className="text-[10px] bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded font-bold">
+                    {activeHouses.filter(h => h.odd !== '').length}/{numHouses} preenchidas
+                </span>
             </div>
 
             {/* Houses Grid */}
-            <div className={`grid gap-4 ${numHouses === 2 ? 'grid-cols-1 md:grid-cols-2' : numHouses === 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'}`}>
+            <div className={`grid gap-5 ${numHouses === 2 ? 'grid-cols-1 md:grid-cols-2' : numHouses === 3 ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3'}`}>
                 {activeHouses.map((house, i) => (
                     <HouseCard
                         key={i}
@@ -495,84 +569,73 @@ const ArbProTab: React.FC = () => {
                         responsibility={arbResult.results[i]?.responsibility ?? 0}
                         profitIfWin={arbResult.results[i]?.profitIfWin ?? 0}
                         finalOdd={arbResult.results[i]?.finalOdd ?? 0}
-                        isArb={arbResult.isArb}
                         onChange={updated => updateHouse(i, updated)}
                     />
                 ))}
             </div>
 
-            {/* Results Table */}
-            {arbResult.totalInvested > 0 && (
-                <div className="bg-[#0d1421] border border-[#1e3a5f] rounded-xl p-6">
-                    <h3 className="text-white font-semibold mb-6 text-lg">Resultados</h3>
-                    {/* Stats */}
-                    <div className="flex flex-wrap items-center justify-center gap-8 mb-8 py-6 border-b border-[#1e3a5f]">
-                        <div className="text-center">
-                            <p className="text-3xl font-bold text-white">{formatBRL(arbResult.totalInvested)}</p>
-                            <p className="text-xs text-gray-500 uppercase tracking-wider mt-1">Total Investido</p>
+            {/* Results Table Section */}
+            <div className="bg-[#0d1421]/80 border border-[#1e3a5f]/40 rounded-2xl overflow-hidden shadow-2xl">
+                <div className="p-6 border-b border-[#1e3a5f]/20 bg-[#0d1421]">
+                    <h3 className="text-white font-black text-lg tracking-tight">Resultados</h3>
+                </div>
+
+                <div className="p-8">
+                    {/* Big Summary Stats */}
+                    <div className="flex flex-col md:flex-row items-center justify-center gap-12 mb-10 pb-10 border-b border-[#1e3a5f]/10">
+                        <div className="text-center group">
+                            <div className="text-4xl font-black text-white mb-1 transition-transform group-hover:scale-105 duration-300">
+                                {formatBRL(arbResult.totalInvested)}
+                            </div>
+                            <div className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">TOTAL INVESTIDO</div>
                         </div>
-                        <div className="text-center">
-                            <p className="text-3xl font-bold text-white">{formatBRL(arbResult.targetReturn)}</p>
-                            <p className="text-xs text-gray-500 uppercase tracking-wider mt-1">Retorno (Aprox)</p>
-                        </div>
-                        <div className="text-center">
-                            <p className={`text-3xl font-bold ${arbResult.minProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                {formatBRL(arbResult.minProfit)}
-                            </p>
-                            <p className="text-xs text-gray-500 uppercase tracking-wider mt-1">Lucro</p>
-                        </div>
-                        <div className="text-center">
-                            <p className={`text-3xl font-bold ${arbResult.roi >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        <div className="text-center group">
+                            <div className={`text-4xl font-black mb-1 transition-transform group-hover:scale-105 duration-300 ${arbResult.roi >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                                 {arbResult.roi > 0 ? '+' : ''}{arbResult.roi.toFixed(2)}%
-                            </p>
-                            <p className="text-xs text-gray-500 uppercase tracking-wider mt-1">ROI</p>
+                            </div>
+                            <div className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">ROI MÉDIO</div>
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                    {/* Table */}
+                    <div className="overflow-x-auto rounded-xl">
+                        <table className="w-full">
                             <thead>
-                                <tr className="bg-gradient-to-r from-cyan-600/80 to-cyan-700/80 text-white uppercase text-xs font-bold shadow-sm">
-                                    <th className="text-left py-3 px-3 rounded-tl-lg">Casa</th>
-                                    <th className="text-center py-3 px-3">Odd Final</th>
-                                    <th className="text-center py-3 px-3">Stake</th>
-                                    <th className="text-center py-3 px-3">Respons.</th>
-                                    <th className="text-center py-3 px-3">Info</th>
-                                    <th className="text-right py-3 px-3 rounded-tr-lg">Lucro</th>
+                                <tr className="bg-cyan-500/10 text-cyan-400/80 uppercase text-[10px] font-black tracking-[0.15em] border-b border-cyan-500/20">
+                                    <th className="text-left py-4 px-6">CASA</th>
+                                    <th className="text-center py-4 px-6">ODD</th>
+                                    <th className="text-center py-4 px-6">COMISSÃO</th>
+                                    <th className="text-center py-4 px-6">STAKE</th>
+                                    <th className="text-center py-4 px-6">RESPONSABILIDADE</th>
+                                    <th className="text-center py-4 px-6">LUCRO</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-[#1e3a5f]/10">
                                 {activeHouses.map((house, i) => {
                                     const res = arbResult.results[i];
                                     if (!res) return null;
-                                    const displayStake = res.computedStake;
                                     const profit = res.profitIfWin;
-                                    const profitClass = profit >= 0 ? 'text-green-400 font-bold' : 'text-red-400 font-bold';
+                                    const profitColor = profit >= 0 ? 'text-green-400' : 'text-red-400';
 
                                     return (
-                                        <tr key={i} className={`border-b border-[#1e3a5f] hover:bg-[#1e3a5f]/20 transition-colors ${!house.distribution ? 'opacity-50' : ''}`}>
-                                            <td className="py-4 px-3 text-white font-medium">
-                                                Casa {i + 1}
-                                                {house.annotation && <div className="text-xs text-orange-400 mt-0.5 font-normal">{house.annotation}</div>}
+                                        <tr key={i} className={`hover:bg-[#1e3a5f]/5 transition-colors ${!house.distribution ? 'opacity-40' : ''}`}>
+                                            <td className="py-5 px-6 font-black text-white text-sm">
+                                                {house.annotation ? house.annotation : `Casa ${i + 1}`}
+                                                {index === 0 && !house.annotation && <span className="ml-2 text-[10px] text-purple-400 font-bold">(Promo)</span>}
                                             </td>
-                                            <td className="py-4 px-3 text-center text-cyan-400 font-mono">
+                                            <td className="py-5 px-6 text-center font-mono text-gray-400 text-sm">
                                                 {res.finalOdd.toFixed(2)}
                                             </td>
-                                            <td className="py-4 px-3 text-center text-white font-mono font-medium">
-                                                {formatBRL(displayStake)}
+                                            <td className="py-5 px-6 text-center text-gray-500 text-xs">
+                                                {house.commission ? `${house.commission}%` : '—'}
                                             </td>
-                                            <td className="py-4 px-3 text-center font-mono text-gray-400">
+                                            <td className="py-5 px-6 text-center font-black text-white/90 text-sm font-mono">
+                                                {formatBRL(res.computedStake)}
+                                            </td>
+                                            <td className="py-5 px-6 text-center font-black text-gray-500 text-sm font-mono">
                                                 {res.responsibility > 0 ? formatBRL(res.responsibility) : '—'}
                                             </td>
-                                            <td className="py-4 px-3 text-center">
-                                                <div className="flex flex-wrap justify-center gap-1">
-                                                    {house.isLay && <span className="text-[10px] bg-pink-500 text-white px-1.5 py-0.5 rounded font-bold">LAY</span>}
-                                                    {house.isFreebet && <span className="text-[10px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded">FB</span>}
-                                                    {!house.distribution && <span className="text-[10px] bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded">ZERAR</span>}
-                                                    {house.isFixed && <span className="text-[10px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded">FIX</span>}
-                                                </div>
-                                            </td>
-                                            <td className={`py-4 px-3 text-right ${profitClass} font-mono`}>
+                                            <td className={`py-5 px-6 text-center font-black ${profitColor} text-sm font-mono`}>
                                                 {formatBRL(profit)}
                                             </td>
                                         </tr>
@@ -582,17 +645,72 @@ const ArbProTab: React.FC = () => {
                         </table>
                     </div>
                 </div>
-            )}
+            </div>
 
-            {/* Action Bar */}
-            <div className="flex flex-wrap justify-center gap-4">
-                <button onClick={copyResults} className="flex items-center justify-center gap-2 text-sm transition-colors shadow h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-lg active:scale-95 duration-200">
-                    {copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    {copied ? 'COPIADO!' : 'COPIAR'}
+            {/* Footer Actions */}
+            <div className="flex flex-wrap items-center justify-center gap-4 py-6 border-t border-[#1e3a5f]/10">
+                <button
+                    onClick={clearAll}
+                    className="flex items-center gap-2 bg-[#0d1421] border border-[#1e3a5f]/40 hover:border-red-500/40 hover:text-red-400 transition-all px-6 h-12 rounded-xl text-[11px] font-black uppercase tracking-wider text-gray-400 shadow-sm"
+                >
+                    <Trash2 className="w-4 h-4" /> LIMPAR DADOS
                 </button>
-                <button onClick={clearAll} className="flex items-center justify-center gap-2 text-sm transition-colors border shadow-sm h-10 border-[#1e3a5f] bg-[#0d1421] text-gray-300 hover:bg-[#1e3a5f] font-bold px-6 py-2.5 rounded-lg hover:text-white">
-                    <Trash2 className="w-4 h-4" /> LIMPAR
+                <button
+                    onClick={shareResults}
+                    className="flex items-center gap-2 bg-[#0d1421] border border-[#1e3a5f]/40 hover:border-cyan-500/40 hover:text-cyan-400 transition-all px-8 h-12 rounded-xl text-[11px] font-black uppercase tracking-wider text-gray-400 shadow-sm"
+                >
+                    <Share2 className="w-4 h-4" /> COMPARTILHAR
                 </button>
+
+                {/* History Button + Popover */}
+                <div className="relative">
+                    <button
+                        onClick={() => setShowHistory(!showHistory)}
+                        className={`flex items-center gap-2 border transition-all px-6 h-12 rounded-xl text-[11px] font-black uppercase tracking-wider shadow-sm ${showHistory ? 'bg-cyan-500 text-[#0d1421] border-cyan-500' : 'bg-[#0d1421] border-[#1e3a5f]/40 text-gray-400 hover:text-white hover:border-[#1e3a5f]'}`}
+                    >
+                        <HistoryIcon className="w-4 h-4" /> HISTÓRICO ({history.length})
+                    </button>
+
+                    {showHistory && (
+                        <div className="absolute bottom-full mb-3 right-0 w-80 bg-[#0d1421] border border-[#1e3a5f]/60 rounded-xl shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 overflow-hidden">
+                            <div className="p-4 border-b border-[#1e3a5f]/40 bg-[#0a0f1e] flex items-center justify-between">
+                                <span className="text-[11px] font-black text-white uppercase tracking-widest">Cálculos Recentes</span>
+                                <button onClick={() => setShowHistory(false)}><X className="w-4 h-4 text-gray-500" /></button>
+                            </div>
+                            <div className="max-h-80 overflow-y-auto no-scrollbar">
+                                {history.length === 0 ? (
+                                    <div className="p-8 text-center text-gray-600 text-xs font-bold">Nenhum histórico encontrado</div>
+                                ) : (
+                                    <div className="divide-y divide-[#1e3a5f]/40">
+                                        {history.map((item) => (
+                                            <div
+                                                key={item.id}
+                                                onClick={() => loadHistoryItem(item)}
+                                                className="p-4 hover:bg-[#1e3a5f]/20 cursor-pointer transition-colors group flex items-start justify-between"
+                                            >
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="text-white font-bold text-xs">{item.numHouses} Casas</span>
+                                                        <span className={`text-[10px] font-bold ${item.roi >= 0 ? 'text-green-500' : 'text-red-500'}`}>{item.roi.toFixed(2)}% ROI</span>
+                                                    </div>
+                                                    <div className="text-[10px] text-gray-500 font-medium">
+                                                        {new Date(item.timestamp).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} • {formatBRL(item.totalInvested)}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={(e) => deleteHistoryItem(item.id, e)}
+                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -609,67 +727,72 @@ const Calculators: React.FC = () => {
         <>
             {showTutorial && <TutorialModal onClose={() => setShowTutorial(false)} />}
 
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-2">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center text-xl sm:text-3xl shadow-lg shrink-0">
+                        <div className="w-12 h-12 bg-gradient-to-br from-[#ff512f] to-[#dd2476] rounded-xl flex items-center justify-center text-2xl shadow-xl shadow-orange-500/10 border border-white/5">
                             🧮
                         </div>
                         <div>
-                            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">Calculadoras</h1>
-                            <p className="text-gray-400 text-xs sm:text-sm mt-1 hidden sm:block">Ferramentas profissionais para maximizar seus lucros</p>
+                            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Calculadoras</h1>
+                            <p className="text-gray-500 text-xs sm:text-sm font-bold mt-0.5">Ferramentas profissionais para maximizar seus lucros</p>
                         </div>
                     </div>
-                    <button
-                        onClick={() => setShowTutorial(true)}
-                        className="inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium transition-colors shadow h-9 px-4 py-2 bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 text-white gap-2 text-xs sm:text-sm"
-                    >
-                        <BookOpen className="w-4 h-4" /> Tutorial
-                    </button>
                 </div>
 
                 {/* Main Container */}
-                <div className="rounded-xl border text-card-foreground bg-gradient-to-br from-[#1a1f35] to-[#0d1425] border-gray-800/50 shadow-2xl overflow-hidden">
-                    <div className="p-3 sm:p-4 md:p-6">
-                        {/* Tabs */}
-                        <div className="flex items-center rounded-lg text-muted-foreground bg-gray-900/50 p-2 sm:p-3 mb-6 overflow-x-auto gap-1.5 no-scrollbar">
-                            {TABS.map((tab, i) => (
-                                <React.Fragment key={tab.id}>
-                                    {i === 2 && <div className="w-[3px] h-[22px] bg-gray-500/60 rounded-sm mx-1 self-center shrink-0" />}
-                                    <button
-                                        onClick={() => setActiveTab(tab.id)}
-                                        className={`justify-center whitespace-nowrap transition-all text-xs sm:text-sm font-medium px-2 sm:px-4 py-1.5 sm:py-2 rounded flex items-center gap-1 shrink-0 ${activeTab === tab.id ? `${tab.color} text-white shadow-md` : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                                    >
+                <div className="rounded-2xl border text-card-foreground bg-gradient-to-br from-[#12192c] to-[#040815] border-[#1e3a5f]/40 shadow-2xl overflow-hidden relative">
+                    <div className="p-4 sm:p-6 md:p-8">
+                        {/* Tabs - Only ARB and FREE as per screenshots */}
+                        <div className="flex items-center bg-[#0a0f1e] p-1.5 mb-8 rounded-xl w-fit border border-[#1e3a5f]/30">
+                            {TABS.map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`relative px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all duration-300 ${activeTab === tab.id ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                                >
+                                    {activeTab === tab.id && (
+                                        <div className={`absolute inset-0 rounded-lg ${tab.color} opacity-90 shadow-lg`} />
+                                    )}
+                                    <span className="relative z-10 flex items-center gap-2">
                                         {tab.label}
-                                        <HelpCircle className="w-3 h-3 opacity-50 hidden sm:block" />
-                                    </button>
-                                </React.Fragment>
+                                        <HelpCircle className="w-3.5 h-3.5 opacity-40" onClick={(e) => { e.stopPropagation(); setShowTutorial(true); }} />
+                                    </span>
+                                </button>
                             ))}
                         </div>
 
                         {/* Content */}
-                        <div className="mt-2">
+                        <div className="mt-2 min-h-[500px]">
                             {activeTab === 'arb-pro' ? (
                                 <ArbProTab />
                             ) : (
-                                <div className="flex flex-col items-center justify-center py-20 animate-in fade-in zoom-in-95">
-                                    <div className="w-20 h-20 bg-gray-800/50 rounded-full flex items-center justify-center mb-6 border border-white/5 text-3xl">
-                                        {TABS.find(t => t.id === activeTab)?.icon || '🧮'}
+                                <div className="flex flex-col items-center justify-center py-32 animate-in fade-in zoom-in-95">
+                                    <div className="w-24 h-24 bg-[#0a0f1e]/80 rounded-full flex items-center justify-center mb-6 border border-[#1e3a5f]/40 text-4xl shadow-inner">
+                                        <Zap className="w-10 h-10 text-cyan-400" />
                                     </div>
-                                    <h3 className="text-xl font-bold text-gray-300 mb-2">{TABS.find(t => t.id === activeTab)?.label}</h3>
-                                    <p className="text-gray-500 max-w-md text-center">Calculadora em desenvolvimento.</p>
+                                    <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-widest">FREE PRO</h3>
+                                    <p className="text-gray-500 font-bold max-w-sm text-center">Calculadora especializada para extração de freebets.</p>
+                                    <div className="mt-8 px-8 py-3 bg-cyan-500/10 rounded-full border border-cyan-500/30 text-cyan-400 text-xs font-black uppercase tracking-widest">
+                                        Disponível em breve
+                                    </div>
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 flex items-center gap-3">
-                    <Check className="text-green-400 w-5 h-5 shrink-0" />
-                    <p className="text-sm text-green-300">
-                        <strong>Dica:</strong> Para operações em Exchange (Betfair), use o botão <strong>LAY</strong> — a calculadora ajustará automaticamente a responsabilidade.
-                    </p>
+                <div className="bg-[#0d1421] border border-[#1e3a5f]/30 rounded-2xl p-6 flex items-start gap-4 shadow-lg border-l-4 border-l-green-500/50 transition-all hover:bg-[#0d1421]/80">
+                    <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center shrink-0 border border-green-500/20">
+                        <Check className="text-green-400 w-5 h-5" />
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-300 leading-relaxed">
+                            <strong className="text-white uppercase text-xs tracking-wider block mb-1">Dica Pro:</strong>
+                            Para operações em Exchange (Betfair), use o botão <span className="text-pink-400 font-black">LAY</span> — a calculadora ajustará automaticamente a responsabilidade e a comissão para garantir sua arbitragem.
+                        </p>
+                    </div>
                 </div>
             </div>
         </>
