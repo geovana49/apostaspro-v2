@@ -11,10 +11,10 @@ export interface CompressionOptions {
 }
 
 const DEFAULT_OPTIONS: CompressionOptions = {
-    maxWidth: 1920, // Full HD for maximum sharpness
-    maxHeight: 1920,
-    quality: 0.90, // High quality for crisp text
-    maxSizeMB: 0.95 // Maximum safe limit for Firestore (1MB limit)
+    maxWidth: 2560, // 2K Resolution (Ultra Sharpness)
+    maxHeight: 2560,
+    quality: 0.92, // Near-lossless perception
+    maxSizeMB: 0.98 // Pushing to the absolute limit (leaving ~20KB margin)
 };
 
 /**
@@ -72,9 +72,9 @@ export async function compressImage(
                     const maxBytes = (opts.maxSizeMB! * 1024 * 1024);
                     let iterations = 0;
 
-                    // Mantemos a qualidade acima de 0.85 para não perder a legibilidade
-                    while (base64.length > maxBytes && quality > 0.85 && iterations < 5) {
-                        quality -= 0.02;
+                    // Mantemos a qualidade acima de 0.60 (era 0.85) para garantir que caiba, mas descendo suavemente
+                    while (base64.length > maxBytes && quality > 0.60 && iterations < 10) {
+                        quality -= 0.05; // Redução suave de 5%
                         base64 = canvas.toDataURL('image/webp', quality);
                         iterations++;
                     }
@@ -155,8 +155,8 @@ export async function compressBase64(
                 // Compressão progressiva
                 const maxBytes = (opts.maxSizeMB! * 1024 * 1024);
                 let iterations = 0;
-                while (newBase64.length > maxBytes && quality > 0.5 && iterations < 5) {
-                    quality -= 0.1;
+                while (newBase64.length > maxBytes && quality > 0.5 && iterations < 10) {
+                    quality -= 0.05; // Redução suave de 5%
                     newBase64 = canvas.toDataURL('image/webp', quality);
                     iterations++;
                 }
