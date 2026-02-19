@@ -11,10 +11,10 @@ export interface CompressionOptions {
 }
 
 const DEFAULT_OPTIONS: CompressionOptions = {
-    maxWidth: 1024,
-    maxHeight: 1024,
-    quality: 0.7, // Reduced from 0.75
-    maxSizeMB: 0.4 // Reduced from 0.5
+    maxWidth: 1280, // Increased for better resolution
+    maxHeight: 1280,
+    quality: 0.85, // Increased for sharper text
+    maxSizeMB: 0.75 // Limit for Firestore 1MB safety margin
 };
 
 /**
