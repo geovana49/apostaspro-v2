@@ -1085,9 +1085,11 @@ interface ImageViewerProps {
   startIndex?: number;
 }
 
-export const ImageViewer: React.FC<ImageViewerProps> = ({ isOpen, onClose, images, startIndex = 0 }) => {
+export const ImageViewer: React.FC<ImageViewerProps & { resolvePhoto?: (id: string) => Promise<string | null> }> = ({ isOpen, onClose, images, startIndex = 0, resolvePhoto }) => {
   const [currentIndex, setCurrentIndex] = useState(startIndex);
   const [showDownloadOptions, setShowDownloadOptions] = useState(false);
+  const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Swipe State
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -1100,6 +1102,30 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ isOpen, onClose, image
       setShowDownloadOptions(false);
     }
   }, [isOpen, startIndex]);
+
+  // Resolve Photo URL
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const currentSrc = images[currentIndex];
+    if (!currentSrc) return;
+
+    if (currentSrc.startsWith('ph_') && resolvePhoto) {
+      setIsLoading(true);
+      resolvePhoto(currentSrc)
+        .then(url => {
+          setResolvedUrl(url);
+        })
+        .catch(err => {
+          console.error("Error resolving photo:", err);
+          setResolvedUrl(null);
+        })
+        .finally(() => setIsLoading(false));
+    } else {
+      setResolvedUrl(currentSrc);
+      setIsLoading(false);
+    }
+  }, [currentIndex, images, isOpen, resolvePhoto]);
 
   const goToNext = useCallback(() => {
     if (images.length > 1) {
@@ -1134,6 +1160,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ isOpen, onClose, image
 
   // Helper: Download Single Image
   const downloadImage = async (url: string, index: number) => {
+    if (!url) return;
     try {
       const response = await fetch(url);
       const blob = await response.blob();
@@ -1141,18 +1168,20 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ isOpen, onClose, image
 
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = `apostas-pro-proof-${Date.now()}-${index + 1}.jpg`;
+      link.download = `apostas-pro-proof-${Date.now()}-${index + 1}.webp`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(blobUrl);
     } catch (e) {
       // Fallback
-      const link = document.createElement('a');
-      link.href = url;
-      link.target = "_blank";
-      link.download = `download-${index}.jpg`;
-      link.click();
+      if (!url.startsWith('blob:')) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.target = "_blank";
+        link.download = `download-${index}.webp`;
+        link.click();
+      }
     }
   };
 
@@ -1161,22 +1190,35 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ isOpen, onClose, image
     if (images.length > 1) {
       setShowDownloadOptions(!showDownloadOptions);
     } else {
-      downloadImage(images[0], 0);
+      if (resolvedUrl) downloadImage(resolvedUrl, 0);
     }
   };
 
   const handleDownloadAll = async () => {
     setShowDownloadOptions(false);
     // Sequential download to avoid browser blocking
+    // Note: This relies on resolving all images which might be tricky if not currently viewed.
+    // For now, we only support downloading the current one reliably if it's a Firestore ID.
+    // Ideally we would resolve all of them, but let's just loop and try.
+    // If resolvePhoto is needed for others, we might fail. 
+    // Simplified: Just try to download what we have in images array if simpler, or warn.
+
+    // Better approach: Iterate and resolve if needed
     for (let i = 0; i < images.length; i++) {
-      await downloadImage(images[i], i);
-      await new Promise(resolve => setTimeout(resolve, 500)); // Small delay
+      let url = images[i];
+      if (url.startsWith('ph_') && resolvePhoto) {
+        url = await resolvePhoto(url) || '';
+      }
+      if (url) {
+        await downloadImage(url, i);
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
     }
   };
 
   const handleDownloadCurrent = () => {
     setShowDownloadOptions(false);
-    downloadImage(images[currentIndex], currentIndex);
+    if (resolvedUrl) downloadImage(resolvedUrl, currentIndex);
   };
 
   // Touch Handlers
@@ -1231,18 +1273,18 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ isOpen, onClose, image
 
           {/* Download Options Menu */}
           {showDownloadOptions && (
-            <div className="absolute top-full right-12 mt-2 w-48 bg-[#151b2e] border border-white/10 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 z-[60]">
+            <div className="absolute top-full right-12 mt-2 w-48 bg-[#151b2e] border border-white/10 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 z-[100003]">
               <button
                 onClick={(e) => { e.stopPropagation(); handleDownloadCurrent(); }}
-                className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white flex items-center gap-2 transition-colors border-b border-white/5"
+                className="w-full text-left px-4 py-3 hover:bg-white/5 text-sm text-gray-300 hover:text-white transition-colors flex items-center gap-2"
               >
                 <Download size={14} /> Baixar Atual
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); handleDownloadAll(); }}
-                className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white flex items-center gap-2 transition-colors"
+                className="w-full text-left px-4 py-3 hover:bg-white/5 text-sm text-gray-300 hover:text-white transition-colors flex items-center gap-2 border-t border-white/5"
               >
-                <Coins size={14} /> Baixar Todas ({images.length})
+                <Box size={14} /> Baixar Todas ({images.length})
               </button>
             </div>
           )}
@@ -1285,16 +1327,23 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ isOpen, onClose, image
             cursor: images.length > 1 ? 'grab' : 'default'
           }}
         >
-          <img
-            src={images[currentIndex]}
-            alt={`View ${currentIndex + 1}`}
-            className="max-w-full max-h-full object-contain shadow-2xl select-none"
-            style={{
-              maxWidth: '100%',
-              maxHeight: '100dvh' // Dynamic viewport height for mobile address bars
-            }}
-            draggable={false}
-          />
+          {isLoading ? (
+            <div className="flex flex-col items-center gap-2 text-primary animate-pulse">
+              <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-sm font-bold uppercase tracking-wider">Carregando...</span>
+            </div>
+          ) : (
+            <img
+              src={resolvedUrl || ''}
+              alt={`View ${currentIndex + 1}`}
+              className="max-w-full max-h-full object-contain shadow-2xl select-none"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '100dvh' // Dynamic viewport height for mobile address bars
+              }}
+              draggable={false}
+            />
+          )}
         </div>
 
         {/* Next Button (Always Visible now per user request) */}

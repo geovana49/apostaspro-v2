@@ -12,7 +12,8 @@ import {
     writeBatch,
     limit,
     clearIndexedDbPersistence,
-    terminate
+    terminate,
+    Bytes
 } from "firebase/firestore";
 import { ref, uploadBytesResumable, uploadString, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase";
@@ -82,6 +83,12 @@ export const FirestoreService = {
     },
 
     deleteBet: async (userId: string, betId: string) => {
+        // [CLEANUP] Deleta as fotos associadas
+        const photosRef = collection(db, "users", userId, "bets", betId, "photos");
+        const photosSnap = await getDocs(photosRef);
+        for (const photoDoc of photosSnap.docs) {
+            await deleteDoc(photoDoc.ref);
+        }
         await deleteDoc(doc(db, "users", userId, "bets", betId));
     },
 
@@ -126,6 +133,12 @@ export const FirestoreService = {
     },
 
     deleteGain: async (userId: string, gainId: string) => {
+        // [CLEANUP] Deleta as fotos associadas
+        const photosRef = collection(db, "users", userId, "gains", gainId, "photos");
+        const photosSnap = await getDocs(photosRef);
+        for (const photoDoc of photosSnap.docs) {
+            await deleteDoc(photoDoc.ref);
+        }
         await deleteDoc(doc(db, "users", userId, "gains", gainId));
     },
 
@@ -268,59 +281,71 @@ export const FirestoreService = {
         await batch.commit();
     },
 
-    // --- Media ---
-    uploadImage: async (userId: string, betId: string, data: Blob | string): Promise<string> => {
+    // --- Media (Firestore-based Storage - FREE) ---
+    uploadImage: async (userId: string, parentId: string, data: Blob | string, type: 'bets' | 'gains' = 'bets'): Promise<string> => {
         // Se já for uma URL (ex: carregando aposta existente), não faz nada
         if (typeof data === 'string' && data.startsWith('http')) return data;
 
-        const uploadWithRetry = async (retryCount = 0): Promise<string> => {
+        const uploadToFirestore = async (): Promise<string> => {
             try {
-                const fileName = `img_${Date.now()}_${Math.max(0, Math.floor(Math.random() * 1000000))}.webp`;
-                const storageRef = ref(storage, `users/${userId}/bets/${betId}/${fileName}`);
+                const photoId = `ph_${Date.now()}_${Math.max(0, Math.floor(Math.random() * 1000000))}`;
+                const photoRef = doc(db, "users", userId, type, parentId, "photos", photoId);
+
+                let uint8Array: Uint8Array;
 
                 if (data instanceof Blob) {
-                    // [RESUMABLE] Mais resiliente a quedas de conexão
-                    const uploadTask = uploadBytesResumable(storageRef, data);
-
-                    return new Promise((resolve, reject) => {
-                        uploadTask.on('state_changed',
-                            (snapshot) => {
-                                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                                if (progress % 20 === 0) console.log(`[Storage] Upload: ${progress.toFixed(0)}%`);
-                            },
-                            (error) => {
-                                console.error("[Storage] Resumable upload error code:", error.code);
-                                reject(error);
-                            },
-                            async () => {
-                                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                                resolve(downloadURL);
-                            }
-                        );
-                    });
+                    const arrayBuffer = await data.arrayBuffer();
+                    uint8Array = new Uint8Array(arrayBuffer);
                 } else if (typeof data === 'string' && data.startsWith('data:')) {
-                    await uploadString(storageRef, data, 'data_url');
-                    return await getDownloadURL(storageRef);
+                    // Converter dataUrl para Uint8Array
+                    const base64 = data.split(',')[1];
+                    const binaryString = window.atob(base64);
+                    uint8Array = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        uint8Array[i] = binaryString.charCodeAt(i);
+                    }
                 } else {
-                    console.error("[Firestore] Tipo de dado inválido para upload:", typeof data);
-                    throw new Error("Formato de imagem inválido");
+                    throw new Error("Formato de imagem inválido para Firestore");
                 }
-            } catch (error: any) {
-                const errorCode = error.code || 'unknown';
-                if (retryCount < 2 && (errorCode.includes('network') || errorCode.includes('retry') || errorCode.includes('request-terminated'))) {
-                    console.warn(`[Firestore] Falha recuperável no upload (tentativa ${retryCount + 1}). Retrying...`, error.message);
-                    await new Promise(r => setTimeout(r, 2000));
-                    return uploadWithRetry(retryCount + 1);
-                }
+
+                // Salva no Firestore (Tamanho máximo do documento: 1MB)
+                await withTimeout(
+                    setDoc(photoRef, {
+                        data: Bytes.fromUint8Array(uint8Array),
+                        createdAt: Timestamp.now()
+                    }),
+                    60000,
+                    "Upload de Foto (Firestore)"
+                );
+
+                console.info(`[Firestore] Foto ${photoId} salva com sucesso.`);
+                return photoId; // Agora o identificador é o ID do documento
+            } catch (error) {
+                console.error("[Firestore] Erro ao salvar foto no Firestore:", error);
                 throw error;
             }
         };
 
-        return withTimeout(
-            uploadWithRetry(),
-            300000, // 5 minutos por imagem (Aumentado de 120s)
-            "Sincronismo de Foto"
-        );
+        return uploadToFirestore();
+    },
+
+    getPhotoData: async (userId: string, parentId: string, photoId: string, type: 'bets' | 'gains' = 'bets'): Promise<string | null> => {
+        try {
+            const photoRef = doc(db, "users", userId, type, parentId, "photos", photoId);
+            const snap = await getDoc(photoRef);
+
+            if (!snap.exists()) return null;
+
+            const data = snap.data();
+            if (!data.data) return null;
+
+            // Converter Uint8Array de volta para Blob/URL
+            const blob = new Blob([data.data.toUint8Array()], { type: 'image/webp' });
+            return URL.createObjectURL(blob);
+        } catch (error) {
+            console.error("[Firestore] Erro ao buscar foto:", error);
+            return null;
+        }
     },
 
     clearLocalCache: async () => {

@@ -1,6 +1,7 @@
 import React, { useState, useReducer, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Button, Input, Dropdown, Modal, SingleDatePickerModal, ImageViewer, MoneyDisplay } from './ui/UIComponents';
+import { FireImage } from './ui/FireImage';
 import {
     Plus, Trash2, X, Calendar, Paperclip, Minus, Loader2, Copy, ChevronUp, ChevronDown, UploadCloud,
     ChevronLeft, ChevronRight, Maximize
@@ -1061,7 +1062,16 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                                     selectedIdx === index ? 'border-primary ring-2 ring-primary ring-offset-2 ring-offset-[#0d1121] scale-[1.05] z-20' :
                                                         'border-white/10 hover:border-primary/50'}`}
                                         >
-                                            <img src={photo.url} alt="Preview" className="w-full h-full object-cover" />
+                                            {photo.url.startsWith('ph_') && formData.id ? (
+                                                <FireImage
+                                                    photoId={photo.url}
+                                                    parentId={formData.id}
+                                                    type={saveAsGain ? 'gains' : 'bets'}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <img src={photo.url} alt="Preview" className="w-full h-full object-cover" />
+                                            )}
 
                                             {/* Viewer Button - Always visible on mobile to distinguish from reorder tap */}
                                             <button
@@ -1128,6 +1138,11 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                 onClose={() => setIsViewerOpen(false)}
                 images={tempPhotos.map(p => p.url)}
                 startIndex={viewerStartIndex}
+                resolvePhoto={(photoId) =>
+                    formData.id && currentUser
+                        ? FirestoreService.getPhotoData(currentUser.uid, formData.id, photoId, saveAsGain ? 'gains' : 'bets')
+                        : Promise.resolve(null)
+                }
             />
         </>
     );

@@ -1,5 +1,6 @@
 import React, { useState, useReducer, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, SingleDatePickerModal } from './ui/UIComponents';
+import { FireImage } from './ui/FireImage';
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
     Copy, MoreVertical, AlertCircle, ImageIcon, Ticket, ArrowUpRight, ArrowDownRight, Minus, DollarSign, Percent,
@@ -134,6 +135,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
+    const [viewerParentId, setViewerParentId] = useState<string | null>(null);
     const [showFloatingButton, setShowFloatingButton] = useState(false);
     const [isFabVisible, setIsFabVisible] = useState(true);
     const betsListRef = useRef<HTMLDivElement>(null);
@@ -583,9 +585,10 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const requestDelete = (id: string) => setDeleteId(id);
     const cancelDelete = () => setDeleteId(null);
 
-    const openImageViewer = (images: string[], index: number) => {
+    const openImageViewer = (images: string[], index: number, parentId: string | null = null) => {
         setViewerImages(images);
         setViewerStartIndex(index);
+        setViewerParentId(parentId);
         setIsViewerOpen(true);
     };
 
@@ -716,7 +719,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const handlePhotoClick = (index: number) => {
         if (selectedIdx === index) {
             // Se já estiver selecionado, abre o visualizador
-            openImageViewer(tempPhotos.map(p => p.url), index);
+            openImageViewer(tempPhotos.map(p => p.url), index, formData.id || null);
             setSelectedIdx(null);
         } else if (selectedIdx === null) {
             setSelectedIdx(index);
@@ -805,7 +808,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                             if (photo.url.startsWith('data:')) {
                                 // Efficient binary upload (Blob)
                                 const blob = base64ToBlob(photo.url);
-                                const url = await FirestoreService.uploadImage(currentUser.uid, betId, blob);
+                                const url = await FirestoreService.uploadImage(currentUser.uid, betId, blob, 'bets');
                                 photoUrls.push(url);
                             } else {
                                 photoUrls.push(photo.url);
@@ -1226,6 +1229,11 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                 onClose={() => setIsViewerOpen(false)}
                 images={viewerImages}
                 startIndex={viewerStartIndex}
+                resolvePhoto={(photoId) =>
+                    viewerParentId && currentUser
+                        ? FirestoreService.getPhotoData(currentUser.uid, viewerParentId, photoId, 'bets')
+                        : Promise.resolve(null)
+                }
             />
 
             <div className="flex flex-col gap-1 mb-6">
@@ -1717,11 +1725,16 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                                             key={idx}
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                openImageViewer(bet.photos || [], idx);
+                                                                openImageViewer(bet.photos || [], idx, bet.id);
                                                             }}
                                                             className="w-16 h-16 rounded border border-white/10 overflow-hidden cursor-zoom-in hover:scale-110 transition-transform hover:border-primary bg-black/50"
                                                         >
-                                                            <img src={photo} alt="thumb" className="w-full h-full object-cover" />
+                                                            <FireImage
+                                                                photoId={photo}
+                                                                parentId={bet.id}
+                                                                type="bets"
+                                                                className="w-full h-full object-cover"
+                                                            />
                                                         </div>
                                                     ))}
                                                 </div>

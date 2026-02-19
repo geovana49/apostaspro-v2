@@ -1,5 +1,6 @@
 import React, { useState, useReducer, useRef, useEffect } from 'react';
 import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, CustomColorPicker, RenderIcon, ICON_MAP, DateRangePickerModal, SingleDatePickerModal, DropdownOption } from './ui/UIComponents';
+import { FireImage } from './ui/FireImage';
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronLeft, ChevronRight,
     Copy, MoreVertical, AlertCircle, ImageIcon, StickyNote, Trophy, Coins, Gamepad2, Paperclip, SearchX, Settings2,
@@ -106,6 +107,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerImages, setViewerImages] = useState<string[]>([]);
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
+    const [viewerParentId, setViewerParentId] = useState<string | null>(null);
     const [showFloatingButton, setShowFloatingButton] = useState(false);
     const [isFabVisible, setIsFabVisible] = useState(true);
     const gainsListRef = useRef<HTMLDivElement>(null);
@@ -341,9 +343,10 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         setExpandedGains(newExpanded);
     };
 
-    const openImageViewer = (images: string[], index: number) => {
+    const openImageViewer = (images: string[], index: number, parentId: string | null = null) => {
         setViewerImages(images);
         setViewerStartIndex(index);
+        setViewerParentId(parentId);
         setIsViewerOpen(true);
     };
 
@@ -479,7 +482,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const handlePhotoClick = (index: number) => {
         if (selectedIdx === index) {
             // Se já estiver selecionado, abre o visualizador (facilita o uso como antes)
-            openImageViewer(tempPhotos.map(p => p.url), index);
+            openImageViewer(tempPhotos.map(p => p.url), index, formData.id || null);
             setSelectedIdx(null); // Desativa a seleção após abrir
         } else if (selectedIdx === null) {
             setSelectedIdx(index);
@@ -627,7 +630,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     if (photo.url.startsWith('data:')) {
                         // Efficient binary upload (Blob)
                         const blob = base64ToBlob(photo.url);
-                        const url = await FirestoreService.uploadImage(currentUser.uid, betId, blob);
+                        const url = await FirestoreService.uploadImage(currentUser.uid, betId, blob, 'gains');
                         photoUrls.push(url);
                     } else {
                         photoUrls.push(photo.url);
@@ -813,8 +816,17 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             />
 
             <CustomColorPicker isOpen={activeColorPicker !== null} onClose={() => setActiveColorPicker(null)} color={activeColorPicker?.type === 'icon' ? newCategoryColor : activeColorPicker?.type === 'bg' ? (newCategoryBgColor || '#000000') : activeColorPicker?.type === 'status' ? newStatusColor : '#000000'} onChange={(c) => { if (activeColorPicker?.type === 'icon') setNewCategoryColor(c); if (activeColorPicker?.type === 'bg') setNewCategoryBgColor(c); if (activeColorPicker?.type === 'status') setNewStatusColor(c); }} anchorEl={activeColorPicker?.anchor} />
-            <ImageViewer isOpen={isViewerOpen} onClose={() => setIsViewerOpen(false)} images={viewerImages} startIndex={viewerStartIndex} />
-
+            <ImageViewer
+                isOpen={isViewerOpen}
+                onClose={() => setIsViewerOpen(false)}
+                images={viewerImages}
+                startIndex={viewerStartIndex}
+                resolvePhoto={(photoId) =>
+                    viewerParentId && currentUser
+                        ? FirestoreService.getPhotoData(currentUser.uid, viewerParentId, photoId, 'gains')
+                        : Promise.resolve(null)
+                }
+            />
             <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-secondary/10 rounded-lg border border-secondary/20">
@@ -977,7 +989,8 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                                                 <div className="flex items-center justify-between mb-2">
                                                                     <div className="flex items-center gap-2">
                                                                         <div className="w-6 h-6 rounded flex items-center justify-center text-[8px] font-bold text-[#090c19]" style={{ backgroundColor: bookie?.color || '#FFFFFF' }}>
-                                                                            {bookie?.logo ? <img src={bookie.logo} alt={bookie.name} className="w-full h-full object-contain p-[1px]" /> : bookie?.name.substring(0, 2).toUpperCase()}
+                                                                            {bookie?.logo ? <img src={bookie.logo} alt={bookie.name} className="w-full h-full object-contain p-[1px]" />
+                                                                                : bookie?.name?.substring(0, 1)}
                                                                         </div>
                                                                         <span className="text-sm font-medium text-white">{coverage.market}</span>
                                                                     </div>
@@ -1014,10 +1027,22 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                         {gain.photos && gain.photos.length > 0 && (
                                             <div>
                                                 <label className="text-xs font-bold text-textMuted uppercase tracking-wider flex items-center gap-2 mb-2"><ImageIcon size={12} /> Fotos</label>
-                                                <div className="flex flex-wrap gap-2">
+                                                <div className="mt-4 flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
                                                     {gain.photos.filter(p => !!p).map((photo, idx) => (
-                                                        <div key={idx} onClick={(e) => { e.stopPropagation(); openImageViewer(gain.photos || [], idx); }} className="w-16 h-16 rounded border border-white/10 overflow-hidden cursor-zoom-in hover:scale-110 transition-transform hover:border-primary bg-black/50">
-                                                            <img src={photo} alt="thumb" className="w-full h-full object-cover" />
+                                                        <div
+                                                            key={idx}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                openImageViewer(gain.photos || [], idx, gain.id);
+                                                            }}
+                                                            className="min-w-[60px] w-[60px] h-[60px] rounded border border-white/10 overflow-hidden cursor-zoom-in hover:border-primary transition-colors bg-black/30"
+                                                        >
+                                                            <FireImage
+                                                                photoId={photo}
+                                                                parentId={gain.id}
+                                                                type="gains"
+                                                                className="w-full h-full object-cover"
+                                                            />
                                                         </div>
                                                     ))}
                                                 </div>
@@ -1238,7 +1263,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                             onDragOver={(e) => e.preventDefault()}
                                             onDrop={() => handleDrop(index)}
                                             onClick={() => handlePhotoClick(index)}
-                                            className={`relative aspect-square rounded-lg overflow-hidden border transition-all duration-300 group bg-black/40 cursor-move 
+                                            className={`relative aspect-square rounded-lg overflow-hidden border transition-all duration-300 group bg-black/40 cursor-move
                                                 ${draggedIdx === index ? 'opacity-40 scale-95 border-primary shadow-2xl' :
                                                     selectedIdx === index ? 'border-primary ring-2 ring-primary ring-offset-2 ring-offset-[#0d1121] scale-[1.05] z-20' :
                                                         'border-white/10 hover:border-primary/50'}`}
@@ -1248,7 +1273,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    openImageViewer(tempPhotos.map(p => p.url), index);
+                                                    openImageViewer(tempPhotos.map(p => p.url), index, formData.id || null);
                                                 }}
                                                 className="absolute top-1.5 left-1.5 p-1.5 bg-black/70 text-white rounded-full hover:bg-primary transition-all shadow-lg active:scale-90 z-20 sm:p-2"
                                                 title="Ver foto"

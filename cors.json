@@ -1,0 +1,21 @@
+[
+    {
+        "origin": [
+            "https://apostaspro-v2.vercel.app",
+            "http://localhost:5173"
+        ],
+        "method": [
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "HEAD",
+            "OPTIONS"
+        ],
+        "maxAgeSeconds": 3600,
+        "responseHeader": [
+            "Content-Type",
+            "x-goog-resumable"
+        ]
+    }
+]
