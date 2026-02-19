@@ -34,8 +34,8 @@ export const FireImage: React.FC<FireImageProps> = ({
             return;
         }
 
-        // Se o photoId for na verdade uma URL legada (Firebase Storage), usa direto
-        if (photoId.startsWith('http')) {
+        // Se o photoId for na verdade uma URL legada (Firebase Storage) ou Base64, usa direto
+        if (photoId.startsWith('http') || photoId.startsWith('data:')) {
             setSrc(photoId);
             setLoading(false);
             return;
@@ -99,6 +99,7 @@ export const FireImage: React.FC<FireImageProps> = ({
             src={src}
             alt={alt}
             className={`${className} transition-opacity duration-300`}
+            style={{ imageRendering: 'auto' }} // Deixa o navegador decidir a melhor renderização (evita pixelização em imagens low-res)
             onClick={onClick}
             loading="lazy"
         />
