@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Menu, LayoutDashboard, Ticket, DollarSign, Bot, Settings, TrendingUp, User, LogOut, ChevronRight, X,
-  ArrowUp, ArrowDown, Cloud, CloudOff, RefreshCw
+  ArrowUp, ArrowDown, Cloud, CloudOff, RefreshCw, Calculator
 } from 'lucide-react';
 import { Page, AppSettings, SettingsTab } from '../types';
 
@@ -137,6 +137,7 @@ const Layout: React.FC<LayoutProps> = ({
     { id: Page.OVERVIEW, label: 'Visão Geral', icon: <LayoutDashboard size={20} /> },
     { id: Page.BETS, label: 'Minhas Apostas', icon: <Ticket size={20} /> },
     { id: Page.GAINS, label: 'Ganhos Extras', icon: <DollarSign size={20} /> },
+    { id: Page.CALCULATORS, label: 'Calculadoras', icon: <Calculator size={20} /> },
     { id: Page.SETTINGS, label: 'Ajustes', icon: <Settings size={20} /> },
   ];
 
@@ -147,6 +148,7 @@ const Layout: React.FC<LayoutProps> = ({
       case Page.GAINS: return 'Ganhos Extras';
       case Page.COACH: return 'Coach';
       case Page.SETTINGS: return 'Ajustes';
+      case Page.CALCULATORS: return 'Calculadoras';
       default: return 'ApostasPro';
     }
   }

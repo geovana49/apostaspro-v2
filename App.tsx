@@ -14,6 +14,7 @@ const ExtraGains = lazy(() => import('./components/ExtraGains'));
 const Coach = lazy(() => import('./components/Coach'));
 const Settings = lazy(() => import('./components/Settings'));
 const LandingPage = lazy(() => import('./components/LandingPage'));
+const Calculators = lazy(() => import('./components/Calculators'));
 
 // A simplified loading component for page transitions
 const PageLoader = () => (
@@ -398,6 +399,8 @@ const App: React.FC = () => {
                   currentUser={currentUser}
                 />
               )}
+
+              {activePage === Page.CALCULATORS && <Calculators />}
             </Suspense>
           </Layout>
         )}

@@ -103,4 +103,5 @@ export enum Page {
   COACH = 'coach',
   SETTINGS = 'settings',
   AI_ASSISTANT = 'aiAssistant',
+  CALCULATORS = 'calculators',
 }
