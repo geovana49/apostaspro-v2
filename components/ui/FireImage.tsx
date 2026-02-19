@@ -99,8 +99,7 @@ export const FireImage: React.FC<FireImageProps> = ({
             src={src}
             alt={alt}
             className={`${className} transition-opacity duration-300`}
-            style={{ imageRendering: 'auto' }} // Deixa o navegador decidir a melhor renderização (evita pixelização em imagens low-res)
-            onClick={onClick}
+            style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }} // Hack para forçar GPU e melhorar nitidez no Chrome/Safari
             loading="lazy"
         />
     );
