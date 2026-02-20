@@ -559,9 +559,9 @@ const ArbProTab: React.FC = () => {
 
             {/* Results Section */}
             <div className="bg-[#0d1421]/80 border border-[#1e3a5f]/40 rounded-2xl overflow-hidden shadow-2xl">
-                <div className="p-8">
+                <div className="pt-16 px-8 pb-8">
                     {/* Spaced summary stats */}
-                    <div className="flex flex-col md:flex-row items-center justify-around gap-16 mb-10 pb-10 border-b border-[#1e3a5f]/10">
+                    <div className="flex flex-col md:flex-row items-center justify-around gap-16 mb-12 pb-12 border-b border-[#1e3a5f]/10">
                         <div className="text-center group">
                             <div className="text-4xl font-black text-white mb-2 transition-transform group-hover:scale-105 duration-300">
                                 {formatBRL(arbResult.totalInvested)}
