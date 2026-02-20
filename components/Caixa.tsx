@@ -587,7 +587,7 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts, bookm
         const newBmOptions = (bookmakers || [])
             .filter(bm => !existingBmIds.has(bm.id))
             .map(bm => ({
-                label: `${bm.name} (Nova Conta Casa)`,
+                label: `${bm.name}`,
                 value: `new_bm_${bm.id}`,
                 icon: bm.logo ? (
                     <img src={bm.logo} alt="" className="w-5 h-5 rounded object-contain" />
