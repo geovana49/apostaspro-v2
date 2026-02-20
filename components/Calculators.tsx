@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import {
-    HelpCircle, ChevronDown, Check, Trash2, Share2, History as HistoryIcon, Users, ClipboardList,
-    Target, Zap, TrendingUp, BookOpen, X, Calculator, ArrowRight, Lightbulb, Info,
-    Lock, Unlock, Copy, AlertCircle, CheckCircle, RotateCcw, Eye, EyeOff, Edit3
+    HelpCircle, ChevronDown, Check, Trash2, History as HistoryIcon,
+    Target, Zap, TrendingUp, BookOpen, X, Calculator, ArrowRight, Lightbulb,
+    Eye, EyeOff
 } from 'lucide-react';
 import {
     calculateArb, parseBR, formatBRL, formatOdd,
@@ -41,13 +41,13 @@ export interface CalculationHistory {
     totalInvested: number;
 }
 
-type RoundingStep = 0.01 | 0.1 | 0.5 | 1 | 2 | 5 | 10 | 50 | 100;
+type RoundingStep = 0.01 | 0.1 | 0.5 | 1;
 
 const DEFAULT_HOUSE = (i: number): HouseState => ({
     id: Math.random().toString(36).substr(2, 9),
     annotation: '',
-    odd: '',
-    stake: '',
+    odd: '2.00',
+    stake: i === 0 ? '100' : '',
     commission: '',
     increase: '',
     isFreebet: false,
@@ -64,12 +64,7 @@ const ROUNDING_OPTIONS: { label: string; value: RoundingStep }[] = [
     { label: 'R$ 0,01', value: 0.01 },
     { label: 'R$ 0,10', value: 0.1 },
     { label: 'R$ 0,50', value: 0.5 },
-    { label: 'R$ 1,00', value: 1 },
-    { label: 'R$ 2,00', value: 2 },
-    { label: 'R$ 5,00', value: 5 },
-    { label: 'R$ 10,00', value: 10 },
-    { label: 'R$ 50,00', value: 50 },
-    { label: 'R$ 100,00', value: 100 },
+    { label: 'R$ 1,00', value: 1 }
 ];
 
 const TABS = [
@@ -158,14 +153,6 @@ const TutorialModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                                 <li><span className="text-purple-400 font-bold">5.</span> Confira o ROI e o lucro estimado na seção Resultados</li>
                                             </ol>
                                         </AccordionItem>
-                                        <AccordionItem icon={<Lightbulb className="w-4 h-4" />} title="Dicas avançadas" iconColor="text-yellow-400">
-                                            <ul className="space-y-1.5">
-                                                <li>• Use <strong className="text-white">FIXAR STAKE</strong> para travar o valor de uma casa específica</li>
-                                                <li>• Use <strong className="text-white">ZERAR</strong> para cobrir apenas o investimento numa casa, jogando o lucro para as outras</li>
-                                                <li>• <strong className="text-white">LAY</strong> permite calcular a responsabilidade em Exchanges (como Betfair)</li>
-                                                <li>• Arredondamento de R$1,00 ajuda a disfarçar padrões nas casas</li>
-                                            </ul>
-                                        </AccordionItem>
                                     </div>
                                 </div>
                             )}
@@ -174,23 +161,6 @@ const TutorialModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                     <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
                                         <h3 className="text-lg font-bold text-cyan-300 flex items-center gap-2"><Zap className="w-5 h-5" /> O que é a FREE PRO?</h3>
                                         <p className="text-gray-300 mt-2">A calculadora FREE PRO especializada em <strong>converter freebets em dinheiro real</strong>. Ela calcula o stake ideal no lay para garantir um retorno fixo sobre a freebet recebida.</p>
-                                    </div>
-                                    <div className="space-y-3">
-                                        <AccordionItem icon={<Calculator className="w-4 h-4" />} title="Quando usar?" iconColor="text-cyan-400">
-                                            <ul className="space-y-1.5">
-                                                <li>• Quando receber uma freebet de boas-vindas ou promoção</li>
-                                                <li>• Para converter qualquer crédito de apostas em dinheiro real</li>
-                                            </ul>
-                                        </AccordionItem>
-                                        <AccordionItem icon={<ArrowRight className="w-4 h-4" />} title="Passo a passo" iconColor="text-cyan-400">
-                                            <ol className="space-y-2">
-                                                <li><span className="text-cyan-400 font-bold">1.</span> Insira o valor da sua freebet</li>
-                                                <li><span className="text-cyan-400 font-bold">2.</span> Digite a ODD do back (na casa de apostas)</li>
-                                                <li><span className="text-cyan-400 font-bold">3.</span> Digite a ODD do lay (na exchange)</li>
-                                                <li><span className="text-cyan-400 font-bold">4.</span> Insira a comissão da exchange</li>
-                                                <li><span className="text-cyan-400 font-bold">5.</span> A calculadora mostra o lucro líquido garantido</li>
-                                            </ol>
-                                        </AccordionItem>
                                     </div>
                                 </div>
                             )}
@@ -241,8 +211,23 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                     {index === 0 && !house.annotation && <span className="text-purple-400 text-[10px] font-black uppercase tracking-wider">(Promo)</span>}
                 </span>
                 {showProfits && (
-                    <div className={`text-xs font-black px-2 py-0.5 rounded ${profitIfWin >= 0 ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
-                        {formatBRL(profitIfWin)}
+                    <div className="flex flex-col items-end gap-1 min-w-[100px]">
+                        <label className="text-[9px] text-gray-500 uppercase font-black tracking-widest whitespace-nowrap">Lucro (Editar)</label>
+                        <div className="relative group/profit w-full">
+                            <input
+                                type="text"
+                                inputMode="decimal"
+                                placeholder={formatBRL(profitIfWin).replace('R$', '').trim()}
+                                value={house.targetProfit}
+                                onChange={e => update({ targetProfit: e.target.value, isProfitFixed: e.target.value !== '', distribution: e.target.value === '' })}
+                                className={`w-full bg-transparent text-right pr-1 font-black text-sm focus:outline-none transition-all placeholder:opacity-50 ${house.isProfitFixed ? 'text-blue-400 border-b border-blue-500/30 font-mono' : profitIfWin >= 0 ? 'text-green-400' : 'text-red-400'}`}
+                            />
+                            {house.isProfitFixed && (
+                                <div className="absolute -left-4 top-1/2 -translate-y-1/2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
             </div>
@@ -321,14 +306,6 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                 </label>
 
                 <label className="flex items-center gap-2 cursor-pointer group">
-                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${house.isProfitFixed ? 'bg-blue-500 border-blue-500' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}
-                        onClick={() => update({ isProfitFixed: !house.isProfitFixed, distribution: true })}>
-                        {house.isProfitFixed && <Check className="w-3 h-3 text-white" />}
-                    </div>
-                    <span className={house.isProfitFixed ? 'text-white' : 'group-hover:text-gray-300'}>EDITAR LUCRO</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer group">
                     <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${house.showCommission ? 'bg-yellow-500 border-yellow-500' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}
                         onClick={toggleCommission}>
                         {house.showCommission && <Check className="w-3 h-3 text-white" />}
@@ -352,21 +329,6 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                     <span className={house.showIncrease ? 'text-white' : 'group-hover:text-gray-300'}>AUMENTO DE ODD</span>
                 </label>
             </div>
-
-            {/* Custom Profit Input */}
-            {house.isProfitFixed && (
-                <div className="mb-4 animate-in fade-in slide-in-from-top-1">
-                    <label className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-1">LUCRO ALVO (R$)</label>
-                    <input
-                        type="text"
-                        inputMode="decimal"
-                        placeholder="0,00"
-                        value={house.targetProfit}
-                        onChange={e => update({ targetProfit: e.target.value })}
-                        className="w-full bg-blue-500/5 border border-blue-500/30 rounded-lg px-3 py-2 text-blue-300 text-sm font-bold focus:border-blue-500/50 focus:outline-none"
-                    />
-                </div>
-            )}
 
             {/* Conditional Commission/Increase */}
             {(house.showCommission || house.commission !== '') && (
@@ -545,13 +507,17 @@ const ArbProTab: React.FC = () => {
                     </div>
                     <p className="text-gray-500 text-sm font-medium mt-1">Gere lucros consistentes usando arbitragem profissional.</p>
                 </div>
-                <button
-                    onClick={() => setShowProfits(!showProfits)}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${showProfits ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30' : 'bg-gray-800 text-gray-500 border border-gray-700'}`}
-                    title={showProfits ? "Ocultar Lucros" : "Mostrar Lucros"}
-                >
-                    {showProfits ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-                </button>
+                <div className="flex flex-col items-center gap-1.5 min-w-[120px]">
+                    <button
+                        onClick={() => setShowProfits(!showProfits)}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${showProfits ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30' : 'bg-gray-800 text-gray-500 border border-gray-700'}`}
+                    >
+                        {showProfits ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                    </button>
+                    <span className="text-[9px] font-bold text-gray-500 uppercase tracking-tighter text-center leading-none">
+                        {showProfits ? 'Ocultar Lucros' : 'Mostrar Lucros'}
+                    </span>
+                </div>
             </div>
 
             {/* Config Selectors */}
@@ -627,6 +593,7 @@ const ArbProTab: React.FC = () => {
                                 <tr className="bg-cyan-500/10 text-cyan-400/80 uppercase text-[10px] font-black tracking-[0.15em] border-b border-cyan-500/20">
                                     <th className="text-left py-4 px-6">CASA</th>
                                     <th className="text-center py-4 px-6">ODD</th>
+                                    <th className="text-center py-4 px-6">COMISSÃO</th>
                                     <th className="text-center py-4 px-6">STAKE</th>
                                     <th className="text-center py-4 px-6">RESPONSABILIDADE</th>
                                     {showProfits && <th className="text-right py-4 px-6">LUCRO</th>}
@@ -637,12 +604,15 @@ const ArbProTab: React.FC = () => {
                                     const res = arbResult.results[i];
                                     if (!res) return null;
                                     return (
-                                        <tr key={house.id} className={`hover:bg-white/[0.02] transition-colors ${!house.distribution && !house.isProfitFixed ? 'opacity-40' : ''}`}>
+                                        <tr key={house.id} className={`hover:bg-white/[0.02] transition-colors ${(!house.distribution && !house.isProfitFixed) ? 'opacity-40' : ''}`}>
                                             <td className="py-5 px-6 font-black text-white text-sm">
                                                 Casa {i + 1} {house.annotation && <span className="text-gray-500 font-medium ml-2">- {house.annotation}</span>}
                                             </td>
                                             <td className="py-5 px-6 text-center font-mono text-gray-400 text-sm">
                                                 {res.finalOdd.toFixed(2)}
+                                            </td>
+                                            <td className="py-5 px-6 text-center text-gray-500 text-xs">
+                                                {house.commission ? `${house.commission}%` : '—'}
                                             </td>
                                             <td className="py-5 px-6 text-center font-black text-white/90 text-sm font-mono">
                                                 {formatBRL(res.computedStake)}
