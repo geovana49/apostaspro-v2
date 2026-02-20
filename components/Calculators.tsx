@@ -31,6 +31,7 @@ export interface HouseState {
     showCommission: boolean;
     showIncrease: boolean;
     isProfitFixed: boolean; // toggle if user wants a specific profit
+    bookmakerId: string;   // selected bookmaker for this house
 }
 
 export interface CalculationHistory {
@@ -66,7 +67,8 @@ const DEFAULT_HOUSE = (i: number): HouseState => ({
     targetProfit: '',
     showCommission: false,
     showIncrease: false,
-    isProfitFixed: false
+    isProfitFixed: false,
+    bookmakerId: ''
 });
 
 const ROUNDING_OPTIONS: { label: string; value: RoundingStep }[] = [
@@ -177,10 +179,11 @@ interface HouseCardProps {
     profitIfWin: number;
     finalOdd: number;
     showProfits: boolean;
+    bookmakers: Bookmaker[];
     onChange: (h: HouseState) => void;
 }
 
-const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, responsibility, profitIfWin, finalOdd, showProfits, onChange }) => {
+const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, responsibility, profitIfWin, finalOdd, showProfits, bookmakers, onChange }) => {
     const isAnchor = house.isFixed;
     const update = (patch: Partial<HouseState>) => onChange({ ...house, ...patch });
 
@@ -198,16 +201,24 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
     return (
         <div className={`bg-[#0d1421]/60 border rounded-xl p-5 transition-all ${isAnchor ? 'border-emerald-500/60 shadow-lg shadow-emerald-500/5' : 'border-[#1e3a5f]/50 hover:border-emerald-500/30'}`}>
             {/* Header */}
-            <div className="flex items-start justify-between mb-4 gap-2">
-                <div className="flex flex-col min-w-0">
-                    <span className="text-white font-bold text-[15px] flex items-center gap-1.5 truncate">
+            <div className="flex items-start justify-between mb-4 gap-4">
+                <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-white font-bold text-[15px] flex items-center gap-1.5 truncate mb-2">
                         {label}
                     </span>
-                    {index === 0 && !house.annotation && (
-                        <span className="text-purple-400 text-[9px] font-black uppercase tracking-wider mt-0.5">
-                            (Promo)
-                        </span>
-                    )}
+                    <div className="relative group/book">
+                        <select
+                            value={house.bookmakerId}
+                            onChange={e => update({ bookmakerId: e.target.value })}
+                            className="w-full bg-[#0a0f1e] text-white font-bold text-xs h-9 px-3 rounded-lg border border-[#1e3a5f]/50 appearance-none focus:outline-none focus:border-emerald-500/50 transition-all cursor-pointer"
+                        >
+                            <option value="">Selecionar Casa</option>
+                            {bookmakers.map(b => (
+                                <option key={b.id} value={b.id}>{b.name}</option>
+                            ))}
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none group-hover/book:text-emerald-400 transition-colors" />
+                    </div>
                 </div>
                 {showProfits && (
                     <div className="flex flex-col items-end gap-1 shrink-0">
@@ -515,7 +526,7 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
         // Map houses to coverages
         const coverages: Coverage[] = activeHouses.map((h, i) => ({
             id: Math.random().toString(36).substr(2, 9),
-            bookmakerId: '', // Default to empty, user will select in modal
+            bookmakerId: h.bookmakerId,
             market: h.isLay ? 'Lay' : 'Back',
             odd: parseBR(h.odd) || 0,
             stake: parseBR(h.stake) || 0,
@@ -526,7 +537,7 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
             id: Date.now().toString(),
             date: new Date().toISOString().split('T')[0],
             event: 'Arbitragem ARB PRO',
-            mainBookmakerId: '',
+            mainBookmakerId: activeHouses[0]?.bookmakerId || '',
             status: pendingStatus,
             coverages: coverages,
             notes: `Calculado via ARB PRO\nROI: ${arbResult.roi.toFixed(2)}%\nInvestimento: ${formatBRL(arbResult.totalInvested)}`,
@@ -610,6 +621,7 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
                         profitIfWin={arbResult.results[i]?.profitIfWin ?? 0}
                         finalOdd={arbResult.results[i]?.finalOdd ?? 0}
                         showProfits={showProfits}
+                        bookmakers={bookmakers}
                         onChange={updated => updateHouse(i, updated)}
                     />
                 ))}
