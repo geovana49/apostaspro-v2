@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import {
     HelpCircle, ChevronDown, Check, Trash2, Share2, History as HistoryIcon, Users, ClipboardList,
     Target, Zap, TrendingUp, BookOpen, X, Calculator, ArrowRight, Lightbulb, Info,
-    Lock, Unlock, Copy, AlertCircle, CheckCircle, RotateCcw
+    Lock, Unlock, Copy, AlertCircle, CheckCircle, RotateCcw, Eye, EyeOff, Edit3
 } from 'lucide-react';
 import {
     calculateArb, parseBR, formatBRL, formatOdd,
@@ -14,6 +14,7 @@ import {
 //  TYPES
 // =============================================
 export interface HouseState {
+    id: string; // for stable keys
     annotation: string;
     odd: string;
     stake: string;
@@ -22,10 +23,12 @@ export interface HouseState {
     isFreebet: boolean;
     isLay: boolean;
     isFixed: boolean;
-    distribution: boolean; // true = standard; false = "Zerar"
+    distribution: boolean; // if false, profit is fixed (targetProfit)
+    targetProfit: string;  // user-entered target profit string
     // UI Helpers
     showCommission: boolean;
     showIncrease: boolean;
+    isProfitFixed: boolean; // toggle if user wants a specific profit
 }
 
 export interface CalculationHistory {
@@ -40,7 +43,8 @@ export interface CalculationHistory {
 
 type RoundingStep = 0.01 | 0.1 | 0.5 | 1 | 2 | 5 | 10 | 50 | 100;
 
-const DEFAULT_HOUSE = (): HouseState => ({
+const DEFAULT_HOUSE = (i: number): HouseState => ({
+    id: Math.random().toString(36).substr(2, 9),
     annotation: '',
     odd: '',
     stake: '',
@@ -48,10 +52,12 @@ const DEFAULT_HOUSE = (): HouseState => ({
     increase: '',
     isFreebet: false,
     isLay: false,
-    isFixed: false,
+    isFixed: i === 0,
     distribution: true,
+    targetProfit: '',
     showCommission: false,
-    showIncrease: false
+    showIncrease: false,
+    isProfitFixed: false
 });
 
 const ROUNDING_OPTIONS: { label: string; value: RoundingStep }[] = [
@@ -207,10 +213,11 @@ interface HouseCardProps {
     responsibility: number;
     profitIfWin: number;
     finalOdd: number;
+    showProfits: boolean;
     onChange: (h: HouseState) => void;
 }
 
-const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, responsibility, profitIfWin, finalOdd, onChange }) => {
+const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, responsibility, profitIfWin, finalOdd, showProfits, onChange }) => {
     const isAnchor = house.isFixed;
     const update = (patch: Partial<HouseState>) => onChange({ ...house, ...patch });
 
@@ -223,14 +230,21 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
         showIncrease: !house.showIncrease
     });
 
+    const label = `Casa ${index + 1}${house.annotation ? ` - ${house.annotation}` : ''}`;
+
     return (
         <div className={`bg-[#0d1421]/60 border rounded-xl p-5 transition-all ${isAnchor ? 'border-purple-500/60 shadow-lg shadow-purple-500/5' : 'border-[#1e3a5f]/50 hover:border-cyan-500/30'}`}>
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
-                <span className="text-white font-bold text-lg flex items-center gap-2">
-                    {house.annotation ? house.annotation : `Casa ${index + 1}`}
-                    {index === 0 && !house.annotation && <span className="text-purple-400 text-xs font-medium uppercase tracking-wider">(Promo)</span>}
+                <span className="text-white font-bold text-[15px] flex items-center gap-2 truncate">
+                    {label}
+                    {index === 0 && !house.annotation && <span className="text-purple-400 text-[10px] font-black uppercase tracking-wider">(Promo)</span>}
                 </span>
+                {showProfits && (
+                    <div className={`text-xs font-black px-2 py-0.5 rounded ${profitIfWin >= 0 ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                        {formatBRL(profitIfWin)}
+                    </div>
+                )}
             </div>
 
             {/* Note Input */}
@@ -247,7 +261,7 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
             {/* ODD Layout */}
             <div className="grid grid-cols-2 gap-3 mb-4">
                 <div>
-                    <label className="text-[10px] text-gray-500 uppercase font-bold tracking-wider block mb-1">ODD</label>
+                    <label className="text-[10px] text-gray-500 uppercase font-black tracking-wider block mb-1">ODD</label>
                     <input
                         type="text"
                         inputMode="decimal"
@@ -258,7 +272,7 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                     />
                 </div>
                 <div>
-                    <label className="text-[10px] text-gray-500 uppercase font-bold tracking-wider block mb-1">ODD FINAL</label>
+                    <label className="text-[10px] text-gray-500 uppercase font-black tracking-wider block mb-1">ODD FINAL</label>
                     <div className="w-full bg-[#0a0f1e]/60 border border-[#1e3a5f]/50 rounded-lg px-3 py-2.5 text-gray-400 text-lg font-bold font-mono min-h-[46px] flex items-center">
                         {finalOdd > 0 ? formatOdd(finalOdd) : '0.00'}
                     </div>
@@ -267,7 +281,7 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
 
             {/* STAKE + BACK/LAY */}
             <div className="mb-4">
-                <label className="text-[10px] text-gray-500 uppercase font-bold tracking-wider block mb-1">STAKE</label>
+                <label className="text-[10px] text-gray-500 uppercase font-black tracking-wider block mb-1">STAKE</label>
                 <div className="flex gap-2">
                     <div className="relative flex-1">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-mono">R$</span>
@@ -296,35 +310,42 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                 </div>
             </div>
 
-            {/* Checkboxes Row 1 */}
-            <div className="flex items-center gap-4 mb-3 text-[11px] font-bold text-gray-400 uppercase tracking-tight">
+            {/* Checkboxes Grouped */}
+            <div className="flex flex-wrap gap-x-4 gap-y-2 mb-4 text-[11px] font-bold text-gray-400 uppercase tracking-tight">
                 <label className="flex items-center gap-2 cursor-pointer group">
-                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${!house.distribution ? 'bg-red-500 border-red-500 shadow-sm shadow-red-500/20' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}
-                        onClick={() => update({ distribution: !house.distribution })}>
-                        {!house.distribution && <Check className="w-3 h-3 text-white" />}
+                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${!house.distribution && !house.isProfitFixed ? 'bg-red-500 border-red-500' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}
+                        onClick={() => update({ distribution: !house.distribution, isProfitFixed: false, targetProfit: '' })}>
+                        {!house.distribution && !house.isProfitFixed && <Check className="w-3 h-3 text-white" />}
                     </div>
-                    <span className={!house.distribution ? 'text-white' : 'group-hover:text-gray-300'}>ZERAR</span>
+                    <span className={!house.distribution && !house.isProfitFixed ? 'text-white' : 'group-hover:text-gray-300'}>ZERAR</span>
                 </label>
+
                 <label className="flex items-center gap-2 cursor-pointer group">
-                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${house.showCommission ? 'bg-yellow-500 border-yellow-500 shadow-sm shadow-yellow-500/20' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}
+                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${house.isProfitFixed ? 'bg-blue-500 border-blue-500' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}
+                        onClick={() => update({ isProfitFixed: !house.isProfitFixed, distribution: true })}>
+                        {house.isProfitFixed && <Check className="w-3 h-3 text-white" />}
+                    </div>
+                    <span className={house.isProfitFixed ? 'text-white' : 'group-hover:text-gray-300'}>EDITAR LUCRO</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer group">
+                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${house.showCommission ? 'bg-yellow-500 border-yellow-500' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}
                         onClick={toggleCommission}>
                         {house.showCommission && <Check className="w-3 h-3 text-white" />}
                     </div>
                     <span className={house.showCommission ? 'text-white' : 'group-hover:text-gray-300'}>COMISSÃO</span>
                 </label>
+
                 <label className="flex items-center gap-2 cursor-pointer group">
-                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${house.isFreebet ? 'bg-purple-500 border-purple-500 shadow-sm shadow-purple-500/20' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}
+                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${house.isFreebet ? 'bg-purple-500 border-purple-500' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}
                         onClick={() => update({ isFreebet: !house.isFreebet })}>
                         {house.isFreebet && <Check className="w-3 h-3 text-white" />}
                     </div>
                     <span className={house.isFreebet ? 'text-white' : 'group-hover:text-gray-300'}>FREEBET</span>
                 </label>
-            </div>
 
-            {/* Checkboxes Row 2 */}
-            <div className="flex items-center gap-4 mb-4 text-[11px] font-bold text-gray-400 uppercase tracking-tight">
-                <label className="flex items-center gap-2 cursor-pointer group">
-                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${house.showIncrease ? 'bg-green-500 border-green-500 shadow-sm shadow-green-500/20' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}
+                <label className="flex items-center gap-2 cursor-pointer group w-full">
+                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${house.showIncrease ? 'bg-green-500 border-green-500' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}
                         onClick={toggleIncrease}>
                         {house.showIncrease && <Check className="w-3 h-3 text-white" />}
                     </div>
@@ -332,36 +353,51 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                 </label>
             </div>
 
-            {/* Conditional Inputs */}
+            {/* Custom Profit Input */}
+            {house.isProfitFixed && (
+                <div className="mb-4 animate-in fade-in slide-in-from-top-1">
+                    <label className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-1">LUCRO ALVO (R$)</label>
+                    <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="0,00"
+                        value={house.targetProfit}
+                        onChange={e => update({ targetProfit: e.target.value })}
+                        className="w-full bg-blue-500/5 border border-blue-500/30 rounded-lg px-3 py-2 text-blue-300 text-sm font-bold focus:border-blue-500/50 focus:outline-none"
+                    />
+                </div>
+            )}
+
+            {/* Conditional Commission/Increase */}
             {(house.showCommission || house.commission !== '') && (
-                <div className="mb-3 animate-in fade-in slide-in-from-top-1 duration-200">
-                    <label className="text-[10px] text-yellow-500/70 uppercase font-black tracking-widest block mb-1">Taxa de Comissão (%)</label>
+                <div className="mb-4 animate-in fade-in slide-in-from-top-1">
+                    <label className="text-[10px] text-yellow-500/70 uppercase font-black tracking-widest block mb-1">Comissão (%)</label>
                     <input
                         type="text"
                         inputMode="decimal"
                         value={house.commission}
                         onChange={e => update({ commission: e.target.value })}
-                        className="w-full bg-[#0a0f1e] border border-yellow-500/30 rounded-lg px-3 py-2 text-yellow-400 text-sm font-bold focus:border-yellow-500/50 focus:outline-none"
+                        className="w-full bg-yellow-500/5 border border-yellow-500/30 rounded-lg px-3 py-2 text-yellow-500 text-sm font-bold focus:border-yellow-500/50 focus:outline-none"
                     />
                 </div>
             )}
 
             {(house.showIncrease || house.increase !== '') && (
-                <div className="mb-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                <div className="mb-4 animate-in fade-in slide-in-from-top-1">
                     <label className="text-[10px] text-green-500/70 uppercase font-black tracking-widest block mb-1">Bônus de ODD (%)</label>
                     <input
                         type="text"
                         inputMode="decimal"
                         value={house.increase}
                         onChange={e => update({ increase: e.target.value })}
-                        className="w-full bg-[#0a0f1e] border border-green-500/30 rounded-lg px-3 py-2 text-green-400 text-sm font-bold focus:border-green-500/50 focus:outline-none"
+                        className="w-full bg-green-500/5 border border-green-500/30 rounded-lg px-3 py-2 text-green-500 text-sm font-bold focus:border-green-500/50 focus:outline-none"
                     />
                 </div>
             )}
 
             {/* Responsibility for Lay */}
             {house.isLay && (
-                <div className="mb-4 animate-in fade-in zoom-in-95 duration-200">
+                <div className="mb-4 animate-in fade-in zoom-in-95">
                     <label className="text-[10px] text-pink-500/70 uppercase font-black tracking-widest block mb-1">Responsabilidade</label>
                     <div className="w-full bg-pink-500/5 border border-pink-500/20 rounded-lg px-3 py-2.5 text-pink-400 text-sm font-bold font-mono">
                         {responsibility > 0 ? formatBRL(responsibility) : 'R$ 0,00'}
@@ -388,24 +424,20 @@ const ArbProTab: React.FC = () => {
     const [rounding, setRounding] = useState<RoundingStep>(0.01);
     const [history, setHistory] = useState<CalculationHistory[]>([]);
     const [showHistory, setShowHistory] = useState(false);
+    const [showProfits, setShowProfits] = useState(true);
 
     // Initialize houses
     const [houses, setHouses] = useState<HouseState[]>(() => {
-        return Array.from({ length: 10 }).map((_, i) => ({
-            ...DEFAULT_HOUSE(),
-            isFixed: i === 0
-        }));
+        return Array.from({ length: 10 }).map((_, i) => DEFAULT_HOUSE(i));
     });
 
-    // Load History from localStorage
+    // Load History
     useEffect(() => {
         const saved = localStorage.getItem('arb_history');
         if (saved) {
             try {
                 setHistory(JSON.parse(saved));
-            } catch (e) {
-                console.error("Error parsing history", e);
-            }
+            } catch (e) { }
         }
     }, []);
 
@@ -422,6 +454,7 @@ const ArbProTab: React.FC = () => {
             isLay: h.isLay,
             isFixed: h.isFixed,
             distribution: h.distribution,
+            targetProfit: h.isProfitFixed ? parseBR(h.targetProfit) : null
         }));
     }, [activeHouses]);
 
@@ -430,9 +463,9 @@ const ArbProTab: React.FC = () => {
         return calculateArb(houseInputs, rounding);
     }, [houseInputs, rounding]);
 
-    // Auto-save history when ROI is valid and results are calculated
+    // Auto-save history
     useEffect(() => {
-        if (arbResult.totalInvested > 0 && arbResult.roi !== 0) {
+        if (arbResult.totalInvested > 1 && arbResult.roi !== 0) {
             const timer = setTimeout(() => {
                 const newCalc: CalculationHistory = {
                     id: Date.now().toString(),
@@ -445,16 +478,11 @@ const ArbProTab: React.FC = () => {
                 };
 
                 setHistory(prev => {
-                    // Check if identical to last entry to avoid spam
-                    if (prev.length > 0) {
-                        const last = prev[0];
-                        if (JSON.stringify(last.houses) === JSON.stringify(activeHouses)) return prev;
-                    }
-                    const updated = [newCalc, ...prev].slice(0, 5);
+                    const updated = [newCalc, ...prev.filter(h => JSON.stringify(h.houses) !== JSON.stringify(activeHouses))].slice(0, 5);
                     localStorage.setItem('arb_history', JSON.stringify(updated));
                     return updated;
                 });
-            }, 3000); // 3s debounce
+            }, 3000);
             return () => clearTimeout(timer);
         }
     }, [arbResult.totalInvested, arbResult.roi, activeHouses, numHouses, rounding]);
@@ -462,12 +490,26 @@ const ArbProTab: React.FC = () => {
     const updateHouse = (index: number, updated: HouseState) => {
         setHouses(prev => {
             const next = [...prev];
+            // If fixing stake, disable profit fixed for this house
             if (updated.isFixed && !prev[index].isFixed) {
                 next.forEach((h, i) => { next[i] = { ...h, isFixed: false }; });
+                updated.isProfitFixed = false;
+                updated.targetProfit = '';
             }
+            // If fixing profit, disable fixed stake for this house
+            if (updated.isProfitFixed && !prev[index].isProfitFixed) {
+                updated.isFixed = false;
+                updated.distribution = true;
+            }
+
             next[index] = updated;
             const anyFixed = next.slice(0, numHouses).some(h => h.isFixed);
-            if (!anyFixed) next[0] = { ...next[0], isFixed: true };
+            if (!anyFixed) {
+                // Find first non-profit-fixed house to anchor
+                const anchorIdx = next.slice(0, numHouses).findIndex(h => !h.isProfitFixed);
+                if (anchorIdx >= 0) next[anchorIdx].isFixed = true;
+                else next[0].isFixed = true;
+            }
             return next;
         });
     };
@@ -483,54 +525,46 @@ const ArbProTab: React.FC = () => {
         setShowHistory(false);
     };
 
-    const deleteHistoryItem = (id: string, e: React.MouseEvent) => {
-        e.stopPropagation();
-        setHistory(prev => {
-            const updated = prev.filter(item => item.id !== id);
-            localStorage.setItem('arb_history', JSON.stringify(updated));
-            return updated;
-        });
-    };
-
     const clearAll = () => {
-        setHouses(prev => prev.map((_, i) => ({
-            ...DEFAULT_HOUSE(),
-            isFixed: i === 0
-        })));
-    };
-
-    const shareResults = () => {
-        // Implementation for sharing URL would go here (serialising state)
-        alert("Link de compartilhamento copiado! (Simulado)");
+        setHouses(prev => prev.map((_, i) => DEFAULT_HOUSE(i)));
     };
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
-            {/* Summary Title */}
-            <div className="border-l-[5px] border-purple-500 pl-5 py-2">
-                <div className="flex items-center gap-3">
-                    <h2 className="text-3xl font-black text-white tracking-tight">ARB PRO</h2>
-                    {arbResult.totalInvested > 0 && (
-                        <div className="bg-green-500/20 border border-green-500/30 rounded px-2 py-0.5 flex items-center gap-1.5 animate-pulse">
-                            <TrendingUp className="w-3.5 h-3.5 text-green-400" />
-                            <span className="text-[11px] font-black text-green-400 uppercase tracking-widest">ROI {arbResult.roi.toFixed(2)}%</span>
-                        </div>
-                    )}
+            {/* Header Title */}
+            <div className="border-l-[5px] border-purple-500 pl-5 py-2 flex items-center justify-between">
+                <div>
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-3xl font-black text-white tracking-tight">ARB PRO</h2>
+                        {arbResult.totalInvested > 0 && (
+                            <div className="bg-green-500/20 border border-green-500/30 rounded px-2 py-0.5 flex items-center gap-1.5">
+                                <TrendingUp className="w-3.5 h-3.5 text-green-400" />
+                                <span className="text-[11px] font-black text-green-400 uppercase tracking-widest">ROI {arbResult.roi.toFixed(2)}%</span>
+                            </div>
+                        )}
+                    </div>
+                    <p className="text-gray-500 text-sm font-medium mt-1">Gere lucros consistentes usando arbitragem profissional.</p>
                 </div>
-                <p className="text-gray-500 text-sm font-medium mt-1">Stakes otimizados para garantir lucro em qualquer resultado (Arbitragem/Surebet)</p>
+                <button
+                    onClick={() => setShowProfits(!showProfits)}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${showProfits ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30' : 'bg-gray-800 text-gray-500 border border-gray-700'}`}
+                    title={showProfits ? "Ocultar Lucros" : "Mostrar Lucros"}
+                >
+                    {showProfits ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                </button>
             </div>
 
             {/* Config Selectors */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-[#0d1421]/40 border border-[#1e3a5f]/30 rounded-xl p-5 shadow-sm">
-                    <label className="text-[11px] text-gray-500 uppercase font-black tracking-widest mb-3 block">Número de Casas</label>
+                    <label className="text-[11px] text-gray-500 uppercase font-black tracking-widest mb-3 block">Células de Cálculo</label>
                     <div className="relative group">
                         <select
                             value={numHouses}
                             onChange={e => setNumHouses(Number(e.target.value))}
                             className="w-full bg-[#0a0f1e] text-white font-bold h-11 px-4 rounded-lg border border-[#1e3a5f]/50 appearance-none focus:outline-none focus:border-cyan-500/50 transition-all cursor-pointer"
                         >
-                            {[2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => <option key={n} value={n}>{n} Casas</option>)}
+                            {[2, 3, 4, 5, 6, 7, 8].map(n => <option key={n} value={n}>{n} Casas</option>)}
                         </select>
                         <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none group-hover:text-cyan-400 transition-colors" />
                     </div>
@@ -550,50 +584,39 @@ const ArbProTab: React.FC = () => {
                 </div>
             </div>
 
-            {/* Casas Section Header */}
-            <div className="flex items-center gap-3 py-2 border-b border-[#1e3a5f]/20">
-                <h3 className="text-sm font-black text-cyan-400 uppercase tracking-[0.2em]">CASAS DE APOSTAS</h3>
-                <span className="text-[10px] bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded font-bold">
-                    {activeHouses.filter(h => h.odd !== '').length}/{numHouses} preenchidas
-                </span>
-            </div>
-
             {/* Houses Grid */}
             <div className={`grid gap-5 ${numHouses === 2 ? 'grid-cols-1 md:grid-cols-2' : numHouses === 3 ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3'}`}>
                 {activeHouses.map((house, i) => (
                     <HouseCard
-                        key={i}
+                        key={house.id}
                         index={i}
                         house={house}
                         computedStake={arbResult.results[i]?.computedStake ?? 0}
                         responsibility={arbResult.results[i]?.responsibility ?? 0}
                         profitIfWin={arbResult.results[i]?.profitIfWin ?? 0}
                         finalOdd={arbResult.results[i]?.finalOdd ?? 0}
+                        showProfits={showProfits}
                         onChange={updated => updateHouse(i, updated)}
                     />
                 ))}
             </div>
 
-            {/* Results Table Section */}
+            {/* Results Section */}
             <div className="bg-[#0d1421]/80 border border-[#1e3a5f]/40 rounded-2xl overflow-hidden shadow-2xl">
-                <div className="p-6 border-b border-[#1e3a5f]/20 bg-[#0d1421]">
-                    <h3 className="text-white font-black text-lg tracking-tight">Resultados</h3>
-                </div>
-
                 <div className="p-8">
-                    {/* Big Summary Stats */}
-                    <div className="flex flex-col md:flex-row items-center justify-center gap-12 mb-10 pb-10 border-b border-[#1e3a5f]/10">
+                    {/* Spaced summary stats */}
+                    <div className="flex flex-col md:flex-row items-center justify-around gap-16 mb-10 pb-10 border-b border-[#1e3a5f]/10">
                         <div className="text-center group">
-                            <div className="text-4xl font-black text-white mb-1 transition-transform group-hover:scale-105 duration-300">
+                            <div className="text-4xl font-black text-white mb-2 transition-transform group-hover:scale-105 duration-300">
                                 {formatBRL(arbResult.totalInvested)}
                             </div>
-                            <div className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">TOTAL INVESTIDO</div>
+                            <div className="text-[10px] text-gray-500 font-black uppercase tracking-[0.25em]">TOTAL INVESTIDO</div>
                         </div>
                         <div className="text-center group">
-                            <div className={`text-4xl font-black mb-1 transition-transform group-hover:scale-105 duration-300 ${arbResult.roi >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            <div className={`text-4xl font-black mb-2 transition-transform group-hover:scale-105 duration-300 ${arbResult.roi >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                                 {arbResult.roi > 0 ? '+' : ''}{arbResult.roi.toFixed(2)}%
                             </div>
-                            <div className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">ROI MÉDIO</div>
+                            <div className="text-[10px] text-gray-500 font-black uppercase tracking-[0.25em]">ROI MÉDIO</div>
                         </div>
                     </div>
 
@@ -604,40 +627,34 @@ const ArbProTab: React.FC = () => {
                                 <tr className="bg-cyan-500/10 text-cyan-400/80 uppercase text-[10px] font-black tracking-[0.15em] border-b border-cyan-500/20">
                                     <th className="text-left py-4 px-6">CASA</th>
                                     <th className="text-center py-4 px-6">ODD</th>
-                                    <th className="text-center py-4 px-6">COMISSÃO</th>
                                     <th className="text-center py-4 px-6">STAKE</th>
                                     <th className="text-center py-4 px-6">RESPONSABILIDADE</th>
-                                    <th className="text-center py-4 px-6">LUCRO</th>
+                                    {showProfits && <th className="text-right py-4 px-6">LUCRO</th>}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[#1e3a5f]/10">
                                 {activeHouses.map((house, i) => {
                                     const res = arbResult.results[i];
                                     if (!res) return null;
-                                    const profit = res.profitIfWin;
-                                    const profitColor = profit >= 0 ? 'text-green-400' : 'text-red-400';
-
                                     return (
-                                        <tr key={i} className={`hover:bg-[#1e3a5f]/5 transition-colors ${!house.distribution ? 'opacity-40' : ''}`}>
+                                        <tr key={house.id} className={`hover:bg-white/[0.02] transition-colors ${!house.distribution && !house.isProfitFixed ? 'opacity-40' : ''}`}>
                                             <td className="py-5 px-6 font-black text-white text-sm">
-                                                {house.annotation ? house.annotation : `Casa ${i + 1}`}
-                                                {i === 0 && !house.annotation && <span className="ml-2 text-[10px] text-purple-400 font-bold">(Promo)</span>}
+                                                Casa {i + 1} {house.annotation && <span className="text-gray-500 font-medium ml-2">- {house.annotation}</span>}
                                             </td>
                                             <td className="py-5 px-6 text-center font-mono text-gray-400 text-sm">
                                                 {res.finalOdd.toFixed(2)}
                                             </td>
-                                            <td className="py-5 px-6 text-center text-gray-500 text-xs">
-                                                {house.commission ? `${house.commission}%` : '—'}
-                                            </td>
                                             <td className="py-5 px-6 text-center font-black text-white/90 text-sm font-mono">
                                                 {formatBRL(res.computedStake)}
                                             </td>
-                                            <td className="py-5 px-6 text-center font-black text-gray-500 text-sm font-mono">
+                                            <td className="py-5 px-6 text-center font-black text-gray-500 text-sm font-mono uppercase tracking-tighter">
                                                 {res.responsibility > 0 ? formatBRL(res.responsibility) : '—'}
                                             </td>
-                                            <td className={`py-5 px-6 text-center font-black ${profitColor} text-sm font-mono`}>
-                                                {formatBRL(profit)}
-                                            </td>
+                                            {showProfits && (
+                                                <td className={`py-5 px-6 text-right font-black ${res.profitIfWin >= 0 ? 'text-green-400' : 'text-red-400'} text-sm font-mono`}>
+                                                    {formatBRL(res.profitIfWin)}
+                                                </td>
+                                            )}
                                         </tr>
                                     );
                                 })}
@@ -655,14 +672,6 @@ const ArbProTab: React.FC = () => {
                 >
                     <Trash2 className="w-4 h-4" /> LIMPAR DADOS
                 </button>
-                <button
-                    onClick={shareResults}
-                    className="flex items-center gap-2 bg-[#0d1421] border border-[#1e3a5f]/40 hover:border-cyan-500/40 hover:text-cyan-400 transition-all px-8 h-12 rounded-xl text-[11px] font-black uppercase tracking-wider text-gray-400 shadow-sm"
-                >
-                    <Share2 className="w-4 h-4" /> COMPARTILHAR
-                </button>
-
-                {/* History Button + Popover */}
                 <div className="relative">
                     <button
                         onClick={() => setShowHistory(!showHistory)}
@@ -670,39 +679,32 @@ const ArbProTab: React.FC = () => {
                     >
                         <HistoryIcon className="w-4 h-4" /> HISTÓRICO ({history.length})
                     </button>
-
                     {showHistory && (
-                        <div className="absolute bottom-full mb-3 right-0 w-80 bg-[#0d1421] border border-[#1e3a5f]/60 rounded-xl shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 overflow-hidden">
-                            <div className="p-4 border-b border-[#1e3a5f]/40 bg-[#0a0f1e] flex items-center justify-between">
+                        <div className="absolute bottom-full mb-3 right-0 w-80 bg-[#0d1425] border border-gray-700/50 rounded-xl shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-2">
+                            <div className="p-4 border-b border-gray-700 flex items-center justify-between">
                                 <span className="text-[11px] font-black text-white uppercase tracking-widest">Cálculos Recentes</span>
                                 <button onClick={() => setShowHistory(false)}><X className="w-4 h-4 text-gray-500" /></button>
                             </div>
                             <div className="max-h-80 overflow-y-auto no-scrollbar">
                                 {history.length === 0 ? (
-                                    <div className="p-8 text-center text-gray-600 text-xs font-bold">Nenhum histórico encontrado</div>
+                                    <div className="p-8 text-center text-gray-600 text-[10px] font-black uppercase tracking-widest">Vazio</div>
                                 ) : (
-                                    <div className="divide-y divide-[#1e3a5f]/40">
+                                    <div className="divide-y divide-gray-800">
                                         {history.map((item) => (
                                             <div
                                                 key={item.id}
                                                 onClick={() => loadHistoryItem(item)}
-                                                className="p-4 hover:bg-[#1e3a5f]/20 cursor-pointer transition-colors group flex items-start justify-between"
+                                                className="p-4 hover:bg-white/[0.03] cursor-pointer transition-colors group flex items-start justify-between"
                                             >
                                                 <div>
                                                     <div className="flex items-center gap-2 mb-1">
                                                         <span className="text-white font-bold text-xs">{item.numHouses} Casas</span>
                                                         <span className={`text-[10px] font-bold ${item.roi >= 0 ? 'text-green-500' : 'text-red-500'}`}>{item.roi.toFixed(2)}% ROI</span>
                                                     </div>
-                                                    <div className="text-[10px] text-gray-500 font-medium">
+                                                    <div className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">
                                                         {new Date(item.timestamp).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} • {formatBRL(item.totalInvested)}
                                                     </div>
                                                 </div>
-                                                <button
-                                                    onClick={(e) => deleteHistoryItem(item.id, e)}
-                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
                                             </div>
                                         ))}
                                     </div>
@@ -728,54 +730,54 @@ const Calculators: React.FC = () => {
             {showTutorial && <TutorialModal onClose={() => setShowTutorial(false)} />}
 
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-                {/* Header */}
+                {/* Header Section */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-[#ff512f] to-[#dd2476] rounded-xl flex items-center justify-center text-2xl shadow-xl shadow-orange-500/10 border border-white/5">
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 bg-gradient-to-br from-[#ff512f] to-[#dd2476] rounded-2xl flex items-center justify-center text-3xl shadow-2xl shadow-orange-500/20 border border-white/10 ring-4 ring-white/5">
                             🧮
                         </div>
                         <div>
-                            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Calculadoras</h1>
-                            <p className="text-gray-500 text-xs sm:text-sm font-bold mt-0.5">Ferramentas profissionais para maximizar seus lucros</p>
+                            <h1 className="text-3xl font-black text-white tracking-tighter uppercase italic">Calculadoras</h1>
+                            <p className="text-gray-500 text-[11px] font-black uppercase tracking-[0.2em] mt-0.5">Maximize seus ganhos em apostas</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Main Container */}
-                <div className="rounded-2xl border text-card-foreground bg-gradient-to-br from-[#12192c] to-[#040815] border-[#1e3a5f]/40 shadow-2xl overflow-hidden relative">
-                    <div className="p-4 sm:p-6 md:p-8">
-                        {/* Tabs - Only ARB and FREE as per screenshots */}
-                        <div className="flex items-center bg-[#0a0f1e] p-1.5 mb-8 rounded-xl w-fit border border-[#1e3a5f]/30">
+                <div className="rounded-3xl border text-card-foreground bg-gradient-to-br from-[#12192c] to-[#040815] border-[#1e3a5f]/40 shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden">
+                    <div className="p-4 sm:p-8">
+                        {/* Tabs Navigation */}
+                        <div className="flex items-center bg-[#0a0f1e]/80 p-1.5 mb-10 rounded-2xl w-fit border border-[#1e3a5f]/30">
                             {TABS.map((tab) => (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`relative px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all duration-300 ${activeTab === tab.id ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                                    className={`relative px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${activeTab === tab.id ? 'text-white' : 'text-gray-600 hover:text-gray-400'}`}
                                 >
                                     {activeTab === tab.id && (
-                                        <div className={`absolute inset-0 rounded-lg ${tab.color} opacity-90 shadow-lg`} />
+                                        <div className={`absolute inset-0 rounded-xl ${tab.color} opacity-90 shadow-xl`} />
                                     )}
                                     <span className="relative z-10 flex items-center gap-2">
                                         {tab.label}
-                                        <HelpCircle className="w-3.5 h-3.5 opacity-40" onClick={(e) => { e.stopPropagation(); setShowTutorial(true); }} />
+                                        <HelpCircle className="w-3.5 h-3.5 opacity-40 hover:opacity-100 cursor-help" onClick={(e) => { e.stopPropagation(); setShowTutorial(true); }} />
                                     </span>
                                 </button>
                             ))}
                         </div>
 
-                        {/* Content */}
-                        <div className="mt-2 min-h-[500px]">
+                        {/* Calculations Content */}
+                        <div className="mt-2 min-h-[600px]">
                             {activeTab === 'arb-pro' ? (
                                 <ArbProTab />
                             ) : (
-                                <div className="flex flex-col items-center justify-center py-32 animate-in fade-in zoom-in-95">
-                                    <div className="w-24 h-24 bg-[#0a0f1e]/80 rounded-full flex items-center justify-center mb-6 border border-[#1e3a5f]/40 text-4xl shadow-inner">
-                                        <Zap className="w-10 h-10 text-cyan-400" />
+                                <div className="flex flex-col items-center justify-center py-40 animate-in fade-in slide-in-from-bottom-10">
+                                    <div className="w-28 h-28 bg-[#0a0f1e] rounded-full flex items-center justify-center mb-8 border border-[#1e3a5f]/40 shadow-inner">
+                                        <Zap className="w-12 h-12 text-cyan-400 animate-pulse" />
                                     </div>
-                                    <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-widest">FREE PRO</h3>
-                                    <p className="text-gray-500 font-bold max-w-sm text-center">Calculadora especializada para extração de freebets.</p>
-                                    <div className="mt-8 px-8 py-3 bg-cyan-500/10 rounded-full border border-cyan-500/30 text-cyan-400 text-xs font-black uppercase tracking-widest">
-                                        Disponível em breve
+                                    <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-[0.3em]">FREE PRO</h3>
+                                    <p className="text-gray-600 font-bold max-w-sm text-center text-xs tracking-widest uppercase">Especialista em Green garantido via freebets.</p>
+                                    <div className="mt-10 px-10 py-4 bg-cyan-500/10 rounded-full border border-cyan-500/20 text-cyan-400 text-[10px] font-black uppercase tracking-[0.3em]">
+                                        Módulo em Construção
                                     </div>
                                 </div>
                             )}
@@ -783,14 +785,15 @@ const Calculators: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-[#0d1421] border border-[#1e3a5f]/30 rounded-2xl p-6 flex items-start gap-4 shadow-lg border-l-4 border-l-green-500/50 transition-all hover:bg-[#0d1421]/80">
-                    <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center shrink-0 border border-green-500/20">
-                        <Check className="text-green-400 w-5 h-5" />
+                {/* Footer Tip */}
+                <div className="bg-[#0d1421]/90 border border-green-500/20 rounded-2xl p-6 flex items-start gap-4 shadow-xl border-l-[6px] border-l-green-500/60">
+                    <div className="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center shrink-0 border border-green-500/20">
+                        <Check className="text-green-400 w-6 h-6" />
                     </div>
                     <div>
-                        <p className="text-sm text-gray-300 leading-relaxed">
-                            <strong className="text-white uppercase text-xs tracking-wider block mb-1">Dica Pro:</strong>
-                            Para operações em Exchange (Betfair), use o botão <span className="text-pink-400 font-black">LAY</span> — a calculadora ajustará automaticamente a responsabilidade e a comissão para garantir sua arbitragem.
+                        <p className="text-sm text-gray-400 leading-relaxed font-medium">
+                            <strong className="text-white uppercase text-[10px] tracking-[0.2em] block mb-1 font-black">Estratégia de Exchange:</strong>
+                            Ao operar na Betfair, ative o botão <span className="text-pink-400 font-black">LAY</span>. A calculadora gerenciará a <span className="text-pink-300">Responsabilidade</span> automaticamente para blindar sua aposta.
                         </p>
                     </div>
                 </div>
