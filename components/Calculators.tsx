@@ -825,25 +825,25 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
             <div className="flex flex-wrap items-center justify-center gap-4 py-8 border-t border-[#1e3a5f]/10 mt-10">
                 <button
                     onClick={handleLaunchToBets}
-                    className="flex items-center gap-2 bg-emerald-500 text-[#0d1421] hover:bg-emerald-600 transition-all px-8 h-12 rounded-xl text-[11px] font-black uppercase tracking-wider shadow-lg shadow-emerald-500/20 active:scale-95"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 bg-emerald-500 text-[#0d1421] hover:bg-emerald-600 transition-all px-8 h-12 rounded-xl text-[11px] font-black uppercase tracking-wider shadow-lg shadow-emerald-500/20 active:scale-95"
                 >
                     <ArrowRight className="w-4 h-4" /> Lançar em Minhas Apostas
                 </button>
                 <button
                     onClick={clearAll}
-                    className="flex items-center gap-2 bg-[#0d1421] border border-[#1e3a5f]/40 hover:border-red-500/40 text-gray-400 hover:text-white transition-all px-8 h-12 rounded-xl text-[11px] font-black uppercase tracking-wider shadow-sm active:scale-95"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#0d1421] border border-[#1e3a5f]/40 hover:border-red-500/40 text-gray-400 hover:text-white transition-all px-8 h-12 rounded-xl text-[11px] font-black uppercase tracking-wider shadow-sm active:scale-95"
                 >
                     <Trash2 className="w-4 h-4" /> Limpar Tudo
                 </button>
-                <div className="relative">
+                <div className="relative w-full sm:w-auto">
                     <button
                         onClick={() => setShowHistory(!showHistory)}
-                        className={`flex items-center gap-2 border transition-all px-6 h-12 rounded-xl text-[11px] font-black uppercase tracking-wider shadow-sm ${showHistory ? 'bg-emerald-500 text-[#0d1421] border-emerald-500' : 'bg-[#0d1421] border-[#1e3a5f]/40 text-gray-400 hover:text-white hover:border-[#1e3a5f]'}`}
+                        className={`w-full flex items-center justify-center gap-2 border transition-all px-6 h-12 rounded-xl text-[11px] font-black uppercase tracking-wider shadow-sm ${showHistory ? 'bg-emerald-500 text-[#0d1421] border-emerald-500' : 'bg-[#0d1421] border-[#1e3a5f]/40 text-gray-400 hover:text-white hover:border-[#1e3a5f]'}`}
                     >
                         <HistoryIcon className="w-4 h-4" /> HISTÓRICO ({history.length})
                     </button>
                     {showHistory && (
-                        <div className="absolute bottom-full mb-3 right-0 w-80 bg-[#0d1425] border border-gray-700/50 rounded-xl shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-2">
+                        <div className="fixed sm:absolute inset-x-4 sm:inset-x-auto bottom-20 sm:bottom-full mb-3 sm:right-0 w-[calc(100vw-32px)] sm:w-80 bg-[#0d1425] border border-gray-700/50 rounded-xl shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-2">
                             <div className="p-4 border-b border-gray-700 flex items-center justify-between">
                                 <span className="text-[11px] font-black text-white uppercase tracking-widest">Cálculos Recentes</span>
                                 <button onClick={() => setShowHistory(false)}><X className="w-4 h-4 text-gray-500" /></button>
