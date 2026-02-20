@@ -87,6 +87,32 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
     const handleSaveMovement = async (movement: Partial<CaixaMovement>) => {
         if (!currentUser) return;
 
+        // Auto-create account if it's a new bookmaker
+        const ensureAccount = async (id?: string) => {
+            if (!id || !id.startsWith('new_bm_')) return id;
+            const bmId = id.replace('new_bm_', '');
+            const bm = bookmakers.find(b => b.id === bmId);
+            if (!bm) return id;
+
+            const newId = `acc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+            const newAcc: CaixaAccount = {
+                id: newId,
+                name: bm.name,
+                type: 'bookmaker',
+                balance: 0,
+                color: bm.color || '#10b981',
+                bookmakerId: bm.id
+            };
+            await FirestoreService.saveCaixaAccount(currentUser.uid, newAcc);
+
+            // Add the new account to the local accounts array so the balance update below finds it
+            accounts.push(newAcc);
+            return newId;
+        };
+
+        const activeToId = await ensureAccount(movement.toAccountId);
+        const activeFromId = await ensureAccount(movement.fromAccountId);
+
         // Create movement record
         const id = `mov_${Date.now()}`;
         const newMovement: CaixaMovement = {
@@ -95,8 +121,8 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
             amount: movement.amount || 0,
             type: movement.type || 'deposit',
             category: movement.category || '',
-            fromAccountId: movement.fromAccountId,
-            toAccountId: movement.toAccountId,
+            fromAccountId: activeFromId,
+            toAccountId: activeToId,
             notes: movement.notes
         };
 
@@ -104,19 +130,19 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
         if (newMovement.type === 'deposit' && newMovement.toAccountId) {
             const acc = accounts.find(a => a.id === newMovement.toAccountId);
             if (acc) {
-                await FirestoreService.saveCaixaAccount(currentUser.uid, { ...acc, balance: acc.balance + newMovement.amount });
+                await FirestoreService.saveCaixaAccount(currentUser.uid, { ...acc, balance: (acc.balance || 0) + newMovement.amount });
             }
         } else if (newMovement.type === 'withdraw' && newMovement.fromAccountId) {
             const acc = accounts.find(a => a.id === newMovement.fromAccountId);
             if (acc) {
-                await FirestoreService.saveCaixaAccount(currentUser.uid, { ...acc, balance: acc.balance - newMovement.amount });
+                await FirestoreService.saveCaixaAccount(currentUser.uid, { ...acc, balance: (acc.balance || 0) - newMovement.amount });
             }
         } else if (newMovement.type === 'transfer' && newMovement.fromAccountId && newMovement.toAccountId) {
             const fromAcc = accounts.find(a => a.id === newMovement.fromAccountId);
             const toAcc = accounts.find(a => a.id === newMovement.toAccountId);
             if (fromAcc && toAcc) {
-                await FirestoreService.saveCaixaAccount(currentUser.uid, { ...fromAcc, balance: fromAcc.balance - newMovement.amount });
-                await FirestoreService.saveCaixaAccount(currentUser.uid, { ...toAcc, balance: toAcc.balance + newMovement.amount });
+                await FirestoreService.saveCaixaAccount(currentUser.uid, { ...fromAcc, balance: (fromAcc.balance || 0) - newMovement.amount });
+                await FirestoreService.saveCaixaAccount(currentUser.uid, { ...toAcc, balance: (toAcc.balance || 0) + newMovement.amount });
             }
         }
 
@@ -543,7 +569,7 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts, bookm
     const [notes, setNotes] = useState('');
 
     const accountOptions = useMemo(() => {
-        return (accounts || []).map(acc => {
+        const options = (accounts || []).map(acc => {
             const bm = acc.bookmakerId ? bookmakers.find(b => b.id === acc.bookmakerId) : null;
             return {
                 label: `${acc.name} (Saldo: R$ ${(acc.balance / 100).toFixed(2)})`,
@@ -555,6 +581,20 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts, bookm
                 )
             };
         });
+
+        // Add bookmakers from settings that don't have accounts yet
+        const existingBmIds = new Set(accounts?.map(a => a.bookmakerId).filter(Boolean));
+        const newBmOptions = (bookmakers || [])
+            .filter(bm => !existingBmIds.has(bm.id))
+            .map(bm => ({
+                label: `${bm.name} (Nova Conta Casa)`,
+                value: `new_bm_${bm.id}`,
+                icon: bm.logo ? (
+                    <img src={bm.logo} alt="" className="w-5 h-5 rounded object-contain" />
+                ) : <Building2 size={14} />
+            }));
+
+        return [...options, ...newBmOptions];
     }, [accounts, bookmakers]);
 
     const categoryOptions = useMemo(() => {
