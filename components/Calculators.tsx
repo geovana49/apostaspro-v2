@@ -558,7 +558,7 @@ const ArbProTab: React.FC = () => {
             </div>
 
             {/* Results Section */}
-            <div className="bg-[#0d1421]/80 border border-[#1e3a5f]/40 rounded-2xl overflow-hidden shadow-2xl">
+            <div className="bg-[#0d1421]/80 border border-[#1e3a5f]/40 rounded-2xl overflow-hidden shadow-2xl mt-10">
                 <div className="pt-16 px-8 pb-8">
                     {/* Spaced summary stats */}
                     <div className="flex flex-col md:flex-row items-center justify-around gap-16 mb-12 pb-12 border-b border-[#1e3a5f]/10">
