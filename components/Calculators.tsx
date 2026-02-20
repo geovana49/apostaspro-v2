@@ -202,7 +202,7 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                 </div>
                 {showProfits && (
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                        <label className="text-[9px] text-gray-300 uppercase font-black tracking-widest whitespace-nowrap">Lucro (Editar)</label>
+                        <label className="text-[9px] text-cyan-500/80 uppercase font-black tracking-widest whitespace-nowrap">Lucro (Editar)</label>
                         <div className="relative group/profit">
                             <input
                                 type="text"
@@ -598,16 +598,16 @@ const ArbProTab: React.FC = () => {
                                             <td className="py-5 px-6 font-black text-white text-sm">
                                                 Casa {i + 1} {house.annotation && <span className="text-gray-500 font-medium ml-2">- {house.annotation}</span>}
                                             </td>
-                                            <td className="py-5 px-6 text-center font-mono text-gray-400 text-sm">
+                                            <td className="py-5 px-6 text-center font-mono text-white/70 text-sm">
                                                 {res.finalOdd.toFixed(2)}
                                             </td>
-                                            <td className="py-5 px-6 text-center text-gray-500 text-xs">
+                                            <td className="py-5 px-6 text-center text-yellow-500/80 text-xs font-bold">
                                                 {house.commission ? `${house.commission}%` : '—'}
                                             </td>
                                             <td className="py-5 px-6 text-center font-black text-white/90 text-sm font-mono">
                                                 {formatBRL(res.computedStake)}
                                             </td>
-                                            <td className="py-5 px-6 text-center font-black text-gray-500 text-sm font-mono uppercase tracking-tighter">
+                                            <td className="py-5 px-6 text-center font-black text-pink-400/80 text-sm font-mono uppercase tracking-tighter">
                                                 {res.responsibility > 0 ? formatBRL(res.responsibility) : '—'}
                                             </td>
                                             {showProfits && (
