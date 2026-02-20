@@ -621,7 +621,7 @@ const ArbProTab: React.FC = () => {
                                         <tr key={i} className={`hover:bg-[#1e3a5f]/5 transition-colors ${!house.distribution ? 'opacity-40' : ''}`}>
                                             <td className="py-5 px-6 font-black text-white text-sm">
                                                 {house.annotation ? house.annotation : `Casa ${i + 1}`}
-                                                {index === 0 && !house.annotation && <span className="ml-2 text-[10px] text-purple-400 font-bold">(Promo)</span>}
+                                                {i === 0 && !house.annotation && <span className="ml-2 text-[10px] text-purple-400 font-bold">(Promo)</span>}
                                             </td>
                                             <td className="py-5 px-6 text-center font-mono text-gray-400 text-sm">
                                                 {res.finalOdd.toFixed(2)}
