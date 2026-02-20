@@ -598,7 +598,7 @@ const ArbProTab: React.FC = () => {
                                             <td className="py-5 px-6 font-black text-white text-sm">
                                                 Casa {i + 1} {house.annotation && <span className="text-gray-500 font-medium ml-2">- {house.annotation}</span>}
                                             </td>
-                                            <td className="py-5 px-6 text-center font-mono text-yellow-500 text-sm font-bold">
+                                            <td className="py-5 px-6 text-center font-mono text-cyan-400 text-sm font-bold">
                                                 {res.finalOdd.toFixed(2)}
                                             </td>
                                             <td className="py-5 px-6 text-center text-yellow-500/80 text-xs font-bold">
