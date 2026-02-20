@@ -68,8 +68,7 @@ const ROUNDING_OPTIONS: { label: string; value: RoundingStep }[] = [
 ];
 
 const TABS = [
-    { id: 'arb-pro', label: 'ARB PRO', icon: '🎯', color: 'bg-purple-500', activeColor: 'text-purple-400' },
-    { id: 'free-pro', label: 'FREE PRO', icon: '⚡', color: 'bg-cyan-500', activeColor: 'text-cyan-400' },
+    { id: 'arb-pro', label: 'ARB PRO', icon: '🎯', color: 'bg-purple-500', activeColor: 'text-purple-400' }
 ];
 
 // =============================================
@@ -122,48 +121,33 @@ const TutorialModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                             </div>
                         </div>
                         <div className="p-6">
-                            <div className="grid grid-cols-2 gap-2 bg-gray-900/50 p-2 mb-6 rounded-lg">
-                                <button onClick={() => setTutorialTab('arbpro')} className={`flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-all ${tutorialTab === 'arbpro' ? 'bg-purple-500 text-white shadow' : 'text-gray-400 hover:text-white'}`}>
-                                    <Target className="w-4 h-4" /> ARB PRO
-                                </button>
-                                <button onClick={() => setTutorialTab('freepro')} className={`flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-all ${tutorialTab === 'freepro' ? 'bg-cyan-500 text-white shadow' : 'text-gray-400 hover:text-white'}`}>
-                                    <Zap className="w-4 h-4" /> FREE PRO
-                                </button>
+                            {/* Tutorial Tab Selection removed as there is only ARB PRO now */}
+
+                            {/* ARB PRO */}
+                            <div className="space-y-4">
+                                <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
+                                    <h3 className="text-lg font-bold text-purple-300 flex items-center gap-2"><Target className="w-5 h-5" /> O que é a ARB PRO?</h3>
+                                    <p className="text-gray-300 mt-2">A calculadora ARB PRO é usada para calcular <strong>arbitragem (surebet)</strong> entre múltiplas casas de apostas. Ela encontra a distribuição ideal de stakes para garantir lucro independente do resultado.</p>
+                                </div>
+                                <div className="space-y-3">
+                                    <AccordionItem icon={<Calculator className="w-4 h-4" />} title="Quando usar?">
+                                        <ul className="space-y-1.5">
+                                            <li>• Quando encontrar odds divergentes em 2 ou mais casas para o mesmo evento</li>
+                                            <li>• Quando tiver uma promoção de odds aumentadas numa casa e odds normais em outra</li>
+                                            <li>• Quando quiser garantir lucro independente do resultado do jogo</li>
+                                        </ul>
+                                    </AccordionItem>
+                                    <AccordionItem icon={<ArrowRight className="w-4 h-4" />} title="Passo a passo">
+                                        <ol className="space-y-2">
+                                            <li><span className="text-purple-400 font-bold">1.</span> Selecione o número de casas de apostas (2, 3 ou 4)</li>
+                                            <li><span className="text-purple-400 font-bold">2.</span> Insira a ODD de cada casa no campo correspondente</li>
+                                            <li><span className="text-purple-400 font-bold">3.</span> Digite o valor do stake na Casa 1 (a de promo)</li>
+                                            <li><span className="text-purple-400 font-bold">4.</span> Os stakes das demais casas são calculados automaticamente</li>
+                                            <li><span className="text-purple-400 font-bold">5.</span> Confira o ROI e o lucro estimado na seção Resultados</li>
+                                        </ol>
+                                    </AccordionItem>
+                                </div>
                             </div>
-                            {tutorialTab === 'arbpro' && (
-                                <div className="space-y-4">
-                                    <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
-                                        <h3 className="text-lg font-bold text-purple-300 flex items-center gap-2"><Target className="w-5 h-5" /> O que é a ARB PRO?</h3>
-                                        <p className="text-gray-300 mt-2">A calculadora ARB PRO é usada para calcular <strong>arbitragem (surebet)</strong> entre múltiplas casas de apostas. Ela encontra a distribuição ideal de stakes para garantir lucro independente do resultado.</p>
-                                    </div>
-                                    <div className="space-y-3">
-                                        <AccordionItem icon={<Calculator className="w-4 h-4" />} title="Quando usar?">
-                                            <ul className="space-y-1.5">
-                                                <li>• Quando encontrar odds divergentes em 2 ou mais casas para o mesmo evento</li>
-                                                <li>• Quando tiver uma promoção de odds aumentadas numa casa e odds normais em outra</li>
-                                                <li>• Quando quiser garantir lucro independente do resultado do jogo</li>
-                                            </ul>
-                                        </AccordionItem>
-                                        <AccordionItem icon={<ArrowRight className="w-4 h-4" />} title="Passo a passo">
-                                            <ol className="space-y-2">
-                                                <li><span className="text-purple-400 font-bold">1.</span> Selecione o número de casas de apostas (2, 3 ou 4)</li>
-                                                <li><span className="text-purple-400 font-bold">2.</span> Insira a ODD de cada casa no campo correspondente</li>
-                                                <li><span className="text-purple-400 font-bold">3.</span> Digite o valor do stake na Casa 1 (a de promo)</li>
-                                                <li><span className="text-purple-400 font-bold">4.</span> Os stakes das demais casas são calculados automaticamente</li>
-                                                <li><span className="text-purple-400 font-bold">5.</span> Confira o ROI e o lucro estimado na seção Resultados</li>
-                                            </ol>
-                                        </AccordionItem>
-                                    </div>
-                                </div>
-                            )}
-                            {tutorialTab === 'freepro' && (
-                                <div className="space-y-4">
-                                    <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
-                                        <h3 className="text-lg font-bold text-cyan-300 flex items-center gap-2"><Zap className="w-5 h-5" /> O que é a FREE PRO?</h3>
-                                        <p className="text-gray-300 mt-2">A calculadora FREE PRO especializada em <strong>converter freebets em dinheiro real</strong>. Ela calcula o stake ideal no lay para garantir um retorno fixo sobre a freebet recebida.</p>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
@@ -218,7 +202,7 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                 </div>
                 {showProfits && (
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                        <label className="text-[9px] text-gray-400/60 uppercase font-black tracking-widest whitespace-nowrap">Lucro (Editar)</label>
+                        <label className="text-[9px] text-gray-300 uppercase font-black tracking-widest whitespace-nowrap">Lucro (Editar)</label>
                         <div className="relative group/profit">
                             <input
                                 type="text"
@@ -226,7 +210,7 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                                 placeholder={formatBRL(profitIfWin).replace('R$', '').trim()}
                                 value={house.targetProfit}
                                 onChange={e => update({ targetProfit: e.target.value, isProfitFixed: e.target.value !== '', distribution: e.target.value === '' })}
-                                className={`bg-transparent text-right font-black text-sm focus:outline-none transition-all placeholder:opacity-50 w-[80px] ${house.isProfitFixed ? 'text-blue-400 border-b border-blue-500/30 font-mono' : profitIfWin >= 0 ? 'text-green-400' : 'text-red-600'}`}
+                                className={`bg-transparent text-right font-black text-sm focus:outline-none transition-all placeholder:opacity-70 w-[90px] ${house.isProfitFixed ? 'text-blue-400 border-b border-blue-500/30 font-mono' : profitIfWin >= 0 ? 'text-green-400' : 'text-red-600'}`}
                             />
                             {house.isProfitFixed && (
                                 <div className="absolute -left-3 top-1/2 -translate-y-1/2">
@@ -280,7 +264,7 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                             <input
                                 type="text"
                                 inputMode="decimal"
-                                placeholder="100,00"
+                                placeholder="0,00"
                                 value={house.stake}
                                 onChange={e => update({ stake: e.target.value })}
                                 className="w-full bg-[#0a0f1e] border border-purple-500/40 rounded-lg pl-9 pr-3 py-2.5 text-white text-lg font-bold focus:outline-none focus:border-purple-400/60 font-mono transition-colors"
@@ -743,20 +727,7 @@ const Calculators: React.FC = () => {
 
                         {/* Calculations Content */}
                         <div className="mt-2 min-h-[600px]">
-                            {activeTab === 'arb-pro' ? (
-                                <ArbProTab />
-                            ) : (
-                                <div className="flex flex-col items-center justify-center py-40 animate-in fade-in slide-in-from-bottom-10">
-                                    <div className="w-28 h-28 bg-[#0a0f1e] rounded-full flex items-center justify-center mb-8 border border-[#1e3a5f]/40 shadow-inner">
-                                        <Zap className="w-12 h-12 text-cyan-400 animate-pulse" />
-                                    </div>
-                                    <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-[0.3em]">FREE PRO</h3>
-                                    <p className="text-gray-600 font-bold max-w-sm text-center text-xs tracking-widest uppercase">Especialista em Green garantido via freebets.</p>
-                                    <div className="mt-10 px-10 py-4 bg-cyan-500/10 rounded-full border border-cyan-500/20 text-cyan-400 text-[10px] font-black uppercase tracking-[0.3em]">
-                                        Módulo em Construção
-                                    </div>
-                                </div>
-                            )}
+                            <ArbProTab />
                         </div>
                     </div>
                 </div>
