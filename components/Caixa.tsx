@@ -283,7 +283,7 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                                     <tr className="border-b border-white/5 bg-white/[0.02]">
                                         <th className="px-6 py-4 font-bold text-gray-400 uppercase tracking-wider text-[10px]">Data</th>
                                         <th className="px-6 py-4 font-bold text-gray-400 uppercase tracking-wider text-[10px]">Tipo</th>
-                                        <th className="px-6 py-4 font-bold text-gray-400 uppercase tracking-wider text-[10px]">Categoria</th>
+                                        <th className="px-6 py-4 font-bold text-gray-400 uppercase tracking-wider text-[10px]">Anotação</th>
                                         <th className="px-6 py-4 font-bold text-gray-400 uppercase tracking-wider text-[10px]">Detalhes</th>
                                         <th className="px-6 py-4 font-bold text-gray-400 uppercase tracking-wider text-[10px] text-right">Valor</th>
                                         <th className="px-6 py-4 font-bold text-gray-400 uppercase tracking-wider text-[10px] text-right">Ação</th>
@@ -482,7 +482,7 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts }: any
     const [fromAccountId, setFromAccountId] = useState('');
     const [toAccountId, setToAccountId] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-    const [category, setCategory] = useState('Aporte Inicial');
+    const [category, setCategory] = useState('');
     const [notes, setNotes] = useState('');
 
     React.useEffect(() => {
@@ -491,7 +491,7 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts }: any
             setFromAccountId('');
             setToAccountId('');
             setDate(new Date().toISOString().split('T')[0]);
-            setCategory(type === 'deposit' ? 'Aporte Inicial' : type === 'withdraw' ? 'Saque Lucro' : 'Transferência');
+            setCategory('');
             setNotes('');
         }
     }, [isOpen, type]);
@@ -500,27 +500,6 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts }: any
         e.preventDefault();
         const cleanAmount = Math.round(parseFloat(amount.replace(',', '.')) * 100);
         onSave({ amount: cleanAmount, type, fromAccountId, toAccountId, date: new Date(date).toISOString(), category, notes });
-    };
-
-    const categories = {
-        deposit: [
-            { value: 'Aporte Inicial', label: '💰 Aporte Inicial' },
-            { value: 'Aporte Mensal', label: '💵 Aporte Mensal' },
-            { value: 'Lucro Apostas', label: '📈 Lucro Apostas' },
-            { value: 'Capital Externo', label: '🏦 Capital Externo' },
-            { value: 'Diversos', label: '➕ Diversos' }
-        ],
-        withdraw: [
-            { value: 'Saque Lucro', label: '💸 Saque Lucro' },
-            { value: 'Resgate Capital', label: '🏧 Resgate Capital' },
-            { value: 'Pagamento Contas', label: '🏠 Pagamento Contas' },
-            { value: 'Diversos', label: '➖ Diversos' }
-        ],
-        transfer: [
-            { value: 'Transferência', label: '🔄 Transferência' },
-            { value: 'Rebalanceamento', label: '⚖️ Rebalanceamento' },
-            { value: 'Banca Operacional', label: '🎯 Banca Operacional' }
-        ]
     };
 
     return (
@@ -547,38 +526,41 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts }: any
                         type="date"
                         value={date}
                         onChange={e => setDate(e.target.value)}
+                        onFocus={(e) => (e.target as any).showPicker?.()}
+                        onClick={(e) => (e.target as any).showPicker?.()}
                         required
                     />
                 </div>
 
                 {type === 'transfer' ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <Select label="Origem (Banco) *" value={fromAccountId} onChange={e => setFromAccountId(e.target.value)} required>
+                        <Select label="Origem (Banco/Casa) *" value={fromAccountId} onChange={e => setFromAccountId(e.target.value)} required>
                             <option value="">Selecione...</option>
                             {accounts.map((a: any) => <option key={a.id} value={a.id}>{a.name}</option>)}
                         </Select>
-                        <Select label="Destino (Banco) *" value={toAccountId} onChange={e => setToAccountId(e.target.value)} required>
+                        <Select label="Destino (Banco/Casa) *" value={toAccountId} onChange={e => setToAccountId(e.target.value)} required>
                             <option value="">Selecione...</option>
                             {accounts.map((a: any) => <option key={a.id} value={a.id}>{a.name}</option>)}
                         </Select>
                     </div>
                 ) : (
                     <Select
-                        label={type === 'deposit' ? "Destino (Banco) *" : "Origem (Banco) *"}
+                        label={type === 'deposit' ? "Destino (Banco/Casa) *" : "Origem (Banco/Casa) *"}
                         value={type === 'deposit' ? toAccountId : fromAccountId}
                         onChange={e => type === 'deposit' ? setToAccountId(e.target.value) : setFromAccountId(e.target.value)}
                         required
                     >
-                        <option value="">Selecione o banco...</option>
+                        <option value="">Selecione o banco ou casa...</option>
                         {accounts.map((a: any) => <option key={a.id} value={a.id}>{a.name} (Saldo: R$ {(a.balance / 100).toFixed(2)})</option>)}
                     </Select>
                 )}
 
-                <Select label="Categoria *" value={category} onChange={e => setCategory(e.target.value)} required>
-                    {categories[type as keyof typeof categories].map(c => (
-                        <option key={c.value} value={c.value}>{c.label}</option>
-                    ))}
-                </Select>
+                <Input
+                    label="Anotação (Opcional)"
+                    value={category}
+                    onChange={e => setCategory(e.target.value)}
+                    placeholder="Ex: Aporte inicial, Lucro, etc..."
+                />
 
                 <div className="w-full">
                     <label className="block text-textMuted text-[11px] font-bold uppercase tracking-wider mb-2">Observação</label>
