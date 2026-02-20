@@ -126,4 +126,8 @@ export interface CaixaMovement {
   fromAccountId?: string;
   toAccountId?: string;
   notes?: string;
+}export interface CaixaCategory {
+  id: string;
+  name: string;
+  type: 'deposit' | 'withdraw';
 }

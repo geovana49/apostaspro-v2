@@ -2,7 +2,7 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
 import { FirestoreService } from "./services/firestoreService";
-import { Page, Bet, ExtraGain, AppSettings, Bookmaker, StatusItem, PromotionItem, OriginItem, SettingsTab, User, CaixaAccount, CaixaMovement } from './types';
+import { Page, Bet, ExtraGain, AppSettings, Bookmaker, StatusItem, PromotionItem, OriginItem, SettingsTab, User, CaixaAccount, CaixaMovement, CaixaCategory } from './types';
 import { INITIAL_BOOKMAKERS, INITIAL_STATUSES, INITIAL_PROMOTIONS, INITIAL_ORIGINS } from './constants';
 import Layout from './components/Layout';
 import { Loader2, AlertCircle } from 'lucide-react';
@@ -48,11 +48,13 @@ const App: React.FC = () => {
   const [gains, setGains] = useState<ExtraGain[]>([]);
   const [caixaAccounts, setCaixaAccounts] = useState<CaixaAccount[]>([]);
   const [caixaMovements, setCaixaMovements] = useState<CaixaMovement[]>([]);
+  const [caixaCategories, setCaixaCategories] = useState<CaixaCategory[]>([]);
 
   // Current User
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
+  const [isResetting, setIsResetting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // -- Offline/Sync State --
@@ -146,6 +148,7 @@ const App: React.FC = () => {
           origins: false,
           caixaAccounts: false,
           caixaMovements: false,
+          caixaCategories: false,
           manual: false
         };
 
@@ -230,6 +233,12 @@ const App: React.FC = () => {
           updateSyncStatus('caixaMovements', syncing);
         });
 
+        const unsubCaixaCategories = FirestoreService.subscribeToCollection<CaixaCategory>(user.uid, "caixa_categories", (data, syncing) => {
+          console.log(`[Snapshot] Caixa Categories: ${data.length}`);
+          setCaixaCategories(data);
+          updateSyncStatus('caixaCategories', syncing);
+        });
+
         // Cleanup subscriptions on logout/unmount
         return () => {
           clearTimeout(loadingTimeout);
@@ -242,6 +251,7 @@ const App: React.FC = () => {
           unsubOrigins();
           unsubCaixaAccounts();
           unsubCaixaMovements();
+          unsubCaixaCategories();
         };
       } else {
         // User is signed out
@@ -434,6 +444,7 @@ const App: React.FC = () => {
                   accounts={caixaAccounts}
                   movements={caixaMovements}
                   bookmakers={bookmakers}
+                  categories={caixaCategories}
                   settings={settings}
                 />
               )}

@@ -3,7 +3,7 @@ import {
     Wallet, Building2, TrendingUp, Plus, ArrowUpRight, ArrowDownLeft,
     Repeat, Trash2, Edit2, Search, Filter, History, Building, Landmark, CreditCard, Banknote
 } from 'lucide-react';
-import { CaixaAccount, CaixaMovement, Bookmaker, User, AppSettings } from '../types';
+import { CaixaAccount, CaixaMovement, Bookmaker, User, AppSettings, CaixaCategory } from '../types';
 import { FirestoreService } from '../services/firestoreService';
 import { Card, Button, Input, Modal, Select, MoneyDisplay, Dropdown } from './ui/UIComponents';
 
@@ -12,10 +12,11 @@ interface CaixaProps {
     accounts: CaixaAccount[];
     movements: CaixaMovement[];
     bookmakers: Bookmaker[];
+    categories: CaixaCategory[];
     settings: AppSettings;
 }
 
-const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmakers, settings }) => {
+const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmakers, categories, settings }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState<'all' | 'bank' | 'bookmaker' | 'other'>('all');
 
@@ -39,13 +40,17 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
 
     // Bookmaker balances summary
     const bookmakerBalances = useMemo(() => {
-        return (bookmakers || []).map(bm => {
-            const total = (accounts || [])
-                .filter(a => a.bookmakerId === bm.id)
-                .reduce((sum, a) => sum + (a.balance || 0), 0);
-            return { ...bm, total };
-        }).filter(bm => bm.total > 0)
-            .sort((a, b) => b.total - a.total);
+        const linkedBmIds = new Set((accounts || []).map(a => a.bookmakerId).filter(Boolean));
+
+        return (bookmakers || [])
+            .filter(bm => linkedBmIds.has(bm.id))
+            .map(bm => {
+                const total = (accounts || [])
+                    .filter(a => a.bookmakerId === bm.id)
+                    .reduce((sum, a) => sum + (a.balance || 0), 0);
+                return { ...bm, total };
+            })
+            .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
     }, [bookmakers, accounts]);
 
     const filteredAccounts = useMemo(() => {
@@ -184,67 +189,67 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                         privacyMode={settings.privacyMode}
                         className="text-3xl font-bold text-white tracking-tight"
                     />
-                    <div className="mt-2 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-primary" style={{ width: '100%' }} />
+                    <div className="mt-4 h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: '100%' }}></div>
                     </div>
                 </Card>
 
-                <Card className="p-6 border-blue-500/20 bg-gradient-to-br from-[#0d1421] to-[#090c19]">
+                <Card className="p-6 border-emerald-500/20 bg-gradient-to-br from-[#0d1421] to-[#090c19]">
                     <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500"><Landmark size={20} /></div>
-                        <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Em Bancos</span>
+                        <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-500"><Landmark size={20} /></div>
+                        <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Bancos / Corretoras</span>
                     </div>
                     <MoneyDisplay
                         value={summary.bank / 100}
                         privacyMode={settings.privacyMode}
                         className="text-3xl font-bold text-white tracking-tight"
                     />
-                    <div className="mt-2 text-xs text-gray-500 font-medium">
-                        {summary.total > 0 ? ((summary.bank / summary.total) * 100).toFixed(1) : 0}% do capital
+                    <div className="mt-4 h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000" style={{ width: summary.total > 0 ? `${(summary.bank / summary.total) * 100}%` : '0%' }}></div>
                     </div>
                 </Card>
 
-                <Card className="p-6 border-emerald-500/20 bg-gradient-to-br from-[#0d1421] to-[#090c19]">
+                <Card className="p-6 border-amber-500/20 bg-gradient-to-br from-[#0d1421] to-[#090c19]">
                     <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-500"><Building2 size={20} /></div>
-                        <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Nas Casas</span>
+                        <div className="p-2 bg-amber-500/10 rounded-lg text-amber-500"><Building2 size={20} /></div>
+                        <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Casas de Apostas</span>
                     </div>
                     <MoneyDisplay
                         value={summary.bookmaker / 100}
                         privacyMode={settings.privacyMode}
                         className="text-3xl font-bold text-white tracking-tight"
                     />
-                    <div className="mt-2 text-xs text-gray-500 font-medium">
-                        {summary.total > 0 ? ((summary.bookmaker / summary.total) * 100).toFixed(1) : 0}% do capital
+                    <div className="mt-4 h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-full bg-amber-500 rounded-full transition-all duration-1000" style={{ width: summary.total > 0 ? `${(summary.bookmaker / summary.total) * 100}%` : '0%' }}></div>
                     </div>
                 </Card>
 
-                <Card className="p-6 border-purple-500/20 bg-gradient-to-br from-[#0d1421] to-[#090c19]">
+                <Card className="p-6 border-blue-500/20 bg-gradient-to-br from-[#0d1421] to-[#090c19]">
                     <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 bg-purple-500/10 rounded-lg text-purple-500"><Banknote size={20} /></div>
-                        <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Outros</span>
+                        <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500"><CreditCard size={20} /></div>
+                        <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Outras Contas</span>
                     </div>
                     <MoneyDisplay
                         value={summary.other / 100}
                         privacyMode={settings.privacyMode}
                         className="text-3xl font-bold text-white tracking-tight"
                     />
-                    <div className="mt-2 text-xs text-gray-500 font-medium">
-                        {summary.total > 0 ? ((summary.other / summary.total) * 100).toFixed(1) : 0}% do capital
+                    <div className="mt-4 h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-full bg-blue-500 rounded-full transition-all duration-1000" style={{ width: summary.total > 0 ? `${(summary.other / summary.total) * 100}%` : '0%' }}></div>
                     </div>
                 </Card>
             </div>
 
-            {/* Bookmaker Balances Horizontal Section */}
+            {/* Bookmaker Balances Horizontal Section - MOVED UP */}
             {bookmakerBalances.length > 0 && (
-                <div className="space-y-4">
+                <div className="space-y-4 animate-in slide-in-from-top duration-500">
                     <div className="flex items-center gap-2">
                         <Building2 size={18} className="text-emerald-500" />
                         <h2 className="text-sm font-bold text-white uppercase tracking-wider">Saldos por Casa</h2>
                     </div>
                     <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                         {bookmakerBalances.map(bm => (
-                            <Card key={bm.id} className="min-w-[180px] p-4 flex flex-col items-center text-center bg-[#0d1421]/60 border-white/5 hover:border-emerald-500/30 transition-all">
+                            <Card key={bm.id} className="min-w-[180px] p-4 flex flex-col items-center text-center bg-[#0d1421]/60 border-white/5 hover:border-emerald-500/30 transition-all cursor-default">
                                 {bm.logo ? (
                                     <img src={bm.logo} alt={bm.name} className="w-10 h-10 rounded-lg object-contain mb-3" />
                                 ) : (
@@ -442,6 +447,8 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                 setType={setMovementType}
                 accounts={accounts}
                 bookmakers={bookmakers}
+                categories={categories}
+                currentUser={currentUser}
             />
 
         </div>
@@ -598,23 +605,36 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts, bookm
     }, [accounts, bookmakers]);
 
     const categoryOptions = useMemo(() => {
-        if (type === 'deposit') {
-            return [
-                { label: 'Aporte Inicial', value: 'Aporte Inicial' },
-                { label: 'Lucro de Aposta', value: 'Lucro de Aposta' },
-                { label: 'Ajuste de Saldo', value: 'Ajuste de Saldo' },
-                { label: 'Outros', value: 'Outros' }
-            ];
-        } else if (type === 'withdraw') {
-            return [
-                { label: 'Retirada', value: 'Retirada' },
-                { label: 'Aposta Realizada', value: 'Aposta Realizada' },
-                { label: 'Ajuste de Saldo', value: 'Ajuste de Saldo' },
-                { label: 'Outros', value: 'Outros' }
-            ];
-        }
-        return [];
-    }, [type]);
+        const filtered = (categories || []).filter(c => c.type === type);
+        const defaults = type === 'deposit'
+            ? ['Aporte Inicial', 'Lucro de Aposta', 'Ajuste de Saldo', 'Outros']
+            : ['Retirada', 'Aposta Realizada', 'Ajuste de Saldo', 'Outros'];
+
+        const options = defaults.map(d => ({ label: d, value: d, isDefault: true }));
+        const customOptions = filtered.map(c => ({ label: c.name, value: c.name, id: c.id, isDefault: false }));
+
+        return [...options, ...customOptions];
+    }, [type, categories]);
+
+    const [newCategoryName, setNewCategoryName] = useState('');
+    const [isManagingCategories, setIsManagingCategories] = useState(false);
+
+    const handleAddCategory = async () => {
+        if (!newCategoryName.trim() || !currentUser) return;
+        const newCat: CaixaCategory = {
+            id: `cat_${Date.now()}`,
+            name: newCategoryName.trim(),
+            type: type as 'deposit' | 'withdraw'
+        };
+        await FirestoreService.saveCaixaCategory(currentUser.uid, newCat);
+        setNewCategoryName('');
+        setCategory(newCat.name);
+    };
+
+    const handleDeleteCategory = async (catId: string) => {
+        if (!currentUser || !confirm('Excluir esta categoria?')) return;
+        await FirestoreService.deleteCaixaCategory(currentUser.uid, catId);
+    };
 
     React.useEffect(() => {
         if (isOpen) {
@@ -704,13 +724,71 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts, bookm
                 )}
 
                 {type !== 'transfer' && (
-                    <Dropdown
-                        label="Categoria"
-                        value={category}
-                        onChange={setCategory}
-                        options={categoryOptions}
-                        placeholder="Selecione uma categoria..."
-                    />
+                    <div className="space-y-3">
+                        <div className="flex items-end gap-2">
+                            <div className="flex-1">
+                                <Dropdown
+                                    label="Categoria"
+                                    value={category}
+                                    onChange={setCategory}
+                                    options={categoryOptions}
+                                    placeholder="Selecione uma categoria..."
+                                />
+                            </div>
+                            <Button
+                                variant="outline"
+                                className="px-3"
+                                type="button"
+                                onClick={() => setIsManagingCategories(!isManagingCategories)}
+                                title="Gerenciar Categorias"
+                            >
+                                <Edit2 size={16} />
+                            </Button>
+                        </div>
+
+                        {isManagingCategories && (
+                            <div className="p-3 bg-white/5 rounded-lg border border-white/10 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Adicionar Nova Categoria</p>
+                                <div className="flex gap-2">
+                                    <Input
+                                        placeholder="Nome da categoria..."
+                                        value={newCategoryName}
+                                        onChange={e => setNewCategoryName(e.target.value)}
+                                        className="flex-1"
+                                    />
+                                    <Button
+                                        variant="primary"
+                                        className="px-3"
+                                        type="button"
+                                        onClick={handleAddCategory}
+                                        disabled={!newCategoryName.trim()}
+                                    >
+                                        <Plus size={16} />
+                                    </Button>
+                                </div>
+
+                                {categoryOptions.filter(o => !o.isDefault).length > 0 && (
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Suas Categorias</p>
+                                        <div className="grid grid-cols-1 gap-1">
+                                            {categoryOptions.filter(o => !o.isDefault).map((opt: any) => (
+                                                <div key={opt.id} className="flex items-center justify-between p-2 bg-white/5 rounded hover:bg-white/10 transition-colors group">
+                                                    <span className="text-xs text-gray-300">{opt.label}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleDeleteCategory(opt.id)}
+                                                        className="p-1 text-gray-600 hover:text-danger hover:bg-danger/10 rounded transition-all opacity-0 group-hover:opacity-100"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 <Input

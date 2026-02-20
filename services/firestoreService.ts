@@ -222,6 +222,14 @@ export const FirestoreService = {
         await deleteDoc(doc(db, "users", userId, "caixa_movements", movementId));
     },
 
+    saveCaixaCategory: async (userId: string, category: CaixaCategory) => {
+        await setDoc(doc(db, "users", userId, "caixa_categories", category.id), category, { merge: true });
+    },
+
+    deleteCaixaCategory: async (userId: string, categoryId: string) => {
+        await deleteDoc(doc(db, "users", userId, "caixa_categories", categoryId));
+    },
+
     initializeUserData: async (userId: string, initialData: {
         bookmakers: Bookmaker[],
         statuses: StatusItem[],
