@@ -307,7 +307,7 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
     const label = `Casa ${index + 1}${house.annotation ? ` - ${house.annotation}` : ''}`;
 
     return (
-        <div className={`bg-[#0d1421]/60 border rounded-xl p-5 transition-all ${isAnchor ? 'border-emerald-500/60 shadow-lg shadow-emerald-500/5' : 'border-[#1e3a5f]/50 hover:border-emerald-500/30'}`}>
+        <div className={`bg-[#0d1421]/60 border rounded-xl p-4 sm:p-5 transition-all ${isAnchor ? 'border-emerald-500/60 shadow-lg shadow-emerald-500/5' : 'border-[#1e3a5f]/50 hover:border-emerald-500/30'}`}>
             {/* Header */}
             <div className="flex items-start justify-between mb-4 gap-4">
                 <div className="flex flex-col min-w-0 flex-1">
@@ -719,7 +719,7 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
             </div>
 
             {/* Houses Grid */}
-            <div className={`grid gap-5 ${numHouses === 2 ? 'grid-cols-1 md:grid-cols-2' : numHouses === 3 ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3'}`}>
+            <div className={`grid gap-4 sm:gap-5 ${numHouses === 2 ? 'grid-cols-1 md:grid-cols-2' : numHouses === 3 ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3'}`}>
                 {activeHouses.map((house, i) => (
                     <HouseCard
                         key={house.id}
@@ -738,18 +738,18 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
 
             {/* Results Section */}
             <div className="bg-[#0d1421]/80 border border-[#1e3a5f]/40 rounded-2xl overflow-hidden shadow-2xl mt-10">
-                <div className="pt-16 px-8 pb-8">
+                <div className="pt-10 sm:pt-16 px-4 sm:px-8 pb-8">
                     {/* Spaced summary stats */}
-                    <div className="flex flex-col md:flex-row items-center justify-around gap-16 mb-12 pb-12 border-b border-[#1e3a5f]/10">
+                    <div className="flex flex-col md:flex-row items-center justify-around gap-8 sm:gap-16 mb-8 sm:mb-12 pb-8 sm:pb-12 border-b border-[#1e3a5f]/10">
                         <div className="text-center group">
-                            <div className="text-4xl font-black text-white mb-2 transition-transform group-hover:scale-105 duration-300">
+                            <div className="text-3xl sm:text-4xl font-black text-white mb-2 transition-transform group-hover:scale-105 duration-300">
                                 {formatBRL(arbResult.totalInvested)}
                             </div>
                             <div className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">Total Investido</div>
                         </div>
 
                         <div className="text-center group">
-                            <div className={`text-4xl font-black mb-2 transition-transform group-hover:scale-105 duration-300 ${arbResult.roi >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            <div className={`text-3xl sm:text-4xl font-black mb-2 transition-transform group-hover:scale-105 duration-300 ${arbResult.roi >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                                 {arbResult.roi.toFixed(2)}%
                             </div>
                             <div className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">ROI Médio</div>
@@ -919,7 +919,7 @@ const Calculators: React.FC<CalculatorsProps> = ({
 
                 {/* Main Container */}
                 <div className="rounded-3xl border text-card-foreground bg-gradient-to-br from-[#12192c] to-[#040815] border-[#1e3a5f]/40 shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden">
-                    <div className="p-4 sm:p-8">
+                    <div className="p-3 sm:p-8">
                         {/* Tabs Navigation */}
                         <div className="flex items-center bg-[#0a0f1e]/80 p-1.5 mb-10 rounded-2xl w-fit border border-[#1e3a5f]/30">
                             {TABS.map((tab) => (
