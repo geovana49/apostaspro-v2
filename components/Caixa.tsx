@@ -27,17 +27,19 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
 
     // Summary Calculations
     const summary = useMemo(() => {
-        return accounts.reduce((acc, account) => {
-            acc.total += account.balance;
-            if (account.type === 'bank') acc.bank += account.balance;
-            else if (account.type === 'bookmaker') acc.bookmaker += account.balance;
-            else acc.other += account.balance;
+        const safeAccounts = accounts || [];
+        return safeAccounts.reduce((acc, account) => {
+            acc.total += account.balance || 0;
+            if (account.type === 'bank') acc.bank += account.balance || 0;
+            else if (account.type === 'bookmaker') acc.bookmaker += account.balance || 0;
+            else acc.other += account.balance || 0;
             return acc;
         }, { total: 0, bank: 0, bookmaker: 0, other: 0 });
     }, [accounts]);
 
     const filteredAccounts = useMemo(() => {
-        return accounts.filter(acc => {
+        const safeAccounts = accounts || [];
+        return safeAccounts.filter(acc => {
             const matchesSearch = acc.name.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesFilter = filterType === 'all' || acc.type === filterType;
             return matchesSearch && matchesFilter;
@@ -268,10 +270,10 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
             <div className="space-y-4">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
                     Histórico de Movimentações
-                    <span className="bg-white/5 text-gray-400 px-2 py-0.5 rounded text-xs font-mono">{movements.length}</span>
+                    <span className="bg-white/5 text-gray-400 px-2 py-0.5 rounded text-xs font-mono">{(movements || []).length}</span>
                 </h2>
 
-                {movements.length === 0 ? (
+                {(!movements || movements.length === 0) ? (
                     <div className="bg-[#0d1121]/50 border border-white/5 border-dashed rounded-2xl p-8 text-center">
                         <p className="text-gray-500 text-sm">Nenhuma movimentação registrada.</p>
                     </div>
@@ -290,9 +292,14 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
-                                    {[...movements].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(mov => {
-                                        const fromAcc = accounts.find(a => a.id === mov.fromAccountId);
-                                        const toAcc = accounts.find(a => a.id === mov.toAccountId);
+                                    {[...(movements || [])].sort((a, b) => {
+                                        const timeA = new Date(a.date).getTime();
+                                        const timeB = new Date(b.date).getTime();
+                                        return (isNaN(timeB) ? 0 : timeB) - (isNaN(timeA) ? 0 : timeA);
+                                    }).map(mov => {
+                                        const safeAccounts = accounts || [];
+                                        const fromAcc = safeAccounts.find(a => a.id === mov.fromAccountId);
+                                        const toAcc = safeAccounts.find(a => a.id === mov.toAccountId);
                                         const date = new Date(mov.date);
                                         const isPositive = mov.type === 'deposit';
                                         const isNegative = mov.type === 'withdraw';
@@ -452,7 +459,7 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
                         if (bm && !name) setName(bm.name);
                     }}>
                         <option value="">Selecione uma casa...</option>
-                        {bookmakers.map((b: any) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                        {(bookmakers || []).map((b: any) => <option key={b.id} value={b.id}>{b.name}</option>)}
                     </Select>
                 ) : null}
 
@@ -536,11 +543,11 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts }: any
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <Select label="Origem (Banco/Casa) *" value={fromAccountId} onChange={e => setFromAccountId(e.target.value)} required>
                             <option value="">Selecione...</option>
-                            {accounts.map((a: any) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                            {(accounts || []).map((a: any) => <option key={a.id} value={a.id}>{a.name}</option>)}
                         </Select>
                         <Select label="Destino (Banco/Casa) *" value={toAccountId} onChange={e => setToAccountId(e.target.value)} required>
                             <option value="">Selecione...</option>
-                            {accounts.map((a: any) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                            {(accounts || []).map((a: any) => <option key={a.id} value={a.id}>{a.name}</option>)}
                         </Select>
                     </div>
                 ) : (
@@ -551,7 +558,7 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts }: any
                         required
                     >
                         <option value="">Selecione o banco ou casa...</option>
-                        {accounts.map((a: any) => <option key={a.id} value={a.id}>{a.name} (Saldo: R$ {(a.balance / 100).toFixed(2)})</option>)}
+                        {(accounts || []).map((a: any) => <option key={a.id} value={a.id}>{a.name} (Saldo: R$ {(a.balance / 100).toFixed(2)})</option>)}
                     </Select>
                 )}
 
