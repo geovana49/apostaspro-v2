@@ -80,7 +80,8 @@ export function calculateArb(houses: HouseInput[], roundingStep: number): ArbRes
         if (h.isFreebet) {
             effectiveOdd = internalFinalOdd * (1 - commDec);
         } else if (h.isLay) {
-            effectiveOdd = internalFinalOdd; // Used differently for Lay
+            // Correct effective odd for Lay: Return = Stake * (Odd - Commission)
+            effectiveOdd = internalFinalOdd - commDec;
         } else {
             effectiveOdd = 1 + (internalFinalOdd - 1) * (1 - commDec);
         }
@@ -99,7 +100,8 @@ export function calculateArb(houses: HouseInput[], roundingStep: number): ArbRes
     if (anchor.isFreebet) {
         fixedNetReturn = anchorStake * anchor.effectiveOdd;
     } else if (anchor.isLay) {
-        fixedNetReturn = anchorStake * (anchor.displayFinalOdd - (anchor.commission / 100));
+        // If Lay wins, we win the backer's stake minus commission
+        fixedNetReturn = anchorStake * (1 - (anchor.commission / 100));
     } else {
         fixedNetReturn = anchorStake * anchor.effectiveOdd;
     }
@@ -142,14 +144,7 @@ export function calculateArb(houses: HouseInput[], roundingStep: number): ArbRes
 
     participatingIds.forEach(i => {
         const h = processed[i];
-        let calcStake = 0;
-
-        if (h.isLay) {
-            const commDec = h.commission / 100;
-            calcStake = fixedNetReturn / (h.displayFinalOdd - commDec);
-        } else {
-            calcStake = h.effectiveOdd > 0 ? fixedNetReturn / h.effectiveOdd : 0;
-        }
+        let calcStake = h.effectiveOdd > 0 ? fixedNetReturn / h.effectiveOdd : 0;
 
         participatingStakes[i] = calcStake;
 
