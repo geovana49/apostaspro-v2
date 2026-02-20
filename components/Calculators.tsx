@@ -46,8 +46,8 @@ type RoundingStep = 0.01 | 0.1 | 0.5 | 1;
 const DEFAULT_HOUSE = (i: number): HouseState => ({
     id: Math.random().toString(36).substr(2, 9),
     annotation: '',
-    odd: '2.00',
-    stake: i === 0 ? '100' : '',
+    odd: '',
+    stake: '',
     commission: '',
     increase: '',
     isFreebet: false,
@@ -205,26 +205,32 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
     return (
         <div className={`bg-[#0d1421]/60 border rounded-xl p-5 transition-all ${isAnchor ? 'border-purple-500/60 shadow-lg shadow-purple-500/5' : 'border-[#1e3a5f]/50 hover:border-cyan-500/30'}`}>
             {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-                <span className="text-white font-bold text-[15px] flex items-center gap-2 truncate">
-                    {label}
-                    {index === 0 && !house.annotation && <span className="text-purple-400 text-[10px] font-black uppercase tracking-wider">(Promo)</span>}
-                </span>
+            <div className="flex items-start justify-between mb-4 gap-2">
+                <div className="flex flex-col min-w-0">
+                    <span className="text-white font-bold text-[15px] flex items-center gap-1.5 truncate">
+                        {label}
+                    </span>
+                    {index === 0 && !house.annotation && (
+                        <span className="text-purple-400 text-[9px] font-black uppercase tracking-wider mt-0.5">
+                            (Promo)
+                        </span>
+                    )}
+                </div>
                 {showProfits && (
-                    <div className="flex flex-col items-end gap-1 min-w-[100px]">
-                        <label className="text-[9px] text-gray-500 uppercase font-black tracking-widest whitespace-nowrap">Lucro (Editar)</label>
-                        <div className="relative group/profit w-full">
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                        <label className="text-[9px] text-gray-400/60 uppercase font-black tracking-widest whitespace-nowrap">Lucro (Editar)</label>
+                        <div className="relative group/profit">
                             <input
                                 type="text"
                                 inputMode="decimal"
                                 placeholder={formatBRL(profitIfWin).replace('R$', '').trim()}
                                 value={house.targetProfit}
                                 onChange={e => update({ targetProfit: e.target.value, isProfitFixed: e.target.value !== '', distribution: e.target.value === '' })}
-                                className={`w-full bg-transparent text-right pr-1 font-black text-sm focus:outline-none transition-all placeholder:opacity-50 ${house.isProfitFixed ? 'text-blue-400 border-b border-blue-500/30 font-mono' : profitIfWin >= 0 ? 'text-green-400' : 'text-red-400'}`}
+                                className={`bg-transparent text-right font-black text-sm focus:outline-none transition-all placeholder:opacity-50 w-[80px] ${house.isProfitFixed ? 'text-blue-400 border-b border-blue-500/30 font-mono' : profitIfWin >= 0 ? 'text-green-400' : 'text-red-600'}`}
                             />
                             {house.isProfitFixed && (
-                                <div className="absolute -left-4 top-1/2 -translate-y-1/2">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                                <div className="absolute -left-3 top-1/2 -translate-y-1/2">
+                                    <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />
                                 </div>
                             )}
                         </div>
@@ -621,7 +627,7 @@ const ArbProTab: React.FC = () => {
                                                 {res.responsibility > 0 ? formatBRL(res.responsibility) : '—'}
                                             </td>
                                             {showProfits && (
-                                                <td className={`py-5 px-6 text-right font-black ${res.profitIfWin >= 0 ? 'text-green-400' : 'text-red-400'} text-sm font-mono`}>
+                                                <td className={`py-5 px-6 text-right font-black ${res.profitIfWin >= 0 ? 'text-green-400' : 'text-red-600'} text-sm font-mono`}>
                                                     {formatBRL(res.profitIfWin)}
                                                 </td>
                                             )}
