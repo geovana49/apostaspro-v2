@@ -78,9 +78,10 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
         const id = `mov_${Date.now()}`;
         const newMovement: CaixaMovement = {
             id,
-            date: new Date().toISOString(),
+            date: movement.date || new Date().toISOString(),
             amount: movement.amount || 0,
             type: movement.type || 'deposit',
+            category: movement.category || '',
             fromAccountId: movement.fromAccountId,
             toAccountId: movement.toAccountId,
             notes: movement.notes
@@ -282,13 +283,14 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                                     <tr className="border-b border-white/5 bg-white/[0.02]">
                                         <th className="px-6 py-4 font-bold text-gray-400 uppercase tracking-wider text-[10px]">Data</th>
                                         <th className="px-6 py-4 font-bold text-gray-400 uppercase tracking-wider text-[10px]">Tipo</th>
+                                        <th className="px-6 py-4 font-bold text-gray-400 uppercase tracking-wider text-[10px]">Categoria</th>
                                         <th className="px-6 py-4 font-bold text-gray-400 uppercase tracking-wider text-[10px]">Detalhes</th>
                                         <th className="px-6 py-4 font-bold text-gray-400 uppercase tracking-wider text-[10px] text-right">Valor</th>
                                         <th className="px-6 py-4 font-bold text-gray-400 uppercase tracking-wider text-[10px] text-right">Ação</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
-                                    {movements.map(mov => {
+                                    {[...movements].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(mov => {
                                         const fromAcc = accounts.find(a => a.id === mov.fromAccountId);
                                         const toAcc = accounts.find(a => a.id === mov.toAccountId);
                                         const date = new Date(mov.date);
@@ -308,10 +310,13 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                                                         {mov.type === 'deposit' ? <ArrowDownLeft size={12} /> :
                                                             mov.type === 'withdraw' ? <ArrowUpRight size={12} /> :
                                                                 <Repeat size={12} />}
-                                                        {mov.type === 'deposit' ? 'Depósito' :
-                                                            mov.type === 'withdraw' ? 'Saque' :
+                                                        {mov.type === 'deposit' ? 'Aporte' :
+                                                            mov.type === 'withdraw' ? 'Retirada' :
                                                                 'Transf.'}
                                                     </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className="text-gray-300 font-medium text-xs">{mov.category || '-'}</span>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex flex-col">
@@ -368,7 +373,7 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
     );
 };
 
-const AccountCard = ({ account, privacyMode, onEdit, onDelete }: { account: CaixaAccount, privacyMode?: boolean, onEdit: () => void, onDelete: () => void }) => (
+const AccountCard: React.FC<{ account: CaixaAccount, privacyMode?: boolean, onEdit: () => void, onDelete: () => void | Promise<void> }> = ({ account, privacyMode, onEdit, onDelete }) => (
     <Card className="p-4 group/card overflow-hidden">
         <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -422,7 +427,8 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const cleanBalance = Math.round(parseFloat(balance.replace(',', '.')) * 100);
+        const parsedBalance = parseFloat(balance.replace(',', '.'));
+        const cleanBalance = isNaN(parsedBalance) ? 0 : Math.round(parsedBalance * 100);
         onSave({ name, type, balance: cleanBalance, color, bookmakerId: type === 'bookmaker' ? bookmakerId : undefined });
     };
 
@@ -453,14 +459,13 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
                 <Input label="Nome da Conta" value={name} onChange={e => setName(e.target.value)} placeholder="ex: NuBank, Bet365..." required />
 
                 <Input
-                    label="Saldo Inicial"
+                    label="Saldo Inicial (Opcional)"
                     prefix="R$"
                     value={balance}
                     onChange={e => {
                         const val = e.target.value.replace(/[^\d,]/g, '');
                         setBalance(val);
                     }}
-                    required
                 />
 
                 <div className="flex gap-2 pt-4">
@@ -476,6 +481,8 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts }: any
     const [amount, setAmount] = useState('0,00');
     const [fromAccountId, setFromAccountId] = useState('');
     const [toAccountId, setToAccountId] = useState('');
+    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [category, setCategory] = useState('Aporte Inicial');
     const [notes, setNotes] = useState('');
 
     React.useEffect(() => {
@@ -483,91 +490,112 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts }: any
             setAmount('0,00');
             setFromAccountId('');
             setToAccountId('');
+            setDate(new Date().toISOString().split('T')[0]);
+            setCategory(type === 'deposit' ? 'Aporte Inicial' : type === 'withdraw' ? 'Saque Lucro' : 'Transferência');
             setNotes('');
         }
-    }, [isOpen]);
+    }, [isOpen, type]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const cleanAmount = Math.round(parseFloat(amount.replace(',', '.')) * 100);
-        onSave({ amount: cleanAmount, type, fromAccountId, toAccountId, notes });
+        onSave({ amount: cleanAmount, type, fromAccountId, toAccountId, date: new Date(date).toISOString(), category, notes });
+    };
+
+    const categories = {
+        deposit: [
+            { value: 'Aporte Inicial', label: '💰 Aporte Inicial' },
+            { value: 'Aporte Mensal', label: '💵 Aporte Mensal' },
+            { value: 'Lucro Apostas', label: '📈 Lucro Apostas' },
+            { value: 'Capital Externo', label: '🏦 Capital Externo' },
+            { value: 'Diversos', label: '➕ Diversos' }
+        ],
+        withdraw: [
+            { value: 'Saque Lucro', label: '💸 Saque Lucro' },
+            { value: 'Resgate Capital', label: '🏧 Resgate Capital' },
+            { value: 'Pagamento Contas', label: '🏠 Pagamento Contas' },
+            { value: 'Diversos', label: '➖ Diversos' }
+        ],
+        transfer: [
+            { value: 'Transferência', label: '🔄 Transferência' },
+            { value: 'Rebalanceamento', label: '⚖️ Rebalanceamento' },
+            { value: 'Banca Operacional', label: '🎯 Banca Operacional' }
+        ]
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Movimentar Capital">
-            <div className="p-6 space-y-6">
-                {/* Type Selector */}
-                <div className="flex gap-2 p-1 bg-[#0d1121] rounded-xl border border-white/10">
-                    <button
-                        onClick={() => setType('deposit')}
-                        className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-lg transition-all ${type === 'deposit' ? 'bg-primary/20 text-primary border border-primary/20' : 'text-gray-500 hover:text-white'}`}
-                    >
-                        <ArrowDownLeft size={20} />
-                        <span className="text-[10px] font-bold uppercase">Depósito</span>
-                    </button>
-                    <button
-                        onClick={() => setType('withdraw')}
-                        className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-lg transition-all ${type === 'withdraw' ? 'bg-danger/20 text-danger border border-danger/20' : 'text-gray-500 hover:text-white'}`}
-                    >
-                        <ArrowUpRight size={20} />
-                        <span className="text-[10px] font-bold uppercase">Saque</span>
-                    </button>
-                    <button
-                        onClick={() => setType('transfer')}
-                        className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-lg transition-all ${type === 'transfer' ? 'bg-secondary/20 text-secondary border border-secondary/20' : 'text-gray-500 hover:text-white'}`}
-                    >
-                        <Repeat size={20} />
-                        <span className="text-[10px] font-bold uppercase">Transf.</span>
-                    </button>
+        <Modal isOpen={isOpen} onClose={onClose} title="Nova Movimentação">
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <div>
+                    <Select label="Tipo *" value={type} onChange={e => setType(e.target.value as any)}>
+                        <option value="deposit">💰 Aporte (Entrada de Capital)</option>
+                        <option value="withdraw">💸 Retirada (Saída de Capital)</option>
+                        <option value="transfer">🔄 Transferência</option>
+                    </Select>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Input
-                        label="Valor"
+                        label="Valor (R$) *"
                         prefix="R$"
                         value={amount}
                         onChange={e => setAmount(e.target.value.replace(/[^\d,]/g, ''))}
                         required
-                        className="text-lg font-bold"
                     />
+                    <Input
+                        label="Data *"
+                        type="date"
+                        value={date}
+                        onChange={e => setDate(e.target.value)}
+                        required
+                    />
+                </div>
 
-                    {type === 'deposit' && (
-                        <Select label="Conta de Destino" value={toAccountId} onChange={e => setToAccountId(e.target.value)} required>
+                {type === 'transfer' ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Select label="Origem (Banco) *" value={fromAccountId} onChange={e => setFromAccountId(e.target.value)} required>
                             <option value="">Selecione...</option>
-                            {accounts.map((a: any) => <option key={a.id} value={a.id}>{a.name} (Saldo: R$ {(a.balance / 100).toFixed(2)})</option>)}
+                            {accounts.map((a: any) => <option key={a.id} value={a.id}>{a.name}</option>)}
                         </Select>
-                    )}
-
-                    {type === 'withdraw' && (
-                        <Select label="Conta de Origem" value={fromAccountId} onChange={e => setFromAccountId(e.target.value)} required>
+                        <Select label="Destino (Banco) *" value={toAccountId} onChange={e => setToAccountId(e.target.value)} required>
                             <option value="">Selecione...</option>
-                            {accounts.map((a: any) => <option key={a.id} value={a.id}>{a.name} (Saldo: R$ {(a.balance / 100).toFixed(2)})</option>)}
+                            {accounts.map((a: any) => <option key={a.id} value={a.id}>{a.name}</option>)}
                         </Select>
-                    )}
-
-                    {type === 'transfer' && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Select label="De (Origem)" value={fromAccountId} onChange={e => setFromAccountId(e.target.value)} required>
-                                <option value="">Selecione...</option>
-                                {accounts.map((a: any) => <option key={a.id} value={a.id}>{a.name}</option>)}
-                            </Select>
-                            <Select label="Para (Destino)" value={toAccountId} onChange={e => setToAccountId(e.target.value)} required>
-                                <option value="">Selecione...</option>
-                                {accounts.map((a: any) => <option key={a.id} value={a.id}>{a.name}</option>)}
-                            </Select>
-                        </div>
-                    )}
-
-                    <Input label="Observação (Opcional)" value={notes} onChange={e => setNotes(e.target.value)} placeholder="ex: Transferência lucro mensal..." />
-
-                    <div className="flex gap-2 pt-4">
-                        <Button variant="neutral" className="flex-1" onClick={onClose}>Cancelar</Button>
-                        <Button type="submit" className={`flex-1 ${type === 'deposit' ? 'bg-primary' : type === 'withdraw' ? 'bg-danger' : 'bg-secondary'}`}>
-                            Confirmar {type === 'deposit' ? 'Depósito' : type === 'withdraw' ? 'Saque' : 'Transferência'}
-                        </Button>
                     </div>
-                </form>
-            </div>
+                ) : (
+                    <Select
+                        label={type === 'deposit' ? "Destino (Banco) *" : "Origem (Banco) *"}
+                        value={type === 'deposit' ? toAccountId : fromAccountId}
+                        onChange={e => type === 'deposit' ? setToAccountId(e.target.value) : setFromAccountId(e.target.value)}
+                        required
+                    >
+                        <option value="">Selecione o banco...</option>
+                        {accounts.map((a: any) => <option key={a.id} value={a.id}>{a.name} (Saldo: R$ {(a.balance / 100).toFixed(2)})</option>)}
+                    </Select>
+                )}
+
+                <Select label="Categoria *" value={category} onChange={e => setCategory(e.target.value)} required>
+                    {categories[type as keyof typeof categories].map(c => (
+                        <option key={c.value} value={c.value}>{c.label}</option>
+                    ))}
+                </Select>
+
+                <div className="w-full">
+                    <label className="block text-textMuted text-[11px] font-bold uppercase tracking-wider mb-2">Observação</label>
+                    <textarea
+                        className="w-full bg-[#0d1121] border border-white/10 focus:border-primary/50 text-white rounded-lg py-2.5 px-4 placeholder-gray-600 focus:outline-none transition-all duration-200 text-sm focus:ring-1 focus:ring-primary/50 hover:border-white/20 shadow-inner"
+                        rows={3}
+                        placeholder="Ex: Aporte inicial do mês, Retirada de lucro..."
+                        value={notes}
+                        onChange={e => setNotes(e.target.value)}
+                    />
+                </div>
+
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
+                    <Button variant="neutral" className="sm:w-32" onClick={onClose}>Cancelar</Button>
+                    <Button type="submit" className="sm:w-32">Registrar</Button>
+                </div>
+            </form>
         </Modal>
     );
 };

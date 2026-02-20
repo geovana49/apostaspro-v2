@@ -122,6 +122,7 @@ export interface CaixaMovement {
   date: string; // ISO string
   amount: number; // in cents (always positive)
   type: 'deposit' | 'withdraw' | 'transfer';
+  category: string;
   fromAccountId?: string;
   toAccountId?: string;
   notes?: string;
