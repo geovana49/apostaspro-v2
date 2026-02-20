@@ -554,12 +554,6 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
                     <p className="text-gray-500 text-sm font-medium mt-1">Gere lucros consistentes usando arbitragem profissional.</p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                    <button
-                        onClick={handleLaunchToBets}
-                        className="bg-emerald-500 hover:bg-emerald-600 text-[#0d1421] px-5 h-10 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
-                    >
-                        <ArrowRight className="w-4 h-4" /> Lançar em Minhas Apostas
-                    </button>
                     <div className="flex flex-col items-center gap-1.5 min-w-[100px]">
                         <button
                             onClick={() => setShowProfits(!showProfits)}
@@ -631,22 +625,6 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
                                 {formatBRL(arbResult.totalInvested)}
                             </div>
                             <div className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">Total Investido</div>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex flex-col gap-3">
-                            <button
-                                onClick={handleLaunchToBets}
-                                className="bg-emerald-500 hover:bg-emerald-600 text-[#0d1421] px-8 py-3 rounded-xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
-                            >
-                                <ArrowRight className="w-4 h-4" /> Lançar em Minhas Apostas
-                            </button>
-                            <button
-                                onClick={clearAll}
-                                className="bg-white/5 hover:bg-white/10 text-white/60 hover:text-white px-8 py-3 rounded-xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 border border-white/10 transition-all"
-                            >
-                                <Trash2 className="w-4 h-4" /> Limpar Tudo
-                            </button>
                         </div>
 
                         <div className="text-center group">
@@ -729,6 +707,12 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
                     className="flex items-center gap-2 bg-emerald-500 text-[#0d1421] hover:bg-emerald-600 transition-all px-8 h-12 rounded-xl text-[11px] font-black uppercase tracking-wider shadow-lg shadow-emerald-500/20 active:scale-95"
                 >
                     <ArrowRight className="w-4 h-4" /> Lançar em Minhas Apostas
+                </button>
+                <button
+                    onClick={clearAll}
+                    className="flex items-center gap-2 bg-[#0d1421] border border-[#1e3a5f]/40 hover:border-red-500/40 text-gray-400 hover:text-white transition-all px-8 h-12 rounded-xl text-[11px] font-black uppercase tracking-wider shadow-sm active:scale-95"
+                >
+                    <Trash2 className="w-4 h-4" /> Limpar Tudo
                 </button>
                 <div className="relative">
                     <button
