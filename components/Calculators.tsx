@@ -9,6 +9,8 @@ import {
     calculateArb, parseBR, formatBRL, formatOdd,
     HouseInput
 } from '../utils/arbCalc';
+import { Bet, Bookmaker, StatusItem, PromotionItem, User, Coverage } from '../types';
+import BetFormModal from './BetFormModal';
 
 // =============================================
 //  TYPES
@@ -39,6 +41,13 @@ export interface CalculationHistory {
     houses: HouseState[];
     roi: number;
     totalInvested: number;
+}
+
+export interface CalculatorsProps {
+    currentUser: User | null;
+    bookmakers: Bookmaker[];
+    statuses: StatusItem[];
+    promotions: PromotionItem[];
 }
 
 type RoundingStep = 0.01 | 0.1 | 0.5 | 1;
@@ -371,12 +380,21 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
 // =============================================
 //  ARB PRO TAB
 // =============================================
-const ArbProTab: React.FC = () => {
+const ArbProTab: React.FC<CalculatorsProps> = ({
+    currentUser,
+    bookmakers,
+    statuses,
+    promotions
+}) => {
     const [numHouses, setNumHouses] = useState(3);
     const [rounding, setRounding] = useState<RoundingStep>(0.01);
     const [history, setHistory] = useState<CalculationHistory[]>([]);
     const [showHistory, setShowHistory] = useState(false);
     const [showProfits, setShowProfits] = useState(true);
+
+    // Bet Saving State
+    const [isBetModalOpen, setIsBetModalOpen] = useState(false);
+    const [prefilledBet, setPrefilledBet] = useState<Bet | null>(null);
 
     // Initialize houses
     const [houses, setHouses] = useState<HouseState[]>(() => {
@@ -481,6 +499,36 @@ const ArbProTab: React.FC = () => {
         setHouses(prev => prev.map((_, i) => DEFAULT_HOUSE(i)));
     };
 
+    const handleLaunchToBets = () => {
+        if (!currentUser) return;
+
+        const pendingStatus = statuses.find(s => s.name === 'Pendente')?.name || 'Pendente';
+
+        // Map houses to coverages
+        const coverages: Coverage[] = activeHouses.map((h, i) => ({
+            id: Math.random().toString(36).substr(2, 9),
+            bookmakerId: '', // Default to empty, user will select in modal
+            market: h.isLay ? 'Lay' : 'Back',
+            odd: parseBR(h.odd) || 0,
+            stake: parseBR(h.stake) || 0,
+            status: pendingStatus
+        }));
+
+        const mainBet: Bet = {
+            id: Date.now().toString(),
+            date: new Date().toISOString().split('T')[0],
+            event: 'Arbitragem ARB PRO',
+            mainBookmakerId: '',
+            status: pendingStatus,
+            coverages: coverages,
+            notes: `Calculado via ARB PRO\nROI: ${arbResult.roi.toFixed(2)}%\nInvestimento: ${formatBRL(arbResult.totalInvested)}`,
+            isDoubleGreen: false
+        };
+
+        setPrefilledBet(mainBet);
+        setIsBetModalOpen(true);
+    };
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             {/* Header Title */}
@@ -566,13 +614,30 @@ const ArbProTab: React.FC = () => {
                             <div className="text-4xl font-black text-white mb-2 transition-transform group-hover:scale-105 duration-300">
                                 {formatBRL(arbResult.totalInvested)}
                             </div>
-                            <div className="text-[10px] text-gray-500 font-black uppercase tracking-[0.25em]">TOTAL INVESTIDO</div>
+                            <div className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">Total Investido</div>
                         </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={handleLaunchToBets}
+                                className="bg-emerald-500 hover:bg-emerald-600 text-[#0d1421] px-8 py-3 rounded-xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+                            >
+                                <ArrowRight className="w-4 h-4" /> Lançar em Minhas Apostas
+                            </button>
+                            <button
+                                onClick={clearAll}
+                                className="bg-white/5 hover:bg-white/10 text-white/60 hover:text-white px-8 py-3 rounded-xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 border border-white/10 transition-all"
+                            >
+                                <Trash2 className="w-4 h-4" /> Limpar Tudo
+                            </button>
+                        </div>
+
                         <div className="text-center group">
                             <div className={`text-4xl font-black mb-2 transition-transform group-hover:scale-105 duration-300 ${arbResult.roi >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                {arbResult.roi > 0 ? '+' : ''}{arbResult.roi.toFixed(2)}%
+                                {arbResult.roi.toFixed(2)}%
                             </div>
-                            <div className="text-[10px] text-gray-500 font-black uppercase tracking-[0.25em]">ROI MÉDIO</div>
+                            <div className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">ROI Médio</div>
                         </div>
                     </div>
 
@@ -624,14 +689,25 @@ const ArbProTab: React.FC = () => {
                 </div>
             </div>
 
+            {/* Bet Modal */}
+            {isBetModalOpen && (
+                <BetFormModal
+                    isOpen={isBetModalOpen}
+                    onClose={() => setIsBetModalOpen(false)}
+                    initialData={prefilledBet}
+                    currentUser={currentUser}
+                    bookmakers={bookmakers}
+                    statuses={statuses}
+                    promotions={promotions}
+                    onSaveSuccess={() => {
+                        setIsBetModalOpen(false);
+                        // Optional: show a toast or something
+                    }}
+                />
+            )}
+
             {/* Footer Actions */}
             <div className="flex flex-wrap items-center justify-center gap-4 py-6 border-t border-[#1e3a5f]/10">
-                <button
-                    onClick={clearAll}
-                    className="flex items-center gap-2 bg-[#0d1421] border border-[#1e3a5f]/40 hover:border-red-500/40 hover:text-red-400 transition-all px-6 h-12 rounded-xl text-[11px] font-black uppercase tracking-wider text-gray-400 shadow-sm"
-                >
-                    <Trash2 className="w-4 h-4" /> LIMPAR DADOS
-                </button>
                 <div className="relative">
                     <button
                         onClick={() => setShowHistory(!showHistory)}
@@ -674,14 +750,19 @@ const ArbProTab: React.FC = () => {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 
 // =============================================
 //  MAIN COMPONENT
 // =============================================
-const Calculators: React.FC = () => {
+const Calculators: React.FC<CalculatorsProps> = ({
+    currentUser,
+    bookmakers,
+    statuses,
+    promotions
+}) => {
     const [activeTab, setActiveTab] = useState('arb-pro');
     const [showTutorial, setShowTutorial] = useState(false);
 
@@ -727,7 +808,14 @@ const Calculators: React.FC = () => {
 
                         {/* Calculations Content */}
                         <div className="mt-2 min-h-[600px]">
-                            <ArbProTab />
+                            {activeTab === 'arb-pro' && (
+                                <ArbProTab
+                                    currentUser={currentUser}
+                                    bookmakers={bookmakers}
+                                    statuses={statuses}
+                                    promotions={promotions}
+                                />
+                            )}
                         </div>
                     </div>
                 </div>

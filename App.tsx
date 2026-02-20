@@ -400,7 +400,14 @@ const App: React.FC = () => {
                 />
               )}
 
-              {activePage === Page.CALCULATORS && <Calculators />}
+              {activePage === Page.CALCULATORS && (
+                <Calculators
+                  currentUser={currentUser}
+                  bookmakers={bookmakers}
+                  statuses={statuses}
+                  promotions={promotions}
+                />
+              )}
             </Suspense>
           </Layout>
         )}
