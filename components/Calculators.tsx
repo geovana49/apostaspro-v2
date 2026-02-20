@@ -750,9 +750,11 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
 
                         <div className="text-center group">
                             <div className={`text-3xl sm:text-4xl font-black mb-2 transition-transform group-hover:scale-105 duration-300 ${arbResult.roi >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                {arbResult.roi.toFixed(2)}%
+                                {arbResult.conversion !== undefined ? arbResult.conversion.toFixed(2) : arbResult.roi.toFixed(2)}%
                             </div>
-                            <div className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">ROI Médio</div>
+                            <div className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">
+                                {arbResult.conversion !== undefined ? 'Conversão (Bônus)' : 'ROI Médio'}
+                            </div>
                         </div>
                     </div>
 

@@ -27,6 +27,7 @@ export interface ArbResult {
     results: HouseResult[];
     minProfit: number;            // worst-case profit (usually equal across all)
     roi: number;                 // minProfit / totalInvested * 100
+    conversion?: number;         // minProfit / FreebetStake * 100 (for Freebet bonus ROI)
     isArb: boolean;               // true if ROI >= 0
 }
 
@@ -231,12 +232,20 @@ export function calculateArb(houses: HouseInput[], roundingStep: number): ArbRes
     const minProfit = finalResults.length > 0 ? Math.min(...finalResults.map(r => r.profitIfWin)) : 0;
     const roi = actualTotalInvested > 0 ? (minProfit / actualTotalInvested) * 100 : 0;
 
+    // Calculate conversion rate if there is at least one Freebet
+    let conversion: number | undefined = undefined;
+    const freebetHouse = houses.find(h => h.isFreebet && h.stake > 0);
+    if (freebetHouse) {
+        conversion = (minProfit / freebetHouse.stake) * 100;
+    }
+
     return {
         targetReturn: fixedNetReturn,
         totalInvested: actualTotalInvested,
         results: finalResults,
         minProfit,
         roi,
+        conversion,
         isArb: roi >= 0
     };
 }
