@@ -567,7 +567,7 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
     );
 };
 
-const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts, bookmakers }: any) => {
+const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts, bookmakers, categories, currentUser }: any) => {
     const [amount, setAmount] = useState('0,00');
     const [fromAccountId, setFromAccountId] = useState('');
     const [toAccountId, setToAccountId] = useState('');
