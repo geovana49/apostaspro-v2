@@ -37,6 +37,17 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
         }, { total: 0, bank: 0, bookmaker: 0, other: 0 });
     }, [accounts]);
 
+    // Bookmaker balances summary
+    const bookmakerBalances = useMemo(() => {
+        return (bookmakers || []).map(bm => {
+            const total = (accounts || [])
+                .filter(a => a.bookmakerId === bm.id)
+                .reduce((sum, a) => sum + (a.balance || 0), 0);
+            return { ...bm, total };
+        }).filter(bm => bm.total > 0)
+            .sort((a, b) => b.total - a.total);
+    }, [bookmakers, accounts]);
+
     const filteredAccounts = useMemo(() => {
         const safeAccounts = accounts || [];
         return safeAccounts.filter(acc => {
@@ -130,7 +141,7 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                         <Plus size={18} /> Nova Conta
                     </Button>
                     <Button className="flex-1 sm:flex-none" onClick={() => { setMovementType('deposit'); setIsMovementModalOpen(true); }}>
-                        <TrendingUp size={18} /> Movimentar
+                        <TrendingUp size={18} /> Nova Movimentação
                     </Button>
                 </div>
             </div>
@@ -198,6 +209,35 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                 </Card>
             </div>
 
+            {/* Bookmaker Balances Horizontal Section */}
+            {bookmakerBalances.length > 0 && (
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                        <Building2 size={18} className="text-emerald-500" />
+                        <h2 className="text-sm font-bold text-white uppercase tracking-wider">Saldos por Casa</h2>
+                    </div>
+                    <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                        {bookmakerBalances.map(bm => (
+                            <Card key={bm.id} className="min-w-[180px] p-4 flex flex-col items-center text-center bg-[#0d1421]/60 border-white/5 hover:border-emerald-500/30 transition-all">
+                                {bm.logo ? (
+                                    <img src={bm.logo} alt={bm.name} className="w-10 h-10 rounded-lg object-contain mb-3" />
+                                ) : (
+                                    <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center mb-3">
+                                        <Building2 size={20} className="text-gray-600" />
+                                    </div>
+                                )}
+                                <div className="text-[10px] text-gray-500 font-bold uppercase mb-1 truncate w-full">{bm.name}</div>
+                                <MoneyDisplay
+                                    value={bm.total / 100}
+                                    privacyMode={settings.privacyMode}
+                                    className="text-lg font-bold text-white"
+                                />
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* Accounts Section */}
             <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -257,6 +297,7 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                             <AccountCard
                                 key={account.id}
                                 account={account}
+                                bookmakers={bookmakers}
                                 privacyMode={settings.privacyMode}
                                 onEdit={() => { setEditingAccount(account); setIsAccountModalOpen(true); }}
                                 onDelete={() => handleDeleteAccount(account.id)}
@@ -374,44 +415,53 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                 type={movementType}
                 setType={setMovementType}
                 accounts={accounts}
+                bookmakers={bookmakers}
             />
 
         </div>
     );
 };
 
-const AccountCard: React.FC<{ account: CaixaAccount, privacyMode?: boolean, onEdit: () => void, onDelete: () => void | Promise<void> }> = ({ account, privacyMode, onEdit, onDelete }) => (
-    <Card className="p-4 group/card overflow-hidden">
-        <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transform group-hover/card:scale-110 group-hover/card:rotate-3 transition-all duration-500" style={{ backgroundColor: `${account.color}20`, color: account.color }}>
-                    {account.type === 'bank' ? <Landmark size={20} /> : account.type === 'bookmaker' ? <Building2 size={20} /> : <Banknote size={20} />}
+const AccountCard: React.FC<{ account: CaixaAccount, bookmakers: Bookmaker[], privacyMode?: boolean, onEdit: () => void, onDelete: () => void | Promise<void> }> = ({ account, bookmakers, privacyMode, onEdit, onDelete }) => {
+    const bookmaker = account.bookmakerId ? bookmakers.find(bm => bm.id === account.bookmakerId) : null;
+
+    return (
+        <Card className="p-4 group/card overflow-hidden">
+            <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transform group-hover/card:scale-110 group-hover/card:rotate-3 transition-all duration-500 overflow-hidden" style={{ backgroundColor: bookmaker?.color ? `${bookmaker.color}20` : `${account.color}20`, color: bookmaker?.color || account.color }}>
+                        {bookmaker?.logo ? (
+                            <img src={bookmaker.logo} alt={bookmaker.name} className="w-full h-full object-contain p-1" />
+                        ) : (
+                            account.type === 'bank' ? <Landmark size={20} /> : account.type === 'bookmaker' ? <Building2 size={20} /> : <Banknote size={20} />
+                        )}
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-white group-hover/card:text-primary transition-colors">{account.name}</h4>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{account.type === 'bank' ? 'Banco' : account.type === 'bookmaker' ? 'Casa de Aposta' : 'Outros'}</p>
+                    </div>
                 </div>
+                <div className="flex gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                    <button onClick={onEdit} className="p-1.5 text-gray-500 hover:text-white hover:bg-white/5 rounded-md transition-all"><Edit2 size={14} /></button>
+                    <button onClick={onDelete} className="p-1.5 text-gray-500 hover:text-danger hover:bg-danger/5 rounded-md transition-all"><Trash2 size={14} /></button>
+                </div>
+            </div>
+            <div className="mt-6 flex items-end justify-between">
                 <div>
-                    <h4 className="font-bold text-white group-hover/card:text-primary transition-colors">{account.name}</h4>
-                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{account.type === 'bank' ? 'Banco' : account.type === 'bookmaker' ? 'Casa de Aposta' : 'Outros'}</p>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Saldo Disponível</p>
+                    <MoneyDisplay
+                        value={account.balance / 100}
+                        privacyMode={privacyMode}
+                        className="text-xl font-bold text-white"
+                    />
+                </div>
+                <div className="p-1.5 bg-white/5 rounded-lg">
+                    <TrendingUp size={14} className="text-gray-600" />
                 </div>
             </div>
-            <div className="flex gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
-                <button onClick={onEdit} className="p-1.5 text-gray-500 hover:text-white hover:bg-white/5 rounded-md transition-all"><Edit2 size={14} /></button>
-                <button onClick={onDelete} className="p-1.5 text-gray-500 hover:text-danger hover:bg-danger/5 rounded-md transition-all"><Trash2 size={14} /></button>
-            </div>
-        </div>
-        <div className="mt-6 flex items-end justify-between">
-            <div>
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Saldo Disponível</p>
-                <MoneyDisplay
-                    value={account.balance / 100}
-                    privacyMode={privacyMode}
-                    className="text-xl font-bold text-white"
-                />
-            </div>
-            <div className="p-1.5 bg-white/5 rounded-lg">
-                <TrendingUp size={14} className="text-gray-600" />
-            </div>
-        </div>
-    </Card>
-);
+        </Card>
+    );
+};
 
 const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: any) => {
     const [name, setName] = useState(editingAccount?.name || '');
@@ -484,13 +534,47 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
     );
 };
 
-const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts }: any) => {
+const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts, bookmakers }: any) => {
     const [amount, setAmount] = useState('0,00');
     const [fromAccountId, setFromAccountId] = useState('');
     const [toAccountId, setToAccountId] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [category, setCategory] = useState('');
     const [notes, setNotes] = useState('');
+
+    const accountOptions = useMemo(() => {
+        return (accounts || []).map(acc => {
+            const bm = acc.bookmakerId ? bookmakers.find(b => b.id === acc.bookmakerId) : null;
+            return {
+                label: `${acc.name} (Saldo: R$ ${(acc.balance / 100).toFixed(2)})`,
+                value: acc.id,
+                icon: bm?.logo ? (
+                    <img src={bm.logo} alt="" className="w-5 h-5 rounded object-contain" />
+                ) : (
+                    acc.type === 'bank' ? <Landmark size={14} /> : <Building2 size={14} />
+                )
+            };
+        });
+    }, [accounts, bookmakers]);
+
+    const categoryOptions = useMemo(() => {
+        if (type === 'deposit') {
+            return [
+                { label: 'Aporte Inicial', value: 'Aporte Inicial' },
+                { label: 'Lucro de Aposta', value: 'Lucro de Aposta' },
+                { label: 'Ajuste de Saldo', value: 'Ajuste de Saldo' },
+                { label: 'Outros', value: 'Outros' }
+            ];
+        } else if (type === 'withdraw') {
+            return [
+                { label: 'Retirada', value: 'Retirada' },
+                { label: 'Aposta Realizada', value: 'Aposta Realizada' },
+                { label: 'Ajuste de Saldo', value: 'Ajuste de Saldo' },
+                { label: 'Outros', value: 'Outros' }
+            ];
+        }
+        return [];
+    }, [type]);
 
     React.useEffect(() => {
         if (isOpen) {
@@ -524,8 +608,8 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts }: any
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <div>
                     <Select label="Tipo *" value={type} onChange={e => setType(e.target.value as any)}>
-                        <option value="deposit">💰 Aporte (Entrada de Capital)</option>
-                        <option value="withdraw">💸 Retirada (Saída de Capital)</option>
+                        <option value="deposit">💰 Depósito / Entrada</option>
+                        <option value="withdraw">💸 Saque / Saída</option>
                         <option value="transfer">🔄 Transferência</option>
                     </Select>
                 </div>
@@ -551,44 +635,50 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts }: any
 
                 {type === 'transfer' ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <Select label="Origem (Banco/Casa) *" value={fromAccountId} onChange={e => setFromAccountId(e.target.value)} required>
-                            <option value="">Selecione...</option>
-                            {(accounts || []).map((a: any) => <option key={a.id} value={a.id}>{a.name}</option>)}
-                        </Select>
-                        <Select label="Destino (Banco/Casa) *" value={toAccountId} onChange={e => setToAccountId(e.target.value)} required>
-                            <option value="">Selecione...</option>
-                            {(accounts || []).map((a: any) => <option key={a.id} value={a.id}>{a.name}</option>)}
-                        </Select>
+                        <Dropdown
+                            label="Origem *"
+                            value={fromAccountId}
+                            onChange={setFromAccountId}
+                            options={accountOptions}
+                            isSearchable
+                            placeholder="Selecione..."
+                        />
+                        <Dropdown
+                            label="Destino *"
+                            value={toAccountId}
+                            onChange={setToAccountId}
+                            options={accountOptions}
+                            isSearchable
+                            placeholder="Selecione..."
+                        />
                     </div>
                 ) : (
-                    <Select
-                        label={type === 'deposit' ? "Destino (Banco/Casa) *" : "Origem (Banco/Casa) *"}
+                    <Dropdown
+                        label={type === 'deposit' ? "Destino *" : "Origem *"}
                         value={type === 'deposit' ? toAccountId : fromAccountId}
-                        onChange={e => type === 'deposit' ? setToAccountId(e.target.value) : setFromAccountId(e.target.value)}
-                        required
-                    >
-                        <option value="">Selecione o banco ou casa...</option>
-                        {(accounts || []).map((a: any) => <option key={a.id} value={a.id}>{a.name} (Saldo: R$ {(a.balance / 100).toFixed(2)})</option>)}
-                    </Select>
+                        onChange={val => type === 'deposit' ? setToAccountId(val) : setFromAccountId(val)}
+                        options={accountOptions}
+                        isSearchable
+                        placeholder="Selecione a conta..."
+                    />
+                )}
+
+                {type !== 'transfer' && (
+                    <Dropdown
+                        label="Categoria"
+                        value={category}
+                        onChange={setCategory}
+                        options={categoryOptions}
+                        placeholder="Selecione uma categoria..."
+                    />
                 )}
 
                 <Input
-                    label="Anotação (Opcional)"
-                    value={category}
-                    onChange={e => setCategory(e.target.value)}
-                    placeholder="Ex: Aporte inicial, Lucro, etc..."
+                    label="Anotação / Observação (Opcional)"
+                    value={notes}
+                    onChange={e => setNotes(e.target.value)}
+                    placeholder="Ex: Aposta na Bet365, Depósito via PIX..."
                 />
-
-                <div className="w-full">
-                    <label className="block text-textMuted text-[11px] font-bold uppercase tracking-wider mb-2">Observação</label>
-                    <textarea
-                        className="w-full bg-[#0d1121] border border-white/10 focus:border-primary/50 text-white rounded-lg py-2.5 px-4 placeholder-gray-600 focus:outline-none transition-all duration-200 text-sm focus:ring-1 focus:ring-primary/50 hover:border-white/20 shadow-inner"
-                        rows={3}
-                        placeholder="Ex: Aporte inicial do mês, Retirada de lucro..."
-                        value={notes}
-                        onChange={e => setNotes(e.target.value)}
-                    />
-                </div>
 
                 <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
                     <Button variant="neutral" className="sm:w-32" onClick={onClose}>Cancelar</Button>
