@@ -25,6 +25,7 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
     const [editingAccount, setEditingAccount] = useState<CaixaAccount | null>(null);
     const [isMovementModalOpen, setIsMovementModalOpen] = useState(false);
     const [movementType, setMovementType] = useState<'deposit' | 'withdraw' | 'transfer'>('deposit');
+    const [initialAccountId, setInitialAccountId] = useState<string | null>(null);
 
     // Summary Calculations
     const summary = useMemo(() => {
@@ -40,10 +41,7 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
 
     // Bookmaker balances summary
     const bookmakerBalances = useMemo(() => {
-        const linkedBmIds = new Set((accounts || []).map(a => a.bookmakerId).filter(Boolean));
-
         return (bookmakers || [])
-            .filter(bm => linkedBmIds.has(bm.id))
             .map(bm => {
                 const total = (accounts || [])
                     .filter(a => a.bookmakerId === bm.id)
@@ -248,23 +246,37 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                         <h2 className="text-sm font-bold text-white uppercase tracking-wider">Saldos por Casa</h2>
                     </div>
                     <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                        {bookmakerBalances.map(bm => (
-                            <Card key={bm.id} className="min-w-[180px] p-4 flex flex-col items-center text-center bg-[#0d1421]/60 border-white/5 hover:border-emerald-500/30 transition-all cursor-default">
-                                {bm.logo ? (
-                                    <img src={bm.logo} alt={bm.name} className="w-10 h-10 rounded-lg object-contain mb-3" />
-                                ) : (
-                                    <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center mb-3">
-                                        <Building2 size={20} className="text-gray-600" />
-                                    </div>
-                                )}
-                                <div className="text-[10px] text-gray-500 font-bold uppercase mb-1 truncate w-full">{bm.name}</div>
-                                <MoneyDisplay
-                                    value={bm.total / 100}
-                                    privacyMode={settings.privacyMode}
-                                    className="text-lg font-bold text-white"
-                                />
-                            </Card>
-                        ))}
+                        {bookmakerBalances.map(bm => {
+                            const account = (accounts || []).find(a => a.bookmakerId === bm.id);
+                            const targetId = account ? account.id : `new_bm_${bm.id}`;
+
+                            return (
+                                <Card
+                                    key={bm.id}
+                                    className="min-w-[180px] p-4 flex flex-col items-center text-center bg-[#0d1421]/60 border-white/5 hover:border-emerald-500/30 transition-all cursor-pointer group hover:scale-[1.02] active:scale-[0.98]"
+                                    onClick={() => {
+                                        setMovementType('deposit');
+                                        setInitialAccountId(targetId);
+                                        setIsMovementModalOpen(true);
+                                    }}
+                                >
+                                    {bm.logo ? (
+                                        <img src={bm.logo} alt={bm.name} className="w-10 h-10 rounded-lg object-contain mb-3" />
+                                    ) : (
+                                        <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center mb-3">
+                                            <Building2 size={20} className="text-gray-600" />
+                                        </div>
+                                    )}
+                                    <div className="text-[10px] text-gray-500 font-bold uppercase mb-1 truncate w-full">{bm.name}</div>
+                                    <MoneyDisplay
+                                        value={bm.total / 100}
+                                        privacyMode={settings.privacyMode}
+                                        className="text-lg font-bold text-white"
+                                    />
+                                    <div className="mt-2 text-[9px] text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity">CLIQUE PARA AJUSTAR</div>
+                                </Card>
+                            );
+                        })}
                     </div>
                 </div>
             )}
@@ -441,7 +453,10 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
 
             <MovementModal
                 isOpen={isMovementModalOpen}
-                onClose={() => setIsMovementModalOpen(false)}
+                onClose={() => {
+                    setIsMovementModalOpen(false);
+                    setInitialAccountId(null);
+                }}
                 onSave={handleSaveMovement}
                 type={movementType}
                 setType={setMovementType}
@@ -449,6 +464,7 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                 bookmakers={bookmakers}
                 categories={categories}
                 currentUser={currentUser}
+                initialAccountId={initialAccountId}
             />
 
         </div>
@@ -567,7 +583,7 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
     );
 };
 
-const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts, bookmakers, categories, currentUser }: any) => {
+const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts, bookmakers, categories, currentUser, initialAccountId }: any) => {
     const [amount, setAmount] = useState('0,00');
     const [fromAccountId, setFromAccountId] = useState('');
     const [toAccountId, setToAccountId] = useState('');
@@ -639,13 +655,13 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts, bookm
     React.useEffect(() => {
         if (isOpen) {
             setAmount('0,00');
-            setFromAccountId('');
-            setToAccountId('');
+            setFromAccountId(type === 'withdraw' ? (initialAccountId || '') : '');
+            setToAccountId(type === 'deposit' ? (initialAccountId || '') : '');
             setDate(new Date().toISOString().split('T')[0]);
-            setCategory('');
+            setCategory(initialAccountId ? 'Ajuste de Saldo' : '');
             setNotes('');
         }
-    }, [isOpen, type]);
+    }, [isOpen, type, initialAccountId]);
 
     const handleShowPicker = (e: React.FocusEvent<HTMLInputElement> | React.MouseEvent<HTMLInputElement>) => {
         try {
@@ -777,7 +793,7 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts, bookm
                                                     <button
                                                         type="button"
                                                         onClick={() => handleDeleteCategory(opt.id)}
-                                                        className="p-1 text-gray-600 hover:text-danger hover:bg-danger/10 rounded transition-all opacity-0 group-hover:opacity-100"
+                                                        className="p-1 text-gray-600 hover:text-danger hover:bg-danger/10 rounded transition-all"
                                                     >
                                                         <Trash2 size={12} />
                                                     </button>
