@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import {
     HelpCircle, ChevronDown, Check, Trash2, History as HistoryIcon,
     Target, Zap, TrendingUp, BookOpen, X, Calculator, ArrowRight, Lightbulb,
-    Eye, EyeOff
+    Eye, EyeOff, Search
 } from 'lucide-react';
 import {
     calculateArb, parseBR, formatBRL, formatOdd,
@@ -81,6 +81,114 @@ const ROUNDING_OPTIONS: { label: string; value: RoundingStep }[] = [
 const TABS = [
     { id: 'arb-pro', label: 'ARB PRO', icon: '🎯', color: 'bg-emerald-500', activeColor: 'text-emerald-400' }
 ];
+
+// =============================================
+//  BOOKMAKER SEARCH SELECTOR
+// =============================================
+interface BookmakerSearchSelectorProps {
+    value: string;
+    onChange: (id: string) => void;
+    bookmakers: Bookmaker[];
+}
+
+const BookmakerSearchSelector: React.FC<BookmakerSearchSelectorProps> = ({ value, onChange, bookmakers }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [search, setSearch] = useState('');
+    const containerRef = React.useRef<HTMLDivElement>(null);
+
+    const selectedBookmaker = bookmakers.find(b => b.id === value);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const filteredBookmakers = useMemo(() => {
+        if (!search) return bookmakers;
+        return bookmakers.filter(b => b.name.toLowerCase().includes(search.toLowerCase()));
+    }, [bookmakers, search]);
+
+    return (
+        <div className="relative" ref={containerRef}>
+            <button
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full bg-[#0a0f1e] text-white font-bold h-10 px-3 rounded-lg border border-[#1e3a5f]/50 flex items-center justify-between hover:border-emerald-500/50 transition-all cursor-pointer group"
+            >
+                <div className="flex items-center gap-2 min-w-0">
+                    {selectedBookmaker ? (
+                        <>
+                            {selectedBookmaker.logo ? (
+                                <img src={selectedBookmaker.logo} alt="" className="w-5 h-5 rounded object-contain bg-white/5" />
+                            ) : (
+                                <div className="w-5 h-5 rounded bg-emerald-500/20 flex items-center justify-center text-[10px] text-emerald-400 font-black">
+                                    {selectedBookmaker.name.substring(0, 1)}
+                                </div>
+                            )}
+                            <span className="truncate text-xs">{selectedBookmaker.name}</span>
+                        </>
+                    ) : (
+                        <span className="text-gray-500 text-xs font-bold uppercase tracking-widest">Selecionar Casa</span>
+                    )}
+                </div>
+                <ChevronDown className={`w-4 h-4 text-gray-500 group-hover:text-emerald-400 transition-all ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isOpen && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-[#0d1425] border border-gray-700/50 rounded-xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 overflow-hidden flex flex-col">
+                    <div className="p-2 border-b border-gray-700/50">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
+                            <input
+                                autoFocus
+                                type="text"
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                placeholder="Buscar casa..."
+                                className="w-full bg-[#0a0f1e] border border-[#1e3a5f]/50 rounded-lg pl-9 pr-3 py-2 text-white text-xs font-bold focus:border-emerald-500/50 focus:outline-none placeholder-gray-600 transition-colors"
+                            />
+                        </div>
+                    </div>
+                    <div className="max-h-60 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent">
+                        {filteredBookmakers.length === 0 ? (
+                            <div className="p-4 text-center text-gray-600 text-[10px] font-black uppercase tracking-widest italic font-mono">
+                                Nenhuma casa encontrada
+                            </div>
+                        ) : (
+                            filteredBookmakers.map(b => (
+                                <button
+                                    key={b.id}
+                                    type="button"
+                                    onClick={() => {
+                                        onChange(b.id);
+                                        setIsOpen(false);
+                                        setSearch('');
+                                    }}
+                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-left group/item ${value === b.id ? 'bg-emerald-500/10 text-emerald-400' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+                                >
+                                    {b.logo ? (
+                                        <img src={b.logo} alt="" className="w-6 h-6 rounded object-contain bg-white/5" />
+                                    ) : (
+                                        <div className="w-6 h-6 rounded bg-emerald-500/20 flex items-center justify-center text-xs text-emerald-400 font-black">
+                                            {b.name.substring(0, 1)}
+                                        </div>
+                                    )}
+                                    <span className="font-bold text-xs uppercase tracking-tight">{b.name}</span>
+                                    {value === b.id && <Check className="w-3.5 h-3.5 ml-auto" />}
+                                </button>
+                            ))
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
 
 // =============================================
 //  TUTORIAL MODAL
@@ -206,19 +314,11 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                     <span className="text-white font-bold text-[15px] flex items-center gap-1.5 truncate mb-2">
                         {label}
                     </span>
-                    <div className="relative group/book">
-                        <select
-                            value={house.bookmakerId}
-                            onChange={e => update({ bookmakerId: e.target.value })}
-                            className="w-full bg-[#0a0f1e] text-white font-bold text-xs h-9 px-3 rounded-lg border border-[#1e3a5f]/50 appearance-none focus:outline-none focus:border-emerald-500/50 transition-all cursor-pointer"
-                        >
-                            <option value="">Selecionar Casa</option>
-                            {bookmakers.map(b => (
-                                <option key={b.id} value={b.id}>{b.name}</option>
-                            ))}
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none group-hover/book:text-emerald-400 transition-colors" />
-                    </div>
+                    <BookmakerSearchSelector
+                        value={house.bookmakerId}
+                        onChange={id => update({ bookmakerId: id })}
+                        bookmakers={bookmakers}
+                    />
                 </div>
                 {showProfits && (
                     <div className="flex flex-col items-end gap-1 shrink-0">
@@ -518,6 +618,15 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
         setHouses(prev => prev.map((_, i) => DEFAULT_HOUSE(i)));
     };
 
+    const deleteHistoryItem = (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        setHistory(prev => {
+            const updated = prev.filter(h => h.id !== id);
+            localStorage.setItem('arb_history', JSON.stringify(updated));
+            return updated;
+        });
+    };
+
     const handleLaunchToBets = () => {
         if (!currentUser) return;
 
@@ -759,6 +868,12 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
                                                         {new Date(item.timestamp).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} • {formatBRL(item.totalInvested)}
                                                     </div>
                                                 </div>
+                                                <button
+                                                    onClick={(e) => deleteHistoryItem(e, item.id)}
+                                                    className="p-2 text-gray-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
                                             </div>
                                         ))}
                                     </div>
