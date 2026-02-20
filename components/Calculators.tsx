@@ -845,7 +845,7 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
                         <HistoryIcon className="w-4 h-4" /> HISTÓRICO ({history.length})
                     </button>
                     {showHistory && (
-                        <div className="fixed sm:absolute top-1/2 sm:top-auto sm:bottom-full left-1/2 sm:left-auto sm:right-0 transform -translate-x-1/2 sm:translate-x-0 -translate-y-1/2 sm:translate-y-0 w-[calc(100vw-32px)] sm:w-80 sm:mb-3 bg-[#0d1425] border border-gray-700/50 rounded-xl shadow-2xl z-[100] animate-in fade-in zoom-in-95 duration-200">
+                        <div className="hidden sm:block absolute bottom-full right-0 mb-3 w-80 bg-[#0d1425] border border-gray-700/50 rounded-xl shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
                             <div className="p-4 border-b border-gray-700 flex items-center justify-between">
                                 <span className="text-[11px] font-black text-white uppercase tracking-widest">Cálculos Recentes</span>
                                 <button onClick={() => setShowHistory(false)}><X className="w-4 h-4 text-gray-500" /></button>
@@ -882,6 +882,62 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
                                 )}
                             </div>
                         </div>
+                    )}
+
+                    {/* Mobile History Modal (Portal) */}
+                    {showHistory && typeof document !== 'undefined' && ReactDOM.createPortal(
+                        <div className="fixed inset-0 z-[999] sm:hidden flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                            <div className="w-full max-h-[80vh] bg-[#0d1425] border border-gray-700/50 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+                                <div className="p-5 border-b border-gray-700 flex items-center justify-between bg-[#0a0f1e]">
+                                    <span className="text-xs font-black text-white uppercase tracking-widest">Histórico de Cálculos</span>
+                                    <button
+                                        onClick={() => setShowHistory(false)}
+                                        className="p-2 hover:bg-white/5 rounded-full transition-colors"
+                                    >
+                                        <X className="w-5 h-5 text-gray-400" />
+                                    </button>
+                                </div>
+                                <div className="flex-1 overflow-y-auto no-scrollbar pb-6">
+                                    {history.length === 0 ? (
+                                        <div className="py-20 text-center text-gray-600 text-[10px] font-black uppercase tracking-widest">
+                                            Nenhum cálculo recente
+                                        </div>
+                                    ) : (
+                                        <div className="divide-y divide-gray-800/50">
+                                            {history.map((item) => (
+                                                <div
+                                                    key={item.id}
+                                                    onClick={() => {
+                                                        loadHistoryItem(item);
+                                                        setShowHistory(false);
+                                                    }}
+                                                    className="p-5 hover:bg-white/[0.02] active:bg-white/[0.05] cursor-pointer transition-colors flex items-center justify-between"
+                                                >
+                                                    <div>
+                                                        <div className="flex items-center gap-2 mb-1.5">
+                                                            <span className="text-white font-bold text-sm tracking-tight">{item.numHouses} Casas</span>
+                                                            <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase ${item.roi >= 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                                                                {item.roi >= 0 ? '+' : ''}{item.roi.toFixed(2)}% ROI
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-[11px] text-gray-500 font-medium">
+                                                            {new Date(item.timestamp).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} • <span className="text-gray-400">{formatBRL(item.totalInvested)}</span>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={(e) => deleteHistoryItem(e, item.id)}
+                                                        className="p-3 text-gray-600 hover:text-red-500 active:scale-95 transition-all"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>,
+                        document.body
                     )}
                 </div>
             </div>
