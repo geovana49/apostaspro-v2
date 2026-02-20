@@ -104,4 +104,25 @@ export enum Page {
   SETTINGS = 'settings',
   AI_ASSISTANT = 'aiAssistant',
   CALCULATORS = 'calculators',
+  CAIXA = 'caixa',
+}
+
+export interface CaixaAccount {
+  id: string;
+  name: string;
+  type: 'bank' | 'bookmaker' | 'other';
+  balance: number; // in cents
+  color: string;
+  icon?: string;
+  bookmakerId?: string; // Optional link to an existing bookmaker
+}
+
+export interface CaixaMovement {
+  id: string;
+  date: string; // ISO string
+  amount: number; // in cents (always positive)
+  type: 'deposit' | 'withdraw' | 'transfer';
+  fromAccountId?: string;
+  toAccountId?: string;
+  notes?: string;
 }

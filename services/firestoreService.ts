@@ -17,7 +17,7 @@ import {
 } from "firebase/firestore";
 import { ref, uploadBytesResumable, uploadString, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase";
-import { Bet, ExtraGain, AppSettings, Bookmaker, StatusItem, PromotionItem, OriginItem } from "../types";
+import { Bet, ExtraGain, AppSettings, Bookmaker, StatusItem, PromotionItem, OriginItem, CaixaAccount, CaixaMovement } from "../types";
 
 // Helper to convert Firestore Timestamp to ISO string and vice-versa
 const convertDate = (data: any) => {
@@ -182,6 +182,44 @@ export const FirestoreService = {
 
     deleteItem: async (userId: string, collectionName: string, itemId: string) => {
         await deleteDoc(doc(db, "users", userId, collectionName, itemId));
+    },
+
+    // --- Caixa (Controle de Caixa) ---
+    subscribeToCaixaAccounts: (userId: string, callback: (accounts: CaixaAccount[], isSyncing: boolean) => void) => {
+        const q = query(collection(db, "users", userId, "caixa_accounts"), orderBy("name", "asc"));
+        return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
+            const accounts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CaixaAccount));
+            callback(accounts, snapshot.metadata.hasPendingWrites);
+        });
+    },
+
+    subscribeToCaixaMovements: (userId: string, callback: (movements: CaixaMovement[], isSyncing: boolean) => void) => {
+        const q = query(collection(db, "users", userId, "caixa_movements"), orderBy("date", "desc"), limit(500));
+        return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
+            const movements = snapshot.docs.map(doc => ({ id: doc.id, ...convertDate(doc.data()) } as CaixaMovement));
+            callback(movements, snapshot.metadata.hasPendingWrites);
+        });
+    },
+
+    saveCaixaAccount: async (userId: string, account: CaixaAccount) => {
+        await setDoc(doc(db, "users", userId, "caixa_accounts", account.id), account, { merge: true });
+    },
+
+    deleteCaixaAccount: async (userId: string, accountId: string) => {
+        await deleteDoc(doc(db, "users", userId, "caixa_accounts", accountId));
+    },
+
+    saveCaixaMovement: async (userId: string, movement: CaixaMovement) => {
+        const movementRef = doc(db, "users", userId, "caixa_movements", movement.id);
+        const dataToSave = {
+            ...movement,
+            date: Timestamp.fromDate(new Date(movement.date))
+        };
+        await setDoc(movementRef, dataToSave, { merge: true });
+    },
+
+    deleteCaixaMovement: async (userId: string, movementId: string) => {
+        await deleteDoc(doc(db, "users", userId, "caixa_movements", movementId));
     },
 
     initializeUserData: async (userId: string, initialData: {

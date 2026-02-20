@@ -2,7 +2,7 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
 import { FirestoreService } from "./services/firestoreService";
-import { Page, Bet, ExtraGain, AppSettings, Bookmaker, StatusItem, PromotionItem, OriginItem, SettingsTab, User } from './types';
+import { Page, Bet, ExtraGain, AppSettings, Bookmaker, StatusItem, PromotionItem, OriginItem, SettingsTab, User, CaixaAccount, CaixaMovement } from './types';
 import { INITIAL_BOOKMAKERS, INITIAL_STATUSES, INITIAL_PROMOTIONS, INITIAL_ORIGINS } from './constants';
 import Layout from './components/Layout';
 import { Loader2, AlertCircle } from 'lucide-react';
@@ -15,6 +15,7 @@ const Coach = lazy(() => import('./components/Coach'));
 const Settings = lazy(() => import('./components/Settings'));
 const LandingPage = lazy(() => import('./components/LandingPage'));
 const Calculators = lazy(() => import('./components/Calculators'));
+const Caixa = lazy(() => import('./components/Caixa'));
 
 // A simplified loading component for page transitions
 const PageLoader = () => (
@@ -45,6 +46,8 @@ const App: React.FC = () => {
   const [promotions, setPromotions] = useState<PromotionItem[]>([]);
   const [origins, setOrigins] = useState<OriginItem[]>([]);
   const [gains, setGains] = useState<ExtraGain[]>([]);
+  const [caixaAccounts, setCaixaAccounts] = useState<CaixaAccount[]>([]);
+  const [caixaMovements, setCaixaMovements] = useState<CaixaMovement[]>([]);
 
   // Current User
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -141,6 +144,8 @@ const App: React.FC = () => {
           statuses: false,
           promotions: false,
           origins: false,
+          caixaAccounts: false,
+          caixaMovements: false,
           manual: false
         };
 
@@ -213,6 +218,18 @@ const App: React.FC = () => {
           updateSyncStatus('origins', syncing);
         }, (err) => console.error("Error subscribing to origins:", err));
 
+        const unsubCaixaAccounts = FirestoreService.subscribeToCaixaAccounts(user.uid, (data, syncing) => {
+          console.log(`[Snapshot] Caixa Accounts: ${data.length}`);
+          setCaixaAccounts(data);
+          updateSyncStatus('caixaAccounts', syncing);
+        });
+
+        const unsubCaixaMovements = FirestoreService.subscribeToCaixaMovements(user.uid, (data, syncing) => {
+          console.log(`[Snapshot] Caixa Movements: ${data.length}`);
+          setCaixaMovements(data);
+          updateSyncStatus('caixaMovements', syncing);
+        });
+
         // Cleanup subscriptions on logout/unmount
         return () => {
           clearTimeout(loadingTimeout);
@@ -223,6 +240,8 @@ const App: React.FC = () => {
           unsubStatuses();
           unsubPromotions();
           unsubOrigins();
+          unsubCaixaAccounts();
+          unsubCaixaMovements();
         };
       } else {
         // User is signed out
@@ -406,6 +425,16 @@ const App: React.FC = () => {
                   bookmakers={bookmakers}
                   statuses={statuses}
                   promotions={promotions}
+                />
+              )}
+
+              {activePage === Page.CAIXA && (
+                <Caixa
+                  currentUser={currentUser}
+                  accounts={caixaAccounts}
+                  movements={caixaMovements}
+                  bookmakers={bookmakers}
+                  settings={settings}
                 />
               )}
             </Suspense>
