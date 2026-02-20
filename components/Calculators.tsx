@@ -68,7 +68,7 @@ const ROUNDING_OPTIONS: { label: string; value: RoundingStep }[] = [
 ];
 
 const TABS = [
-    { id: 'arb-pro', label: 'ARB PRO', icon: '🎯', color: 'bg-purple-500', activeColor: 'text-purple-400' }
+    { id: 'arb-pro', label: 'ARB PRO', icon: '🎯', color: 'bg-emerald-500', activeColor: 'text-emerald-400' }
 ];
 
 // =============================================
@@ -107,7 +107,7 @@ const TutorialModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         <div className="flex flex-col space-y-1.5 p-6 border-b border-gray-700">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
                                         <BookOpen className="w-6 h-6 text-white" />
                                     </div>
                                     <div>
@@ -187,7 +187,7 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
     const label = `Casa ${index + 1}${house.annotation ? ` - ${house.annotation}` : ''}`;
 
     return (
-        <div className={`bg-[#0d1421]/60 border rounded-xl p-5 transition-all ${isAnchor ? 'border-purple-500/60 shadow-lg shadow-purple-500/5' : 'border-[#1e3a5f]/50 hover:border-cyan-500/30'}`}>
+        <div className={`bg-[#0d1421]/60 border rounded-xl p-5 transition-all ${isAnchor ? 'border-emerald-500/60 shadow-lg shadow-emerald-500/5' : 'border-[#1e3a5f]/50 hover:border-emerald-500/30'}`}>
             {/* Header */}
             <div className="flex items-start justify-between mb-4 gap-2">
                 <div className="flex flex-col min-w-0">
@@ -202,7 +202,7 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                 </div>
                 {showProfits && (
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                        <label className="text-[9px] text-white/40 uppercase font-black tracking-widest whitespace-nowrap">Lucro (Editar)</label>
+                        <label className="text-[9px] text-white uppercase font-black tracking-widest whitespace-nowrap">Lucro (Editar)</label>
                         <div className="relative group/profit">
                             <input
                                 type="text"
@@ -210,11 +210,11 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                                 placeholder={formatBRL(profitIfWin).replace('R$', '').trim()}
                                 value={house.targetProfit}
                                 onChange={e => update({ targetProfit: e.target.value, isProfitFixed: e.target.value !== '', distribution: e.target.value === '' })}
-                                className={`bg-transparent text-right font-black text-sm focus:outline-none transition-all placeholder:opacity-70 w-[90px] ${house.isProfitFixed ? 'text-cyan-400 border-b border-cyan-500/30 font-mono' : profitIfWin >= 0 ? 'text-green-400' : 'text-red-600'}`}
+                                className={`bg-transparent text-right font-black text-sm focus:outline-none transition-all w-[90px] ${house.isProfitFixed ? 'text-emerald-400 border-b border-emerald-500/30 font-mono placeholder:text-emerald-400/50' : profitIfWin >= 0 ? 'text-green-400 placeholder:text-green-400/50' : 'text-red-500 placeholder:text-red-500/50'}`}
                             />
                             {house.isProfitFixed && (
                                 <div className="absolute -left-3 top-1/2 -translate-y-1/2">
-                                    <div className="w-1 h-1 rounded-full bg-cyan-400 animate-pulse" />
+                                    <div className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
                                 </div>
                             )}
                         </div>
@@ -229,7 +229,7 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                     placeholder="Anotação (casa, parceiro, etc.)"
                     value={house.annotation}
                     onChange={e => update({ annotation: e.target.value })}
-                    className="w-full bg-[#0a0f1e]/80 border border-[#1e3a5f]/50 rounded-lg px-3 py-2 text-gray-300 text-sm focus:border-cyan-500/50 focus:outline-none placeholder-gray-600 transition-colors"
+                    className="w-full bg-[#0a0f1e]/80 border border-[#1e3a5f]/50 rounded-lg px-3 py-2 text-gray-300 text-sm focus:border-emerald-500/50 focus:outline-none placeholder-gray-600 transition-colors"
                 />
             </div>
 
@@ -243,7 +243,7 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                         placeholder="2,00"
                         value={house.odd}
                         onChange={e => update({ odd: e.target.value })}
-                        className="w-full bg-[#0a0f1e] border border-[#1e3a5f] rounded-lg px-3 py-2.5 text-white text-lg font-bold focus:border-cyan-500 focus:outline-none transition-colors border-opacity-50"
+                        className="w-full bg-[#0a0f1e] border border-[#1e3a5f] rounded-lg px-3 py-2.5 text-white text-lg font-bold focus:border-emerald-500 focus:outline-none transition-colors border-opacity-50"
                     />
                 </div>
                 <div>
@@ -267,7 +267,7 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                                 placeholder="0,00"
                                 value={house.stake}
                                 onChange={e => update({ stake: e.target.value })}
-                                className="w-full bg-[#0a0f1e] border border-purple-500/40 rounded-lg pl-9 pr-3 py-2.5 text-white text-lg font-bold focus:outline-none focus:border-purple-400/60 font-mono transition-colors"
+                                className="w-full bg-[#0a0f1e] border border-emerald-500/40 rounded-lg pl-9 pr-3 py-2.5 text-white text-lg font-bold focus:outline-none focus:border-emerald-400/60 font-mono transition-colors"
                             />
                         ) : (
                             <div className="w-full bg-[#0a0f1e]/60 border border-[#1e3a5f]/50 rounded-lg pl-9 pr-3 py-2.5 text-white/80 text-lg font-bold font-mono min-h-[46px] flex items-center">
@@ -278,7 +278,7 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                     <button
                         onClick={() => update({ isLay: !house.isLay })}
                         className={`inline-flex items-center justify-center h-[46px] px-4 font-black uppercase text-sm rounded-lg transition-all duration-200 shadow-sm
-                        ${house.isLay ? 'bg-pink-500 text-white hover:bg-pink-600' : 'bg-cyan-400 text-[#0d1421] hover:bg-cyan-500'}`}
+                        ${house.isLay ? 'bg-pink-500 text-white hover:bg-pink-600' : 'bg-emerald-400 text-[#0d1421] hover:bg-emerald-500'}`}
                     >
                         {house.isLay ? 'LAY' : 'BACK'}
                     </button>
@@ -360,7 +360,7 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
             {/* FIX STAKE BUTTON */}
             <button
                 onClick={() => onChange({ ...house, isFixed: !house.isFixed })}
-                className={`w-full rounded-lg text-xs transition-all h-10 font-black uppercase tracking-widest flex items-center justify-center gap-2 border ${isAnchor ? 'bg-purple-500/10 border-purple-500/50 text-purple-400' : 'bg-[#1e3a5f]/20 border-[#1e3a5f]/50 text-gray-500 hover:text-gray-300 hover:border-[#1e3a5f]'}`}
+                className={`w-full rounded-lg text-xs transition-all h-10 font-black uppercase tracking-widest flex items-center justify-center gap-2 border ${isAnchor ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' : 'bg-[#1e3a5f]/20 border-[#1e3a5f]/50 text-gray-500 hover:text-gray-300 hover:border-[#1e3a5f]'}`}
             >
                 {isAnchor ? 'STAKE FIXADO' : 'FIXAR STAKE'}
             </button>
@@ -484,7 +484,7 @@ const ArbProTab: React.FC = () => {
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             {/* Header Title */}
-            <div className="border-l-[5px] border-purple-500 pl-5 py-2 flex items-center justify-between">
+            <div className="border-l-[5px] border-emerald-500 pl-5 py-2 flex items-center justify-between">
                 <div>
                     <div className="flex items-center gap-3">
                         <h2 className="text-3xl font-black text-white tracking-tight">ARB PRO</h2>
@@ -500,7 +500,7 @@ const ArbProTab: React.FC = () => {
                 <div className="flex flex-col items-center gap-1.5 min-w-[120px]">
                     <button
                         onClick={() => setShowProfits(!showProfits)}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${showProfits ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30' : 'bg-gray-800 text-gray-500 border border-gray-700'}`}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${showProfits ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-gray-800 text-gray-500 border border-gray-700'}`}
                     >
                         {showProfits ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                     </button>
@@ -518,11 +518,11 @@ const ArbProTab: React.FC = () => {
                         <select
                             value={numHouses}
                             onChange={e => setNumHouses(Number(e.target.value))}
-                            className="w-full bg-[#0a0f1e] text-white font-bold h-11 px-4 rounded-lg border border-[#1e3a5f]/50 appearance-none focus:outline-none focus:border-cyan-500/50 transition-all cursor-pointer"
+                            className="w-full bg-[#0a0f1e] text-white font-bold h-11 px-4 rounded-lg border border-[#1e3a5f]/50 appearance-none focus:outline-none focus:border-emerald-500/50 transition-all cursor-pointer"
                         >
                             {[2, 3, 4, 5, 6, 7, 8].map(n => <option key={n} value={n}>{n} Casas</option>)}
                         </select>
-                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none group-hover:text-cyan-400 transition-colors" />
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none group-hover:text-emerald-400 transition-colors" />
                     </div>
                 </div>
                 <div className="bg-[#0d1421]/40 border border-[#1e3a5f]/30 rounded-xl p-5 shadow-sm">
@@ -531,11 +531,11 @@ const ArbProTab: React.FC = () => {
                         <select
                             value={rounding}
                             onChange={e => setRounding(Number(e.target.value) as RoundingStep)}
-                            className="w-full bg-[#0a0f1e] text-white font-bold h-11 px-4 rounded-lg border border-[#1e3a5f]/50 appearance-none focus:outline-none focus:border-cyan-500/50 transition-all cursor-pointer"
+                            className="w-full bg-[#0a0f1e] text-white font-bold h-11 px-4 rounded-lg border border-[#1e3a5f]/50 appearance-none focus:outline-none focus:border-emerald-500/50 transition-all cursor-pointer"
                         >
                             {ROUNDING_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                         </select>
-                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none group-hover:text-cyan-400 transition-colors" />
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none group-hover:text-emerald-400 transition-colors" />
                     </div>
                 </div>
             </div>
@@ -580,7 +580,7 @@ const ArbProTab: React.FC = () => {
                     <div className="overflow-x-auto rounded-xl">
                         <table className="w-full">
                             <thead>
-                                <tr className="bg-cyan-500/10 text-cyan-400/80 uppercase text-[10px] font-black tracking-[0.15em] border-b border-cyan-500/20">
+                                <tr className="bg-emerald-500/10 text-emerald-400/80 uppercase text-[10px] font-black tracking-[0.15em] border-b border-emerald-500/20">
                                     <th className="text-left py-4 px-6">CASA</th>
                                     <th className="text-center py-4 px-6">ODD</th>
                                     <th className="text-center py-4 px-6">COMISSÃO</th>
@@ -598,7 +598,7 @@ const ArbProTab: React.FC = () => {
                                             <td className="py-5 px-6 font-black text-white text-sm">
                                                 Casa {i + 1} {house.annotation && <span className="text-gray-500 font-medium ml-2">- {house.annotation}</span>}
                                             </td>
-                                            <td className="py-5 px-6 text-center font-mono text-cyan-400 text-sm font-bold">
+                                            <td className="py-5 px-6 text-center font-mono text-yellow-500 text-sm font-bold">
                                                 {res.finalOdd.toFixed(2)}
                                             </td>
                                             <td className="py-5 px-6 text-center text-yellow-500/80 text-xs font-bold">
@@ -635,7 +635,7 @@ const ArbProTab: React.FC = () => {
                 <div className="relative">
                     <button
                         onClick={() => setShowHistory(!showHistory)}
-                        className={`flex items-center gap-2 border transition-all px-6 h-12 rounded-xl text-[11px] font-black uppercase tracking-wider shadow-sm ${showHistory ? 'bg-cyan-500 text-[#0d1421] border-cyan-500' : 'bg-[#0d1421] border-[#1e3a5f]/40 text-gray-400 hover:text-white hover:border-[#1e3a5f]'}`}
+                        className={`flex items-center gap-2 border transition-all px-6 h-12 rounded-xl text-[11px] font-black uppercase tracking-wider shadow-sm ${showHistory ? 'bg-emerald-500 text-[#0d1421] border-emerald-500' : 'bg-[#0d1421] border-[#1e3a5f]/40 text-gray-400 hover:text-white hover:border-[#1e3a5f]'}`}
                     >
                         <HistoryIcon className="w-4 h-4" /> HISTÓRICO ({history.length})
                     </button>
@@ -693,8 +693,8 @@ const Calculators: React.FC = () => {
                 {/* Header Section */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-2">
                     <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-gradient-to-br from-[#ff512f] to-[#dd2476] rounded-2xl flex items-center justify-center text-3xl shadow-2xl shadow-orange-500/20 border border-white/10 ring-4 ring-white/5">
-                            🧮
+                        <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-emerald-500/20 border border-white/10 ring-4 ring-white/5">
+                            <Calculator className="w-7 h-7" />
                         </div>
                         <div>
                             <h1 className="text-3xl font-black text-white tracking-tighter uppercase italic">Calculadoras</h1>
