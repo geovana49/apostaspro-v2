@@ -845,7 +845,7 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
                         <HistoryIcon className="w-4 h-4" /> HISTÓRICO ({history.length})
                     </button>
                     {showHistory && (
-                        <div className="fixed sm:absolute inset-x-4 sm:inset-x-auto top-1/2 sm:top-auto sm:bottom-full left-1/2 sm:left-auto -translate-x-1/2 sm:translate-x-0 -translate-y-1/2 sm:translate-y-0 mb-3 sm:right-0 w-[calc(100vw-32px)] sm:w-80 bg-[#0d1425] border border-gray-700/50 rounded-xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="fixed sm:absolute top-1/2 sm:top-auto sm:bottom-full left-1/2 sm:left-auto sm:right-0 transform -translate-x-1/2 sm:translate-x-0 -translate-y-1/2 sm:translate-y-0 w-[calc(100vw-32px)] sm:w-80 sm:mb-3 bg-[#0d1425] border border-gray-700/50 rounded-xl shadow-2xl z-[100] animate-in fade-in zoom-in-95 duration-200">
                             <div className="p-4 border-b border-gray-700 flex items-center justify-between">
                                 <span className="text-[11px] font-black text-white uppercase tracking-widest">Cálculos Recentes</span>
                                 <button onClick={() => setShowHistory(false)}><X className="w-4 h-4 text-gray-500" /></button>
