@@ -296,33 +296,41 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
 
             {/* Checkboxes Grouped */}
             <div className="flex flex-wrap gap-x-4 gap-y-2 mb-4 text-[11px] font-bold text-gray-400 uppercase tracking-tight">
-                <label className="flex items-center gap-2 cursor-pointer group">
-                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${!house.distribution && !house.isProfitFixed ? 'bg-red-500 border-red-500' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}
-                        onClick={() => update({ distribution: !house.distribution, isProfitFixed: false, targetProfit: '' })}>
+                <label
+                    className="flex items-center gap-2 cursor-pointer group"
+                    onClick={() => update({ distribution: !house.distribution, isProfitFixed: false, targetProfit: '' })}
+                >
+                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${!house.distribution && !house.isProfitFixed ? 'bg-red-500 border-red-500' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}>
                         {!house.distribution && !house.isProfitFixed && <Check className="w-3 h-3 text-white" />}
                     </div>
                     <span className={!house.distribution && !house.isProfitFixed ? 'text-white' : 'group-hover:text-gray-300'}>ZERAR</span>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer group">
-                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${house.showCommission ? 'bg-yellow-500 border-yellow-500' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}
-                        onClick={toggleCommission}>
+                <label
+                    className="flex items-center gap-2 cursor-pointer group"
+                    onClick={toggleCommission}
+                >
+                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${house.showCommission ? 'bg-yellow-500 border-yellow-500' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}>
                         {house.showCommission && <Check className="w-3 h-3 text-white" />}
                     </div>
                     <span className={house.showCommission ? 'text-white' : 'group-hover:text-gray-300'}>COMISSÃO</span>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer group">
-                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${house.isFreebet ? 'bg-purple-500 border-purple-500' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}
-                        onClick={() => update({ isFreebet: !house.isFreebet })}>
+                <label
+                    className="flex items-center gap-2 cursor-pointer group"
+                    onClick={() => update({ isFreebet: !house.isFreebet })}
+                >
+                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${house.isFreebet ? 'bg-purple-500 border-purple-500' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}>
                         {house.isFreebet && <Check className="w-3 h-3 text-white" />}
                     </div>
                     <span className={house.isFreebet ? 'text-white' : 'group-hover:text-gray-300'}>FREEBET</span>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer group w-full">
-                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${house.showIncrease ? 'bg-green-500 border-green-500' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}
-                        onClick={toggleIncrease}>
+                <label
+                    className="flex items-center gap-2 cursor-pointer group w-full"
+                    onClick={toggleIncrease}
+                >
+                    <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${house.showIncrease ? 'bg-green-500 border-green-500' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}>
                         {house.showIncrease && <Check className="w-3 h-3 text-white" />}
                     </div>
                     <span className={house.showIncrease ? 'text-white' : 'group-hover:text-gray-300'}>AUMENTO DE ODD</span>
@@ -545,16 +553,24 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
                     </div>
                     <p className="text-gray-500 text-sm font-medium mt-1">Gere lucros consistentes usando arbitragem profissional.</p>
                 </div>
-                <div className="flex flex-col items-center gap-1.5 min-w-[120px]">
+                <div className="flex items-center gap-3 shrink-0">
                     <button
-                        onClick={() => setShowProfits(!showProfits)}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${showProfits ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-gray-800 text-gray-500 border border-gray-700'}`}
+                        onClick={handleLaunchToBets}
+                        className="bg-emerald-500 hover:bg-emerald-600 text-[#0d1421] px-5 h-10 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
                     >
-                        {showProfits ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                        <ArrowRight className="w-4 h-4" /> Lançar em Minhas Apostas
                     </button>
-                    <span className="text-[9px] font-bold text-gray-500 uppercase tracking-tighter text-center leading-none">
-                        {showProfits ? 'Ocultar Lucros' : 'Mostrar Lucros'}
-                    </span>
+                    <div className="flex flex-col items-center gap-1.5 min-w-[100px]">
+                        <button
+                            onClick={() => setShowProfits(!showProfits)}
+                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${showProfits ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-gray-800 text-gray-500 border border-gray-700'}`}
+                        >
+                            {showProfits ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                        </button>
+                        <span className="text-[8px] font-bold text-gray-500 uppercase tracking-tighter text-center leading-none">
+                            {showProfits ? 'Ocultar Lucros' : 'Mostrar Lucros'}
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -707,7 +723,13 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
             )}
 
             {/* Footer Actions */}
-            <div className="flex flex-wrap items-center justify-center gap-4 py-6 border-t border-[#1e3a5f]/10">
+            <div className="flex flex-wrap items-center justify-center gap-4 py-8 border-t border-[#1e3a5f]/10 mt-10">
+                <button
+                    onClick={handleLaunchToBets}
+                    className="flex items-center gap-2 bg-emerald-500 text-[#0d1421] hover:bg-emerald-600 transition-all px-8 h-12 rounded-xl text-[11px] font-black uppercase tracking-wider shadow-lg shadow-emerald-500/20 active:scale-95"
+                >
+                    <ArrowRight className="w-4 h-4" /> Lançar em Minhas Apostas
+                </button>
                 <div className="relative">
                     <button
                         onClick={() => setShowHistory(!showHistory)}
