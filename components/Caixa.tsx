@@ -273,7 +273,7 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                     <span className="bg-white/5 text-gray-400 px-2 py-0.5 rounded text-xs font-mono">{(movements || []).length}</span>
                 </h2>
 
-                {(!movements || movements.length === 0) ? (
+                {(!movements || (movements || []).length === 0) ? (
                     <div className="bg-[#0d1121]/50 border border-white/5 border-dashed rounded-2xl p-8 text-center">
                         <p className="text-gray-500 text-sm">Nenhuma movimentação registrada.</p>
                     </div>
@@ -503,6 +503,16 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts }: any
         }
     }, [isOpen, type]);
 
+    const handleShowPicker = (e: React.FocusEvent<HTMLInputElement> | React.MouseEvent<HTMLInputElement>) => {
+        try {
+            if ((e.target as any).showPicker) {
+                (e.target as any).showPicker();
+            }
+        } catch (err) {
+            console.error("Failed to show picker:", err);
+        }
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const cleanAmount = Math.round(parseFloat(amount.replace(',', '.')) * 100);
@@ -533,8 +543,8 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts }: any
                         type="date"
                         value={date}
                         onChange={e => setDate(e.target.value)}
-                        onFocus={(e) => (e.target as any).showPicker?.()}
-                        onClick={(e) => (e.target as any).showPicker?.()}
+                        onFocus={handleShowPicker}
+                        onClick={handleShowPicker}
                         required
                     />
                 </div>
