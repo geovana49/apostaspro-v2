@@ -202,7 +202,7 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                 </div>
                 {showProfits && (
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                        <label className="text-[9px] text-cyan-500/80 uppercase font-black tracking-widest whitespace-nowrap">Lucro (Editar)</label>
+                        <label className="text-[9px] text-white/40 uppercase font-black tracking-widest whitespace-nowrap">Lucro (Editar)</label>
                         <div className="relative group/profit">
                             <input
                                 type="text"
@@ -210,11 +210,11 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                                 placeholder={formatBRL(profitIfWin).replace('R$', '').trim()}
                                 value={house.targetProfit}
                                 onChange={e => update({ targetProfit: e.target.value, isProfitFixed: e.target.value !== '', distribution: e.target.value === '' })}
-                                className={`bg-transparent text-right font-black text-sm focus:outline-none transition-all placeholder:opacity-70 w-[90px] ${house.isProfitFixed ? 'text-blue-400 border-b border-blue-500/30 font-mono' : profitIfWin >= 0 ? 'text-green-400' : 'text-red-600'}`}
+                                className={`bg-transparent text-right font-black text-sm focus:outline-none transition-all placeholder:opacity-70 w-[90px] ${house.isProfitFixed ? 'text-cyan-400 border-b border-cyan-500/30 font-mono' : profitIfWin >= 0 ? 'text-green-400' : 'text-red-600'}`}
                             />
                             {house.isProfitFixed && (
                                 <div className="absolute -left-3 top-1/2 -translate-y-1/2">
-                                    <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />
+                                    <div className="w-1 h-1 rounded-full bg-cyan-400 animate-pulse" />
                                 </div>
                             )}
                         </div>
@@ -598,7 +598,7 @@ const ArbProTab: React.FC = () => {
                                             <td className="py-5 px-6 font-black text-white text-sm">
                                                 Casa {i + 1} {house.annotation && <span className="text-gray-500 font-medium ml-2">- {house.annotation}</span>}
                                             </td>
-                                            <td className="py-5 px-6 text-center font-mono text-white/70 text-sm">
+                                            <td className="py-5 px-6 text-center font-mono text-cyan-400 text-sm font-bold">
                                                 {res.finalOdd.toFixed(2)}
                                             </td>
                                             <td className="py-5 px-6 text-center text-yellow-500/80 text-xs font-bold">
