@@ -1,5 +1,4 @@
 
-
 import { Bookmaker, StatusItem, PromotionItem, OriginItem } from './types';
 
 export const INITIAL_BOOKMAKERS: Bookmaker[] = [
@@ -61,3 +60,16 @@ export const PROMOTION_TYPES = [
 export const MOCK_BETS = [];
 
 export const MOCK_GAINS = [];
+
+export const DEFAULT_CAIXA_CATEGORIES: { id: string, name: string, type: 'deposit' | 'withdraw' }[] = [
+  // Deposits
+  { id: 'cat_dep_initial', name: 'Aporte Inicial', type: 'deposit' },
+  { id: 'cat_dep_profit', name: 'Lucro de Aposta', type: 'deposit' },
+  { id: 'cat_dep_adjust', name: 'Ajuste de Saldo', type: 'deposit' },
+  { id: 'cat_dep_other', name: 'Outros', type: 'deposit' },
+  // Withdrawals
+  { id: 'cat_wit_withdraw', name: 'Retirada', type: 'withdraw' },
+  { id: 'cat_wit_bet', name: 'Aposta Realizada', type: 'withdraw' },
+  { id: 'cat_wit_adjust', name: 'Ajuste de Saldo', type: 'withdraw' },
+  { id: 'cat_wit_other', name: 'Outros', type: 'withdraw' }
+];
