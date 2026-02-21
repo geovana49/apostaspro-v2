@@ -115,6 +115,7 @@ export interface CaixaAccount {
   color: string;
   icon?: string;
   bookmakerId?: string; // Optional link to an existing bookmaker
+  useGenericIcon?: boolean; // User preference to show generic icon instead of logo
 }
 
 export interface CaixaMovement {

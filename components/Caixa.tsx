@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import {
     Wallet, Building2, TrendingUp, Plus, ArrowUpRight, ArrowDownLeft, ArrowLeft, ArrowRight,
     Repeat, Trash2, Edit2, Search, Filter, History, Building, Landmark, CreditCard, Banknote,
-    ChevronLeft, ChevronRight
+    ChevronLeft, ChevronRight, ChevronDown, Check
 } from 'lucide-react';
 import { CaixaAccount, CaixaMovement, Bookmaker, User, AppSettings, CaixaCategory } from '../types';
 import { FirestoreService } from '../services/firestoreService';
@@ -76,7 +76,8 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
             balance: account.balance || 0,
             color: account.color || '#10b981',
             bookmakerId: account.bookmakerId || null as any,
-            icon: account.icon || null as any
+            icon: account.icon || null as any,
+            useGenericIcon: account.useGenericIcon || false
         };
         await FirestoreService.saveCaixaAccount(currentUser.uid, newAccount);
         setIsAccountModalOpen(false);
@@ -479,6 +480,7 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                                 key={account.id}
                                 account={account}
                                 bookmakers={bookmakers}
+                                movements={movements}
                                 privacyMode={settings.privacyMode}
                                 onEdit={() => { setEditingAccount(account); setIsAccountModalOpen(true); }}
                                 onDelete={() => handleDeleteAccount(account.id)}
@@ -580,7 +582,6 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                 )}
             </div>
 
-            {/* Modals */}
             <AccountModal
                 isOpen={isAccountModalOpen}
                 onClose={() => setIsAccountModalOpen(false)}
@@ -609,43 +610,143 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
     );
 };
 
-const AccountCard: React.FC<{ account: CaixaAccount, bookmakers: Bookmaker[], privacyMode?: boolean, onEdit: () => void, onDelete: () => void | Promise<void> }> = ({ account, bookmakers, privacyMode, onEdit, onDelete }) => {
+interface AccountCardProps {
+    account: CaixaAccount;
+    bookmakers: Bookmaker[];
+    movements: CaixaMovement[];
+    privacyMode?: boolean;
+    onEdit: () => void;
+    onDelete: () => void | Promise<void>;
+}
+
+const AccountCard: React.FC<AccountCardProps> = ({ account, bookmakers, movements, privacyMode, onEdit, onDelete }) => {
+    const [isExpanded, setIsExpanded] = React.useState(false);
     const bookmaker = account.bookmakerId ? bookmakers.find(bm => bm.id === account.bookmakerId) : null;
 
+    // Filter movements for this account
+    const accountMovements = useMemo(() => {
+        return (movements || [])
+            .filter(m => m.fromAccountId === account.id || m.toAccountId === account.id)
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .slice(0, 10);
+    }, [movements, account.id]);
+
+    const showLogo = (bookmaker?.logo || account.icon) && !account.useGenericIcon;
+
     return (
-        <Card className="p-4 group/card overflow-hidden">
-            <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transform group-hover/card:scale-110 group-hover/card:rotate-3 transition-all duration-500 overflow-hidden" style={{ backgroundColor: bookmaker?.color ? `${bookmaker.color}20` : `${account.color}20`, color: bookmaker?.color || account.color }}>
-                        {bookmaker?.logo ? (
-                            <img src={bookmaker.logo} alt={bookmaker.name} className="w-full h-full object-contain p-1" />
+        <Card className={`group/card overflow-hidden transition-all duration-500 ${isExpanded ? 'ring-2 ring-primary/40' : ''}`}>
+            <div className="p-4">
+                <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transform group-hover/card:scale-110 group-hover/card:rotate-3 transition-all duration-500 overflow-hidden" style={{ backgroundColor: bookmaker?.color ? `${bookmaker.color}20` : `${account.color}20`, color: bookmaker?.color || account.color }}>
+                            {showLogo ? (
+                                <img src={bookmaker?.logo || account.icon} alt="" className="w-full h-full object-contain p-1" />
+                            ) : (
+                                account.type === 'bank' ? <Landmark size={20} /> : account.type === 'bookmaker' ? <Building2 size={20} /> : <Banknote size={20} />
+                            )}
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-1.5">
+                                <h4 className="font-bold text-white group-hover/card:text-primary transition-colors">{account.name}</h4>
+                                {accountMovements.length > 0 && (
+                                    <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                                        <ChevronDown size={12} className="text-gray-500" />
+                                    </div>
+                                )}
+                            </div>
+                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{account.type === 'bank' ? 'Banco' : account.type === 'bookmaker' ? 'Casa de Aposta' : account.type}</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                        <button onClick={onEdit} className="p-1.5 text-gray-500 hover:text-white hover:bg-white/5 rounded-md transition-all"><Edit2 size={14} /></button>
+                        <button onClick={onDelete} className="p-1.5 text-gray-500 hover:text-danger hover:bg-danger/5 rounded-md transition-all"><Trash2 size={14} /></button>
+                    </div>
+                </div>
+
+                <div className="mt-6 flex items-end justify-between">
+                    <div className="cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Saldo Disponível</p>
+                        <MoneyDisplay
+                            value={account.balance / 100}
+                            privacyMode={privacyMode}
+                            className="text-xl font-bold text-white tracking-tight"
+                        />
+                    </div>
+                    <button
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className={`p-1.5 rounded-lg transition-all ${isExpanded ? 'bg-primary/20 text-primary' : 'bg-white/5 text-gray-600 hover:text-gray-400'}`}
+                    >
+                        <History size={14} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Account Details - Expanded History */}
+            {isExpanded && (
+                <div className="border-t border-white/5 bg-white/[0.02] animate-in slide-in-from-top-4 duration-500">
+                    <div className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <h5 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                <History size={12} className="text-primary" />
+                                Últimas Movimentações
+                            </h5>
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-white/5 text-gray-500 uppercase font-bold">{accountMovements.length} transações</span>
+                        </div>
+
+                        {accountMovements.length === 0 ? (
+                            <div className="py-4 text-center">
+                                <p className="text-[10px] text-gray-600 italic">Nenhuma movimentação para esta conta.</p>
+                            </div>
                         ) : (
-                            account.type === 'bank' ? <Landmark size={20} /> : account.type === 'bookmaker' ? <Building2 size={20} /> : <Banknote size={20} />
+                            <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
+                                {accountMovements.map(m => {
+                                    const isIncoming = m.toAccountId === account.id && m.type !== 'transfer';
+                                    const isOutgoing = m.fromAccountId === account.id && m.type !== 'transfer';
+                                    const isTransferOut = m.fromAccountId === account.id && m.type === 'transfer';
+                                    const isTransferIn = m.toAccountId === account.id && m.type === 'transfer';
+
+                                    let textColor = 'text-white';
+                                    let prefix = '';
+                                    if (isIncoming || isTransferIn) { textColor = 'text-primary'; prefix = '+'; }
+                                    if (isOutgoing || isTransferOut) { textColor = 'text-danger'; prefix = '-'; }
+
+                                    return (
+                                        <div key={m.id} className="flex items-center justify-between p-2 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/10 transition-colors">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className={`p-1.5 rounded-lg ${(isIncoming || isTransferIn) ? 'bg-primary/10 text-primary' :
+                                                    (isOutgoing || isTransferOut) ? 'bg-danger/10 text-danger' : 'bg-white/10 text-white'
+                                                    }`}>
+                                                    {m.type === 'deposit' ? <ArrowDownLeft size={10} /> :
+                                                        m.type === 'withdraw' ? <ArrowUpRight size={10} /> :
+                                                            <Repeat size={10} />}
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] font-bold text-gray-300">{m.category || (m.type === 'transfer' ? 'Transferência' : 'Movimento')}</span>
+                                                    <span className="text-[9px] text-gray-500 font-medium">{new Date(m.date).toLocaleDateString('pt-BR')}</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className={`text-[11px] font-bold font-mono ${textColor}`}>
+                                                    {prefix}<MoneyDisplay value={m.amount / 100} prefix="" privacyMode={privacyMode} />
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         )}
+
+                        <div className="pt-1 flex justify-center">
+                            <button
+                                onClick={() => setIsExpanded(false)}
+                                className="text-[10px] font-bold text-gray-600 hover:text-white transition-colors py-1 w-full"
+                            >
+                                recolher detalhes
+                            </button>
+                        </div>
                     </div>
-                    <div>
-                        <h4 className="font-bold text-white group-hover/card:text-primary transition-colors">{account.name}</h4>
-                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{account.type === 'bank' ? 'Banco' : account.type === 'bookmaker' ? 'Casa de Aposta' : 'Outros'}</p>
-                    </div>
                 </div>
-                <div className="flex gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
-                    <button onClick={onEdit} className="p-1.5 text-gray-500 hover:text-white hover:bg-white/5 rounded-md transition-all"><Edit2 size={14} /></button>
-                    <button onClick={onDelete} className="p-1.5 text-gray-500 hover:text-danger hover:bg-danger/5 rounded-md transition-all"><Trash2 size={14} /></button>
-                </div>
-            </div>
-            <div className="mt-6 flex items-end justify-between">
-                <div>
-                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Saldo Disponível</p>
-                    <MoneyDisplay
-                        value={account.balance / 100}
-                        privacyMode={privacyMode}
-                        className="text-xl font-bold text-white"
-                    />
-                </div>
-                <div className="p-1.5 bg-white/5 rounded-lg">
-                    <TrendingUp size={14} className="text-gray-600" />
-                </div>
-            </div>
+            )}
         </Card>
     );
 };
@@ -659,6 +760,7 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
     const [icon, setIcon] = useState(editingAccount?.icon || '');
     const [isCustomType, setIsCustomType] = useState(false);
     const [customTypeName, setCustomTypeName] = useState('');
+    const [useGenericIcon, setUseGenericIcon] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
     const formatToBRL = (value: string) => {
@@ -691,8 +793,10 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
             setColor(editingAccount.color);
             setBookmakerId(editingAccount.bookmakerId || '');
             setIcon(editingAccount.icon || '');
+            setUseGenericIcon(editingAccount.useGenericIcon || false);
         } else {
             setName(''); setType('bank'); setIsCustomType(false); setCustomTypeName(''); setBalance(''); setColor('#10b981'); setBookmakerId(''); setIcon('');
+            setUseGenericIcon(false);
         }
     }, [editingAccount, isOpen]);
 
@@ -717,7 +821,8 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
                 balance: numericBalance,
                 color,
                 bookmakerId: type === 'bookmaker' ? bookmakerId : undefined,
-                icon: icon || undefined
+                icon: icon || undefined,
+                useGenericIcon
             });
         } catch (error) {
             console.error("Erro ao salvar conta:", error);
@@ -767,7 +872,7 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
                 <Input label="Nome da Conta" value={name} onChange={e => setName(e.target.value)} placeholder="ex: NuBank, Bet365..." required />
 
                 {type !== 'bookmaker' && (
-                    <div className="space-y-2">
+                    <div className="space-y-4">
                         <div className="flex gap-4 items-end">
                             <div className="flex-1">
                                 <Input
@@ -777,12 +882,32 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
                                     placeholder="https://exemplo.com/logo.png"
                                 />
                             </div>
-                            {icon && (
+                            {(icon || (type === 'bookmaker' && bookmakerId && bookmakers.find(bm => bm.id === bookmakerId)?.logo)) && (
                                 <div className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 p-1.5 flex items-center justify-center shrink-0">
-                                    <img src={icon} alt="Preview" className="w-full h-full object-contain rounded-md" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                                    <img src={icon || bookmakers.find(bm => bm.id === bookmakerId)?.logo} alt="Preview" className="w-full h-full object-contain rounded-md" onError={(e) => (e.currentTarget.style.display = 'none')} />
                                 </div>
                             )}
                         </div>
+
+                        <label className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/[0.08] transition-all group">
+                            <input
+                                type="checkbox"
+                                checked={useGenericIcon}
+                                onChange={e => setUseGenericIcon(e.target.checked)}
+                                className="hidden"
+                            />
+                            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${useGenericIcon ? 'bg-primary border-primary' : 'border-white/20'}`}>
+                                {useGenericIcon && <Check size={14} className="text-[#090c19]" />}
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-[11px] font-bold text-white uppercase tracking-wider">Usar ícone de banco genérico</p>
+                                <p className="text-[9px] text-gray-500 font-medium">Ative para ocultar a logo e mostrar o ícone padrão.</p>
+                            </div>
+                            <div className="text-gray-500 group-hover:text-primary transition-colors">
+                                <Landmark size={16} />
+                            </div>
+                        </label>
+
                         <div className="flex flex-wrap gap-2">
                             {[
                                 { name: 'Nubank', url: 'https://www.google.com/s2/favicons?sz=64&domain=nubank.com.br', color: '#820ad1' },
