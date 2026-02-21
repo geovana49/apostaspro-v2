@@ -58,21 +58,37 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     };
 
     const handleAddNote = async () => {
-        if (!currentUser || !content.trim()) return;
+        if (!currentUser) {
+            alert('Erro: Usuário não autenticado.');
+            return;
+        }
 
-        const newNote: NotepadNote = {
-            id: `note_${Date.now()}`,
-            content: content.trim(),
-            emoji: selectedEmoji,
-            priority,
-            reminderDate: reminderDate || undefined,
-            reminderEnabled: !!reminderDate,
-            createdAt: new Date().toISOString()
-        };
+        if (!content.trim()) {
+            alert('Por favor, escreva o conteúdo da anotação.');
+            return;
+        }
 
-        await FirestoreService.saveNote(currentUser.uid, newNote);
-        setContent('');
-        setReminderDate('');
+        try {
+            const newNote: NotepadNote = {
+                id: `note_${Date.now()}`,
+                content: content.trim(),
+                emoji: selectedEmoji,
+                priority,
+                reminderDate: reminderDate || undefined,
+                reminderEnabled: !!reminderDate,
+                createdAt: new Date().toISOString()
+            };
+
+            await FirestoreService.saveNote(currentUser.uid, newNote);
+            setContent('');
+            setReminderDate('');
+
+            // Give feedback
+            console.info("[Notepad] Nota salva com sucesso.");
+        } catch (error) {
+            console.error("[Notepad] Erro ao salvar nota:", error);
+            alert('Erro ao salvar nota no servidor. Verifique sua conexão.');
+        }
     };
 
     const handleDeleteNote = async (noteId: string) => {
@@ -96,15 +112,26 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
         }
     };
 
+    const upcomingReminders = notes
+        .filter(n => n.reminderEnabled && n.reminderDate && new Date(n.reminderDate) > new Date())
+        .sort((a, b) => new Date(a.reminderDate!).getTime() - new Date(b.reminderDate!).getTime());
+
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Header */}
-            <div>
-                <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
-                    <StickyNote size={32} className="text-primary" />
-                    Bloco de Notas
-                </h1>
-                <p className="text-gray-400">Anote procedimentos, lembretes e tarefas rápidas</p>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
+                        <StickyNote size={32} className="text-primary" />
+                        Bloco de Notas
+                        {upcomingReminders.length > 0 && (
+                            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-[#090c19] text-[10px] font-black animate-pulse shadow-[0_0_15px_rgba(23,186,164,0.5)]">
+                                {upcomingReminders.length}
+                            </span>
+                        )}
+                    </h1>
+                    <p className="text-gray-400">Anote procedimentos, lembretes e tarefas rápidas</p>
+                </div>
             </div>
 
             {/* Input Card */}
@@ -172,21 +199,21 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 </div>
 
                                 <div className="flex items-center gap-3 w-full md:w-auto">
-                                    <div className="relative flex-1 md:flex-none">
+                                    <div className="relative flex-1 md:flex-none h-9">
                                         <input
                                             type="datetime-local"
-                                            className="w-full bg-[#090c19] border border-white/10 rounded-xl px-3 py-1.5 text-[10px] text-gray-400 focus:ring-1 focus:ring-primary outline-none"
+                                            className="w-full h-full bg-[#090c19] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-gray-400 focus:ring-1 focus:ring-primary focus:text-white outline-none transition-all"
                                             value={reminderDate}
                                             onChange={(e) => setReminderDate(e.target.value)}
                                         />
-                                        <Bell size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                                        <Bell size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                                     </div>
                                     <Button
                                         onClick={handleAddNote}
                                         disabled={!content.trim()}
-                                        className="bg-gradient-to-r from-primary to-[#00CC66] text-black font-bold h-9 px-4 rounded-xl shadow-lg shadow-primary/10 hover:scale-105 transition-all text-xs"
+                                        className="bg-gradient-to-r from-primary to-[#00CC66] text-black font-bold h-9 px-5 rounded-xl shadow-lg shadow-primary/10 hover:scale-105 active:scale-95 transition-all text-xs"
                                     >
-                                        <Plus size={16} className="mr-1" /> Adicionar
+                                        <Plus size={16} className="mr-1" /> Salvar Anotação
                                     </Button>
                                 </div>
                             </div>
@@ -194,6 +221,34 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     </div>
                 )}
             </Card>
+
+            {/* Upcoming Reminders Section */}
+            {upcomingReminders.length > 0 && (
+                <div className="space-y-3 animate-in fade-in slide-in-from-left-4 duration-500">
+                    <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest px-1">
+                        <Bell size={14} className="animate-bounce" /> Próximos Lembretes
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {upcomingReminders.slice(0, 3).map(rem => (
+                            <div key={rem.id} className="bg-primary/5 border border-primary/20 rounded-xl p-3 flex items-start gap-3 relative group overflow-hidden">
+                                <div className="absolute top-0 right-0 w-16 h-16 bg-primary/10 rounded-full -mr-8 -mt-8 blur-2xl group-hover:bg-primary/20 transition-all" />
+                                <span className="text-xl shrink-0">{rem.emoji}</span>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[11px] text-white font-bold truncate">{rem.content}</p>
+                                    <p className="text-[10px] text-primary/70 font-medium">
+                                        {new Date(rem.reminderDate!).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                        {upcomingReminders.length > 3 && (
+                            <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center justify-center text-[10px] text-gray-500 font-bold uppercase tracking-tighter">
+                                + {upcomingReminders.length - 3} outros agendados
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Notes List */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
