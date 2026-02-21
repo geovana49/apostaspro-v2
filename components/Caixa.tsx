@@ -657,28 +657,51 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
     const [color, setColor] = useState(editingAccount?.color || '#10b981');
     const [bookmakerId, setBookmakerId] = useState(editingAccount?.bookmakerId || '');
     const [icon, setIcon] = useState(editingAccount?.icon || '');
+    const [isCustomType, setIsCustomType] = useState(false);
+    const [customTypeName, setCustomTypeName] = useState('');
+
+    const formatToBRL = (value: string) => {
+        const numbers = value.replace(/\D/g, '');
+        const amount = parseInt(numbers || '0') / 100;
+        return amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    const bookmakerOptions = useMemo(() => {
+        return (bookmakers || []).map(bm => ({
+            label: bm.name,
+            value: bm.id,
+            icon: bm.logo ? <img src={bm.logo} alt="" className="w-5 h-5 rounded object-contain" /> : <Building2 size={14} />
+        }));
+    }, [bookmakers]);
 
     React.useEffect(() => {
         if (editingAccount) {
             setName(editingAccount.name);
-            setType(editingAccount.type);
-            setBalance((editingAccount.balance / 100).toFixed(2).replace('.', ','));
+            const standardTypes = ['bank', 'bookmaker', 'pix', 'other'];
+            if (standardTypes.includes(editingAccount.type)) {
+                setType(editingAccount.type);
+                setIsCustomType(false);
+            } else {
+                setType('custom');
+                setIsCustomType(true);
+                setCustomTypeName(editingAccount.type);
+            }
+            setBalance(editingAccount.balance === 0 ? '' : formatToBRL((editingAccount.balance).toString()));
             setColor(editingAccount.color);
             setBookmakerId(editingAccount.bookmakerId || '');
             setIcon(editingAccount.icon || '');
         } else {
-            setName(''); setType('bank'); setBalance('0,00'); setColor('#10b981'); setBookmakerId(''); setIcon('');
+            setName(''); setType('bank'); setIsCustomType(false); setCustomTypeName(''); setBalance(''); setColor('#10b981'); setBookmakerId(''); setIcon('');
         }
     }, [editingAccount, isOpen]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const parsedBalance = parseFloat(balance.replace(',', '.'));
-        const cleanBalance = isNaN(parsedBalance) ? 0 : Math.round(parsedBalance * 100);
+        const numericBalance = balance ? parseInt(balance.replace(/\D/g, '')) : 0;
         onSave({
             name,
-            type,
-            balance: cleanBalance,
+            type: isCustomType ? customTypeName : type,
+            balance: numericBalance,
             color,
             bookmakerId: type === 'bookmaker' ? bookmakerId : undefined,
             icon: icon || undefined
@@ -689,42 +712,72 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
         <Modal isOpen={isOpen} onClose={onClose} title={editingAccount ? "Editar Conta" : "Nova Conta"}>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                    <Select label="Tipo de Conta" value={type} onChange={e => setType(e.target.value as any)}>
-                        <option value="bank">Banco / PIX</option>
+                    <Select label="Tipo de Conta" value={type} onChange={e => {
+                        const val = e.target.value;
+                        setType(val);
+                        setIsCustomType(val === 'custom');
+                    }}>
+                        <option value="bank">Banco / Corretora</option>
+                        <option value="pix">PIX</option>
                         <option value="bookmaker">Casa de Aposta</option>
                         <option value="other">Outros</option>
+                        <option value="custom">[Personalizar]</option>
                     </Select>
-                    <Input label="Cor" type="color" value={color} onChange={e => setColor(e.target.value)} className="h-[42px] p-1" />
+                    {isCustomType ? (
+                        <Input label="Nome do Tipo" value={customTypeName} onChange={e => setCustomTypeName(e.target.value)} placeholder="ex: Cofre, Dinheiro..." required />
+                    ) : (
+                        <Input label="Cor" type="color" value={color} onChange={e => setColor(e.target.value)} className="h-[42px] p-1" />
+                    )}
                 </div>
 
                 {type === 'bookmaker' ? (
-                    <Select label="Vincular Casa" value={bookmakerId} onChange={e => {
-                        const id = e.target.value;
-                        setBookmakerId(id);
-                        const bm = bookmakers.find((b: any) => b.id === id);
-                        if (bm && !name) setName(bm.name);
-                    }}>
-                        <option value="">Selecione uma casa...</option>
-                        {(bookmakers || []).map((b: any) => <option key={b.id} value={b.id}>{b.name}</option>)}
-                    </Select>
+                    <Dropdown
+                        label="Vincular Casa"
+                        value={bookmakerId}
+                        onChange={(id: string) => {
+                            setBookmakerId(id);
+                            const bm = bookmakers.find((b: any) => b.id === id);
+                            if (bm && !name) setName(bm.name);
+                        }}
+                        options={bookmakerOptions}
+                        isSearchable
+                        placeholder="Selecione uma casa..."
+                    />
                 ) : null}
 
                 <Input label="Nome da Conta" value={name} onChange={e => setName(e.target.value)} placeholder="ex: NuBank, Bet365..." required />
 
                 {type !== 'bookmaker' && (
                     <div className="space-y-2">
-                        <Input
-                            label="URL do Logo/Ícone (Opcional)"
-                            value={icon}
-                            onChange={e => setIcon(e.target.value)}
-                            placeholder="https://exemplo.com/logo.png"
-                        />
-                        <div className="flex gap-2">
+                        <div className="flex gap-4 items-end">
+                            <div className="flex-1">
+                                <Input
+                                    label="URL do Logo/Ícone (Opcional)"
+                                    value={icon}
+                                    onChange={e => setIcon(e.target.value)}
+                                    placeholder="https://exemplo.com/logo.png"
+                                />
+                            </div>
+                            {icon && (
+                                <div className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 p-1.5 flex items-center justify-center shrink-0">
+                                    <img src={icon} alt="Preview" className="w-full h-full object-contain rounded-md" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
                             {[
                                 { name: 'Nubank', url: 'https://www.google.com/s2/favicons?sz=64&domain=nubank.com.br', color: '#820ad1' },
                                 { name: 'Inter', url: 'https://www.google.com/s2/favicons?sz=64&domain=bancointer.com.br', color: '#ff7a00' },
                                 { name: 'Itaú', url: 'https://www.google.com/s2/favicons?sz=64&domain=itau.com.br', color: '#ec7000' },
                                 { name: 'Bradesco', url: 'https://www.google.com/s2/favicons?sz=64&domain=bradesco.com.br', color: '#cc092f' },
+                                { name: 'Santander', url: 'https://www.google.com/s2/favicons?sz=64&domain=santander.com.br', color: '#ec0000' },
+                                { name: 'BTG', url: 'https://www.google.com/s2/favicons?sz=64&domain=btgpactual.com', color: '#1e214a' },
+                                { name: 'C6 Bank', url: 'https://www.google.com/s2/favicons?sz=64&domain=c6bank.com.br', color: '#000000' },
+                                { name: 'Banco do Brasil', url: 'https://www.google.com/s2/favicons?sz=64&domain=bb.com.br', color: '#fcfc30' },
+                                { name: 'Caixa', url: 'https://www.google.com/s2/favicons?sz=64&domain=caixa.gov.br', color: '#005ca9' },
+                                { name: 'PicPay', url: 'https://www.google.com/s2/favicons?sz=64&domain=picpay.com', color: '#21c25e' },
+                                { name: 'Mercado Pago', url: 'https://www.google.com/s2/favicons?sz=64&domain=mercadopago.com.br', color: '#01b0ea' },
+                                { name: 'PagBank', url: 'https://www.google.com/s2/favicons?sz=64&domain=pagseguro.uol.com.br', color: '#00c8a2' },
                             ].map(bank => (
                                 <button
                                     key={bank.name}
@@ -762,20 +815,18 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
                             Informar Saldo Atual
                         </button>
                     </div>
-                    {balance !== '0,00' && (
+                    {balance !== '' && (
                         <div className="animate-in fade-in slide-in-from-top-2 duration-200 pt-2">
                             <Input
                                 label={type === 'bookmaker' ? "Saldo Atual na Plataforma" : "Saldo Atual na Conta"}
                                 prefix="R$"
                                 value={balance}
-                                onChange={e => {
-                                    const val = e.target.value.replace(/[^\d,]/g, '');
-                                    setBalance(val);
-                                }}
+                                onChange={e => setBalance(formatToBRL(e.target.value))}
+                                placeholder="0,00"
                                 required
                             />
                             <p className="text-[10px] text-gray-500 mt-1 italic">
-                                {type === 'bookmaker' ? 'Este valor será seu saldo inicial nesta plataforma.' : 'Este valor será seu saldo inicial nesta conta bancária.'}
+                                {type === 'bookmaker' ? 'Este valor será seu saldo inicial nesta plataforma.' : 'Este valor será seu saldo inicial nesta conta.'}
                             </p>
                         </div>
                     )}
