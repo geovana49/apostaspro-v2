@@ -326,21 +326,24 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                                             onClick={() => setExpandedBmId(isExpanded ? null : bm.id)}
                                         >
                                             <div className="flex items-center gap-4 flex-1 min-w-0">
+                                                {bm.logo ? (
+                                                    <div className="relative">
+                                                        <div className="absolute -inset-1 bg-white/5 rounded-full blur-md opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                                                        <img src={bm.logo} alt="" className="relative w-11 h-11 rounded-xl object-contain bg-[#0a0f1d] border border-white/10 p-1.5 shadow-lg" />
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center border border-white/5">
+                                                        <Building2 size={22} className="text-gray-600" />
+                                                    </div>
+                                                )}
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="text-xs text-gray-400 font-bold uppercase mb-0.5 truncate">{bm.name}</div>
+                                                    <div className="text-xs text-gray-400 font-bold uppercase mb-0.5 truncate tracking-tight">{bm.name}</div>
                                                     <MoneyDisplay
                                                         value={bm.total / 100}
                                                         privacyMode={settings.privacyMode}
                                                         className="text-xl font-bold text-white tracking-tight"
                                                     />
                                                 </div>
-                                                {bm.logo ? (
-                                                    <img src={bm.logo} alt="" className="w-10 h-10 rounded-lg object-contain bg-white/5 p-1.5" />
-                                                ) : (
-                                                    <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
-                                                        <Building2 size={20} className="text-gray-600" />
-                                                    </div>
-                                                )}
                                             </div>
                                         </Card>
 
@@ -665,6 +668,7 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
     const [balance, setBalance] = useState(editingAccount ? (editingAccount.balance / 100).toFixed(2).replace('.', ',') : '0,00');
     const [color, setColor] = useState(editingAccount?.color || '#10b981');
     const [bookmakerId, setBookmakerId] = useState(editingAccount?.bookmakerId || '');
+    const [icon, setIcon] = useState(editingAccount?.icon || '');
 
     React.useEffect(() => {
         if (editingAccount) {
@@ -673,8 +677,9 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
             setBalance((editingAccount.balance / 100).toFixed(2).replace('.', ','));
             setColor(editingAccount.color);
             setBookmakerId(editingAccount.bookmakerId || '');
+            setIcon(editingAccount.icon || '');
         } else {
-            setName(''); setType('bank'); setBalance('0,00'); setColor('#10b981'); setBookmakerId('');
+            setName(''); setType('bank'); setBalance('0,00'); setColor('#10b981'); setBookmakerId(''); setIcon('');
         }
     }, [editingAccount, isOpen]);
 
@@ -682,7 +687,14 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
         e.preventDefault();
         const parsedBalance = parseFloat(balance.replace(',', '.'));
         const cleanBalance = isNaN(parsedBalance) ? 0 : Math.round(parsedBalance * 100);
-        onSave({ name, type, balance: cleanBalance, color, bookmakerId: type === 'bookmaker' ? bookmakerId : undefined });
+        onSave({
+            name,
+            type,
+            balance: cleanBalance,
+            color,
+            bookmakerId: type === 'bookmaker' ? bookmakerId : undefined,
+            icon: icon || undefined
+        });
     };
 
     return (
@@ -710,6 +722,35 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
                 ) : null}
 
                 <Input label="Nome da Conta" value={name} onChange={e => setName(e.target.value)} placeholder="ex: NuBank, Bet365..." required />
+
+                {type !== 'bookmaker' && (
+                    <div className="space-y-2">
+                        <Input
+                            label="URL do Logo/Ícone (Opcional)"
+                            value={icon}
+                            onChange={e => setIcon(e.target.value)}
+                            placeholder="https://exemplo.com/logo.png"
+                        />
+                        <div className="flex gap-2">
+                            {[
+                                { name: 'Nubank', url: 'https://www.google.com/s2/favicons?sz=64&domain=nubank.com.br', color: '#820ad1' },
+                                { name: 'Inter', url: 'https://www.google.com/s2/favicons?sz=64&domain=bancointer.com.br', color: '#ff7a00' },
+                                { name: 'Itaú', url: 'https://www.google.com/s2/favicons?sz=64&domain=itau.com.br', color: '#ec7000' },
+                                { name: 'Bradesco', url: 'https://www.google.com/s2/favicons?sz=64&domain=bradesco.com.br', color: '#cc092f' },
+                            ].map(bank => (
+                                <button
+                                    key={bank.name}
+                                    type="button"
+                                    onClick={() => { setIcon(bank.url); setColor(bank.color); }}
+                                    className="p-1 px-2 rounded-lg bg-white/5 border border-white/10 hover:border-primary transition-all text-[9px] text-gray-400 flex items-center gap-1.5"
+                                >
+                                    <img src={bank.url} className="w-3 h-3 rounded-xs" alt="" />
+                                    {bank.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 <div className="space-y-3 p-4 bg-white/5 rounded-2xl border border-white/10">
                     <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">
