@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     StickyNote, Trash2, Plus, Bell, BellOff, ChevronUp, ChevronDown,
-    TriangleAlert, Star, Check
+    TriangleAlert, Star, Check, Calendar, Clock, X
 } from 'lucide-react';
 import { User, NotepadNote } from '../types';
 import { FirestoreService } from '../services/firestoreService';
@@ -12,6 +12,7 @@ interface BlocoNotasProps {
     notes: NotepadNote[];
 }
 
+
 const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [content, setContent] = useState('');
     const [selectedEmoji, setSelectedEmoji] = useState('📌');
@@ -19,6 +20,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [reminderDate, setReminderDate] = useState('');
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [showRemindersPopup, setShowRemindersPopup] = useState(false);
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [tempDate, setTempDate] = useState(new Date().toISOString().split('T')[0]);
+    const [tempTime, setTempTime] = useState('12:00');
     const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>(
         'Notification' in window ? Notification.permission : 'denied'
     );
@@ -116,6 +120,11 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
         }
     };
 
+    const handleConfirmReminder = () => {
+        setReminderDate(`${tempDate}T${tempTime}`);
+        setShowDatePicker(false);
+    };
+
     const upcomingReminders = notes
         .filter(n => n.reminderEnabled && n.reminderDate && new Date(n.reminderDate) > new Date())
         .sort((a, b) => new Date(a.reminderDate!).getTime() - new Date(b.reminderDate!).getTime());
@@ -128,42 +137,47 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
                         <StickyNote size={32} className="text-primary" />
                         Bloco de Notas
-                        {upcomingReminders.length > 0 && (
-                            <div className="relative">
-                                <button
-                                    onClick={() => setShowRemindersPopup(!showRemindersPopup)}
-                                    className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-[#090c19] text-xs font-black animate-pulse shadow-[0_0_15px_rgba(23,186,164,0.5)] hover:scale-110 transition-transform"
-                                >
-                                    {upcomingReminders.length}
-                                </button>
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowRemindersPopup(!showRemindersPopup)}
+                                className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all relative ${upcomingReminders.length > 0 ? 'bg-primary/10 text-primary shadow-[0_0_15px_rgba(23,186,164,0.2)]' : 'bg-white/5 text-gray-400'}`}
+                            >
+                                <Bell size={20} className={upcomingReminders.length > 0 ? 'animate-bounce' : ''} />
+                                {upcomingReminders.length > 0 && (
+                                    <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 rounded-full bg-primary text-[#090c19] text-[10px] font-black shadow-[0_0_8px_#17baa4]">
+                                        {upcomingReminders.length}
+                                    </span>
+                                )}
+                            </button>
 
-                                {showRemindersPopup && (
-                                    <div className="absolute top-10 left-0 w-64 bg-[#1a1f35] border border-white/10 rounded-2xl shadow-2xl z-[100] p-4 animate-in fade-in zoom-in-95 duration-200">
-                                        <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
-                                            <span className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-1">
-                                                <Bell size={10} /> Pendentes
-                                            </span>
-                                            <button onClick={() => setShowRemindersPopup(false)} className="text-gray-500 hover:text-white">
-                                                <Plus size={14} className="rotate-45" />
-                                            </button>
-                                        </div>
-                                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
-                                            {upcomingReminders.map(rem => (
-                                                <div key={rem.id} className="bg-white/5 rounded-xl p-2 hover:bg-white/10 transition-colors cursor-pointer group">
-                                                    <div className="flex items-start gap-2">
-                                                        <span className="text-lg">{rem.emoji}</span>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-[10px] text-white font-medium truncate">{rem.content}</p>
-                                                            <p className="text-[9px] text-primary/70">{new Date(rem.reminderDate!).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
-                                                        </div>
+                            {showRemindersPopup && upcomingReminders.length > 0 && (
+                                <div className="absolute top-12 left-0 w-72 bg-[#1a1f35] border border-white/10 rounded-2xl shadow-2xl z-[100] p-4 animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
+                                        <span className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-1">
+                                            <Bell size={10} /> Lembretes Agendados
+                                        </span>
+                                        <button onClick={() => setShowRemindersPopup(false)} className="text-gray-500 hover:text-white transition-colors">
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                    <div className="space-y-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+                                        {upcomingReminders.map(rem => (
+                                            <div key={rem.id} className="bg-white/5 rounded-xl p-3 border border-white/5 hover:border-primary/30 transition-all cursor-pointer group">
+                                                <div className="flex items-start gap-2">
+                                                    <span className="text-xl shrink-0 group-hover:scale-110 transition-transform">{rem.emoji}</span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs text-white font-bold truncate mb-0.5">{rem.content}</p>
+                                                        <p className="text-[10px] text-primary/70 font-medium">
+                                                            {new Date(rem.reminderDate!).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                                        </p>
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
+                                            </div>
+                                        ))}
                                     </div>
-                                )}
-                            </div>
-                        )}
+                                </div>
+                            )}
+                        </div>
                     </h1>
                     <p className="text-gray-400">Anote procedimentos, lembretes e tarefas rápidas</p>
                 </div>
@@ -243,33 +257,88 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 </div>
 
                                 <div className="flex items-center gap-3 w-full md:w-auto">
-                                    <div
-                                        className="flex flex-col gap-1 flex-1 md:flex-none cursor-pointer group"
-                                        onClick={(e) => {
-                                            const input = e.currentTarget.querySelector('input');
-                                            if (input && 'showPicker' in input) {
-                                                try { (input as any).showPicker(); } catch (err) { }
-                                            }
-                                        }}
-                                    >
-                                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest pl-1 group-hover:text-primary transition-colors">Agendar Lembrete</span>
-                                        <div className="relative h-9">
-                                            <input
-                                                type="datetime-local"
-                                                className="w-full h-full bg-[#090c19] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:ring-1 focus:ring-primary outline-none transition-all cursor-pointer"
-                                                value={reminderDate}
-                                                onChange={(e) => setReminderDate(e.target.value)}
-                                            />
-                                            <Bell size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                                    <div className="flex flex-col gap-1 flex-1 md:flex-none relative">
+                                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest pl-1">Agendar Lembrete</span>
+                                        <div
+                                            className="relative h-10 cursor-pointer group/picker"
+                                            onClick={() => setShowDatePicker(!showDatePicker)}
+                                        >
+                                            <div className="w-full h-full bg-[#090c19] border border-white/10 rounded-xl px-4 flex items-center justify-between text-xs text-white group-hover/picker:border-primary/50 transition-all shadow-lg overflow-hidden min-w-[180px]">
+                                                <span className={reminderDate ? 'text-white font-bold' : 'text-gray-500'}>
+                                                    {reminderDate
+                                                        ? new Date(reminderDate).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                                                        : 'Selecionar Data e Hora'
+                                                    }
+                                                </span>
+                                                <Calendar size={14} className="text-gray-500 group-hover/picker:text-primary transition-colors" />
+                                            </div>
+
+                                            {showDatePicker && (
+                                                <div
+                                                    className="absolute bottom-12 left-0 w-72 bg-[#1a1f35] border border-white/10 rounded-2xl shadow-2xl z-[150] p-5 animate-in slide-in-from-bottom-2 duration-300"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
+                                                        <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Configurar Alerta</span>
+                                                        <button onClick={() => setShowDatePicker(false)} className="text-gray-500 hover:text-white">
+                                                            <X size={14} />
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="space-y-4">
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] text-gray-500 font-bold flex items-center gap-2">
+                                                                <Calendar size={12} className="text-primary" /> DATA
+                                                            </label>
+                                                            <input
+                                                                type="date"
+                                                                className="w-full bg-[#090c19] border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary transition-all color-scheme-dark"
+                                                                value={tempDate}
+                                                                onChange={(e) => setTempDate(e.target.value)}
+                                                            />
+                                                        </div>
+
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] text-gray-500 font-bold flex items-center gap-2">
+                                                                <Clock size={12} className="text-primary" /> HORA
+                                                            </label>
+                                                            <input
+                                                                type="time"
+                                                                className="w-full bg-[#090c19] border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary transition-all color-scheme-dark"
+                                                                value={tempTime}
+                                                                onChange={(e) => setTempTime(e.target.value)}
+                                                            />
+                                                        </div>
+
+                                                        <div className="flex gap-2 pt-2">
+                                                            <button
+                                                                onClick={() => {
+                                                                    setReminderDate('');
+                                                                    setShowDatePicker(false);
+                                                                }}
+                                                                className="flex-1 bg-white/5 hover:bg-white/10 text-gray-400 text-[10px] font-bold py-2.5 rounded-xl transition-all"
+                                                            >
+                                                                LIMPAR
+                                                            </button>
+                                                            <button
+                                                                onClick={handleConfirmReminder}
+                                                                className="flex-1 bg-primary text-[#090c19] text-[10px] font-black py-2.5 rounded-xl hover:scale-[1.02] transition-all shadow-lg shadow-primary/20"
+                                                            >
+                                                                DEFINIR
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="flex items-end h-full pt-5">
                                         <Button
                                             onClick={handleAddNote}
                                             disabled={!content.trim()}
-                                            className="bg-gradient-to-r from-primary to-[#00CC66] text-black font-bold h-9 px-5 rounded-xl shadow-lg shadow-primary/10 hover:scale-105 active:scale-95 transition-all text-xs"
+                                            className="bg-gradient-to-r from-primary to-[#10b981] text-[#05070e] font-black h-10 px-6 rounded-xl shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-95 transition-all text-xs uppercase tracking-wider"
                                         >
-                                            <Plus size={16} className="mr-1" /> Salvar Anotação
+                                            <Plus size={18} className="mr-1.5" /> Salvar Anotação
                                         </Button>
                                     </div>
                                 </div>
