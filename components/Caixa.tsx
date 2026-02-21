@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import {
-    Wallet, Building2, TrendingUp, Plus, ArrowUpRight, ArrowDownLeft,
-    Repeat, Trash2, Edit2, Search, Filter, History, Building, Landmark, CreditCard, Banknote
+    Wallet, Building2, TrendingUp, Plus, ArrowUpRight, ArrowDownLeft, ArrowLeft, ArrowRight,
+    Repeat, Trash2, Edit2, Search, Filter, History, Building, Landmark, CreditCard, Banknote,
+    ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { CaixaAccount, CaixaMovement, Bookmaker, User, AppSettings, CaixaCategory } from '../types';
 import { FirestoreService } from '../services/firestoreService';
@@ -272,7 +273,7 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                                 if (el) el.scrollBy({ left: -300, behavior: 'smooth' });
                             }}
                         >
-                            <ArrowDownLeft size={16} className="rotate-45" />
+                            <ArrowLeft size={16} />
                         </button>
                         <button
                             className="absolute -right-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-[#0d1421]/80 backdrop-blur-md border border-white/10 rounded-full text-white opacity-0 group-hover/carousel:opacity-100 transition-opacity hidden lg:flex"
@@ -281,7 +282,7 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                                 if (el) el.scrollBy({ left: 300, behavior: 'smooth' });
                             }}
                         >
-                            <ArrowUpRight size={16} className="-rotate-45" />
+                            <ArrowRight size={16} />
                         </button>
 
                         <div
@@ -386,18 +387,31 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                                                     )}
                                                 </div>
 
-                                                {/* Quick Action */}
-                                                <Button
-                                                    className="w-full text-xs h-9"
-                                                    onClick={() => {
-                                                        setMovementType('deposit');
-                                                        setInitialAccountId(targetId);
-                                                        setIsMovementModalOpen(true);
-                                                    }}
-                                                >
-                                                    <TrendingUp size={14} className="mr-2" />
-                                                    Novo Lançamento
-                                                </Button>
+                                                {/* Quick Actions */}
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        className="flex-1 text-[10px] h-9 border-white/10 text-gray-400 hover:text-white"
+                                                        onClick={() => {
+                                                            setEditingAccount(account || { bookmakerId: bm.id, type: 'bookmaker', name: bm.name, balance: 0, color: bm.color });
+                                                            setIsAccountModalOpen(true);
+                                                        }}
+                                                    >
+                                                        <Edit2 size={14} className="mr-2" />
+                                                        Informar Saldo
+                                                    </Button>
+                                                    <Button
+                                                        className="flex-1 text-[10px] h-9"
+                                                        onClick={() => {
+                                                            setMovementType('deposit');
+                                                            setInitialAccountId(targetId);
+                                                            setIsMovementModalOpen(true);
+                                                        }}
+                                                    >
+                                                        <TrendingUp size={14} className="mr-2" />
+                                                        Lançamento
+                                                    </Button>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
