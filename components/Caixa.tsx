@@ -698,7 +698,9 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
                 <Input label="Nome da Conta" value={name} onChange={e => setName(e.target.value)} placeholder="ex: NuBank, Bet365..." required />
 
                 <div className="space-y-3 p-4 bg-white/5 rounded-2xl border border-white/10">
-                    <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Você já possui saldo nesta plataforma?</p>
+                    <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">
+                        {type === 'bookmaker' ? 'Você já possui saldo nesta plataforma?' : 'Você já possui saldo nesta conta?'}
+                    </p>
                     <div className="flex gap-2">
                         <button
                             type="button"
@@ -720,7 +722,7 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
                     {balance !== '0,00' && (
                         <div className="animate-in fade-in slide-in-from-top-2 duration-200 pt-2">
                             <Input
-                                label="Saldo Atual na Plataforma"
+                                label={type === 'bookmaker' ? "Saldo Atual na Plataforma" : "Saldo Atual na Conta"}
                                 prefix="R$"
                                 value={balance}
                                 onChange={e => {
@@ -729,7 +731,9 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
                                 }}
                                 required
                             />
-                            <p className="text-[10px] text-gray-500 mt-1 italic">Este valor será seu saldo inicial nesta conta.</p>
+                            <p className="text-[10px] text-gray-500 mt-1 italic">
+                                {type === 'bookmaker' ? 'Este valor será seu saldo inicial nesta plataforma.' : 'Este valor será seu saldo inicial nesta conta bancária.'}
+                            </p>
                         </div>
                     )}
                 </div>
