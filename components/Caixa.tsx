@@ -75,8 +75,8 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
             type: account.type || 'bank',
             balance: account.balance || 0,
             color: account.color || '#10b981',
-            bookmakerId: account.bookmakerId,
-            icon: account.icon
+            bookmakerId: account.bookmakerId || null as any,
+            icon: account.icon || null as any
         };
         await FirestoreService.saveCaixaAccount(currentUser.uid, newAccount);
         setIsAccountModalOpen(false);
