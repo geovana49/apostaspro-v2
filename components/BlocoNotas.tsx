@@ -74,7 +74,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                 content: content.trim(),
                 emoji: selectedEmoji,
                 priority,
-                reminderDate: reminderDate || undefined,
+                reminderDate: reminderDate || null,
                 reminderEnabled: !!reminderDate,
                 createdAt: new Date().toISOString()
             };
@@ -199,22 +199,35 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 </div>
 
                                 <div className="flex items-center gap-3 w-full md:w-auto">
-                                    <div className="relative flex-1 md:flex-none h-9">
-                                        <input
-                                            type="datetime-local"
-                                            className="w-full h-full bg-[#090c19] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-gray-400 focus:ring-1 focus:ring-primary focus:text-white outline-none transition-all"
-                                            value={reminderDate}
-                                            onChange={(e) => setReminderDate(e.target.value)}
-                                        />
-                                        <Bell size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                                    <div className="flex flex-col gap-1 flex-1 md:flex-none">
+                                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest pl-1">Agendar Lembrete</span>
+                                        <div
+                                            className="relative h-9 cursor-pointer"
+                                            onClick={(e) => {
+                                                const input = e.currentTarget.querySelector('input');
+                                                if (input && 'showPicker' in input) {
+                                                    try { (input as any).showPicker(); } catch (err) { }
+                                                }
+                                            }}
+                                        >
+                                            <input
+                                                type="datetime-local"
+                                                className="w-full h-full bg-[#090c19] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:ring-1 focus:ring-primary outline-none transition-all cursor-pointer"
+                                                value={reminderDate}
+                                                onChange={(e) => setReminderDate(e.target.value)}
+                                            />
+                                            <Bell size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                                        </div>
                                     </div>
-                                    <Button
-                                        onClick={handleAddNote}
-                                        disabled={!content.trim()}
-                                        className="bg-gradient-to-r from-primary to-[#00CC66] text-black font-bold h-9 px-5 rounded-xl shadow-lg shadow-primary/10 hover:scale-105 active:scale-95 transition-all text-xs"
-                                    >
-                                        <Plus size={16} className="mr-1" /> Salvar Anotação
-                                    </Button>
+                                    <div className="flex items-end h-full pt-5">
+                                        <Button
+                                            onClick={handleAddNote}
+                                            disabled={!content.trim()}
+                                            className="bg-gradient-to-r from-primary to-[#00CC66] text-black font-bold h-9 px-5 rounded-xl shadow-lg shadow-primary/10 hover:scale-105 active:scale-95 transition-all text-xs"
+                                        >
+                                            <Plus size={16} className="mr-1" /> Salvar Anotação
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
