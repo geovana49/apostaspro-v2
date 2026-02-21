@@ -640,7 +640,7 @@ const AccountCard: React.FC<AccountCardProps> = ({ account, bookmakers, movement
                     <div className="flex items-center gap-3 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transform group-hover/card:scale-110 group-hover/card:rotate-3 transition-all duration-500 overflow-hidden" style={{ backgroundColor: bookmaker?.color ? `${bookmaker.color}20` : `${account.color}20`, color: bookmaker?.color || account.color }}>
                             {showLogo ? (
-                                <img src={bookmaker?.logo || account.icon} alt="" className="w-full h-full object-contain p-1" />
+                                <img src={bookmaker?.logo || account.icon} alt="" className="w-full h-full object-cover" />
                             ) : (
                                 account.type === 'bank' ? <Landmark size={20} /> : account.type === 'bookmaker' ? <Building2 size={20} /> : <Banknote size={20} />
                             )}
@@ -883,8 +883,8 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
                                 />
                             </div>
                             {(icon || (type === 'bookmaker' && bookmakerId && bookmakers.find(bm => bm.id === bookmakerId)?.logo)) && (
-                                <div className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 p-1.5 flex items-center justify-center shrink-0">
-                                    <img src={icon || bookmakers.find(bm => bm.id === bookmakerId)?.logo} alt="Preview" className="w-full h-full object-contain rounded-md" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                                <div className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
+                                    <img src={icon || bookmakers.find(bm => bm.id === bookmakerId)?.logo} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
                                 </div>
                             )}
                         </div>
