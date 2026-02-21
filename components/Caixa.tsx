@@ -136,22 +136,17 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
         };
 
         // Update account balances
-        if (newMovement.type === 'deposit' && newMovement.toAccountId) {
-            const acc = accounts.find(a => a.id === newMovement.toAccountId);
-            if (acc) {
-                await FirestoreService.saveCaixaAccount(currentUser.uid, { ...acc, balance: (acc.balance || 0) + newMovement.amount });
-            }
-        } else if (newMovement.type === 'withdraw' && newMovement.fromAccountId) {
+        if (newMovement.fromAccountId) {
             const acc = accounts.find(a => a.id === newMovement.fromAccountId);
             if (acc) {
                 await FirestoreService.saveCaixaAccount(currentUser.uid, { ...acc, balance: (acc.balance || 0) - newMovement.amount });
             }
-        } else if (newMovement.type === 'transfer' && newMovement.fromAccountId && newMovement.toAccountId) {
-            const fromAcc = accounts.find(a => a.id === newMovement.fromAccountId);
-            const toAcc = accounts.find(a => a.id === newMovement.toAccountId);
-            if (fromAcc && toAcc) {
-                await FirestoreService.saveCaixaAccount(currentUser.uid, { ...fromAcc, balance: (fromAcc.balance || 0) - newMovement.amount });
-                await FirestoreService.saveCaixaAccount(currentUser.uid, { ...toAcc, balance: (toAcc.balance || 0) + newMovement.amount });
+        }
+
+        if (newMovement.toAccountId) {
+            const acc = accounts.find(a => a.id === newMovement.toAccountId);
+            if (acc) {
+                await FirestoreService.saveCaixaAccount(currentUser.uid, { ...acc, balance: (acc.balance || 0) + newMovement.amount });
             }
         }
 
@@ -244,7 +239,7 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                 </Card>
             </div>
 
-            {/* Bookmaker Balances Horizontal Section - MOVED UP */}
+            {/* Bookmaker Balances Horizontal Section */}
             {bookmakerBalances.length > 0 && (
                 <div className="space-y-4">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -288,7 +283,6 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                         <div
                             id="bm-carousel"
                             className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 px-1 no-scrollbar scroll-smooth"
-                            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                         >
                             {bookmakerBalances.map(bm => {
                                 const account = (accounts || []).find(a => a.bookmakerId === bm.id);
@@ -421,12 +415,6 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                                 );
                             })}
                         </div>
-                        {bookmakerBalances.length === 0 && (
-                            <div className="col-span-full py-8 text-center bg-white/[0.02] border border-dashed border-white/5 rounded-3xl">
-                                <Search className="mx-auto text-gray-600 mb-3" size={24} />
-                                <p className="text-sm text-gray-500">Nenhuma casa encontrada com este nome.</p>
-                            </div>
-                        )}
                     </div>
                 </div>
             )}
@@ -824,7 +812,6 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts, bookm
             };
         });
 
-        // Add bookmakers from settings that don't have accounts yet
         const existingBmIds = new Set(accounts?.map(a => a.bookmakerId).filter(Boolean));
         const newBmOptions = (bookmakers || [])
             .filter(bm => !existingBmIds.has(bm.id))
@@ -840,7 +827,7 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts, bookm
     }, [accounts, bookmakers]);
 
     const categoryOptions = useMemo(() => {
-        const filtered = (categories || []).filter(c => c.type === type);
+        const filtered = (categories || []).filter(c => c.type === (type === 'transfer' ? 'withdraw' : type));
         return filtered.map(c => ({ label: c.name, value: c.name, id: c.id, isDefault: false }));
     }, [type, categories]);
 
@@ -852,7 +839,7 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts, bookm
         const newCat: CaixaCategory = {
             id: `cat_${Date.now()}`,
             name: newCategoryName.trim(),
-            type: type as 'deposit' | 'withdraw'
+            type: (type === 'transfer' ? 'withdraw' : type) as 'deposit' | 'withdraw'
         };
         await FirestoreService.saveCaixaCategory(currentUser.uid, newCat);
         setNewCategoryName('');
@@ -875,14 +862,8 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts, bookm
         }
     }, [isOpen, type, initialAccountId]);
 
-    const handleShowPicker = (e: React.FocusEvent<HTMLInputElement> | React.MouseEvent<HTMLInputElement>) => {
-        try {
-            if ((e.target as any).showPicker) {
-                (e.target as any).showPicker();
-            }
-        } catch (err) {
-            console.error("Failed to show picker:", err);
-        }
+    const handleShowPicker = (e: any) => {
+        try { if (e.target.showPicker) e.target.showPicker(); } catch (err) { }
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -921,35 +902,32 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts, bookm
                     />
                 </div>
 
-                {type === 'transfer' ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <Dropdown
-                            label="Origem *"
-                            value={fromAccountId}
-                            onChange={setFromAccountId}
-                            options={accountOptions}
-                            isSearchable
-                            placeholder="Selecione..."
-                        />
-                        <Dropdown
-                            label="Destino *"
-                            value={toAccountId}
-                            onChange={setToAccountId}
-                            options={accountOptions}
-                            isSearchable
-                            placeholder="Selecione..."
-                        />
-                    </div>
-                ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Dropdown
-                        label={type === 'deposit' ? "Destino *" : "Origem *"}
-                        value={type === 'deposit' ? toAccountId : fromAccountId}
-                        onChange={val => type === 'deposit' ? setToAccountId(val) : setFromAccountId(val)}
+                        label={
+                            type === 'transfer' ? "Origem (De) *" :
+                                type === 'deposit' ? "Origem (Banco/Saldo) *" :
+                                    "Origem (Plataforma) *"
+                        }
+                        value={fromAccountId}
+                        onChange={setFromAccountId}
                         options={accountOptions}
                         isSearchable
-                        placeholder="Selecione a conta..."
+                        placeholder="Selecione..."
                     />
-                )}
+                    <Dropdown
+                        label={
+                            type === 'transfer' ? "Destino (Para) *" :
+                                type === 'deposit' ? "Destino (Plataforma) *" :
+                                    "Destino (Banco/Saldo) *"
+                        }
+                        value={toAccountId}
+                        onChange={setToAccountId}
+                        options={accountOptions}
+                        isSearchable
+                        placeholder="Selecione..."
+                    />
+                </div>
 
                 {type !== 'transfer' && (
                     <div className="space-y-3">
@@ -1019,16 +997,19 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts, bookm
                     </div>
                 )}
 
-                <Input
-                    label="Anotação / Observação (Opcional)"
-                    value={notes}
-                    onChange={e => setNotes(e.target.value)}
-                    placeholder="Ex: Aposta na Bet365, Depósito via PIX..."
-                />
+                <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Notas (Opcional)</label>
+                    <textarea
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-primary/50 transition-all resize-none h-24"
+                        placeholder="Observações sobre esta movimentação..."
+                        value={notes}
+                        onChange={e => setNotes(e.target.value)}
+                    />
+                </div>
 
-                <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
-                    <Button variant="neutral" className="sm:w-32" onClick={onClose}>Cancelar</Button>
-                    <Button type="submit" className="sm:w-32">Registrar</Button>
+                <div className="flex gap-3 pt-4">
+                    <Button variant="neutral" className="flex-1" onClick={onClose} type="button">Cancelar</Button>
+                    <Button type="submit" className="flex-1">Salvar Movimentação</Button>
                 </div>
             </form>
         </Modal>

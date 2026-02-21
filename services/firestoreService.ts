@@ -17,7 +17,7 @@ import {
 } from "firebase/firestore";
 import { ref, uploadBytesResumable, uploadString, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase";
-import { Bet, ExtraGain, AppSettings, Bookmaker, StatusItem, PromotionItem, OriginItem, CaixaAccount, CaixaMovement } from "../types";
+import { Bet, ExtraGain, AppSettings, Bookmaker, StatusItem, PromotionItem, OriginItem, CaixaAccount, CaixaMovement, CaixaCategory } from "../types";
 
 // Helper to convert Firestore Timestamp to ISO string and vice-versa
 const convertDate = (data: any) => {
