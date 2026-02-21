@@ -263,121 +263,147 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {bookmakerBalances.map(bm => {
-                            const account = (accounts || []).find(a => a.bookmakerId === bm.id);
-                            const targetId = account ? account.id : `new_bm_${bm.id}`;
-                            const isExpanded = expandedBmId === bm.id;
+                    <div className="relative group/carousel">
+                        {/* Navigation Buttons */}
+                        <button
+                            className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-[#0d1421]/80 backdrop-blur-md border border-white/10 rounded-full text-white opacity-0 group-hover/carousel:opacity-100 transition-opacity hidden lg:flex"
+                            onClick={() => {
+                                const el = document.getElementById('bm-carousel');
+                                if (el) el.scrollBy({ left: -300, behavior: 'smooth' });
+                            }}
+                        >
+                            <ArrowDownLeft size={16} className="rotate-45" />
+                        </button>
+                        <button
+                            className="absolute -right-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-[#0d1421]/80 backdrop-blur-md border border-white/10 rounded-full text-white opacity-0 group-hover/carousel:opacity-100 transition-opacity hidden lg:flex"
+                            onClick={() => {
+                                const el = document.getElementById('bm-carousel');
+                                if (el) el.scrollBy({ left: 300, behavior: 'smooth' });
+                            }}
+                        >
+                            <ArrowUpRight size={16} className="-rotate-45" />
+                        </button>
 
-                            // Get movements for this house
-                            const houseAccountIds = (accounts || [])
-                                .filter(a => a.bookmakerId === bm.id)
-                                .map(a => a.id);
-                            const houseMovements = (movements || [])
-                                .filter(m => houseAccountIds.includes(m.fromAccountId || '') || houseAccountIds.includes(m.toAccountId || ''))
-                                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                        <div
+                            id="bm-carousel"
+                            className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 px-1 no-scrollbar scroll-smooth"
+                            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                        >
+                            {bookmakerBalances.map(bm => {
+                                const account = (accounts || []).find(a => a.bookmakerId === bm.id);
+                                const targetId = account ? account.id : `new_bm_${bm.id}`;
+                                const isExpanded = expandedBmId === bm.id;
 
-                            const stats = houseMovements.reduce((acc, m) => {
-                                const amount = m.amount || 0;
-                                const isTo = houseAccountIds.includes(m.toAccountId || '');
-                                const isFrom = houseAccountIds.includes(m.fromAccountId || '');
+                                // Get movements for this house
+                                const houseAccountIds = (accounts || [])
+                                    .filter(a => a.bookmakerId === bm.id)
+                                    .map(a => a.id);
+                                const houseMovements = (movements || [])
+                                    .filter(m => houseAccountIds.includes(m.fromAccountId || '') || houseAccountIds.includes(m.toAccountId || ''))
+                                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-                                if (m.type === 'transfer') {
-                                    if (isTo && !isFrom) acc.deposits += amount;
-                                    if (isFrom && !isTo) acc.withdrawals += amount;
-                                } else if (m.type === 'deposit' && isTo) {
-                                    acc.deposits += amount;
-                                } else if (m.type === 'withdraw' && isFrom) {
-                                    acc.withdrawals += amount;
-                                }
-                                return acc;
-                            }, { deposits: 0, withdrawals: 0 });
+                                const stats = houseMovements.reduce((acc, m) => {
+                                    const amount = m.amount || 0;
+                                    const isTo = houseAccountIds.includes(m.toAccountId || '');
+                                    const isFrom = houseAccountIds.includes(m.fromAccountId || '');
 
-                            return (
-                                <div key={bm.id} className="space-y-3">
-                                    <Card
-                                        className={`p-4 flex items-center justify-between bg-[#0d1421]/60 border-white/5 hover:border-emerald-500/30 transition-all cursor-pointer group ${isExpanded ? 'border-emerald-500/40 ring-1 ring-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.05)]' : ''}`}
-                                        onClick={() => setExpandedBmId(isExpanded ? null : bm.id)}
-                                    >
-                                        <div className="flex items-center gap-4 flex-1 min-w-0">
-                                            <div className="flex-1 min-w-0">
-                                                <div className="text-xs text-gray-400 font-bold uppercase mb-0.5 truncate">{bm.name}</div>
-                                                <MoneyDisplay
-                                                    value={bm.total / 100}
-                                                    privacyMode={settings.privacyMode}
-                                                    className="text-xl font-bold text-white tracking-tight"
-                                                />
-                                            </div>
-                                            {bm.logo ? (
-                                                <img src={bm.logo} alt="" className="w-10 h-10 rounded-lg object-contain bg-white/5 p-1.5" />
-                                            ) : (
-                                                <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
-                                                    <Building2 size={20} className="text-gray-600" />
+                                    if (m.type === 'transfer') {
+                                        if (isTo && !isFrom) acc.deposits += amount;
+                                        if (isFrom && !isTo) acc.withdrawals += amount;
+                                    } else if (m.type === 'deposit' && isTo) {
+                                        acc.deposits += amount;
+                                    } else if (m.type === 'withdraw' && isFrom) {
+                                        acc.withdrawals += amount;
+                                    }
+                                    return acc;
+                                }, { deposits: 0, withdrawals: 0 });
+
+                                return (
+                                    <div key={bm.id} className="snap-start shrink-0 w-[280px] sm:w-[320px] space-y-3">
+                                        <Card
+                                            className={`p-4 flex items-center justify-between bg-[#0d1421]/60 border-white/5 hover:border-emerald-500/30 transition-all cursor-pointer group ${isExpanded ? 'border-emerald-500/40 ring-1 ring-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.05)]' : ''}`}
+                                            onClick={() => setExpandedBmId(isExpanded ? null : bm.id)}
+                                        >
+                                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-xs text-gray-400 font-bold uppercase mb-0.5 truncate">{bm.name}</div>
+                                                    <MoneyDisplay
+                                                        value={bm.total / 100}
+                                                        privacyMode={settings.privacyMode}
+                                                        className="text-xl font-bold text-white tracking-tight"
+                                                    />
                                                 </div>
-                                            )}
-                                        </div>
-                                    </Card>
-
-                                    {isExpanded && (
-                                        <div className="bg-[#090c19] border border-white/5 rounded-2xl p-4 space-y-4 animate-in slide-in-from-top-2 duration-300">
-                                            {/* Summary Stats */}
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl">
-                                                    <div className="text-[10px] text-emerald-500 font-bold uppercase mb-1 flex items-center gap-1.5">
-                                                        <ArrowDownLeft size={10} /> Depósitos
-                                                    </div>
-                                                    <MoneyDisplay value={stats.deposits / 100} privacyMode={settings.privacyMode} className="text-sm font-bold text-white" />
-                                                </div>
-                                                <div className="p-3 bg-red-500/5 border border-red-500/10 rounded-xl">
-                                                    <div className="text-[10px] text-red-500 font-bold uppercase mb-1 flex items-center gap-1.5">
-                                                        <ArrowUpRight size={10} /> Saques
-                                                    </div>
-                                                    <MoneyDisplay value={stats.withdrawals / 100} privacyMode={settings.privacyMode} className="text-sm font-bold text-white" />
-                                                </div>
-                                            </div>
-
-                                            {/* History Mini List */}
-                                            <div className="space-y-2">
-                                                <div className="text-[10px] text-gray-500 font-bold uppercase px-1">Últimas Transações</div>
-                                                {houseMovements.length === 0 ? (
-                                                    <div className="text-[11px] text-gray-600 italic px-1">Nenhuma movimentação registrada.</div>
+                                                {bm.logo ? (
+                                                    <img src={bm.logo} alt="" className="w-10 h-10 rounded-lg object-contain bg-white/5 p-1.5" />
                                                 ) : (
-                                                    <div className="space-y-1.5 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
-                                                        {houseMovements.slice(0, 10).map(m => (
-                                                            <div key={m.id} className="flex items-center justify-between p-2 rounded-lg bg-white/5 text-[11px]">
-                                                                <div className="min-w-0 flex-1">
-                                                                    <div className="text-gray-300 font-medium truncate">{m.category || 'Mover Capital'}</div>
-                                                                    <div className="text-[9px] text-gray-600">{new Date(m.date).toLocaleDateString('pt-BR')}</div>
-                                                                </div>
-                                                                <div className={`font-bold ml-2 ${(m.type === 'deposit' || (m.type === 'transfer' && houseAccountIds.includes(m.toAccountId || '')))
-                                                                    ? 'text-primary' : 'text-danger'
-                                                                    }`}>
-                                                                    {(m.type === 'deposit' || (m.type === 'transfer' && houseAccountIds.includes(m.toAccountId || ''))) ? '+' : '-'}
-                                                                    R$ {(m.amount / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                                                </div>
-                                                            </div>
-                                                        ))}
+                                                    <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+                                                        <Building2 size={20} className="text-gray-600" />
                                                     </div>
                                                 )}
                                             </div>
+                                        </Card>
 
-                                            {/* Quick Action */}
-                                            <Button
-                                                className="w-full text-xs h-9"
-                                                onClick={() => {
-                                                    setMovementType('deposit');
-                                                    setInitialAccountId(targetId);
-                                                    setIsMovementModalOpen(true);
-                                                }}
-                                            >
-                                                <TrendingUp size={14} className="mr-2" />
-                                                Novo Lançamento
-                                            </Button>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
+                                        {isExpanded && (
+                                            <div className="bg-[#090c19] border border-white/5 rounded-2xl p-4 space-y-4 animate-in slide-in-from-top-2 duration-300">
+                                                {/* Summary Stats */}
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl">
+                                                        <div className="text-[10px] text-emerald-500 font-bold uppercase mb-1 flex items-center gap-1.5">
+                                                            <ArrowDownLeft size={10} /> Depósitos
+                                                        </div>
+                                                        <MoneyDisplay value={stats.deposits / 100} privacyMode={settings.privacyMode} className="text-sm font-bold text-white" />
+                                                    </div>
+                                                    <div className="p-3 bg-red-500/5 border border-red-500/10 rounded-xl">
+                                                        <div className="text-[10px] text-red-500 font-bold uppercase mb-1 flex items-center gap-1.5">
+                                                            <ArrowUpRight size={10} /> Saques
+                                                        </div>
+                                                        <MoneyDisplay value={stats.withdrawals / 100} privacyMode={settings.privacyMode} className="text-sm font-bold text-white" />
+                                                    </div>
+                                                </div>
+
+                                                {/* History Mini List */}
+                                                <div className="space-y-2">
+                                                    <div className="text-[10px] text-gray-500 font-bold uppercase px-1">Últimas Transações</div>
+                                                    {houseMovements.length === 0 ? (
+                                                        <div className="text-[11px] text-gray-600 italic px-1">Nenhuma movimentação registrada.</div>
+                                                    ) : (
+                                                        <div className="space-y-1.5 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                                                            {houseMovements.slice(0, 5).map(m => (
+                                                                <div key={m.id} className="flex items-center justify-between p-2 rounded-lg bg-white/5 text-[11px]">
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <div className="text-gray-300 font-medium truncate">{m.category || 'Mover Capital'}</div>
+                                                                        <div className="text-[9px] text-gray-600">{new Date(m.date).toLocaleDateString('pt-BR')}</div>
+                                                                    </div>
+                                                                    <div className={`font-bold ml-2 ${(m.type === 'deposit' || (m.type === 'transfer' && houseAccountIds.includes(m.toAccountId || '')))
+                                                                        ? 'text-primary' : 'text-danger'
+                                                                        }`}>
+                                                                        {(m.type === 'deposit' || (m.type === 'transfer' && houseAccountIds.includes(m.toAccountId || ''))) ? '+' : '-'}
+                                                                        R$ {(m.amount / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Quick Action */}
+                                                <Button
+                                                    className="w-full text-xs h-9"
+                                                    onClick={() => {
+                                                        setMovementType('deposit');
+                                                        setInitialAccountId(targetId);
+                                                        setIsMovementModalOpen(true);
+                                                    }}
+                                                >
+                                                    <TrendingUp size={14} className="mr-2" />
+                                                    Novo Lançamento
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
                         {bookmakerBalances.length === 0 && (
                             <div className="col-span-full py-8 text-center bg-white/[0.02] border border-dashed border-white/5 rounded-3xl">
                                 <Search className="mx-auto text-gray-600 mb-3" size={24} />
@@ -671,15 +697,42 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
 
                 <Input label="Nome da Conta" value={name} onChange={e => setName(e.target.value)} placeholder="ex: NuBank, Bet365..." required />
 
-                <Input
-                    label="Saldo Inicial (Opcional)"
-                    prefix="R$"
-                    value={balance}
-                    onChange={e => {
-                        const val = e.target.value.replace(/[^\d,]/g, '');
-                        setBalance(val);
-                    }}
-                />
+                <div className="space-y-3 p-4 bg-white/5 rounded-2xl border border-white/10">
+                    <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Você já possui saldo nesta plataforma?</p>
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setBalance('0,00')}
+                            className={`flex-1 py-2 px-3 rounded-xl border text-xs font-bold transition-all ${balance === '0,00' ? 'bg-primary border-primary text-[#090c19]' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}
+                        >
+                            Começar do zero (R$ 0,00)
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (balance === '0,00') setBalance('');
+                            }}
+                            className={`flex-1 py-2 px-3 rounded-xl border text-xs font-bold transition-all ${balance !== '0,00' ? 'bg-primary border-primary text-[#090c19]' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}
+                        >
+                            Informar Saldo Atual
+                        </button>
+                    </div>
+                    {balance !== '0,00' && (
+                        <div className="animate-in fade-in slide-in-from-top-2 duration-200 pt-2">
+                            <Input
+                                label="Saldo Atual na Plataforma"
+                                prefix="R$"
+                                value={balance}
+                                onChange={e => {
+                                    const val = e.target.value.replace(/[^\d,]/g, '');
+                                    setBalance(val);
+                                }}
+                                required
+                            />
+                            <p className="text-[10px] text-gray-500 mt-1 italic">Este valor será seu saldo inicial nesta conta.</p>
+                        </div>
+                    )}
+                </div>
 
                 <div className="flex gap-2 pt-4">
                     <Button variant="neutral" className="flex-1" onClick={onClose}>Cancelar</Button>
