@@ -782,7 +782,11 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
                                 <button
                                     key={bank.name}
                                     type="button"
-                                    onClick={() => { setIcon(bank.url); setColor(bank.color); }}
+                                    onClick={() => {
+                                        setIcon(bank.url);
+                                        setColor(bank.color);
+                                        if (!name) setName(bank.name);
+                                    }}
                                     className="p-1 px-2 rounded-lg bg-white/5 border border-white/10 hover:border-primary transition-all text-[9px] text-gray-400 flex items-center gap-1.5"
                                 >
                                     <img src={bank.url} className="w-3 h-3 rounded-xs" alt="" />
@@ -800,17 +804,17 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
                     <div className="flex gap-2">
                         <button
                             type="button"
-                            onClick={() => setBalance('0,00')}
-                            className={`flex-1 py-2 px-3 rounded-xl border text-xs font-bold transition-all ${balance === '0,00' ? 'bg-primary border-primary text-[#090c19]' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}
+                            onClick={() => setBalance('')}
+                            className={`flex-1 py-2 px-3 rounded-xl border text-xs font-bold transition-all ${balance === '' ? 'bg-primary border-primary text-[#090c19]' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}
                         >
                             Começar do zero (R$ 0,00)
                         </button>
                         <button
                             type="button"
                             onClick={() => {
-                                if (balance === '0,00') setBalance('');
+                                if (balance === '') setBalance('0,00');
                             }}
-                            className={`flex-1 py-2 px-3 rounded-xl border text-xs font-bold transition-all ${balance !== '0,00' ? 'bg-primary border-primary text-[#090c19]' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}
+                            className={`flex-1 py-2 px-3 rounded-xl border text-xs font-bold transition-all ${balance !== '' ? 'bg-primary border-primary text-[#090c19]' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}
                         >
                             Informar Saldo Atual
                         </button>
