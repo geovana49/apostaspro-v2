@@ -16,6 +16,7 @@ interface LayoutProps {
   isOnline: boolean;
   isSyncing: boolean;
   onForceSync?: () => void;
+  notesCount?: number;
 }
 
 const Layout: React.FC<LayoutProps> = ({
@@ -27,7 +28,8 @@ const Layout: React.FC<LayoutProps> = ({
   onLogout,
   isOnline,
   isSyncing,
-  onForceSync
+  onForceSync,
+  notesCount = 0
 }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -138,7 +140,7 @@ const Layout: React.FC<LayoutProps> = ({
     { id: Page.BETS, label: 'Minhas Apostas', icon: <Ticket size={20} /> },
     { id: Page.GAINS, label: 'Ganhos Extras', icon: <DollarSign size={20} /> },
     { id: Page.CAIXA, label: 'Controle de Caixa', icon: <Wallet size={20} /> },
-    { id: Page.NOTES, label: 'Bloco de Notas', icon: <StickyNote size={20} /> },
+    { id: Page.NOTES, label: 'Bloco de Notas', icon: <StickyNote size={20} />, badge: notesCount },
     { id: Page.CALCULATORS, label: 'Calculadoras', icon: <Calculator size={20} /> },
     { id: Page.SETTINGS, label: 'Ajustes', icon: <Settings size={20} /> },
   ];
@@ -228,6 +230,12 @@ const Layout: React.FC<LayoutProps> = ({
                   ${isActive ? 'text-primary scale-110 drop-shadow-[0_0_8px_rgba(23,186,164,0.5)]' : 'group-hover:text-white group-hover:scale-105'}
                 `}>
                   {item.icon}
+                  {/* Badge */}
+                  {item.id === Page.NOTES && notesCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[#090c19] text-[9px] font-black animate-pulse shadow-[0_0_8px_#17baa4]">
+                      {notesCount}
+                    </span>
+                  )}
                 </span>
 
                 <span className="relative z-10 tracking-wide">{item.label}</span>

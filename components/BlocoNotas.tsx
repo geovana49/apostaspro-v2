@@ -18,15 +18,19 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('low');
     const [reminderDate, setReminderDate] = useState('');
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [showRemindersPopup, setShowRemindersPopup] = useState(false);
+    const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>(
+        'Notification' in window ? Notification.permission : 'denied'
+    );
 
     const emojis = ['🎰', '💰', '🔥', '⚠️', '✅', '❌', '⭐', '🎯', '💎', '🚀', '📌', '💡'];
 
-    useEffect(() => {
-        // Request notification permission on mount
-        if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission();
+    const handleRequestPermission = async () => {
+        if ('Notification' in window) {
+            const permission = await Notification.requestPermission();
+            setPermissionStatus(permission);
         }
-    }, []);
+    };
 
     // Check for reminders every minute
     useEffect(() => {
@@ -125,13 +129,53 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         <StickyNote size={32} className="text-primary" />
                         Bloco de Notas
                         {upcomingReminders.length > 0 && (
-                            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-[#090c19] text-[10px] font-black animate-pulse shadow-[0_0_15px_rgba(23,186,164,0.5)]">
-                                {upcomingReminders.length}
-                            </span>
+                            <div className="relative">
+                                <button
+                                    onClick={() => setShowRemindersPopup(!showRemindersPopup)}
+                                    className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-[#090c19] text-xs font-black animate-pulse shadow-[0_0_15px_rgba(23,186,164,0.5)] hover:scale-110 transition-transform"
+                                >
+                                    {upcomingReminders.length}
+                                </button>
+
+                                {showRemindersPopup && (
+                                    <div className="absolute top-10 left-0 w-64 bg-[#1a1f35] border border-white/10 rounded-2xl shadow-2xl z-[100] p-4 animate-in fade-in zoom-in-95 duration-200">
+                                        <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
+                                            <span className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-1">
+                                                <Bell size={10} /> Pendentes
+                                            </span>
+                                            <button onClick={() => setShowRemindersPopup(false)} className="text-gray-500 hover:text-white">
+                                                <Plus size={14} className="rotate-45" />
+                                            </button>
+                                        </div>
+                                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+                                            {upcomingReminders.map(rem => (
+                                                <div key={rem.id} className="bg-white/5 rounded-xl p-2 hover:bg-white/10 transition-colors cursor-pointer group">
+                                                    <div className="flex items-start gap-2">
+                                                        <span className="text-lg">{rem.emoji}</span>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-[10px] text-white font-medium truncate">{rem.content}</p>
+                                                            <p className="text-[9px] text-primary/70">{new Date(rem.reminderDate!).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </h1>
                     <p className="text-gray-400">Anote procedimentos, lembretes e tarefas rápidas</p>
                 </div>
+
+                {permissionStatus === 'default' && (
+                    <button
+                        onClick={handleRequestPermission}
+                        className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-yellow-500/20 transition-all animate-bounce"
+                    >
+                        <Bell size={14} /> Ativar Notificações
+                    </button>
+                )}
             </div>
 
             {/* Input Card */}
@@ -199,17 +243,17 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 </div>
 
                                 <div className="flex items-center gap-3 w-full md:w-auto">
-                                    <div className="flex flex-col gap-1 flex-1 md:flex-none">
-                                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest pl-1">Agendar Lembrete</span>
-                                        <div
-                                            className="relative h-9 cursor-pointer"
-                                            onClick={(e) => {
-                                                const input = e.currentTarget.querySelector('input');
-                                                if (input && 'showPicker' in input) {
-                                                    try { (input as any).showPicker(); } catch (err) { }
-                                                }
-                                            }}
-                                        >
+                                    <div
+                                        className="flex flex-col gap-1 flex-1 md:flex-none cursor-pointer group"
+                                        onClick={(e) => {
+                                            const input = e.currentTarget.querySelector('input');
+                                            if (input && 'showPicker' in input) {
+                                                try { (input as any).showPicker(); } catch (err) { }
+                                            }
+                                        }}
+                                    >
+                                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest pl-1 group-hover:text-primary transition-colors">Agendar Lembrete</span>
+                                        <div className="relative h-9">
                                             <input
                                                 type="datetime-local"
                                                 className="w-full h-full bg-[#090c19] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:ring-1 focus:ring-primary outline-none transition-all cursor-pointer"
