@@ -17,7 +17,7 @@ import {
 } from "firebase/firestore";
 import { ref, uploadBytesResumable, uploadString, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase";
-import { Bet, ExtraGain, AppSettings, Bookmaker, StatusItem, PromotionItem, OriginItem, CaixaAccount, CaixaMovement, CaixaCategory } from "../types";
+import { Bet, ExtraGain, AppSettings, Bookmaker, StatusItem, PromotionItem, OriginItem, CaixaAccount, CaixaMovement, CaixaCategory, NotepadNote } from "../types";
 
 // Helper to convert Firestore Timestamp to ISO string and vice-versa
 const convertDate = (data: any) => {
@@ -420,5 +420,22 @@ export const FirestoreService = {
             clearTimeout(safetyTimeout);
             window.location.reload();
         }
+    },
+
+    // --- Bloco de Notas ---
+    subscribeToNotes: (userId: string, callback: (notes: NotepadNote[], isSyncing: boolean) => void) => {
+        const q = query(collection(db, "users", userId, "notes"), orderBy("createdAt", "desc"));
+        return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
+            const notes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as NotepadNote));
+            callback(notes, snapshot.metadata.hasPendingWrites);
+        });
+    },
+
+    saveNote: async (userId: string, note: NotepadNote) => {
+        await setDoc(doc(db, "users", userId, "notes", note.id), note, { merge: true });
+    },
+
+    deleteNote: async (userId: string, noteId: string) => {
+        await deleteDoc(doc(db, "users", userId, "notes", noteId));
     }
 };

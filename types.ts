@@ -105,6 +105,7 @@ export enum Page {
   AI_ASSISTANT = 'aiAssistant',
   CALCULATORS = 'calculators',
   CAIXA = 'caixa',
+  NOTES = 'notes',
 }
 
 export interface CaixaAccount {
@@ -127,8 +128,20 @@ export interface CaixaMovement {
   fromAccountId?: string;
   toAccountId?: string;
   notes?: string;
-}export interface CaixaCategory {
+}
+
+export interface CaixaCategory {
   id: string;
   name: string;
   type: 'deposit' | 'withdraw';
+}
+
+export interface NotepadNote {
+  id: string;
+  content: string;
+  emoji: string;
+  priority: 'low' | 'medium' | 'high';
+  reminderDate?: string;
+  reminderEnabled: boolean;
+  createdAt: string;
 }

@@ -2,7 +2,7 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
 import { FirestoreService } from "./services/firestoreService";
-import { Page, Bet, ExtraGain, AppSettings, Bookmaker, StatusItem, PromotionItem, OriginItem, SettingsTab, User, CaixaAccount, CaixaMovement, CaixaCategory } from './types';
+import { Page, Bet, ExtraGain, AppSettings, Bookmaker, StatusItem, PromotionItem, OriginItem, SettingsTab, User, CaixaAccount, CaixaMovement, CaixaCategory, NotepadNote } from './types';
 import { INITIAL_BOOKMAKERS, INITIAL_STATUSES, INITIAL_PROMOTIONS, INITIAL_ORIGINS, DEFAULT_CAIXA_CATEGORIES } from './constants';
 import Layout from './components/Layout';
 import { Loader2, AlertCircle } from 'lucide-react';
@@ -16,6 +16,7 @@ const Settings = lazy(() => import('./components/Settings'));
 const LandingPage = lazy(() => import('./components/LandingPage'));
 const Calculators = lazy(() => import('./components/Calculators'));
 const Caixa = lazy(() => import('./components/Caixa'));
+const BlocoNotas = lazy(() => import('./components/BlocoNotas'));
 
 // A simplified loading component for page transitions
 const PageLoader = () => (
@@ -49,6 +50,7 @@ const App: React.FC = () => {
   const [caixaAccounts, setCaixaAccounts] = useState<CaixaAccount[]>([]);
   const [caixaMovements, setCaixaMovements] = useState<CaixaMovement[]>([]);
   const [caixaCategories, setCaixaCategories] = useState<CaixaCategory[]>([]);
+  const [notes, setNotes] = useState<NotepadNote[]>([]);
 
   // Current User
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -150,6 +152,7 @@ const App: React.FC = () => {
           caixaAccounts: false,
           caixaMovements: false,
           caixaCategories: false,
+          notes: false,
           manual: false
         };
 
@@ -240,6 +243,12 @@ const App: React.FC = () => {
           updateSyncStatus('caixaCategories', syncing);
         });
 
+        const unsubNotes = FirestoreService.subscribeToNotes(user.uid, (data, syncing) => {
+          console.log(`[Snapshot] Notes: ${data.length}`);
+          setNotes(data);
+          updateSyncStatus('notes', syncing);
+        });
+
         // Cleanup subscriptions on logout/unmount
         return () => {
           clearTimeout(loadingTimeout);
@@ -253,6 +262,7 @@ const App: React.FC = () => {
           unsubCaixaAccounts();
           unsubCaixaMovements();
           unsubCaixaCategories();
+          unsubNotes();
         };
       } else {
         // User is signed out
@@ -260,6 +270,7 @@ const App: React.FC = () => {
         setIsLoggedIn(false);
         setBets([]);
         setGains([]);
+        setNotes([]);
         setBookmakers(INITIAL_BOOKMAKERS);
         setStatuses(INITIAL_STATUSES);
         setPromotions(INITIAL_PROMOTIONS);
@@ -447,6 +458,13 @@ const App: React.FC = () => {
                   bookmakers={bookmakers}
                   categories={caixaCategories}
                   settings={settings}
+                />
+              )}
+
+              {activePage === Page.NOTES && (
+                <BlocoNotas
+                  currentUser={currentUser}
+                  notes={notes}
                 />
               )}
             </Suspense>
