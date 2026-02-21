@@ -659,6 +659,7 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
     const [icon, setIcon] = useState(editingAccount?.icon || '');
     const [isCustomType, setIsCustomType] = useState(false);
     const [customTypeName, setCustomTypeName] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
 
     const formatToBRL = (value: string) => {
         const numbers = value.replace(/\D/g, '');
@@ -695,17 +696,35 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
         }
     }, [editingAccount, isOpen]);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const numericBalance = balance ? parseInt(balance.replace(/\D/g, '')) : 0;
-        onSave({
-            name,
-            type: isCustomType ? customTypeName : type,
-            balance: numericBalance,
-            color,
-            bookmakerId: type === 'bookmaker' ? bookmakerId : undefined,
-            icon: icon || undefined
-        });
+        if (!name.trim()) {
+            return alert("Por favor, informe o nome da conta.");
+        }
+        if (isCustomType && !customTypeName.trim()) {
+            return alert("Por favor, informe o nome do tipo personalizado.");
+        }
+        if (type === 'bookmaker' && !bookmakerId) {
+            return alert("Por favor, selecione uma casa de aposta.");
+        }
+
+        setIsSaving(true);
+        try {
+            const numericBalance = balance ? parseInt(balance.replace(/\D/g, '')) : 0;
+            await onSave({
+                name,
+                type: isCustomType ? customTypeName : type,
+                balance: numericBalance,
+                color,
+                bookmakerId: type === 'bookmaker' ? bookmakerId : undefined,
+                icon: icon || undefined
+            });
+        } catch (error) {
+            console.error("Erro ao salvar conta:", error);
+            alert("Ocorreu um erro ao salvar a conta. Verifique sua conexão.");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -837,8 +856,10 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
                 </div>
 
                 <div className="flex gap-2 pt-4">
-                    <Button variant="neutral" className="flex-1" onClick={onClose}>Cancelar</Button>
-                    <Button type="submit" className="flex-1">Salvar Conta</Button>
+                    <Button variant="neutral" className="flex-1" onClick={onClose} disabled={isSaving}>Cancelar</Button>
+                    <Button type="submit" className="flex-1" disabled={isSaving}>
+                        {isSaving ? "Salvando..." : "Salvar Conta"}
+                    </Button>
                 </div>
             </form>
         </Modal>
