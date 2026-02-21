@@ -235,6 +235,7 @@ export const FirestoreService = {
         statuses: StatusItem[],
         promotions: PromotionItem[],
         origins: OriginItem[],
+        caixa_categories?: any[],
         settings: AppSettings
     }) => {
         const userDocRef = doc(db, "users", userId);
@@ -303,11 +304,14 @@ export const FirestoreService = {
         initialData.statuses.forEach(s => batch.set(doc(db, "users", userId, "statuses", s.id), s, { merge: true }));
         initialData.promotions.forEach(p => batch.set(doc(db, "users", userId, "promotions", p.id), p, { merge: true }));
         initialData.origins.forEach(o => batch.set(doc(db, "users", userId, "origins", o.id), o, { merge: true }));
+        if (initialData.caixa_categories) {
+            initialData.caixa_categories.forEach(c => batch.set(doc(db, "users", userId, "caixa_categories", c.id), c, { merge: true }));
+        }
         await batch.commit();
     },
 
     factoryReset: async (userId: string) => {
-        const collections = ["bets", "gains", "bookmakers", "statuses", "promotions", "origins", "settings"];
+        const collections = ["bets", "gains", "bookmakers", "statuses", "promotions", "origins", "settings", "caixa_accounts", "caixa_movements", "caixa_categories"];
         let batch = writeBatch(db);
         let operationCount = 0;
 

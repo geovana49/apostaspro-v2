@@ -3,11 +3,15 @@
 import { Bookmaker, StatusItem, PromotionItem, OriginItem } from './types';
 
 export const INITIAL_BOOKMAKERS: Bookmaker[] = [
-  { id: '1', name: 'Bet365', color: '#107c10' },
-  { id: '2', name: 'Betano', color: '#ea580c' },
-  { id: '3', name: 'Sportingbet', color: '#2563eb' },
-  { id: '4', name: 'Pinnacle', color: '#f97316' },
-  { id: '5', name: 'Betesporte', color: '#1e3a8a' },
+  { id: '1', name: 'Bet365', color: '#107c10', logo: 'https://www.google.com/s2/favicons?sz=64&domain=bet365.com' },
+  { id: '2', name: 'Betano', color: '#ea580c', logo: 'https://www.google.com/s2/favicons?sz=64&domain=betano.com' },
+  { id: '3', name: 'Sportingbet', color: '#2563eb', logo: 'https://www.google.com/s2/favicons?sz=64&domain=sportingbet.com' },
+  { id: '4', name: 'Pinnacle', color: '#f97316', logo: 'https://www.google.com/s2/favicons?sz=64&domain=pinnacle.com' },
+  { id: '5', name: 'Betfair', color: '#ffeb3b', logo: 'https://www.google.com/s2/favicons?sz=64&domain=betfair.com' },
+  { id: '6', name: 'KTO', color: '#ef4444', logo: 'https://www.google.com/s2/favicons?sz=64&domain=kto.com' },
+  { id: '7', name: 'Stake', color: '#1a1a1a', logo: 'https://www.google.com/s2/favicons?sz=64&domain=stake.com' },
+  { id: '8', name: 'Novibet', color: '#22d3ee', logo: 'https://www.google.com/s2/favicons?sz=64&domain=novibet.com' },
+  { id: '9', name: 'Superbet', color: '#e11d48', logo: 'https://www.google.com/s2/favicons?sz=64&domain=superbet.com' },
 ];
 
 export const INITIAL_STATUSES: StatusItem[] = [

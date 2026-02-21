@@ -3,7 +3,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
 import { FirestoreService } from "./services/firestoreService";
 import { Page, Bet, ExtraGain, AppSettings, Bookmaker, StatusItem, PromotionItem, OriginItem, SettingsTab, User, CaixaAccount, CaixaMovement, CaixaCategory } from './types';
-import { INITIAL_BOOKMAKERS, INITIAL_STATUSES, INITIAL_PROMOTIONS, INITIAL_ORIGINS } from './constants';
+import { INITIAL_BOOKMAKERS, INITIAL_STATUSES, INITIAL_PROMOTIONS, INITIAL_ORIGINS, DEFAULT_CAIXA_CATEGORIES } from './constants';
 import Layout from './components/Layout';
 import { Loader2, AlertCircle } from 'lucide-react';
 
@@ -106,6 +106,7 @@ const App: React.FC = () => {
           statuses: INITIAL_STATUSES,
           promotions: INITIAL_PROMOTIONS,
           origins: INITIAL_ORIGINS,
+          caixa_categories: DEFAULT_CAIXA_CATEGORIES,
           settings: {
             ...DEFAULT_SETTINGS,
             username: user.username,
