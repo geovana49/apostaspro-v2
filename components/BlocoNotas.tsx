@@ -156,19 +156,6 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 )}
                             </button>
 
-                            {(permissionStatus === 'default' || permissionStatus === 'denied') && (
-                                <button
-                                    onClick={handleRequestPermission}
-                                    className={`absolute left-12 top-0 h-10 whitespace-nowrap px-3 rounded-xl text-[10px] font-bold transition-all flex items-center gap-2 border shadow-lg ${permissionStatus === 'denied'
-                                        ? 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20'
-                                        : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500 hover:bg-yellow-500/20 animate-pulse'
-                                        }`}
-                                    title={permissionStatus === 'denied' ? 'Notificações bloqueadas! Clique para ver como ativar.' : 'Clique para ativar alertas'}
-                                >
-                                    {permissionStatus === 'denied' ? <BellOff size={14} /> : <Bell size={14} />}
-                                    <span>{permissionStatus === 'denied' ? 'Notificações Bloqueadas' : 'Ativar Notificações'}</span>
-                                </button>
-                            )}
 
                             {showRemindersPopup && (
                                 <div className="absolute top-12 left-0 w-72 bg-[#1a1f35] border border-white/10 rounded-2xl shadow-2xl z-[100] p-4 animate-in fade-in zoom-in-95 duration-200">
@@ -275,7 +262,21 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                         </button>
                                     </div>
 
-                                    <div className="flex items-center gap-3 w-full md:w-auto">
+                                    <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
+                                        {/* Notification Permission Button */}
+                                        {(permissionStatus === 'default' || permissionStatus === 'denied') && (
+                                            <button
+                                                onClick={handleRequestPermission}
+                                                className={`flex items-center gap-2 px-3 h-10 rounded-xl text-[10px] font-bold transition-all border shadow-lg whitespace-nowrap ${permissionStatus === 'denied'
+                                                    ? 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20'
+                                                    : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500 hover:bg-yellow-500/20 animate-pulse'
+                                                    }`}
+                                                title={permissionStatus === 'denied' ? 'Notificações bloqueadas! Clique para ver como ativar.' : 'Clique para ativar alertas'}
+                                            >
+                                                {permissionStatus === 'denied' ? <BellOff size={14} /> : <Bell size={14} />}
+                                                <span>{permissionStatus === 'denied' ? 'Notificações Bloqueadas' : 'Ativar Notificações'}</span>
+                                            </button>
+                                        )}
                                         <div className="flex flex-col gap-1 flex-1 md:flex-none relative">
                                             <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest pl-1">Agendar Lembrete</span>
                                             <div
