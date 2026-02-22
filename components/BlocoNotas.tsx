@@ -270,7 +270,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                             : 'Selecionar Data e Hora'
                                                         }
                                                     </span>
-                                                    <div className="relative" onClick={(e) => { e.stopPropagation(); setShowRemindersPopup(!showRemindersPopup); }}>
+                                                    <div className="relative ml-3" onClick={(e) => { e.stopPropagation(); setShowRemindersPopup(!showRemindersPopup); }}>
                                                         <Bell size={14} className={`transition-colors ${upcomingReminders.length > 0 ? 'text-primary animate-bounce' : 'text-gray-500 group-hover/picker:text-primary'}`} />
                                                         {upcomingReminders.length > 0 && (
                                                             <span className="absolute -top-2 -right-2 flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[#090c19] text-[8px] font-black shadow-[0_0_6px_#17baa4]">
