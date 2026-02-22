@@ -179,7 +179,7 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="p-6 border-primary/20 bg-gradient-to-br from-[#0d1421] to-[#090c19]">
+                <Card className="p-4 sm:p-6 border-primary/20 bg-gradient-to-br from-[#0d1421] to-[#090c19]">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="p-2 bg-primary/10 rounded-lg text-primary"><Wallet size={20} /></div>
                         <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Capital Total</span>
@@ -187,14 +187,14 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                     <MoneyDisplay
                         value={summary.total / 100}
                         privacyMode={settings.privacyMode}
-                        className="text-3xl font-bold text-white tracking-tight"
+                        className="text-2xl sm:text-3xl font-bold text-white tracking-tight"
                     />
                     <div className="mt-4 h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                         <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: '100%' }}></div>
                     </div>
                 </Card>
 
-                <Card className="p-6 border-emerald-500/20 bg-gradient-to-br from-[#0d1421] to-[#090c19]">
+                <Card className="p-4 sm:p-6 border-emerald-500/20 bg-gradient-to-br from-[#0d1421] to-[#090c19]">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-500"><Landmark size={20} /></div>
                         <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Bancos / Corretoras</span>
@@ -202,14 +202,14 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                     <MoneyDisplay
                         value={summary.bank / 100}
                         privacyMode={settings.privacyMode}
-                        className="text-3xl font-bold text-white tracking-tight"
+                        className="text-2xl sm:text-3xl font-bold text-white tracking-tight"
                     />
                     <div className="mt-4 h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                         <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000" style={{ width: summary.total > 0 ? `${(summary.bank / summary.total) * 100}%` : '0%' }}></div>
                     </div>
                 </Card>
 
-                <Card className="p-6 border-amber-500/20 bg-gradient-to-br from-[#0d1421] to-[#090c19]">
+                <Card className="p-4 sm:p-6 border-amber-500/20 bg-gradient-to-br from-[#0d1421] to-[#090c19]">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="p-2 bg-amber-500/10 rounded-lg text-amber-500"><Building2 size={20} /></div>
                         <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Casas de Apostas</span>
@@ -217,14 +217,14 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                     <MoneyDisplay
                         value={summary.bookmaker / 100}
                         privacyMode={settings.privacyMode}
-                        className="text-3xl font-bold text-white tracking-tight"
+                        className="text-2xl sm:text-3xl font-bold text-white tracking-tight"
                     />
                     <div className="mt-4 h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                         <div className="h-full bg-amber-500 rounded-full transition-all duration-1000" style={{ width: summary.total > 0 ? `${(summary.bookmaker / summary.total) * 100}%` : '0%' }}></div>
                     </div>
                 </Card>
 
-                <Card className="p-6 border-blue-500/20 bg-gradient-to-br from-[#0d1421] to-[#090c19]">
+                <Card className="p-4 sm:p-6 border-blue-500/20 bg-gradient-to-br from-[#0d1421] to-[#090c19]">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500"><CreditCard size={20} /></div>
                         <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Outras Contas</span>
@@ -232,7 +232,7 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                     <MoneyDisplay
                         value={summary.other / 100}
                         privacyMode={settings.privacyMode}
-                        className="text-3xl font-bold text-white tracking-tight"
+                        className="text-2xl sm:text-3xl font-bold text-white tracking-tight"
                     />
                     <div className="mt-4 h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                         <div className="h-full bg-blue-500 rounded-full transition-all duration-1000" style={{ width: summary.total > 0 ? `${(summary.other / summary.total) * 100}%` : '0%' }}></div>
@@ -283,7 +283,7 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
 
                         <div
                             id="bm-carousel"
-                            className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 px-1 no-scrollbar scroll-smooth"
+                            className="flex overflow-x-auto snap-x snap-mandatory gap-3 sm:gap-4 pb-4 px-1 no-scrollbar scroll-smooth"
                         >
                             {bookmakerBalances.map(bm => {
                                 const account = (accounts || []).find(a => a.bookmakerId === bm.id);

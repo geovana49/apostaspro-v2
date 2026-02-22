@@ -162,21 +162,23 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                 {/* Notification Status Button - Top Right */}
                 <div className="flex items-center gap-2">
                     {permissionStatus === 'granted' ? (
-                        <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[11px] font-bold bg-primary/10 border border-primary/20 text-primary shadow-lg shadow-primary/5 whitespace-nowrap">
+                        <div className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-[10px] sm:text-[11px] font-bold bg-primary/10 border border-primary/20 text-primary shadow-lg shadow-primary/5 whitespace-nowrap">
                             <Bell size={14} className="animate-pulse" />
-                            <span>Notificações Ativadas</span>
+                            <span className="hidden xs:inline">Notificações Ativadas</span>
+                            <span className="xs:hidden">Ativas</span>
                         </div>
                     ) : (permissionStatus === 'default' || permissionStatus === 'denied') && (
                         <button
                             onClick={handleRequestPermission}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[11px] font-bold transition-all border shadow-lg whitespace-nowrap ${permissionStatus === 'denied'
+                            className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-[10px] sm:text-[11px] font-bold transition-all border shadow-lg whitespace-nowrap ${permissionStatus === 'denied'
                                 ? 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20'
                                 : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500 hover:bg-yellow-500/20 animate-pulse'
                                 }`}
                             title={permissionStatus === 'denied' ? 'Notificações bloqueadas! Clique para ver como ativar.' : 'Clique para ativar alertas'}
                         >
                             {permissionStatus === 'denied' ? <BellOff size={14} /> : <Bell size={14} />}
-                            <span>{permissionStatus === 'denied' ? 'Notificações Bloqueadas' : 'Ativar Notificações'}</span>
+                            <span className="hidden xs:inline">{permissionStatus === 'denied' ? 'Notificações Bloqueadas' : 'Ativar Notificações'}</span>
+                            <span className="xs:hidden">{permissionStatus === 'denied' ? 'Bloqueadas' : 'Ativar'}</span>
                         </button>
                     )}
                 </div>
@@ -201,7 +203,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                 {
                     !isCollapsed && (
-                        <div className="p-6 pt-0 space-y-4">
+                        <div className="p-4 md:p-6 pt-0 space-y-4">
                             <div className="space-y-4">
                                 <textarea
                                     className="w-full bg-[#090c19] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all min-h-[100px] resize-none"
@@ -238,19 +240,19 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                     <div className="flex flex-wrap gap-2">
                                         <button
                                             onClick={() => setPriority('high')}
-                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${priority === 'high' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'text-gray-500 border-white/5 hover:bg-white/5'}`}
+                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all border ${priority === 'high' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'text-gray-500 border-white/5 hover:bg-white/5'}`}
                                         >
                                             <TriangleAlert size={14} /> Urgente
                                         </button>
                                         <button
                                             onClick={() => setPriority('medium')}
-                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${priority === 'medium' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'text-gray-500 border-white/5 hover:bg-white/5'}`}
+                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all border ${priority === 'medium' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'text-gray-500 border-white/5 hover:bg-white/5'}`}
                                         >
                                             <Star size={14} /> Importante
                                         </button>
                                         <button
                                             onClick={() => setPriority('low')}
-                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${priority === 'low' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'text-gray-500 border-white/5 hover:bg-white/5'}`}
+                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all border ${priority === 'low' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'text-gray-500 border-white/5 hover:bg-white/5'}`}
                                         >
                                             <StickyNote size={14} /> Normal
                                         </button>
