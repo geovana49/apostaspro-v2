@@ -162,34 +162,33 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         <p className="text-gray-500 text-xs sm:text-sm font-medium">Anote procedimentos e tarefas rápidas</p>
                     </div>
                 </div>
+            </div>
 
-                {/* Notification Status Button - Top Right */}
-                <div className="flex items-center gap-2 w-full sm:w-auto overflow-hidden">
+            {/* Input Card */}
+            <Card className="bg-gradient-to-br from-[#1a1f35] to-[#0d1425] border-gray-800/50 relative overflow-hidden">
+                {/* Notification Status Button - Responsive Position */}
+                <div className="absolute top-4 sm:static sm:top-auto right-4 sm:right-auto z-20">
                     {permissionStatus === 'granted' ? (
-                        <div className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-[10px] sm:text-[11px] font-bold bg-primary/10 border border-primary/20 text-primary shadow-lg shadow-primary/5 whitespace-nowrap">
-                            <Bell size={14} className="animate-pulse" />
+                        <div className="flex items-center gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl text-[9px] sm:text-[11px] font-bold bg-primary/10 border border-primary/20 text-primary shadow-lg shadow-primary/5 whitespace-nowrap">
+                            <Bell size={12} className="sm:size-[14px] animate-pulse" />
                             <span className="hidden xs:inline">Notificações Ativadas</span>
                             <span className="xs:hidden">Ativas</span>
                         </div>
                     ) : (permissionStatus === 'default' || permissionStatus === 'denied') && (
                         <button
                             onClick={handleRequestPermission}
-                            className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-[10px] sm:text-[11px] font-bold transition-all border shadow-lg whitespace-nowrap ${permissionStatus === 'denied'
+                            className={`flex items-center gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl text-[9px] sm:text-[11px] font-bold transition-all border shadow-lg whitespace-nowrap ${permissionStatus === 'denied'
                                 ? 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20'
                                 : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500 hover:bg-yellow-500/20 animate-pulse'
                                 }`}
                             title={permissionStatus === 'denied' ? 'Notificações bloqueadas! Clique para ver como ativar.' : 'Clique para ativar alertas'}
                         >
-                            {permissionStatus === 'denied' ? <BellOff size={14} /> : <Bell size={14} />}
+                            {permissionStatus === 'denied' ? <BellOff size={12} className="sm:size-[14px]" /> : <Bell size={12} className="sm:size-[14px]" />}
                             <span className="hidden xs:inline">{permissionStatus === 'denied' ? 'Notificações Bloqueadas' : 'Ativar Notificações'}</span>
                             <span className="xs:hidden">{permissionStatus === 'denied' ? 'Bloqueadas' : 'Ativar'}</span>
                         </button>
                     )}
                 </div>
-            </div>
-
-            {/* Input Card */}
-            <Card className="bg-gradient-to-br from-[#1a1f35] to-[#0d1425] border-gray-800/50">
                 <div className="flex flex-col space-y-1.5 p-6 pb-2">
                     <div className="flex items-center justify-between">
                         <div className="font-semibold tracking-tight text-white flex items-center gap-2 text-lg">
@@ -243,10 +242,10 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
                                     <div className="grid grid-cols-3 gap-2 w-full">
                                         <button
-                                            onClick={() => setPriority('low')}
-                                            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-1 sm:px-3 py-1.5 rounded-lg text-[9px] sm:text-xs font-bold transition-all border ${priority === 'low' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'text-gray-500 border-white/5 hover:bg-white/5'}`}
+                                            onClick={() => setPriority('high')}
+                                            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-1 sm:px-3 py-1.5 rounded-lg text-[9px] sm:text-xs font-bold transition-all border ${priority === 'high' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'text-gray-500 border-white/5 hover:bg-white/5'}`}
                                         >
-                                            <StickyNote size={12} className="sm:size-[14px]" /> Normal
+                                            <TriangleAlert size={12} className="sm:size-[14px]" /> Urgente
                                         </button>
                                         <button
                                             onClick={() => setPriority('medium')}
@@ -255,10 +254,10 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                             <Star size={12} className="sm:size-[14px]" /> Importante
                                         </button>
                                         <button
-                                            onClick={() => setPriority('high')}
-                                            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-1 sm:px-3 py-1.5 rounded-lg text-[9px] sm:text-xs font-bold transition-all border ${priority === 'high' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'text-gray-500 border-white/5 hover:bg-white/5'}`}
+                                            onClick={() => setPriority('low')}
+                                            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-1 sm:px-3 py-1.5 rounded-lg text-[9px] sm:text-xs font-bold transition-all border ${priority === 'low' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'text-gray-500 border-white/5 hover:bg-white/5'}`}
                                         >
-                                            <TriangleAlert size={12} className="sm:size-[14px]" /> Urgente
+                                            <StickyNote size={12} className="sm:size-[14px]" /> Normal
                                         </button>
                                     </div>
 
@@ -404,9 +403,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                             <Button
                                                 onClick={handleAddNote}
                                                 disabled={!content.trim()}
-                                                className="w-full bg-gradient-to-r from-primary to-[#10b981] text-[#05070e] font-black h-full px-6 rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+                                                className="w-full bg-gradient-to-r from-primary to-[#10b981] text-[#05070e] font-black h-full px-6 rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all text-xs uppercase tracking-wider flex items-center justify-center"
                                             >
-                                                <Plus size={20} strokeWidth={3} /> Salvar Anotação
+                                                <Plus size={18} className="mr-2" /> Salvar Anotação
                                             </Button>
                                         </div>
                                     </div>
@@ -530,52 +529,54 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                 )}
             </div>
             {/* Notification Blocked Guide Modal */}
-            {showBlockedGuide && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-sm bg-black/60">
-                    <Card className="max-w-md w-full bg-[#1a1f35] border-white/10 shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="p-6 space-y-4">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-red-500/10 rounded-xl">
-                                        <BellOff size={24} className="text-red-500" />
+            {
+                showBlockedGuide && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-sm bg-black/60">
+                        <Card className="max-w-md w-full bg-[#1a1f35] border-white/10 shadow-2xl animate-in zoom-in-95 duration-200">
+                            <div className="p-6 space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-red-500/10 rounded-xl">
+                                            <BellOff size={24} className="text-red-500" />
+                                        </div>
+                                        <h3 className="text-lg font-bold text-white">Notificações Bloqueadas</h3>
                                     </div>
-                                    <h3 className="text-lg font-bold text-white">Notificações Bloqueadas</h3>
+                                    <button onClick={() => setShowBlockedGuide(false)} className="text-gray-500 hover:text-white">
+                                        <X size={20} />
+                                    </button>
                                 </div>
-                                <button onClick={() => setShowBlockedGuide(false)} className="text-gray-500 hover:text-white">
-                                    <X size={20} />
-                                </button>
-                            </div>
 
-                            <div className="space-y-4 text-sm text-gray-400 leading-relaxed">
-                                <p>O seu navegador bloqueou as notificações para este site. Para receber alertas de lembretes, você precisa desbloquear manualmente:</p>
+                                <div className="space-y-4 text-sm text-gray-400 leading-relaxed">
+                                    <p>O seu navegador bloqueou as notificações para este site. Para receber alertas de lembretes, você precisa desbloquear manualmente:</p>
 
-                                <div className="bg-white/5 rounded-2xl p-4 border border-white/5 space-y-3">
-                                    <div className="flex items-start gap-3">
-                                        <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 font-bold text-xs">1</div>
-                                        <p>Clique no ícone de <span className="text-white font-bold inline-flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded">🔒 Cadeado</span> ao lado da URL na barra de endereços.</p>
-                                    </div>
-                                    <div className="flex items-start gap-3">
-                                        <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 font-bold text-xs">2</div>
-                                        <p>Encontre a opção <span className="text-white font-bold">Notificações</span>.</p>
-                                    </div>
-                                    <div className="flex items-start gap-3">
-                                        <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 font-bold text-xs">3</div>
-                                        <p>Mude para <span className="text-primary font-bold">Permitir</span> e recarregue a página.</p>
+                                    <div className="bg-white/5 rounded-2xl p-4 border border-white/5 space-y-3">
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 font-bold text-xs">1</div>
+                                            <p>Clique no ícone de <span className="text-white font-bold inline-flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded">🔒 Cadeado</span> ao lado da URL na barra de endereços.</p>
+                                        </div>
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 font-bold text-xs">2</div>
+                                            <p>Encontre a opção <span className="text-white font-bold">Notificações</span>.</p>
+                                        </div>
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 font-bold text-xs">3</div>
+                                            <p>Mude para <span className="text-primary font-bold">Permitir</span> e recarregue a página.</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <Button
-                                onClick={() => setShowBlockedGuide(false)}
-                                className="w-full bg-primary hover:bg-primary-dark text-[#090c19] font-black h-12 rounded-xl"
-                            >
-                                Entendi, vou ajustar
-                            </Button>
-                        </div>
-                    </Card>
-                </div>
-            )}
-        </div>
+                                <Button
+                                    onClick={() => setShowBlockedGuide(false)}
+                                    className="w-full bg-primary hover:bg-primary-dark text-[#090c19] font-black h-12 rounded-xl"
+                                >
+                                    Entendi, vou ajustar
+                                </Button>
+                            </div>
+                        </Card>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 
