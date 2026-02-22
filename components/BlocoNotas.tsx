@@ -150,17 +150,21 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
-                        <StickyNote size={32} className="text-primary" />
-                        Bloco de Notas
-                    </h1>
-                    <p className="text-gray-400">Anote procedimentos, lembretes e tarefas rápidas</p>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <div className="p-2 bg-primary/10 rounded-xl shrink-0">
+                        <StickyNote size={24} className="text-primary sm:size-8" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                            Bloco de Notas
+                        </h1>
+                        <p className="text-gray-500 text-xs sm:text-sm font-medium">Anote procedimentos e tarefas rápidas</p>
+                    </div>
                 </div>
 
                 {/* Notification Status Button - Top Right */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto overflow-hidden">
                     {permissionStatus === 'granted' ? (
                         <div className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-[10px] sm:text-[11px] font-bold bg-primary/10 border border-primary/20 text-primary shadow-lg shadow-primary/5 whitespace-nowrap">
                             <Bell size={14} className="animate-pulse" />
@@ -258,14 +262,14 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                         </button>
                                     </div>
 
-                                    <div className="flex items-center gap-3 w-full md:w-auto">
-                                        <div className="flex flex-col gap-1 flex-1 md:flex-none relative">
+                                    <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 w-full">
+                                        <div className="flex flex-col gap-1 flex-1 relative">
                                             <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest pl-1">Agendar Lembrete</span>
                                             <div
-                                                className="relative h-10 cursor-pointer group/picker"
+                                                className="relative h-11 sm:h-10 cursor-pointer group/picker"
                                                 onClick={() => setShowDatePicker(!showDatePicker)}
                                             >
-                                                <div className="w-full h-full bg-[#090c19] border border-white/10 rounded-xl px-4 flex items-center justify-between text-xs text-white group-hover/picker:border-primary/50 transition-all shadow-lg overflow-hidden min-w-[180px]">
+                                                <div className="w-full h-full bg-[#090c19] border border-white/10 rounded-xl px-4 flex items-center justify-between text-xs text-white group-hover/picker:border-primary/50 transition-all shadow-lg overflow-hidden md:min-w-[180px]">
                                                     <span className={reminderDate ? 'text-white font-bold' : 'text-gray-500'}>
                                                         {reminderDate
                                                             ? new Date(reminderDate).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
