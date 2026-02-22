@@ -243,10 +243,10 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
                                     <div className="flex flex-wrap gap-2">
                                         <button
-                                            onClick={() => setPriority('high')}
-                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all border ${priority === 'high' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'text-gray-500 border-white/5 hover:bg-white/5'}`}
+                                            onClick={() => setPriority('low')}
+                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all border ${priority === 'low' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'text-gray-500 border-white/5 hover:bg-white/5'}`}
                                         >
-                                            <TriangleAlert size={14} /> Urgente
+                                            <StickyNote size={14} /> Normal
                                         </button>
                                         <button
                                             onClick={() => setPriority('medium')}
@@ -255,10 +255,10 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                             <Star size={14} /> Importante
                                         </button>
                                         <button
-                                            onClick={() => setPriority('low')}
-                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all border ${priority === 'low' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'text-gray-500 border-white/5 hover:bg-white/5'}`}
+                                            onClick={() => setPriority('high')}
+                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all border ${priority === 'high' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'text-gray-500 border-white/5 hover:bg-white/5'}`}
                                         >
-                                            <StickyNote size={14} /> Normal
+                                            <TriangleAlert size={14} /> Urgente
                                         </button>
                                     </div>
 
@@ -404,9 +404,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                             <Button
                                                 onClick={handleAddNote}
                                                 disabled={!content.trim()}
-                                                className="bg-gradient-to-r from-primary to-[#10b981] text-[#05070e] font-black h-10 px-4 sm:px-6 rounded-xl shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-95 transition-all text-xs uppercase tracking-wider"
+                                                className="w-full bg-gradient-to-r from-primary to-[#10b981] text-[#05070e] font-black h-full px-6 rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2"
                                             >
-                                                <Plus size={18} className="mr-1.5" /> Salvar Anotação
+                                                <Plus size={20} strokeWidth={3} /> Salvar Anotação
                                             </Button>
                                         </div>
                                     </div>
