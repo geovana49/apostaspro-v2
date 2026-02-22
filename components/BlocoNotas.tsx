@@ -221,7 +221,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                 key={e}
                                                 onClick={() => setSelectedEmoji(e)}
                                                 className={`w-11 h-11 shrink-0 flex items-center justify-center rounded-[18px] text-xl transition-all duration-300 ${selectedEmoji === e
-                                                    ? 'bg-primary text-white shadow-[0_0_15px_rgba(23,186,164,0.4)] scale-110 border-primary'
+                                                    ? 'bg-primary/20 text-white shadow-[0_0_20px_rgba(23,186,164,0.2)] scale-110 border-primary/50'
                                                     : 'bg-white/5 border border-white/10 text-gray-400 hover:bg-white/10 hover:border-white/20 hover:scale-105'
                                                     } border backdrop-blur-md`}
                                             >
