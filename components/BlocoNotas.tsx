@@ -241,24 +241,24 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 </div>
 
                                 <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-                                    <div className="flex flex-wrap gap-2">
+                                    <div className="grid grid-cols-3 gap-2 w-full">
                                         <button
                                             onClick={() => setPriority('low')}
-                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all border ${priority === 'low' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'text-gray-500 border-white/5 hover:bg-white/5'}`}
+                                            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-1 sm:px-3 py-1.5 rounded-lg text-[9px] sm:text-xs font-bold transition-all border ${priority === 'low' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'text-gray-500 border-white/5 hover:bg-white/5'}`}
                                         >
-                                            <StickyNote size={14} /> Normal
+                                            <StickyNote size={12} className="sm:size-[14px]" /> Normal
                                         </button>
                                         <button
                                             onClick={() => setPriority('medium')}
-                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all border ${priority === 'medium' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'text-gray-500 border-white/5 hover:bg-white/5'}`}
+                                            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-1 sm:px-3 py-1.5 rounded-lg text-[9px] sm:text-xs font-bold transition-all border ${priority === 'medium' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'text-gray-500 border-white/5 hover:bg-white/5'}`}
                                         >
-                                            <Star size={14} /> Importante
+                                            <Star size={12} className="sm:size-[14px]" /> Importante
                                         </button>
                                         <button
                                             onClick={() => setPriority('high')}
-                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all border ${priority === 'high' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'text-gray-500 border-white/5 hover:bg-white/5'}`}
+                                            className={`flex items-center justify-center gap-1.5 sm:gap-2 px-1 sm:px-3 py-1.5 rounded-lg text-[9px] sm:text-xs font-bold transition-all border ${priority === 'high' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'text-gray-500 border-white/5 hover:bg-white/5'}`}
                                         >
-                                            <TriangleAlert size={14} /> Urgente
+                                            <TriangleAlert size={12} className="sm:size-[14px]" /> Urgente
                                         </button>
                                     </div>
 
