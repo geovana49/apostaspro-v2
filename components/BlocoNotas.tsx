@@ -400,7 +400,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                             <Button
                                                 onClick={handleAddNote}
                                                 disabled={!content.trim()}
-                                                className="bg-gradient-to-r from-primary to-[#10b981] text-[#05070e] font-black h-10 px-6 rounded-xl shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-95 transition-all text-xs uppercase tracking-wider"
+                                                className="bg-gradient-to-r from-primary to-[#10b981] text-[#05070e] font-black h-10 px-4 sm:px-6 rounded-xl shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-95 transition-all text-xs uppercase tracking-wider"
                                             >
                                                 <Plus size={18} className="mr-1.5" /> Salvar Anotação
                                             </Button>

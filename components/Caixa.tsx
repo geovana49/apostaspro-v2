@@ -159,20 +159,24 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
         <div className="space-y-8 animate-in fade-in duration-700">
 
             {/* Header & Actions */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-                        <span className="p-2 bg-primary/10 rounded-lg"><Wallet className="text-primary" /></span>
-                        Controle de Caixa
-                    </h1>
-                    <p className="text-gray-500 text-sm mt-1 font-medium">Gerencie seu capital em operação</p>
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                <div className="flex items-center gap-3 w-full lg:w-auto">
+                    <div className="p-1.5 sm:p-2 bg-primary/10 rounded-xl">
+                        <Wallet className="text-primary w-5 h-5 sm:w-6 sm:h-6" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                            Controle de Caixa
+                        </h1>
+                        <p className="text-gray-500 text-[10px] sm:text-xs font-medium uppercase tracking-widest mt-0.5">Gerencie seu capital em operação</p>
+                    </div>
                 </div>
-                <div className="flex gap-2 w-full sm:w-auto">
-                    <Button variant="outline" className="flex-1 sm:flex-none" onClick={() => { setEditingAccount(null); setIsAccountModalOpen(true); }}>
-                        <Plus size={18} /> Nova Conta
+                <div className="grid grid-cols-1 sm:flex sm:flex-row gap-2 w-full lg:w-auto">
+                    <Button variant="outline" className="h-11 sm:h-10 text-xs font-bold" onClick={() => { setEditingAccount(null); setIsAccountModalOpen(true); }}>
+                        <Plus size={16} className="mr-1" /> Nova Conta
                     </Button>
-                    <Button className="flex-1 sm:flex-none" onClick={() => { setMovementType('deposit'); setIsMovementModalOpen(true); }}>
-                        <TrendingUp size={18} /> Nova Movimentação
+                    <Button className="h-11 sm:h-10 text-xs font-bold shadow-lg shadow-primary/20" onClick={() => { setMovementType('deposit'); setIsMovementModalOpen(true); }}>
+                        <TrendingUp size={16} className="mr-1" /> Nova Movimentação
                     </Button>
                 </div>
             </div>
