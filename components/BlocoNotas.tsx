@@ -35,13 +35,20 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
     const handleRequestPermission = async () => {
         if ('Notification' in window) {
-            const permission = await Notification.requestPermission();
-            setPermissionStatus(permission);
+            try {
+                const permission = await Notification.requestPermission();
+                setPermissionStatus(permission);
 
-            if (permission === 'denied') {
-                alert('As notificações estão bloqueadas no seu navegador. Para ativar, clique no ícone de cadeado na barra de endereços (ao lado do link do site) e mude Notificações para Permitir.');
-            } else if (permission === 'granted') {
-                new Notification('Bloco de Notas', { body: 'Notificações ativadas com sucesso! 🎉' });
+                if (permission === 'denied') {
+                    alert('⚠️ Notificações Bloqueadas\n\nPara ativar, clique no ícone de "Cadeado" ao lado do link do site na barra de endereços e altere "Notificações" para "Permitir".');
+                } else if (permission === 'granted') {
+                    new Notification('Apostas Pro', {
+                        body: 'Notificações ativadas com sucesso! 🎉',
+                        icon: '/favicon.png'
+                    });
+                }
+            } catch (error) {
+                console.error('Error requesting notification permission:', error);
             }
         }
     };
@@ -200,19 +207,23 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                                 {/* Emoji Carousel */}
                                 <div className="relative group/carousel">
-                                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none scroll-smooth" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                                    <div className="flex gap-2.5 overflow-x-auto pb-3 pt-1 scrollbar-none scroll-smooth px-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                                         {emojis.map(e => (
                                             <button
                                                 key={e}
                                                 onClick={() => setSelectedEmoji(e)}
-                                                className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl text-lg transition-all ${selectedEmoji === e ? 'bg-primary/20 border-primary ring-1 ring-primary scale-110' : 'bg-white/5 border border-white/10 hover:bg-white/10 hover:scale-105'}`}
+                                                className={`w-11 h-11 shrink-0 flex items-center justify-center rounded-[18px] text-xl transition-all duration-300 ${selectedEmoji === e
+                                                    ? 'bg-primary text-white shadow-[0_0_15px_rgba(23,186,164,0.4)] scale-110 border-primary'
+                                                    : 'bg-white/5 border border-white/10 text-gray-400 hover:bg-white/10 hover:border-white/20 hover:scale-105'
+                                                    } border backdrop-blur-md`}
                                             >
                                                 {e}
                                             </button>
                                         ))}
                                     </div>
                                     {/* Fade edges */}
-                                    <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-[#1a1f35] to-transparent pointer-events-none" />
+                                    <div className="absolute left-0 top-0 bottom-3 w-4 bg-gradient-to-r from-[#1a1f35] to-transparent pointer-events-none z-10" />
+                                    <div className="absolute right-0 top-0 bottom-3 w-12 bg-gradient-to-l from-[#1a1f35] via-[#1a1f35]/80 to-transparent pointer-events-none z-10" />
                                 </div>
 
                                 <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
@@ -238,55 +249,6 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                     </div>
 
                                     <div className="flex items-center gap-3 w-full md:w-auto">
-                                        {/* Bell Icon - Reminders */}
-                                        <div className="relative flex items-end pt-5">
-                                            <button
-                                                onClick={() => setShowRemindersPopup(!showRemindersPopup)}
-                                                className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all relative ${upcomingReminders.length > 0 ? 'bg-primary/10 text-primary shadow-[0_0_15px_rgba(23,186,164,0.2)]' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
-                                            >
-                                                <Bell size={20} className={upcomingReminders.length > 0 ? 'animate-bounce' : ''} />
-                                                {upcomingReminders.length > 0 && (
-                                                    <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 rounded-full bg-primary text-[#090c19] text-[10px] font-black shadow-[0_0_8px_#17baa4]">
-                                                        {upcomingReminders.length}
-                                                    </span>
-                                                )}
-                                            </button>
-
-                                            {showRemindersPopup && (
-                                                <div className="absolute bottom-12 right-0 w-72 bg-[#1a1f35] border border-white/10 rounded-2xl shadow-2xl z-[100] p-4 animate-in fade-in zoom-in-95 duration-200">
-                                                    <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
-                                                        <span className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-1">
-                                                            <Bell size={10} /> {upcomingReminders.length > 0 ? 'Lembretes Agendados' : 'Notificações'}
-                                                        </span>
-                                                        <button onClick={() => setShowRemindersPopup(false)} className="text-gray-500 hover:text-white transition-colors">
-                                                            <X size={14} />
-                                                        </button>
-                                                    </div>
-                                                    <div className="space-y-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
-                                                        {upcomingReminders.length > 0 ? (
-                                                            upcomingReminders.map(rem => (
-                                                                <div key={rem.id} className="bg-white/5 rounded-xl p-3 border border-white/5 hover:border-primary/30 transition-all cursor-pointer group">
-                                                                    <div className="flex items-start gap-2">
-                                                                        <span className="text-xl shrink-0 group-hover:scale-110 transition-transform">{rem.emoji}</span>
-                                                                        <div className="flex-1 min-w-0">
-                                                                            <p className="text-xs text-white font-bold truncate mb-0.5">{rem.content}</p>
-                                                                            <p className="text-[10px] text-primary/70 font-medium">
-                                                                                {new Date(rem.reminderDate!).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                                                                            </p>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            ))
-                                                        ) : (
-                                                            <div className="py-8 text-center space-y-2">
-                                                                <BellOff size={24} className="mx-auto text-gray-600 opacity-30" />
-                                                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Nenhum lembrete agendado</p>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
                                         <div className="flex flex-col gap-1 flex-1 md:flex-none relative">
                                             <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest pl-1">Agendar Lembrete</span>
                                             <div
@@ -300,7 +262,49 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                             : 'Selecionar Data e Hora'
                                                         }
                                                     </span>
-                                                    <Calendar size={14} className="text-gray-500 group-hover/picker:text-primary transition-colors" />
+                                                    <div className="relative" onClick={(e) => { e.stopPropagation(); setShowRemindersPopup(!showRemindersPopup); }}>
+                                                        <Bell size={14} className={`transition-colors ${upcomingReminders.length > 0 ? 'text-primary animate-bounce' : 'text-gray-500 group-hover/picker:text-primary'}`} />
+                                                        {upcomingReminders.length > 0 && (
+                                                            <span className="absolute -top-2 -right-2 flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[#090c19] text-[8px] font-black shadow-[0_0_6px_#17baa4]">
+                                                                {upcomingReminders.length}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {/* Reminders Popup */}
+                                                    {showRemindersPopup && (
+                                                        <div className="absolute bottom-12 right-0 w-72 bg-[#1a1f35] border border-white/10 rounded-2xl shadow-2xl z-[100] p-4 animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+                                                            <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
+                                                                <span className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-1">
+                                                                    <Bell size={10} /> {upcomingReminders.length > 0 ? 'Lembretes Agendados' : 'Notificações'}
+                                                                </span>
+                                                                <button onClick={(e) => { e.stopPropagation(); setShowRemindersPopup(false); }} className="text-gray-500 hover:text-white transition-colors">
+                                                                    <X size={14} />
+                                                                </button>
+                                                            </div>
+                                                            <div className="space-y-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+                                                                {upcomingReminders.length > 0 ? (
+                                                                    upcomingReminders.map(rem => (
+                                                                        <div key={rem.id} className="bg-white/5 rounded-xl p-3 border border-white/5 hover:border-primary/30 transition-all cursor-pointer group">
+                                                                            <div className="flex items-start gap-2">
+                                                                                <span className="text-xl shrink-0 group-hover:scale-110 transition-transform">{rem.emoji}</span>
+                                                                                <div className="flex-1 min-w-0">
+                                                                                    <p className="text-xs text-white font-bold truncate mb-0.5">{rem.content}</p>
+                                                                                    <p className="text-[10px] text-primary/70 font-medium">
+                                                                                        {new Date(rem.reminderDate!).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))
+                                                                ) : (
+                                                                    <div className="py-8 text-center space-y-2">
+                                                                        <BellOff size={24} className="mx-auto text-gray-600 opacity-30" />
+                                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Nenhum lembrete agendado</p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
 
                                                 {showDatePicker && (
@@ -439,13 +443,13 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 'bg-gradient-to-b from-blue-500 to-blue-900 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
                             }`} />
 
-                        <div className="flex gap-4 md:gap-8 items-start relative">
-                            <div className="relative shrink-0 ml-4 h-full flex items-center justify-center pt-2">
-                                <div className="text-3xl bg-white/5 w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center border border-white/10 group-hover:scale-105 transition-all duration-500 shadow-xl group-hover:border-primary/20 bg-gradient-to-br from-white/5 to-transparent">
+                        <div className="flex gap-4 md:gap-8 items-start relative pb-2">
+                            <div className="relative shrink-0 ml-5 h-full flex items-center justify-center pt-2">
+                                <div className="text-3xl bg-gradient-to-br from-white/10 to-transparent w-14 h-14 md:w-16 md:h-16 rounded-[22px] flex items-center justify-center border border-white/10 group-hover:scale-110 transition-all duration-500 shadow-2xl group-hover:border-primary/40 backdrop-blur-sm">
                                     {note.emoji}
                                 </div>
                                 {note.reminderEnabled && note.reminderDate && (
-                                    <div className="absolute top-0 -right-1 w-6 h-6 rounded-lg bg-primary text-[#090c19] flex items-center justify-center shadow-lg animate-pulse ring-2 ring-[#121625]">
+                                    <div className="absolute top-0 -right-1 w-6 h-6 rounded-lg bg-primary text-[#090c19] flex items-center justify-center shadow-[0_0_10px_#17baa4] animate-pulse ring-2 ring-[#121625]">
                                         <Bell size={12} strokeWidth={3} />
                                     </div>
                                 )}
