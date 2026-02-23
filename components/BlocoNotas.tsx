@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     StickyNote, Trash2, Plus, Bell, BellOff, ChevronUp, ChevronDown,
-    TriangleAlert, Star, Check, Calendar, Clock, X, Search, PlusCircle
+    TriangleAlert, Star, Check, Calendar, Clock, X, Search, PenLine
 } from 'lucide-react';
 import { User, NotepadNote } from '../types';
 import { FirestoreService } from '../services/firestoreService';
@@ -191,13 +191,13 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                 {/* Responsive Header Container */}
                 {/* Compact Header for Input Card - Just the collapse toggle */}
                 <div className="flex items-center justify-between px-4 sm:px-6 pt-6 pb-2 relative z-20">
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/5 rounded-xl shadow-inner backdrop-blur-sm">
-                        <PlusCircle size={14} className="text-primary" />
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/5 rounded-xl backdrop-blur-sm">
+                        <PenLine size={14} className="text-primary" />
                         <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest leading-none">Nova Anotação</span>
                     </div>
                     <button
                         onClick={() => setIsCollapsed(!isCollapsed)}
-                        className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all flex items-center justify-center bg-white/5 border border-white/5 sm:bg-transparent sm:border-none shadow-sm"
+                        className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all flex items-center justify-center sm:bg-transparent sm:border-none"
                     >
                         {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
                     </button>
