@@ -24,6 +24,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [tempDate, setTempDate] = useState(new Date().toISOString().split('T')[0]);
     const [tempTime, setTempTime] = useState('12:00');
     const [showBlockedGuide, setShowBlockedGuide] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
     const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>(
         'Notification' in window ? Notification.permission : 'denied'
     );
@@ -165,47 +166,81 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
             </div>
 
             {/* Input Card */}
-            <Card className="bg-gradient-to-br from-[#1a1f35] to-[#0d1425] border-gray-800/50 relative overflow-hidden pb-4">
-                {/* Header Container - Realigned Top Layout */}
-                <div className="flex flex-col p-6 pt-8 pb-4 relative z-20 gap-1">
-                    {/* Top Row: Title and Notification Button Aligned Perfectly */}
-                    <div className="flex items-center justify-between gap-4 w-full">
-                        <div className="flex items-center gap-2 min-w-0">
-                            <StickyNote size={20} className="text-yellow-400 shrink-0" />
-                            <span className="font-semibold tracking-tight text-white text-base sm:text-lg whitespace-nowrap">Bloco de Notas</span>
+            <Card className="bg-gradient-to-br from-[#1a1f35] to-[#0d1425] border-gray-800/50 relative overflow-hidden pb-4 transition-all duration-300">
+                {/* Responsive Header Container */}
+                <div className="flex flex-col relative z-20">
+                    {/* Mobile Header (< sm) */}
+                    <div className="sm:hidden flex flex-col p-6 pt-8 pb-4 gap-1">
+                        <div className="flex items-center justify-between gap-4 w-full">
+                            <div className="flex items-center gap-2 min-w-0">
+                                <StickyNote size={20} className="text-yellow-400 shrink-0" />
+                                <span className="font-semibold tracking-tight text-white text-[15px] xs:text-base whitespace-nowrap">Bloco de Notas</span>
+                            </div>
+                            <div className="shrink-0">
+                                {permissionStatus === 'granted' ? (
+                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-bold bg-primary/10 border border-primary/20 text-primary shadow-lg shadow-primary/5">
+                                        <Bell size={13} className="animate-pulse" />
+                                        <span>Ativas</span>
+                                    </div>
+                                ) : (permissionStatus === 'default' || permissionStatus === 'denied') && (
+                                    <button
+                                        onClick={handleRequestPermission}
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all border shadow-lg ${permissionStatus === 'denied'
+                                            ? 'bg-red-500/10 border-red-500/20 text-red-400'
+                                            : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500'
+                                            }`}
+                                    >
+                                        <Bell size={14} />
+                                        <span>{permissionStatus === 'denied' ? 'Bloqueadas' : 'Ativar'}</span>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex justify-end w-full pr-1">
+                            <button
+                                onClick={() => setIsCollapsed(!isCollapsed)}
+                                className="p-1 rounded-lg text-gray-500 transition-all"
+                            >
+                                {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Desktop Header (>= sm) - Restored original look */}
+                    <div className="hidden sm:flex items-center justify-between p-6">
+                        <div className="flex items-center gap-3">
+                            <StickyNote size={24} className="text-yellow-400" />
+                            <div>
+                                <h3 className="text-lg font-bold text-white leading-none">Bloco de Notas</h3>
+                                <p className="text-[10px] text-gray-500 font-medium mt-1">Anote procedimentos e tarefas rápidas</p>
+                            </div>
                         </div>
 
-                        <div className="shrink-0">
+                        <div className="flex items-center gap-3">
                             {permissionStatus === 'granted' ? (
-                                <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[10px] sm:text-[11px] font-bold bg-primary/10 border border-primary/20 text-primary shadow-lg shadow-primary/5 whitespace-nowrap">
-                                    <Bell size={13} className="sm:size-[14px] animate-pulse" />
-                                    <span className="hidden xs:inline">Notificações Ativadas</span>
-                                    <span className="xs:hidden">Ativas</span>
+                                <div className="flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-bold bg-primary/10 border border-primary/20 text-primary">
+                                    <Bell size={14} className="animate-pulse" />
+                                    <span>Notificações Ativadas</span>
                                 </div>
                             ) : (permissionStatus === 'default' || permissionStatus === 'denied') && (
                                 <button
                                     onClick={handleRequestPermission}
-                                    className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[10px] sm:text-[11px] font-bold transition-all border shadow-lg whitespace-nowrap ${permissionStatus === 'denied'
-                                        ? 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20'
-                                        : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500 hover:bg-yellow-500/20 animate-pulse'
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-bold transition-all border ${permissionStatus === 'denied'
+                                        ? 'bg-red-500/10 border-red-500/20 text-red-400'
+                                        : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500 animate-pulse'
                                         }`}
                                 >
-                                    {permissionStatus === 'denied' ? <BellOff size={14} className="sm:size-[15px]" /> : <Bell size={14} className="sm:size-[15px]" />}
-                                    <span className="hidden xs:inline">{permissionStatus === 'denied' ? 'Bloqueadas' : 'Ativar Notificações'}</span>
-                                    <span className="xs:hidden">{permissionStatus === 'denied' ? 'Bloqueadas' : 'Ativar'}</span>
+                                    <Bell size={14} />
+                                    <span>{permissionStatus === 'denied' ? 'Notificações Bloqueadas' : 'Ativar Notificações'}</span>
                                 </button>
                             )}
+                            <button
+                                onClick={() => setIsCollapsed(!isCollapsed)}
+                                className="p-2 rounded-xl text-gray-500 hover:text-white hover:bg-white/5 transition-all"
+                            >
+                                {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+                            </button>
                         </div>
-                    </div>
-
-                    {/* Bottom Row: Small Chevron below the Notification Button */}
-                    <div className="flex justify-end w-full pr-1">
-                        <button
-                            onClick={() => setIsCollapsed(!isCollapsed)}
-                            className="p-1 rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-all"
-                        >
-                            {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-                        </button>
                     </div>
                 </div>
 
@@ -419,7 +454,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         </div>
                     )
                 }
-            </Card >
+            </Card>
 
             {/* Upcoming Reminders Section */}
             {
@@ -451,137 +486,153 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                 )
             }
 
-            {/* Notes List */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-20">
-                {notes.map((note) => (
-                    <Card key={note.id} className="bg-[#121625]/80 backdrop-blur-sm border-white/5 p-4 md:p-6 group relative overflow-hidden transition-all hover:bg-[#121625] hover:border-primary/20 hover:translate-y-[-2px] duration-300">
-                        {/* Priority Neon Active Border */}
-                        <div className={`absolute top-0 left-0 w-1 h-full ${note.priority === 'high' ? 'bg-gradient-to-b from-red-500 to-red-900 shadow-[0_0_10px_rgba(239,68,68,0.5)]' :
-                            note.priority === 'medium' ? 'bg-gradient-to-b from-yellow-500 to-yellow-900 shadow-[0_0_10px_rgba(234,179,8,0.5)]' :
-                                'bg-gradient-to-b from-blue-500 to-blue-900 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
-                            }`} />
+            {/* Search Bar & Notes List Area */}
+            <div className="space-y-4">
+                <div className="relative group">
+                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                        <Plus className="w-4 h-4 text-gray-500 group-focus-within:text-primary transition-colors rotate-45" />
+                    </div>
+                    <input
+                        type="search"
+                        placeholder="Pesquisar anotações..."
+                        className="w-full bg-[#1a1f35]/50 border border-white/5 rounded-2xl pl-11 pr-4 h-12 text-sm text-white focus:outline-none focus:border-primary/50 focus:bg-[#1a1f35] transition-all backdrop-blur-sm"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
 
-                        <div className="flex gap-4 md:gap-8 items-start relative pb-2">
-                            <div className="relative shrink-0 ml-5 h-full flex items-center justify-center pt-2">
-                                <div className="text-3xl bg-gradient-to-br from-white/10 to-transparent w-14 h-14 md:w-16 md:h-16 rounded-[22px] flex items-center justify-center border border-white/10 group-hover:scale-110 transition-all duration-500 shadow-2xl group-hover:border-primary/40 backdrop-blur-sm">
-                                    {note.emoji}
-                                </div>
-                                {note.reminderEnabled && note.reminderDate && (
-                                    <div className="absolute top-0 -right-1 w-6 h-6 rounded-lg bg-primary text-[#090c19] flex items-center justify-center shadow-[0_0_10px_#17baa4] animate-pulse ring-2 ring-[#121625]">
-                                        <Bell size={12} strokeWidth={3} />
+                {/* Notes List */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-20">
+                    {notes
+                        .filter(note => note.content.toLowerCase().includes(searchTerm.toLowerCase()))
+                        .map((note) => (
+                            <Card key={note.id} className="bg-[#121625]/80 backdrop-blur-sm border-white/5 p-4 md:p-6 group relative overflow-hidden transition-all hover:bg-[#121625] hover:border-primary/20 hover:translate-y-[-2px] duration-300">
+                                {/* Priority Neon Active Border */}
+                                <div className={`absolute top-0 left-0 w-1 h-full ${note.priority === 'high' ? 'bg-gradient-to-b from-red-500 to-red-900 shadow-[0_0_10px_rgba(239,68,68,0.5)]' :
+                                    note.priority === 'medium' ? 'bg-gradient-to-b from-yellow-500 to-yellow-900 shadow-[0_0_10px_rgba(234,179,8,0.5)]' :
+                                        'bg-gradient-to-b from-blue-500 to-blue-900 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
+                                    }`} />
+
+                                <div className="flex gap-4 md:gap-8 items-start relative pb-2">
+                                    <div className="relative shrink-0 ml-5 h-full flex items-center justify-center pt-2">
+                                        <div className="text-3xl bg-gradient-to-br from-white/10 to-transparent w-14 h-14 md:w-16 md:h-16 rounded-[22px] flex items-center justify-center border border-white/10 group-hover:scale-110 transition-all duration-500 shadow-2xl group-hover:border-primary/40 backdrop-blur-sm">
+                                            {note.emoji}
+                                        </div>
+                                        {note.reminderEnabled && note.reminderDate && (
+                                            <div className="absolute top-0 -right-1 w-6 h-6 rounded-lg bg-primary text-[#090c19] flex items-center justify-center shadow-[0_0_10px_#17baa4] animate-pulse ring-2 ring-[#121625]">
+                                                <Bell size={12} strokeWidth={3} />
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
 
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="flex items-center gap-2">
-                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.1em] border ${getPriorityColor(note.priority)}`}>
-                                            {note.priority === 'high' ? 'Urgente' : note.priority === 'medium' ? 'Importante' : 'Normal'}
-                                        </span>
-                                        {note.reminderDate && (
-                                            <span className={`text-[10px] font-bold flex items-center gap-1 ${note.reminderEnabled ? 'text-primary' : 'text-gray-600'}`}>
-                                                <Calendar size={10} /> {new Date(note.reminderDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.1em] border ${getPriorityColor(note.priority)}`}>
+                                                    {note.priority === 'high' ? 'Urgente' : note.priority === 'medium' ? 'Importante' : 'Normal'}
+                                                </span>
+                                                {note.reminderDate && (
+                                                    <span className={`text-[10px] font-bold flex items-center gap-1 ${note.reminderEnabled ? 'text-primary' : 'text-gray-600'}`}>
+                                                        <Calendar size={10} /> {new Date(note.reminderDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity translate-x-4 group-hover:translate-x-0 duration-300">
+                                                {note.reminderDate && (
+                                                    <button
+                                                        onClick={() => handleToggleReminder(note)}
+                                                        className={`p-1.5 rounded-xl transition-all hover:scale-110 ${note.reminderEnabled ? 'text-primary bg-primary/10' : 'text-gray-500 bg-white/5'}`}
+                                                    >
+                                                        {note.reminderEnabled ? <Bell size={14} /> : <BellOff size={14} />}
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={() => handleDeleteNote(note.id)}
+                                                    className="p-1.5 rounded-xl text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all hover:scale-110"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <p className="text-gray-200 text-sm md:text-base leading-relaxed break-words line-clamp-4 group-hover:line-clamp-none transition-all duration-300">
+                                            {note.content}
+                                        </p>
+
+                                        <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-gray-600">
+                                            <span className="flex items-center gap-1.5">
+                                                <Clock size={10} /> {new Date(note.createdAt).toLocaleDateString('pt-BR')}
                                             </span>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity translate-x-4 group-hover:translate-x-0 duration-300">
-                                        {note.reminderDate && (
-                                            <button
-                                                onClick={() => handleToggleReminder(note)}
-                                                className={`p-1.5 rounded-xl transition-all hover:scale-110 ${note.reminderEnabled ? 'text-primary bg-primary/10' : 'text-gray-500 bg-white/5'}`}
-                                            >
-                                                {note.reminderEnabled ? <Bell size={14} /> : <BellOff size={14} />}
-                                            </button>
-                                        )}
-                                        <button
-                                            onClick={() => handleDeleteNote(note.id)}
-                                            className="p-1.5 rounded-xl text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all hover:scale-110"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
+                                            {note.reminderDate && note.reminderEnabled && (
+                                                <span className="text-primary/60 flex items-center gap-1">
+                                                    Alerta {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
+                            </Card>
+                        ))}
 
-                                <p className="text-gray-200 text-sm md:text-base leading-relaxed break-words line-clamp-4 group-hover:line-clamp-none transition-all duration-300">
-                                    {note.content}
-                                </p>
+                    {notes.filter(note => note.content.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
+                        <div className="col-span-full py-24 text-center space-y-4">
+                            <div className="w-24 h-24 bg-white/5 rounded-[40px] flex items-center justify-center mx-auto mb-6 border border-white/5 shadow-inner">
+                                <StickyNote size={48} className="text-gray-700 opacity-20" />
+                            </div>
+                            <h3 className="text-white text-lg font-bold">Nenhuma anotação encontrada</h3>
+                            <p className="text-gray-500 text-sm max-w-[240px] mx-auto">Tente usar outros termos de pesquisa ou adicione uma nova nota acima.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
 
-                                <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-gray-600">
-                                    <span className="flex items-center gap-1.5">
-                                        <Clock size={10} /> {new Date(note.createdAt).toLocaleDateString('pt-BR')}
-                                    </span>
-                                    {note.reminderDate && note.reminderEnabled && (
-                                        <span className="text-primary/60 flex items-center gap-1">
-                                            Alerta {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                                        </span>
-                                    )}
+            {/* Notification Blocked Guide Modal */}
+            {showBlockedGuide && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-sm bg-black/60">
+                    <Card className="max-w-md w-full bg-[#1a1f35] border-white/10 shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="p-6 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-red-500/10 rounded-xl">
+                                        <BellOff size={24} className="text-red-500" />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-white">Notificações Bloqueadas</h3>
+                                </div>
+                                <button onClick={() => setShowBlockedGuide(false)} className="text-gray-500 hover:text-white">
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <div className="space-y-4 text-sm text-gray-400 leading-relaxed">
+                                <p>O seu navegador bloqueou as notificações para este site. Para receber alertas de lembretes, você precisa desbloquear manualmente:</p>
+
+                                <div className="bg-white/5 rounded-2xl p-4 border border-white/5 space-y-3">
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 font-bold text-xs">1</div>
+                                        <p>Clique no ícone de <span className="text-white font-bold inline-flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded">🔒 Cadeado</span> ao lado da URL na barra de endereços.</p>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 font-bold text-xs">2</div>
+                                        <p>Encontre a opção <span className="text-white font-bold">Notificações</span>.</p>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 font-bold text-xs">3</div>
+                                        <p>Mude para <span className="text-primary font-bold">Permitir</span> e recarregue a página.</p>
+                                    </div>
                                 </div>
                             </div>
+
+                            <Button
+                                onClick={() => setShowBlockedGuide(false)}
+                                className="w-full bg-primary hover:bg-primary-dark text-[#090c19] font-black h-12 rounded-xl"
+                            >
+                                Entendi, vou ajustar
+                            </Button>
                         </div>
                     </Card>
-                ))}
-
-                {notes.length === 0 && (
-                    <div className="col-span-full py-24 text-center space-y-4">
-                        <div className="w-24 h-24 bg-white/5 rounded-[40px] flex items-center justify-center mx-auto mb-6 border border-white/5 shadow-inner">
-                            <StickyNote size={48} className="text-gray-700 opacity-20" />
-                        </div>
-                        <h3 className="text-white text-lg font-bold">Nenhuma anotação ainda</h3>
-                        <p className="text-gray-500 text-sm max-w-[240px] mx-auto">Sua lista está vazia. Comece anotando seus procedimentos e lembretes acima.</p>
-                        <p className="text-[10px] text-gray-600 uppercase tracking-widest font-black pt-4">Dica: Use Ctrl+Enter para salvar rápido</p>
-                    </div>
-                )}
-            </div>
-            {/* Notification Blocked Guide Modal */}
-            {
-                showBlockedGuide && (
-                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-sm bg-black/60">
-                        <Card className="max-w-md w-full bg-[#1a1f35] border-white/10 shadow-2xl animate-in zoom-in-95 duration-200">
-                            <div className="p-6 space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-red-500/10 rounded-xl">
-                                            <BellOff size={24} className="text-red-500" />
-                                        </div>
-                                        <h3 className="text-lg font-bold text-white">Notificações Bloqueadas</h3>
-                                    </div>
-                                    <button onClick={() => setShowBlockedGuide(false)} className="text-gray-500 hover:text-white">
-                                        <X size={20} />
-                                    </button>
-                                </div>
-
-                                <div className="space-y-4 text-sm text-gray-400 leading-relaxed">
-                                    <p>O seu navegador bloqueou as notificações para este site. Para receber alertas de lembretes, você precisa desbloquear manualmente:</p>
-
-                                    <div className="bg-white/5 rounded-2xl p-4 border border-white/5 space-y-3">
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 font-bold text-xs">1</div>
-                                            <p>Clique no ícone de <span className="text-white font-bold inline-flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded">🔒 Cadeado</span> ao lado da URL na barra de endereços.</p>
-                                        </div>
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 font-bold text-xs">2</div>
-                                            <p>Encontre a opção <span className="text-white font-bold">Notificações</span>.</p>
-                                        </div>
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 font-bold text-xs">3</div>
-                                            <p>Mude para <span className="text-primary font-bold">Permitir</span> e recarregue a página.</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <Button
-                                    onClick={() => setShowBlockedGuide(false)}
-                                    className="w-full bg-primary hover:bg-primary-dark text-[#090c19] font-black h-12 rounded-xl"
-                                >
-                                    Entendi, vou ajustar
-                                </Button>
-                            </div>
-                        </Card>
-                    </div>
-                )
-            }
-        </div >
+                </div>
+            )}
+        </div>
     );
 };
 
