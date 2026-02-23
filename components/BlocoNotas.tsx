@@ -168,7 +168,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                 <div className="shrink-0 w-full sm:w-auto">
                     {permissionStatus === 'granted' ? (
                         <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[10px] sm:text-[11px] font-bold bg-primary/10 border border-primary/20 text-primary shadow-lg shadow-primary/5 whitespace-nowrap justify-center sm:justify-start">
-                            <Bell size={13} className="sm:size-[14px] animate-pulse" />
+                            <Bell size={13} className="sm:size-[14px]" />
                             <span className="hidden xs:inline">Notificações Ativas</span>
                             <span className="xs:hidden">Ativas</span>
                         </div>
@@ -180,7 +180,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500 hover:bg-yellow-500/20 animate-pulse'
                                 }`}
                         >
-                            {permissionStatus === 'denied' ? <BellOff size={14} className="sm:size-[15px]" /> : <Bell size={14} className="sm:size-[15px]" />}
+                            {permissionStatus === 'denied' ? <BellOff size={14} className="sm:size-[15px]" /> : <Bell size={14} className="sm:size-[15px] animate-pulse" />}
                             <span className="hidden xs:inline">{permissionStatus === 'denied' ? 'Notificações Bloqueadas' : 'Ativar Notificações'}</span>
                             <span className="xs:hidden">{permissionStatus === 'denied' ? 'Bloqueadas' : 'Ativar'}</span>
                         </button>
@@ -192,18 +192,15 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
             <Card className="bg-gradient-to-br from-[#1a1f35] to-[#0d1425] border-gray-800/50 relative overflow-hidden pb-4 transition-all duration-300">
                 {/* Responsive Header Container */}
                 {/* Compact Header for Input Card - Just the collapse toggle */}
-                <div className="flex items-center justify-between p-4 pb-0 relative z-20">
-                    <div className="flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/5 rounded-lg">
-                        <Plus size={12} className="text-primary" />
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nova Anotação</span>
+                <div className="flex items-center justify-between px-4 sm:px-6 pt-4 pb-0 relative z-20">
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/5 rounded-xl">
+                        <Plus size={14} className="text-primary" />
+                        <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest leading-none">Nova Anotação</span>
                     </div>
                     <button
                         onClick={() => setIsCollapsed(!isCollapsed)}
-                        className="p-2 rounded-xl text-gray-500 hover:text-white hover:bg-white/5 transition-all flex items-center gap-2 bg-white/5 border border-white/5 sm:bg-transparent sm:border-none"
+                        className="p-1.5 sm:p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all flex items-center justify-center bg-white/5 border border-white/5 sm:bg-transparent sm:border-none aspect-square"
                     >
-                        <span className="text-[10px] font-bold uppercase tracking-widest sm:hidden">
-                            {isCollapsed ? 'Abrir Bloco' : 'Recolher'}
-                        </span>
                         {isCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
                     </button>
                 </div>
