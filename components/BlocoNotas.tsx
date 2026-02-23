@@ -166,40 +166,42 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
             {/* Input Card */}
             <Card className="bg-gradient-to-br from-[#1a1f35] to-[#0d1425] border-gray-800/50 relative overflow-hidden">
-                {/* Notification Status Button - Responsive Position */}
-                <div className="absolute top-4 sm:static sm:top-auto right-4 sm:right-auto z-20">
-                    {permissionStatus === 'granted' ? (
-                        <div className="flex items-center gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-[10px] sm:text-[11px] font-bold bg-primary/10 border border-primary/20 text-primary shadow-lg shadow-primary/5 whitespace-nowrap">
-                            <Bell size={12} className="sm:size-[14px] animate-pulse" />
-                            <span className="hidden xs:inline">Notificações Ativadas</span>
-                            <span className="xs:hidden">Ativas</span>
+                <div className="flex flex-col space-y-1.5 p-4 sm:p-6 pb-2">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="font-semibold tracking-tight text-white flex items-center gap-2 text-base sm:text-lg min-w-0">
+                            <StickyNote size={20} className="text-yellow-400 shrink-0" />
+                            <span className="truncate">📝 Bloco de Notas</span>
                         </div>
-                    ) : (permissionStatus === 'default' || permissionStatus === 'denied') && (
-                        <button
-                            onClick={handleRequestPermission}
-                            className={`flex items-center gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-[10px] sm:text-[11px] font-bold transition-all border shadow-lg whitespace-nowrap ${permissionStatus === 'denied'
-                                ? 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20'
-                                : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500 hover:bg-yellow-500/20 animate-pulse'
-                                }`}
-                        >
-                            {permissionStatus === 'denied' ? <BellOff size={12} className="sm:size-[14px]" /> : <Bell size={12} className="sm:size-[14px]" />}
-                            <span className="hidden xs:inline">{permissionStatus === 'denied' ? 'Bloqueadas' : 'Ativar Notificações'}</span>
-                            <span className="xs:hidden">{permissionStatus === 'denied' ? 'Bloqueadas' : 'Ativar'}</span>
-                        </button>
-                    )}
-                </div>
-                <div className="flex flex-col space-y-1.5 p-6 pb-2">
-                    <div className="flex items-center justify-between">
-                        <div className="font-semibold tracking-tight text-white flex items-center gap-2 text-lg">
-                            <StickyNote size={20} className="text-yellow-400" />
-                            📝 Bloco de Notas
+
+                        <div className="flex items-center gap-2 shrink-0">
+                            {/* Notification Status Button - Integrated Flow */}
+                            {permissionStatus === 'granted' ? (
+                                <div className="flex items-center gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[9px] sm:text-[11px] font-bold bg-primary/10 border border-primary/20 text-primary shadow-lg shadow-primary/5 whitespace-nowrap">
+                                    <Bell size={12} className="sm:size-[14px] animate-pulse" />
+                                    <span className="hidden xs:inline">Ativadas</span>
+                                    <span className="xs:hidden">Ativas</span>
+                                </div>
+                            ) : (permissionStatus === 'default' || permissionStatus === 'denied') && (
+                                <button
+                                    onClick={handleRequestPermission}
+                                    className={`flex items-center gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[9px] sm:text-[11px] font-bold transition-all border shadow-lg whitespace-nowrap ${permissionStatus === 'denied'
+                                        ? 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20'
+                                        : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500 hover:bg-yellow-500/20 animate-pulse'
+                                        }`}
+                                >
+                                    {permissionStatus === 'denied' ? <BellOff size={12} className="sm:size-[14px]" /> : <Bell size={12} className="sm:size-[14px]" />}
+                                    <span className="hidden xs:inline">{permissionStatus === 'denied' ? 'Bloqueadas' : 'Ativar'}</span>
+                                    <span className="xs:hidden">{permissionStatus === 'denied' ? 'Off' : 'On'}</span>
+                                </button>
+                            )}
+
+                            <button
+                                onClick={() => setIsCollapsed(!isCollapsed)}
+                                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all shrink-0"
+                            >
+                                {isCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                            </button>
                         </div>
-                        <button
-                            onClick={() => setIsCollapsed(!isCollapsed)}
-                            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all"
-                        >
-                            {isCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
-                        </button>
                     </div>
                 </div>
 
