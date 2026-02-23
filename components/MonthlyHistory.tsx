@@ -35,9 +35,16 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
 
         // Filter and aggregate bets
         bets.forEach(bet => {
-            const date = new Date(bet.date);
-            if (date.getFullYear() === selectedYear) {
-                const month = date.getMonth();
+            // Robust parsing to avoid timezone shifts
+            const dateStr = bet.date.includes('T') ? bet.date.split('T')[0] : bet.date;
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const betDate = new Date(y, m - 1, d);
+
+            if (betDate.getFullYear() === selectedYear) {
+                // Ignore Pending and Drafts for financial history
+                if (['Pendente', 'Rascunho'].includes(bet.status)) return;
+
+                const month = betDate.getMonth();
                 const stats = calculateBetStats(bet);
 
                 monthlyData[month].ops += 1;
@@ -49,9 +56,15 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
 
         // Add Gains (ExtraGains)
         gains.forEach(gain => {
-            const date = new Date(gain.date);
-            if (date.getFullYear() === selectedYear) {
-                const month = date.getMonth();
+            const dateStr = gain.date.includes('T') ? gain.date.split('T')[0] : gain.date;
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const gainDate = new Date(y, m - 1, d);
+
+            if (gainDate.getFullYear() === selectedYear) {
+                // Ignore Pending or Cancelled gains
+                if (['Pendente', 'Cancelado'].includes(gain.status)) return;
+
+                const month = gainDate.getMonth();
                 monthlyData[month].ops += 1;
                 monthlyData[month].grossGain += gain.amount;
                 monthlyData[month].netProfit += gain.amount;
@@ -183,7 +196,7 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                             <div className="space-y-4">
                                 <div className="flex justify-between items-end">
                                     <div className="space-y-0.5">
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Resultado</p>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Lucro Líquido</p>
                                         <p className={`text-lg font-bold ${isProfit ? 'text-primary' : 'text-red-500'}`}>
                                             <MoneyDisplay value={data.netProfit} privacyMode={settings.privacyMode} />
                                         </p>
