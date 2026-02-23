@@ -166,15 +166,17 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
             {/* Input Card */}
             <Card className="bg-gradient-to-br from-[#1a1f35] to-[#0d1425] border-gray-800/50 relative overflow-hidden pb-4">
-                {/* Header Container - Reorganized Elements */}
-                <div className="flex flex-col p-6 pt-20 pb-8 relative z-20">
-                    <div className="flex items-center justify-between gap-4 w-full mb-6">
-                        <div className="flex items-center gap-2 min-w-0">
+                {/* Header Container - Compact Top Layout */}
+                <div className="flex flex-col p-6 pt-8 pb-4 relative z-20">
+                    <div className="flex items-start justify-between gap-4 w-full">
+                        {/* Title at the Top Left */}
+                        <div className="flex items-center gap-2 min-w-0 pt-2">
                             <StickyNote size={20} className="text-yellow-400 shrink-0" />
                             <span className="font-semibold tracking-tight text-white text-base sm:text-lg whitespace-nowrap">Bloco de Notas</span>
                         </div>
 
-                        <div className="shrink-0">
+                        {/* Notification and Small Chevron Stacked on the Right */}
+                        <div className="flex flex-col items-end gap-2 shrink-0">
                             {permissionStatus === 'granted' ? (
                                 <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[10px] sm:text-[11px] font-bold bg-primary/10 border border-primary/20 text-primary shadow-lg shadow-primary/5 whitespace-nowrap">
                                     <Bell size={13} className="sm:size-[14px] animate-pulse" />
@@ -194,16 +196,15 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                     <span className="xs:hidden">{permissionStatus === 'denied' ? 'Bloqueadas' : 'Ativar'}</span>
                                 </button>
                             )}
-                        </div>
-                    </div>
 
-                    <div className="flex justify-center w-full">
-                        <button
-                            onClick={() => setIsCollapsed(!isCollapsed)}
-                            className="p-1 sm:p-2 rounded-full text-gray-500 hover:text-white hover:bg-white/5 transition-all bg-white/5 border border-white/5"
-                        >
-                            {isCollapsed ? <ChevronDown size={22} /> : <ChevronUp size={22} />}
-                        </button>
+                            {/* Small Chevron below the Notification Button */}
+                            <button
+                                onClick={() => setIsCollapsed(!isCollapsed)}
+                                className="p-1 sm:p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-all"
+                            >
+                                {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                            </button>
+                        </div>
                     </div>
                 </div>
 
