@@ -173,10 +173,10 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             <span className="truncate">📝 Bloco de Notas</span>
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0">
-                            {/* Notification Status Button - Integrated Flow */}
+                        <div className="flex flex-col items-end shrink-0 -mt-1 sm:mt-0">
+                            {/* Notification Status Button - Stacked Above Chevron */}
                             {permissionStatus === 'granted' ? (
-                                <div className="flex items-center gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[9px] sm:text-[11px] font-bold bg-primary/10 border border-primary/20 text-primary shadow-lg shadow-primary/5 whitespace-nowrap">
+                                <div className="flex items-center gap-2 px-2.5 sm:px-4 py-1 sm:py-2 rounded-lg sm:rounded-xl text-[9px] sm:text-[11px] font-bold bg-primary/10 border border-primary/20 text-primary shadow-lg shadow-primary/5 whitespace-nowrap mb-1">
                                     <Bell size={12} className="sm:size-[14px] animate-pulse" />
                                     <span className="hidden xs:inline">Ativadas</span>
                                     <span className="xs:hidden">Ativas</span>
@@ -184,12 +184,12 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             ) : (permissionStatus === 'default' || permissionStatus === 'denied') && (
                                 <button
                                     onClick={handleRequestPermission}
-                                    className={`flex items-center gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[9px] sm:text-[11px] font-bold transition-all border shadow-lg whitespace-nowrap ${permissionStatus === 'denied'
+                                    className={`flex items-center gap-2 px-2.5 sm:px-4 py-1 sm:py-2 rounded-lg sm:rounded-xl text-[9px] sm:text-[11px] font-bold transition-all border shadow-lg whitespace-nowrap mb-1 ${permissionStatus === 'denied'
                                         ? 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20'
                                         : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500 hover:bg-yellow-500/20 animate-pulse'
                                         }`}
                                 >
-                                    {permissionStatus === 'denied' ? <BellOff size={12} className="sm:size-[14px]" /> : <Bell size={12} className="sm:size-[14px]" />}
+                                    {permissionStatus === 'denied' ? <BellOff size={11} className="sm:size-[13px]" /> : <Bell size={11} className="sm:size-[13px]" />}
                                     <span className="hidden xs:inline">{permissionStatus === 'denied' ? 'Bloqueadas' : 'Ativar'}</span>
                                     <span className="xs:hidden">{permissionStatus === 'denied' ? 'Off' : 'On'}</span>
                                 </button>
@@ -197,9 +197,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                             <button
                                 onClick={() => setIsCollapsed(!isCollapsed)}
-                                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all shrink-0"
+                                className="p-1 sm:p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-all transition-transform duration-300"
                             >
-                                {isCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                                {isCollapsed ? <ChevronDown size={16} className="sm:size-5" /> : <ChevronUp size={16} className="sm:size-5" />}
                             </button>
                         </div>
                     </div>
