@@ -153,8 +153,8 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                 </Card>
             </div>
 
-            {/* Monthly Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {/* Monthly Grid - Horizontal Line without wrap */}
+            <div className="flex overflow-x-auto pb-8 gap-6 no-scrollbar snap-x snap-mandatory px-2">
                 {monthNames.map((name, index) => {
                     const data = monthlyData[index];
                     const isProfit = data.netProfit >= 0;
@@ -165,76 +165,79 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                         <Card
                             key={index}
                             onClick={() => hasData && setDetailMonth(index)}
-                            className={`p-5 transition-all duration-300 bg-[#151b2e] border-white/5 group relative
-                                ${isCurrentMonth ? 'ring-2 ring-primary shadow-[0_0_25px_rgba(23,186,164,0.3)] border-primary/40' : 'hover:border-white/20'}
-                                ${!hasData ? 'opacity-40 cursor-default' : 'hover:scale-[1.02] cursor-pointer'}
+                            className={`flex-shrink-0 w-[300px] p-6 transition-all duration-500 bg-[#151b2e] border-white/5 group relative snap-center
+                                ${isCurrentMonth ? 'ring-2 ring-primary border-primary/40 shadow-[0_0_40px_rgba(23,186,164,0.4)]' : 'hover:border-white/10'}
+                                ${!hasData ? 'opacity-40 cursor-default grayscale' : 'hover:scale-[1.02] cursor-pointer hover:shadow-[0_0_50px_rgba(23,186,164,0.3)]'}
+                                ${hasData && isCurrentMonth ? 'scale-[1.02]' : ''}
                             `}
                         >
-                            {/* Card Background Glow */}
+                            {/* Outer Glow Effect on Hover - Intensified */}
                             {hasData && (
-                                <div className={`absolute -inset-0.5 rounded-xl blur-[10px] opacity-0 group-hover:opacity-20 transition duration-500 pointer-events-none ${isProfit ? 'bg-primary' : 'bg-red-500'}`} />
+                                <div className={`absolute -inset-[2px] rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0
+                                    ${isProfit ? 'shadow-[0_0_30px_rgba(23,186,164,0.4)]' : 'shadow-[0_0_30px_rgba(239,68,68,0.4)]'}
+                                `} />
                             )}
 
                             <div className="relative z-10">
                                 <div className="flex justify-between items-start mb-6">
                                     <div className="space-y-1">
                                         <div className="flex items-center gap-2">
-                                            <h3 className={`font-bold text-xl leading-none ${isCurrentMonth ? 'text-primary' : 'text-white'}`}>
+                                            <h3 className={`font-black text-2xl leading-none ${isCurrentMonth ? 'text-primary' : 'text-white'}`}>
                                                 {name}
                                             </h3>
                                             {isCurrentMonth && (
-                                                <span className="text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Mês Atual</span>
+                                                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                                             )}
                                         </div>
                                         <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{selectedYear}</span>
                                     </div>
-                                    <div className={`bg-gray-800/50 backdrop-blur-sm border border-white/5 px-2 py-1 rounded text-[11px] font-bold text-gray-400`}>
-                                        {data.ops} ops
+                                    <div className={`bg-gray-800/40 border border-white/5 px-2.5 py-1 rounded-full text-[11px] font-black text-gray-400`}>
+                                        {data.ops} OPS
                                     </div>
                                 </div>
 
-                                <div className="space-y-6">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1">
-                                            <p className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
-                                                <span className="text-[#00f7ff]">$</span> Total Apostado
+                                <div className="space-y-4">
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                                            <p className="flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
+                                                <span className="text-[#00f7ff] text-base">$</span> Total Apostado
                                             </p>
-                                            <p className="text-base font-bold text-[#00f7ff] drop-shadow-[0_0_8px_rgba(0,247,255,0.3)]">
+                                            <p className="text-base font-black text-[#00f7ff] drop-shadow-[0_0_10px_rgba(0,247,255,0.4)]">
                                                 <MoneyDisplay value={data.staked} privacyMode={settings.privacyMode} />
                                             </p>
                                         </div>
-                                        <div className="space-y-1">
-                                            <p className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
-                                                <span className="text-[#ff00e6]">◎</span> Total Ganho
+                                        <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                                            <p className="flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
+                                                <span className="text-[#ff00e6] text-base">◎</span> Total Ganho
                                             </p>
-                                            <p className="text-base font-bold text-[#ff00e6] drop-shadow-[0_0_8px_rgba(255,0,230,0.3)]">
+                                            <p className="text-base font-black text-[#ff00e6] drop-shadow-[0_0_10px_rgba(255,0,230,0.4)]">
                                                 <MoneyDisplay value={data.grossGain} privacyMode={settings.privacyMode} />
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div className="h-px bg-white/5 w-full" />
-
-                                    <div className="flex justify-between items-end">
-                                        <div className="space-y-1">
-                                            <p className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
-                                                <Coins size={10} /> Lucro Operações
-                                            </p>
-                                            <p className={`text-xl font-bold ${isProfit ? 'text-primary' : 'text-red-500'} drop-shadow-[0_0_10px_rgba(var(--color-primary),0.3)]`}>
-                                                <MoneyDisplay value={data.netProfit} privacyMode={settings.privacyMode} />
-                                            </p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight mb-1">ROI</p>
-                                            <p className={`text-lg font-black ${isProfit ? 'text-white' : 'text-red-400'}`}>
-                                                {data.roi.toFixed(2)}%
-                                            </p>
+                                    <div className="pt-2">
+                                        <div className="flex justify-between items-end bg-[#0d1121] p-4 rounded-xl border border-white/10">
+                                            <div className="space-y-1">
+                                                <p className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
+                                                    <Coins size={12} className="text-primary" /> Lucro Líquido
+                                                </p>
+                                                <p className={`text-xl font-black ${isProfit ? 'text-primary' : 'text-red-500'} drop-shadow-[0_0_15px_rgba(var(--color-primary),0.35)]`}>
+                                                    <MoneyDisplay value={data.netProfit} privacyMode={settings.privacyMode} />
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight mb-1">ROI</p>
+                                                <p className={`text-lg font-black ${isProfit ? 'text-white' : 'text-red-400'}`}>
+                                                    {data.roi.toFixed(2)}%
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
 
                                     {hasData && (
-                                        <div className="pt-2 text-[10px] text-gray-500 font-bold uppercase tracking-widest text-center group-hover:text-primary transition-colors">
-                                            Clique para ver operações do mês
+                                        <div className="pt-2 text-[10px] text-primary/60 font-black uppercase tracking-[0.2em] text-center group-hover:text-primary transition-all group-hover:tracking-[0.25em]">
+                                            Clique para ver detalhes
                                         </div>
                                     )}
                                 </div>
