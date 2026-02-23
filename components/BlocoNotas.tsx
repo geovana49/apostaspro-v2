@@ -406,7 +406,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                 disabled={!content.trim()}
                                                 className="w-full bg-gradient-to-r from-primary to-[#10b981] text-[#05070e] font-black h-full px-6 rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all text-xs uppercase tracking-wider flex items-center justify-center"
                                             >
-                                                <Plus size={18} className="mr-2" /> Salvar Anotação
+                                                <Plus size={18} strokeWidth={3} className="mr-2" /> Salvar Anotação
                                             </Button>
                                         </div>
                                     </div>
