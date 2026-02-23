@@ -106,6 +106,7 @@ export enum Page {
   CALCULATORS = 'calculators',
   CAIXA = 'caixa',
   NOTES = 'notes',
+  MONTHLY_HISTORY = 'monthlyHistory',
 }
 
 export interface CaixaAccount {

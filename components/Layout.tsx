@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Menu, LayoutDashboard, Ticket, DollarSign, Bot, Settings, TrendingUp, User, LogOut, ChevronRight, X,
-  ArrowUp, ArrowDown, Cloud, CloudOff, RefreshCw, Calculator, Wallet, StickyNote
+  ArrowUp, ArrowDown, Cloud, CloudOff, RefreshCw, Calculator, Wallet, StickyNote, BarChart3, Calendar
 } from 'lucide-react';
 import { Page, AppSettings, SettingsTab } from '../types';
 
@@ -141,6 +141,7 @@ const Layout: React.FC<LayoutProps> = ({
     { id: Page.GAINS, label: 'Ganhos Extras', icon: <DollarSign size={20} /> },
     { id: Page.CAIXA, label: 'Controle de Caixa', icon: <Wallet size={20} /> },
     { id: Page.NOTES, label: 'Bloco de Notas', icon: <StickyNote size={20} />, badge: notesCount },
+    { id: Page.MONTHLY_HISTORY, label: 'Histórico Mensal', icon: <BarChart3 size={20} /> },
     { id: Page.CALCULATORS, label: 'Calculadoras', icon: <Calculator size={20} /> },
     { id: Page.SETTINGS, label: 'Ajustes', icon: <Settings size={20} /> },
   ];
@@ -155,6 +156,7 @@ const Layout: React.FC<LayoutProps> = ({
       case Page.CALCULATORS: return 'Calculadoras';
       case Page.CAIXA: return 'Controle de Caixa';
       case Page.NOTES: return 'Bloco de Notas';
+      case Page.MONTHLY_HISTORY: return 'Histórico Mensal';
       default: return 'ApostasPro';
     }
   }

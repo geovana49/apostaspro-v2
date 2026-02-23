@@ -17,6 +17,7 @@ const LandingPage = lazy(() => import('./components/LandingPage'));
 const Calculators = lazy(() => import('./components/Calculators'));
 const Caixa = lazy(() => import('./components/Caixa'));
 const BlocoNotas = lazy(() => import('./components/BlocoNotas'));
+const MonthlyHistory = lazy(() => import('./components/MonthlyHistory'));
 
 // A simplified loading component for page transitions
 const PageLoader = () => (
@@ -466,6 +467,14 @@ const App: React.FC = () => {
                 <BlocoNotas
                   currentUser={currentUser}
                   notes={notes}
+                />
+              )}
+
+              {activePage === Page.MONTHLY_HISTORY && (
+                <MonthlyHistory
+                  bets={bets}
+                  gains={gains}
+                  settings={settings}
                 />
               )}
             </Suspense>
