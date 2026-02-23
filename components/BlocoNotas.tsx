@@ -198,8 +198,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                 <div className="flex flex-col space-y-1.5 p-6 pt-20 pb-10">
                     <div className="flex items-center justify-between">
-                        <div className="font-semibold tracking-tight text-white flex items-center gap-2 text-lg min-w-0 pr-32">
-                            <StickyNote size={20} className="text-yellow-400 shrink-0" />
+                        <div className="font-semibold tracking-tight text-white flex items-center gap-2 text-base sm:text-lg min-w-0 pr-32">
+                            <StickyNote size={18} className="text-yellow-400 shrink-0" />
                             <span className="truncate whitespace-nowrap">📝 Bloco de Notas</span>
                         </div>
                     </div>
