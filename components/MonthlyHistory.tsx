@@ -153,8 +153,8 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                 </Card>
             </div>
 
-            {/* Monthly Grid - Horizontal Line without wrap */}
-            <div className="flex overflow-x-auto pb-8 gap-6 no-scrollbar snap-x snap-mandatory px-2">
+            {/* Monthly Grid - Wrapping Grid Layout */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {monthNames.map((name, index) => {
                     const data = monthlyData[index];
                     const isProfit = data.netProfit >= 0;
@@ -165,10 +165,9 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                         <Card
                             key={index}
                             onClick={() => hasData && setDetailMonth(index)}
-                            className={`flex-shrink-0 w-[300px] p-6 transition-all duration-500 bg-[#151b2e] border-white/5 group relative snap-center
+                            className={`p-6 transition-all duration-500 bg-[#151b2e] border-white/5 group relative
                                 ${isCurrentMonth ? 'ring-2 ring-primary border-primary/40 shadow-[0_0_40px_rgba(23,186,164,0.4)]' : 'hover:border-white/10'}
                                 ${!hasData ? 'opacity-40 cursor-default grayscale' : 'hover:scale-[1.02] cursor-pointer hover:shadow-[0_0_50px_rgba(23,186,164,0.3)]'}
-                                ${hasData && isCurrentMonth ? 'scale-[1.02]' : ''}
                             `}
                         >
                             {/* Outer Glow Effect on Hover - Intensified */}
