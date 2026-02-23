@@ -54,23 +54,6 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
             }
         });
 
-        // Add Gains (ExtraGains)
-        gains.forEach(gain => {
-            const dateStr = gain.date.includes('T') ? gain.date.split('T')[0] : gain.date;
-            const [y, m, d] = dateStr.split('-').map(Number);
-            const gainDate = new Date(y, m - 1, d);
-
-            if (gainDate.getFullYear() === selectedYear) {
-                // Ignore Pending or Cancelled gains
-                if (['Pendente', 'Cancelado'].includes(gain.status)) return;
-
-                const month = gainDate.getMonth();
-                monthlyData[month].ops += 1;
-                monthlyData[month].grossGain += gain.amount;
-                monthlyData[month].netProfit += gain.amount;
-            }
-        });
-
         // Calculate Year Totals
         const yearSummary = Object.values(monthlyData).reduce((acc, curr) => ({
             ops: acc.ops + curr.ops,
