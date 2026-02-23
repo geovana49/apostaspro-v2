@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Calendar, TrendingUp, DollarSign, Target, Activity, Trophy, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Card, MoneyDisplay } from './ui/UIComponents';
+import { Calendar, TrendingUp, DollarSign, Target, Activity, Trophy, ChevronLeft, ChevronRight, ArrowUpRight, Ticket, Coins } from 'lucide-react';
+import { Card, MoneyDisplay, Modal } from './ui/UIComponents';
 import { Bet, ExtraGain, AppSettings } from '../types';
 import { calculateBetStats } from '../utils/betCalculations';
 
@@ -12,6 +12,7 @@ interface MonthlyHistoryProps {
 
 const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }) => {
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [detailMonth, setDetailMonth] = useState<number | null>(null);
 
     const monthNames = [
         'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -25,23 +26,22 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
             staked: number,
             grossGain: number,
             netProfit: number,
-            roi: number
+            roi: number,
+            items: (Bet | ExtraGain)[]
         }> = {};
 
         // Initialize months
         for (let i = 0; i < 12; i++) {
-            monthlyData[i] = { ops: 0, staked: 0, grossGain: 0, netProfit: 0, roi: 0 };
+            monthlyData[i] = { ops: 0, staked: 0, grossGain: 0, netProfit: 0, roi: 0, items: [] };
         }
 
         // Filter and aggregate bets
         bets.forEach(bet => {
-            // Robust parsing to avoid timezone shifts
             const dateStr = bet.date.includes('T') ? bet.date.split('T')[0] : bet.date;
             const [y, m, d] = dateStr.split('-').map(Number);
             const betDate = new Date(y, m - 1, d);
 
             if (betDate.getFullYear() === selectedYear) {
-                // Ignore Pending and Drafts for financial history
                 if (['Pendente', 'Rascunho'].includes(bet.status)) return;
 
                 const month = betDate.getMonth();
@@ -51,8 +51,13 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                 monthlyData[month].staked += stats.totalStake;
                 monthlyData[month].grossGain += stats.totalReturn;
                 monthlyData[month].netProfit += stats.profit;
+                monthlyData[month].items.push(bet);
             }
         });
+
+        // Add Gains (ExtraGains) - Standalone gains are still tracked in components state
+        // but Overview logic previously excluded them from global ROI to focus on "Betting Strategy".
+        // Here we keep them excluded to match Overview, but they are in the 'gains' prop.
 
         // Calculate Year Totals
         const yearSummary = Object.values(monthlyData).reduce((acc, curr) => ({
@@ -73,7 +78,7 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
         });
 
         return { monthlyData, yearSummary: { ...yearSummary, roi: yearRoi } };
-    }, [bets, gains, selectedYear]);
+    }, [bets, selectedYear]);
 
     const { monthlyData, yearSummary } = yearlyStats;
 
@@ -105,7 +110,7 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                 </div>
             </div>
 
-            {/* Year Summary Card - Premium Design */}
+            {/* Year Summary Card */}
             <div className="relative group">
                 <div className={`
                     absolute -inset-0.5 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-500
@@ -159,66 +164,145 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                     return (
                         <Card
                             key={index}
-                            className={`p-5 transition-all duration-300 hover:scale-[1.02] bg-[#151b2e] border-white/5 group
-                                ${isCurrentMonth ? 'ring-2 ring-primary/30 border-primary/20' : ''}
-                                ${!hasData ? 'opacity-50 hover:opacity-100' : ''}
+                            onClick={() => hasData && setDetailMonth(index)}
+                            className={`p-5 transition-all duration-300 bg-[#151b2e] border-white/5 group relative
+                                ${isCurrentMonth ? 'ring-2 ring-primary shadow-[0_0_25px_rgba(23,186,164,0.3)] border-primary/40' : 'hover:border-white/20'}
+                                ${!hasData ? 'opacity-40 cursor-default' : 'hover:scale-[1.02] cursor-pointer'}
                             `}
                         >
-                            <div className="flex justify-between items-start mb-4">
-                                <div>
-                                    <h3 className={`font-bold text-lg leading-none ${isCurrentMonth ? 'text-primary' : 'text-white'}`}>
-                                        {name}
-                                    </h3>
-                                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{selectedYear}</span>
-                                </div>
-                                <div className={`p-2 rounded-lg ${isProfit ? 'bg-primary/10 text-primary' : 'bg-red-500/10 text-red-500'}`}>
-                                    <TrendingUp size={16} className={hasData ? '' : 'opacity-20'} />
-                                </div>
-                            </div>
+                            {/* Card Background Glow */}
+                            {hasData && (
+                                <div className={`absolute -inset-0.5 rounded-xl blur-[10px] opacity-0 group-hover:opacity-20 transition duration-500 pointer-events-none ${isProfit ? 'bg-primary' : 'bg-red-500'}`} />
+                            )}
 
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-end">
-                                    <div className="space-y-0.5">
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Lucro Líquido</p>
-                                        <p className={`text-lg font-bold ${isProfit ? 'text-primary' : 'text-red-500'}`}>
-                                            <MoneyDisplay value={data.netProfit} privacyMode={settings.privacyMode} />
-                                        </p>
+                            <div className="relative z-10">
+                                <div className="flex justify-between items-start mb-6">
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2">
+                                            <h3 className={`font-bold text-xl leading-none ${isCurrentMonth ? 'text-primary' : 'text-white'}`}>
+                                                {name}
+                                            </h3>
+                                            {isCurrentMonth && (
+                                                <span className="text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Mês Atual</span>
+                                            )}
+                                        </div>
+                                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{selectedYear}</span>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">ROI</p>
-                                        <p className={`text-sm font-black ${isProfit ? 'text-primary/60' : 'text-red-500/60'}`}>
-                                            {data.roi.toFixed(1)}%
-                                        </p>
+                                    <div className={`bg-gray-800/50 backdrop-blur-sm border border-white/5 px-2 py-1 rounded text-[11px] font-bold text-gray-400`}>
+                                        {data.ops} ops
                                     </div>
                                 </div>
 
-                                {/* Mini Indicator Bar */}
-                                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <p className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
+                                                <span className="text-[#00f7ff]">$</span> Total Apostado
+                                            </p>
+                                            <p className="text-base font-bold text-[#00f7ff] drop-shadow-[0_0_8px_rgba(0,247,255,0.3)]">
+                                                <MoneyDisplay value={data.staked} privacyMode={settings.privacyMode} />
+                                            </p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
+                                                <span className="text-[#ff00e6]">◎</span> Total Ganho
+                                            </p>
+                                            <p className="text-base font-bold text-[#ff00e6] drop-shadow-[0_0_8px_rgba(255,0,230,0.3)]">
+                                                <MoneyDisplay value={data.grossGain} privacyMode={settings.privacyMode} />
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="h-px bg-white/5 w-full" />
+
+                                    <div className="flex justify-between items-end">
+                                        <div className="space-y-1">
+                                            <p className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
+                                                <Coins size={10} /> Lucro Operações
+                                            </p>
+                                            <p className={`text-xl font-bold ${isProfit ? 'text-primary' : 'text-red-500'} drop-shadow-[0_0_10px_rgba(var(--color-primary),0.3)]`}>
+                                                <MoneyDisplay value={data.netProfit} privacyMode={settings.privacyMode} />
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight mb-1">ROI</p>
+                                            <p className={`text-lg font-black ${isProfit ? 'text-white' : 'text-red-400'}`}>
+                                                {data.roi.toFixed(2)}%
+                                            </p>
+                                        </div>
+                                    </div>
+
                                     {hasData && (
-                                        <div
-                                            className={`h-full transition-all duration-1000 ${isProfit ? 'bg-primary' : 'bg-red-500'}`}
-                                            style={{ width: `${Math.min(Math.abs(data.roi || 0) * 3, 100)}%` }}
-                                        />
+                                        <div className="pt-2 text-[10px] text-gray-500 font-bold uppercase tracking-widest text-center group-hover:text-primary transition-colors">
+                                            Clique para ver operações do mês
+                                        </div>
                                     )}
-                                </div>
-
-                                <div className="pt-2 flex justify-between items-center border-t border-white/5">
-                                    <div className="flex items-center gap-1.5">
-                                        <Activity size={12} className="text-gray-500" />
-                                        <span className="text-[11px] font-bold text-gray-400">{data.ops} Ops</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <DollarSign size={12} className="text-gray-500" />
-                                        <span className="text-[11px] font-bold text-gray-400">
-                                            <MoneyDisplay value={data.staked} privacyMode={settings.privacyMode} />
-                                        </span>
-                                    </div>
                                 </div>
                             </div>
                         </Card>
                     );
                 })}
             </div>
+
+            {/* Details Modal */}
+            <Modal
+                isOpen={detailMonth !== null}
+                onClose={() => setDetailMonth(null)}
+                title={`Operações de ${detailMonth !== null ? monthNames[detailMonth] : ''} ${selectedYear}`}
+                maxW="max-w-3xl"
+            >
+                <div className="space-y-3">
+                    {detailMonth !== null && monthlyData[detailMonth].items.length > 0 ? (
+                        monthlyData[detailMonth].items.map((item, i) => {
+                            const isBet = 'coverages' in item;
+                            const stats = isBet ? calculateBetStats(item as Bet) : null;
+                            const profit = isBet ? stats?.profit : (item as ExtraGain).amount;
+                            const roi = isBet ? ((stats?.profit || 0) / (stats?.totalStake || 1)) * 100 : 100;
+                            const isPositive = (profit || 0) >= 0;
+
+                            return (
+                                <div key={i} className="bg-[#0d1121] border border-white/5 rounded-xl p-4 flex items-center justify-between group hover:border-white/10 transition-colors">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`p-2.5 rounded-lg ${isPositive ? 'bg-primary/10 text-primary' : 'bg-red-500/10 text-red-500'}`}>
+                                            {isBet ? <Ticket size={20} /> : <Coins size={20} />}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-white group-hover:text-primary transition-colors">
+                                                {isBet ? (item as Bet).event : (item as ExtraGain).origin}
+                                            </p>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <span className="text-[10px] font-bold text-gray-500 uppercase">
+                                                    {isBet
+                                                        ? ((item as Bet).coverages?.[0]?.market || 'Aposta')
+                                                        : 'Ganho Extra'}
+                                                </span>
+                                                <span className="text-gray-700 text-[10px]">•</span>
+                                                <span className="text-[10px] font-bold text-gray-500 uppercase">
+                                                    {isBet ? (item as Bet).mainBookmakerId : (item as ExtraGain).status}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="text-right">
+                                        <p className={`text-base font-bold ${isPositive ? 'text-primary' : 'text-red-500'}`}>
+                                            <MoneyDisplay value={profit || 0} privacyMode={settings.privacyMode} />
+                                        </p>
+                                        <p className={`text-[10px] font-black ${isPositive ? 'text-primary/60' : 'text-red-500/60'}`}>
+                                            {isBet ? `${roi.toFixed(1)}% ROI` : '+100%'}
+                                        </p>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    ) : (
+                        <div className="py-12 text-center">
+                            <Activity size={48} className="mx-auto text-gray-800 mb-4" />
+                            <p className="text-gray-500 font-medium">Nenhuma operação encontrada neste mês.</p>
+                        </div>
+                    )}
+                </div>
+            </Modal>
         </div>
     );
 };
