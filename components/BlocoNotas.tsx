@@ -173,12 +173,12 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             <span className="truncate">📝 Bloco de Notas</span>
                         </div>
 
-                        <div className="flex flex-col items-end shrink-0 -mt-1 sm:mt-0">
+                        <div className="flex flex-col items-end shrink-0 -mt-2 sm:mt-0">
                             {/* Notification Status Button - Stacked Above Chevron */}
                             {permissionStatus === 'granted' ? (
                                 <div className="flex items-center gap-2 px-2.5 sm:px-4 py-1 sm:py-2 rounded-lg sm:rounded-xl text-[9px] sm:text-[11px] font-bold bg-primary/10 border border-primary/20 text-primary shadow-lg shadow-primary/5 whitespace-nowrap mb-1">
                                     <Bell size={12} className="sm:size-[14px] animate-pulse" />
-                                    <span className="hidden xs:inline">Ativadas</span>
+                                    <span className="hidden xs:inline">Notificações Ativadas</span>
                                     <span className="xs:hidden">Ativas</span>
                                 </div>
                             ) : (permissionStatus === 'default' || permissionStatus === 'denied') && (
@@ -190,8 +190,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                         }`}
                                 >
                                     {permissionStatus === 'denied' ? <BellOff size={11} className="sm:size-[13px]" /> : <Bell size={11} className="sm:size-[13px]" />}
-                                    <span className="hidden xs:inline">{permissionStatus === 'denied' ? 'Bloqueadas' : 'Ativar'}</span>
-                                    <span className="xs:hidden">{permissionStatus === 'denied' ? 'Off' : 'On'}</span>
+                                    <span className="hidden xs:inline">{permissionStatus === 'denied' ? 'Notificações Bloqueadas' : 'Ativar Notificações'}</span>
+                                    <span className="xs:hidden">{permissionStatus === 'denied' ? 'Bloqueadas' : 'Ativar'}</span>
                                 </button>
                             )}
 
