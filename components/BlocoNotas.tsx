@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     StickyNote, Trash2, Plus, Bell, BellOff, ChevronUp, ChevronDown,
-    TriangleAlert, Star, Check, Calendar, Clock, X
+    TriangleAlert, Star, Check, Calendar, Clock, X, Search
 } from 'lucide-react';
 import { User, NotepadNote } from '../types';
 import { FirestoreService } from '../services/firestoreService';
@@ -163,6 +163,29 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         <p className="text-gray-500 text-xs sm:text-sm font-medium">Anote procedimentos e tarefas rápidas</p>
                     </div>
                 </div>
+
+                {/* Relocated Notification Button */}
+                <div className="shrink-0 w-full sm:w-auto">
+                    {permissionStatus === 'granted' ? (
+                        <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[10px] sm:text-[11px] font-bold bg-primary/10 border border-primary/20 text-primary shadow-lg shadow-primary/5 whitespace-nowrap justify-center sm:justify-start">
+                            <Bell size={13} className="sm:size-[14px] animate-pulse" />
+                            <span className="hidden xs:inline">Notificações Ativadas</span>
+                            <span className="xs:hidden">Ativas</span>
+                        </div>
+                    ) : (permissionStatus === 'default' || permissionStatus === 'denied') && (
+                        <button
+                            onClick={handleRequestPermission}
+                            className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[10px] sm:text-[11px] font-bold transition-all border shadow-lg whitespace-nowrap w-full sm:w-auto justify-center sm:justify-start ${permissionStatus === 'denied'
+                                ? 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20'
+                                : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500 hover:bg-yellow-500/20 animate-pulse'
+                                }`}
+                        >
+                            {permissionStatus === 'denied' ? <BellOff size={14} className="sm:size-[15px]" /> : <Bell size={14} className="sm:size-[15px]" />}
+                            <span className="hidden xs:inline">{permissionStatus === 'denied' ? 'Bloqueadas' : 'Ativar Notificações'}</span>
+                            <span className="xs:hidden">{permissionStatus === 'denied' ? 'Bloqueadas' : 'Ativar'}</span>
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Input Card */}
@@ -176,37 +199,18 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 <StickyNote size={20} className="text-yellow-400 shrink-0" />
                                 <span className="font-semibold tracking-tight text-white text-[15px] xs:text-base whitespace-nowrap">Bloco de Notas</span>
                             </div>
-                            <div className="shrink-0">
-                                {permissionStatus === 'granted' ? (
-                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-bold bg-primary/10 border border-primary/20 text-primary shadow-lg shadow-primary/5">
-                                        <Bell size={13} className="animate-pulse" />
-                                        <span>Ativas</span>
-                                    </div>
-                                ) : (permissionStatus === 'default' || permissionStatus === 'denied') && (
-                                    <button
-                                        onClick={handleRequestPermission}
-                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all border shadow-lg ${permissionStatus === 'denied'
-                                            ? 'bg-red-500/10 border-red-500/20 text-red-400'
-                                            : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500'
-                                            }`}
-                                    >
-                                        <Bell size={14} />
-                                        <span>{permissionStatus === 'denied' ? 'Bloqueadas' : 'Ativar'}</span>
-                                    </button>
-                                )}
-                            </div>
                         </div>
                         <div className="flex justify-end w-full pr-1">
                             <button
                                 onClick={() => setIsCollapsed(!isCollapsed)}
-                                className="p-1 rounded-lg text-gray-500 transition-all"
+                                className="p-1 rounded-lg text-gray-500 transition-all hover:bg-white/5"
                             >
                                 {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
                             </button>
                         </div>
                     </div>
 
-                    {/* Desktop Header (>= sm) - Restored original look */}
+                    {/* Desktop Header (>= sm) - Simplified without Notification Button */}
                     <div className="hidden sm:flex items-center justify-between p-6">
                         <div className="flex items-center gap-3">
                             <StickyNote size={24} className="text-yellow-400" />
@@ -217,23 +221,6 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         </div>
 
                         <div className="flex items-center gap-3">
-                            {permissionStatus === 'granted' ? (
-                                <div className="flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-bold bg-primary/10 border border-primary/20 text-primary">
-                                    <Bell size={14} className="animate-pulse" />
-                                    <span>Notificações Ativadas</span>
-                                </div>
-                            ) : (permissionStatus === 'default' || permissionStatus === 'denied') && (
-                                <button
-                                    onClick={handleRequestPermission}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-bold transition-all border ${permissionStatus === 'denied'
-                                        ? 'bg-red-500/10 border-red-500/20 text-red-400'
-                                        : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500 animate-pulse'
-                                        }`}
-                                >
-                                    <Bell size={14} />
-                                    <span>{permissionStatus === 'denied' ? 'Notificações Bloqueadas' : 'Ativar Notificações'}</span>
-                                </button>
-                            )}
                             <button
                                 onClick={() => setIsCollapsed(!isCollapsed)}
                                 className="p-2 rounded-xl text-gray-500 hover:text-white hover:bg-white/5 transition-all"
@@ -279,7 +266,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                     <div className="absolute right-0 top-0 bottom-3 w-12 bg-gradient-to-l from-[#1a1f35] via-[#1a1f35]/80 to-transparent pointer-events-none z-10" />
                                 </div>
 
-                                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                                <div className="flex flex-col md:flex-row gap-6 md:gap-16 items-start md:items-center justify-between">
                                     <div className="grid grid-cols-3 gap-2 w-full">
                                         <button
                                             onClick={() => setPriority('high')}
@@ -490,7 +477,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
             <div className="space-y-4">
                 <div className="relative group">
                     <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                        <Plus className="w-4 h-4 text-gray-500 group-focus-within:text-primary transition-colors rotate-45" />
+                        <Search className="w-4 h-4 text-gray-500 group-focus-within:text-primary transition-colors" />
                     </div>
                     <input
                         type="search"
