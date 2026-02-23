@@ -169,8 +169,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     {permissionStatus === 'granted' ? (
                         <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[10px] sm:text-[11px] font-bold bg-primary/10 border border-primary/20 text-primary shadow-lg shadow-primary/5 whitespace-nowrap justify-center sm:justify-start">
                             <Bell size={13} className="sm:size-[14px] animate-pulse" />
-                            <span className="hidden xs:inline">Notificações Ativadas</span>
-                            <span className="xs:hidden">Ativas</span>
+                            <span>Ativado</span>
                         </div>
                     ) : (permissionStatus === 'default' || permissionStatus === 'denied') && (
                         <button
@@ -180,9 +179,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500 hover:bg-yellow-500/20 animate-pulse'
                                 }`}
                         >
-                            {permissionStatus === 'denied' ? <BellOff size={14} className="sm:size-[15px]" /> : <Bell size={14} className="sm:size-[15px]" />}
-                            <span className="hidden xs:inline">{permissionStatus === 'denied' ? 'Bloqueadas' : 'Ativar Notificações'}</span>
-                            <span className="xs:hidden">{permissionStatus === 'denied' ? 'Bloqueadas' : 'Ativar'}</span>
+                            <Bell size={14} className="sm:size-[15px]" />
+                            <span>{permissionStatus === 'denied' ? 'Bloqueadas' : 'Ativar'}</span>
                         </button>
                     )}
                 </div>
@@ -191,44 +189,17 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
             {/* Input Card */}
             <Card className="bg-gradient-to-br from-[#1a1f35] to-[#0d1425] border-gray-800/50 relative overflow-hidden pb-4 transition-all duration-300">
                 {/* Responsive Header Container */}
-                <div className="flex flex-col relative z-20">
-                    {/* Mobile Header (< sm) */}
-                    <div className="sm:hidden flex flex-col p-6 pt-8 pb-4 gap-1">
-                        <div className="flex items-center justify-between gap-4 w-full">
-                            <div className="flex items-center gap-2 min-w-0">
-                                <StickyNote size={20} className="text-yellow-400 shrink-0" />
-                                <span className="font-semibold tracking-tight text-white text-[15px] xs:text-base whitespace-nowrap">Bloco de Notas</span>
-                            </div>
-                        </div>
-                        <div className="flex justify-end w-full pr-1">
-                            <button
-                                onClick={() => setIsCollapsed(!isCollapsed)}
-                                className="p-1 rounded-lg text-gray-500 transition-all hover:bg-white/5"
-                            >
-                                {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Desktop Header (>= sm) - Simplified without Notification Button */}
-                    <div className="hidden sm:flex items-center justify-between p-6">
-                        <div className="flex items-center gap-3">
-                            <StickyNote size={24} className="text-yellow-400" />
-                            <div>
-                                <h3 className="text-lg font-bold text-white leading-none">Bloco de Notas</h3>
-                                <p className="text-[10px] text-gray-500 font-medium mt-1">Anote procedimentos e tarefas rápidas</p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={() => setIsCollapsed(!isCollapsed)}
-                                className="p-2 rounded-xl text-gray-500 hover:text-white hover:bg-white/5 transition-all"
-                            >
-                                {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
-                            </button>
-                        </div>
-                    </div>
+                {/* Compact Header for Input Card - Just the collapse toggle */}
+                <div className="flex justify-end p-4 pb-0 relative z-20">
+                    <button
+                        onClick={() => setIsCollapsed(!isCollapsed)}
+                        className="p-2 rounded-xl text-gray-500 hover:text-white hover:bg-white/5 transition-all flex items-center gap-2 bg-white/5 border border-white/5 sm:bg-transparent sm:border-none"
+                    >
+                        <span className="text-[10px] font-bold uppercase tracking-widest sm:hidden">
+                            {isCollapsed ? 'Abrir Bloco' : 'Recolher'}
+                        </span>
+                        {isCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                    </button>
                 </div>
 
                 {
@@ -247,7 +218,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                                 {/* Emoji Carousel */}
                                 <div className="relative group/carousel">
-                                    <div className="flex gap-2.5 overflow-x-auto pb-3 pt-1 scrollbar-none scroll-smooth px-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                                    <div className="flex gap-2.5 overflow-x-auto pb-4 pt-1 scroll-smooth px-1 custom-scrollbar-horizontal" style={{ scrollbarWidth: 'auto' }}>
                                         {emojis.map(e => (
                                             <button
                                                 key={e}
@@ -266,7 +237,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                     <div className="absolute right-0 top-0 bottom-3 w-12 bg-gradient-to-l from-[#1a1f35] via-[#1a1f35]/80 to-transparent pointer-events-none z-10" />
                                 </div>
 
-                                <div className="flex flex-col md:flex-row gap-6 md:gap-16 items-start md:items-center justify-between">
+                                <div className="flex flex-col xl:flex-row gap-4 xl:gap-8 items-stretch xl:items-center justify-between">
                                     <div className="grid grid-cols-3 gap-2 w-full">
                                         <button
                                             onClick={() => setPriority('high')}
@@ -426,11 +397,11 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="flex items-end h-full pt-5">
+                                        <div className="flex items-end h-full pt-2 xl:pt-5">
                                             <Button
                                                 onClick={handleAddNote}
                                                 disabled={!content.trim()}
-                                                className="w-full bg-gradient-to-r from-primary to-[#10b981] text-[#05070e] font-black h-full px-6 rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all text-xs uppercase tracking-wider flex items-center justify-center"
+                                                className="w-full xl:w-auto bg-gradient-to-r from-primary to-[#10b981] text-[#05070e] font-black h-11 xl:h-10 px-6 rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all text-xs uppercase tracking-wider flex items-center justify-center whitespace-nowrap"
                                             >
                                                 <Plus size={18} strokeWidth={3} className="mr-2" /> Salvar Anotação
                                             </Button>
