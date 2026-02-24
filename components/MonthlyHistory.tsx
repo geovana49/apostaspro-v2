@@ -166,9 +166,13 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                             key={index}
                             onClick={() => hasData && setDetailMonth(index)}
                             className={`p-6 transition-all duration-300 bg-[#151b2e] border-white/5 group relative
-                                ${isCurrentMonth ? 'ring-2 ring-primary border-primary/40 shadow-[0_0_20px_rgba(23,186,164,0.15)]' : 'hover:border-white/10'}
-                                ${hasData ? 'ring-1 ring-primary/30 shadow-[0_0_15px_rgba(23,186,164,0.1)]' : 'opacity-70 cursor-default'}
-                                ${hasData ? 'hover:scale-[1.01] cursor-pointer hover:shadow-[0_0_30px_rgba(23,186,164,0.15)]' : ''}
+                                ${isCurrentMonth
+                                    ? 'ring-2 ring-primary border-primary/40 shadow-[0_0_25px_rgba(23,186,164,0.25)]'
+                                    : hasData
+                                        ? 'ring-2 ring-primary/30 border-primary/20 shadow-[0_0_15px_rgba(23,186,164,0.15)]'
+                                        : 'opacity-70 border-white/5 cursor-default'
+                                }
+                                ${hasData ? 'hover:scale-[1.01] cursor-pointer hover:shadow-[0_0_30px_rgba(23,186,164,0.25)] hover:ring-primary/50' : ''}
                             `}
                         >
                             <div className="relative z-10">
