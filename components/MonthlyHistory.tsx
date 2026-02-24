@@ -128,23 +128,23 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                         </div>
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Investimento</p>
-                            <p className="text-2xl font-bold text-white">
+                            <p className="text-2xl font-bold text-white whitespace-nowrap">
                                 <MoneyDisplay value={yearSummary.staked} privacyMode={settings.privacyMode} />
                             </p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Retorno Bruto</p>
-                            <p className="text-2xl font-bold text-white">
+                            <p className="text-2xl font-bold text-white whitespace-nowrap">
                                 <MoneyDisplay value={yearSummary.grossGain} privacyMode={settings.privacyMode} />
                             </p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Lucro Líquido</p>
                             <div className="flex items-center gap-2">
-                                <p className={`text-2xl font-bold ${yearSummary.netProfit >= 0 ? 'text-primary' : 'text-red-500'}`}>
+                                <p className={`text-2xl font-bold ${yearSummary.netProfit >= 0 ? 'text-primary' : 'text-red-500'} whitespace-nowrap`}>
                                     <MoneyDisplay value={yearSummary.netProfit} privacyMode={settings.privacyMode} />
                                 </p>
-                                <span className={`text-xs px-2 py-0.5 rounded-full font-bold bg-white/5 ${yearSummary.roi >= 0 ? 'text-primary/70' : 'text-red-500/70'}`}>
+                                <span className={`text-xs px-2 py-0.5 rounded-full font-bold bg-white/5 ${yearSummary.roi >= 0 ? 'text-primary/70' : 'text-red-500/70'} whitespace-nowrap`}>
                                     {yearSummary.roi.toFixed(1)}%
                                 </span>
                             </div>
@@ -263,12 +263,12 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
 
                             return (
                                 <div key={i} className="bg-[#0d1121] border border-white/5 rounded-xl p-4 flex items-center justify-between group hover:border-white/10 transition-colors">
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-4 min-w-0">
                                         <div className={`p-2.5 rounded-lg ${isPositive ? 'bg-primary/10 text-primary' : 'bg-red-500/10 text-red-500'}`}>
                                             {isBet ? <Ticket size={20} /> : <Coins size={20} />}
                                         </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-white group-hover:text-primary transition-colors">
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-bold text-white group-hover:text-primary transition-colors line-clamp-2 sm:line-clamp-none">
                                                 {isBet ? (item as Bet).event : (item as ExtraGain).origin}
                                             </p>
                                             <div className="flex items-center gap-2 mt-0.5">
