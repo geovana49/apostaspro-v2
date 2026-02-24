@@ -165,7 +165,7 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                         <Card
                             key={index}
                             onClick={() => hasData && setDetailMonth(index)}
-                            className={`p-6 transition-all duration-300 bg-[#151b2e] border-white/5 group relative overflow-hidden
+                            className={`p-6 transition-all duration-300 bg-[#151b2e] border-white/5 group relative
                                 ${isCurrentMonth
                                     ? 'ring-2 ring-primary border-primary/40 shadow-[0_0_25px_rgba(23,186,164,0.25)]'
                                     : hasData
@@ -175,9 +175,12 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                                 ${hasData ? 'hover:scale-[1.01] cursor-pointer hover:shadow-[0_0_30px_rgba(23,186,164,0.25)] hover:ring-primary/50' : ''}
                             `}
                         >
-                            {/* Inner Gloss/Shine Effect for cards with data */}
+                            {/* Outer Neon Glow Aura for cards with data */}
                             {hasData && (
-                                <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/[0.08] to-transparent pointer-events-none z-0" />
+                                <>
+                                    <div className={`absolute -inset-1 rounded-xl blur-lg opacity-30 pointer-events-none z-0 ${isProfit ? 'bg-primary/50' : 'bg-red-500/50'}`} />
+                                    <div className={`absolute -inset-[1px] rounded-xl opacity-20 pointer-events-none z-0 ${isProfit ? 'bg-primary' : 'bg-red-500'}`} />
+                                </>
                             )}
                             <div className="relative z-10">
                                 <div className="flex justify-between items-start mb-6">
