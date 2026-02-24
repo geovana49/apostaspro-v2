@@ -121,27 +121,27 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                         <Trophy size={160} />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 relative z-10">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8 relative z-10">
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Operações</p>
-                            <p className="text-xl sm:text-2xl font-bold text-white">{yearSummary.ops}</p>
+                            <p className="text-lg sm:text-2xl font-bold text-white tracking-tighter">{yearSummary.ops}</p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Investimento</p>
-                            <p className="text-xl sm:text-2xl font-bold text-white">
+                            <p className="text-lg sm:text-2xl font-bold text-white tracking-tighter">
                                 <MoneyDisplay value={yearSummary.staked} privacyMode={settings.privacyMode} />
                             </p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Retorno Bruto</p>
-                            <p className="text-xl sm:text-2xl font-bold text-white">
+                            <p className="text-lg sm:text-2xl font-bold text-white tracking-tighter">
                                 <MoneyDisplay value={yearSummary.grossGain} privacyMode={settings.privacyMode} />
                             </p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Lucro Líquido</p>
                             <div className="flex items-center gap-2">
-                                <p className={`text-xl sm:text-2xl font-bold ${yearSummary.netProfit >= 0 ? 'text-primary' : 'text-red-500'}`}>
+                                <p className={`text-lg sm:text-2xl font-bold ${yearSummary.netProfit >= 0 ? 'text-primary' : 'text-red-500'} tracking-tighter`}>
                                     <MoneyDisplay value={yearSummary.netProfit} privacyMode={settings.privacyMode} />
                                 </p>
                                 <span className={`text-xs px-2 py-0.5 rounded-full font-bold bg-white/5 ${yearSummary.roi >= 0 ? 'text-primary/70' : 'text-red-500/70'}`}>
