@@ -167,12 +167,12 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                             onClick={() => hasData && setDetailMonth(index)}
                             className={`p-6 transition-all duration-300 bg-[#151b2e] border-white/5 group relative
                                 ${isCurrentMonth
-                                    ? 'ring-2 ring-primary border-primary/40 shadow-[0_0_20px_rgba(23,186,164,0.3)]'
+                                    ? 'ring-2 ring-primary border-primary/40 shadow-[0_0_25px_rgba(23,186,164,0.4)]'
                                     : hasData
-                                        ? `ring-2 ${isProfit ? 'ring-primary/40' : 'ring-red-500/40'} border-transparent shadow-[0_0_15px_${isProfit ? 'rgba(23,186,164,0.15)' : 'rgba(239,68,68,0.15)'}]`
+                                        ? `ring-2 ${isProfit ? 'ring-primary/70' : 'ring-red-500/70'} border-transparent shadow-[0_0_20px_${isProfit ? 'rgba(23,186,164,0.35)' : 'rgba(239,68,68,0.35)'}]`
                                         : 'opacity-70 border-white/5 cursor-default'
                                 }
-                                ${hasData ? `hover:scale-[1.01] cursor-pointer hover:shadow-[0_0_30px_${isProfit ? 'rgba(23,186,164,0.3)' : 'rgba(239,68,68,0.3)'}]` : ''}
+                                ${hasData ? `hover:scale-[1.01] cursor-pointer hover:shadow-[0_0_35px_${isProfit ? 'rgba(23,186,164,0.45)' : 'rgba(239,68,68,0.45)'}]` : ''}
                             `}
                         >
                             {/* O brilho agora é puramente externo via shadow e ring acima */}
