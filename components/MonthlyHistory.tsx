@@ -167,21 +167,15 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                             onClick={() => hasData && setDetailMonth(index)}
                             className={`p-6 transition-all duration-300 bg-[#151b2e] border-white/5 group relative
                                 ${isCurrentMonth
-                                    ? 'ring-2 ring-primary border-primary/40 shadow-[0_0_25px_rgba(23,186,164,0.25)]'
+                                    ? 'ring-2 ring-primary border-primary/40 shadow-[0_0_20px_rgba(23,186,164,0.3)]'
                                     : hasData
-                                        ? 'ring-2 ring-primary/30 border-primary/20 shadow-[0_0_15px_rgba(23,186,164,0.15)]'
+                                        ? `ring-2 ${isProfit ? 'ring-primary/40' : 'ring-red-500/40'} border-transparent shadow-[0_0_15px_${isProfit ? 'rgba(23,186,164,0.15)' : 'rgba(239,68,68,0.15)'}]`
                                         : 'opacity-70 border-white/5 cursor-default'
                                 }
-                                ${hasData ? 'hover:scale-[1.01] cursor-pointer hover:shadow-[0_0_30px_rgba(23,186,164,0.25)] hover:ring-primary/50' : ''}
+                                ${hasData ? `hover:scale-[1.01] cursor-pointer hover:shadow-[0_0_30px_${isProfit ? 'rgba(23,186,164,0.3)' : 'rgba(239,68,68,0.3)'}]` : ''}
                             `}
                         >
-                            {/* Outer Neon Glow Aura for cards with data */}
-                            {hasData && (
-                                <>
-                                    <div className={`absolute -inset-1 rounded-xl blur-lg opacity-30 pointer-events-none z-0 ${isProfit ? 'bg-primary/50' : 'bg-red-500/50'}`} />
-                                    <div className={`absolute -inset-[1px] rounded-xl opacity-20 pointer-events-none z-0 ${isProfit ? 'bg-primary' : 'bg-red-500'}`} />
-                                </>
-                            )}
+                            {/* O brilho agora é puramente externo via shadow e ring acima */}
                             <div className="relative z-10">
                                 <div className="flex justify-between items-start mb-6">
                                     <div className="space-y-1">
