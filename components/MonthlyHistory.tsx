@@ -116,35 +116,35 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                     absolute -inset-0.5 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-500
                     ${yearSummary.netProfit >= 0 ? 'bg-primary' : 'bg-red-500'}
                 `}></div>
-                <Card className="relative p-6 sm:p-8 bg-[#0d1121] border-white/5 overflow-hidden">
+                <Card className="relative p-4 sm:p-8 bg-[#0d1121] border-white/5 overflow-hidden">
                     <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none group-hover:scale-110 transition-transform duration-700">
                         <Trophy size={160} />
                     </div>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 relative z-10">
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Operações</p>
-                            <p className="text-2xl font-bold text-white">{yearSummary.ops}</p>
+                            <p className="text-xl sm:text-2xl font-bold text-white">{yearSummary.ops}</p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Investimento</p>
-                            <p className="text-2xl font-bold text-white whitespace-nowrap">
+                            <p className="text-xl sm:text-2xl font-bold text-white">
                                 <MoneyDisplay value={yearSummary.staked} privacyMode={settings.privacyMode} />
                             </p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Retorno Bruto</p>
-                            <p className="text-2xl font-bold text-white whitespace-nowrap">
+                            <p className="text-xl sm:text-2xl font-bold text-white">
                                 <MoneyDisplay value={yearSummary.grossGain} privacyMode={settings.privacyMode} />
                             </p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Lucro Líquido</p>
                             <div className="flex items-center gap-2">
-                                <p className={`text-2xl font-bold ${yearSummary.netProfit >= 0 ? 'text-primary' : 'text-red-500'} whitespace-nowrap`}>
+                                <p className={`text-xl sm:text-2xl font-bold ${yearSummary.netProfit >= 0 ? 'text-primary' : 'text-red-500'}`}>
                                     <MoneyDisplay value={yearSummary.netProfit} privacyMode={settings.privacyMode} />
                                 </p>
-                                <span className={`text-xs px-2 py-0.5 rounded-full font-bold bg-white/5 ${yearSummary.roi >= 0 ? 'text-primary/70' : 'text-red-500/70'} whitespace-nowrap`}>
+                                <span className={`text-xs px-2 py-0.5 rounded-full font-bold bg-white/5 ${yearSummary.roi >= 0 ? 'text-primary/70' : 'text-red-500/70'}`}>
                                     {yearSummary.roi.toFixed(1)}%
                                 </span>
                             </div>
@@ -154,7 +154,7 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
             </div>
 
             {/* Monthly Grid - Grid Layout */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 px-0">
                 {monthNames.map((name, index) => {
                     const data = monthlyData[index];
                     const isProfit = data.netProfit >= 0;
