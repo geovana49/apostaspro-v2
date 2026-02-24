@@ -178,18 +178,18 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                             <div className="relative z-10">
                                 <div className="flex justify-between items-start mb-6">
                                     <div className="space-y-1">
-                                        <div className="flex items-center gap-2">
-                                            <h3 className={`font-bold text-xl leading-none ${isCurrentMonth ? 'text-primary' : 'text-white'}`}>
-                                                {name}
-                                            </h3>
-                                            {isCurrentMonth && (
-                                                <span className="text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Mês Atual</span>
-                                            )}
-                                        </div>
+                                        <h3 className={`font-bold text-xl leading-none ${isCurrentMonth ? 'text-primary' : 'text-white'}`}>
+                                            {name}
+                                        </h3>
                                         <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{selectedYear}</span>
                                     </div>
-                                    <div className="bg-[#0d1121] border border-white/5 px-2 py-1 rounded text-[11px] font-bold text-gray-400">
-                                        {data.ops} OPS
+                                    <div className="flex flex-col items-end gap-1.5">
+                                        <div className="bg-[#0d1121] border border-white/5 px-2 py-1 rounded text-[11px] font-bold text-gray-400">
+                                            {data.ops} OPS
+                                        </div>
+                                        {isCurrentMonth && (
+                                            <span className="text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Mês Atual</span>
+                                        )}
                                     </div>
                                 </div>
 
