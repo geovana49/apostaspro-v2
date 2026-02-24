@@ -167,7 +167,7 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                             onClick={() => hasData && setDetailMonth(index)}
                             className={`p-6 transition-all duration-300 bg-[#151b2e] border-white/5 group relative
                                 ${isCurrentMonth ? 'ring-2 ring-primary border-primary/40 shadow-[0_0_20px_rgba(23,186,164,0.15)]' : 'hover:border-white/10'}
-                                ${!hasData ? 'opacity-40 cursor-default' : 'hover:scale-[1.01] cursor-pointer hover:shadow-[0_0_30px_rgba(23,186,164,0.15)]'}
+                                ${!hasData ? 'opacity-70 cursor-default' : 'hover:scale-[1.01] cursor-pointer hover:shadow-[0_0_30px_rgba(23,186,164,0.15)]'}
                             `}
                         >
                             <div className="relative z-10">
@@ -194,7 +194,7 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                                             <p className="flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
                                                 <span className="text-[#00f7ff]">$</span> Total Apostado
                                             </p>
-                                            <p className="font-bold text-[#00f7ff]">
+                                            <p className="font-bold text-[#00f7ff] whitespace-nowrap">
                                                 <MoneyDisplay value={data.staked} privacyMode={settings.privacyMode} />
                                             </p>
                                         </div>
@@ -202,7 +202,7 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                                             <p className="flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
                                                 <span className="text-[#ff00e6]">◎</span> Total Ganho
                                             </p>
-                                            <p className="font-bold text-[#ff00e6]">
+                                            <p className="font-bold text-[#ff00e6] whitespace-nowrap">
                                                 <MoneyDisplay value={data.grossGain} privacyMode={settings.privacyMode} />
                                             </p>
                                         </div>
@@ -215,13 +215,13 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                                             <p className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
                                                 <Coins size={10} /> Lucro Líquido
                                             </p>
-                                            <p className={`text-xl font-bold ${isProfit ? 'text-primary' : 'text-red-500'}`}>
+                                            <p className={`text-xl font-bold ${isProfit ? 'text-primary' : 'text-red-500'} whitespace-nowrap`}>
                                                 <MoneyDisplay value={data.netProfit} privacyMode={settings.privacyMode} />
                                             </p>
                                         </div>
                                         <div className="text-right">
                                             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight mb-1">ROI</p>
-                                            <p className={`text-lg font-black ${isProfit ? 'text-white' : 'text-red-400'}`}>
+                                            <p className={`text-lg font-black ${isProfit ? 'text-white' : 'text-red-400'} whitespace-nowrap`}>
                                                 {data.roi.toFixed(2)}%
                                             </p>
                                         </div>
@@ -279,7 +279,7 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                                         </div>
                                     </div>
 
-                                    <div className="text-right">
+                                    <div className="text-right whitespace-nowrap">
                                         <p className={`text-base font-bold ${isPositive ? 'text-primary' : 'text-red-500'}`}>
                                             <MoneyDisplay value={profit || 0} privacyMode={settings.privacyMode} />
                                         </p>
