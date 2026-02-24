@@ -167,69 +167,74 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                             onClick={() => hasData && setDetailMonth(index)}
                             className={`p-6 transition-all duration-300 bg-[#151b2e] border-white/5 group relative
                                 ${isCurrentMonth
-                                    ? 'ring-1 ring-primary border-primary/40 shadow-[0_0_15px_rgba(23,186,164,0.2)]'
+                                    ? 'ring-2 ring-primary border-primary/40 shadow-[0_0_25px_rgba(23,186,164,0.25)]'
                                     : hasData
-                                        ? 'ring-1 ring-primary/30 border-primary/10 shadow-[0_0_10px_rgba(23,186,164,0.1)]'
+                                        ? 'ring-2 ring-primary/30 border-primary/20 shadow-[0_0_15px_rgba(23,186,164,0.15)]'
                                         : 'opacity-70 border-white/5 cursor-default'
                                 }
-                                ${hasData ? 'hover:scale-[1.01] cursor-pointer hover:shadow-[0_0_25px_rgba(23,186,164,0.2)] hover:ring-primary/50' : ''}
+                                ${hasData ? 'hover:scale-[1.01] cursor-pointer hover:shadow-[0_0_30px_rgba(23,186,164,0.25)] hover:ring-primary/50' : ''}
                             `}
                         >
                             <div className="relative z-10">
                                 <div className="flex justify-between items-start mb-6">
                                     <div className="space-y-1">
-                                        <h3 className="font-bold text-2xl leading-none text-white">
+                                        <h3 className={`font-bold text-xl leading-none ${isCurrentMonth ? 'text-primary' : 'text-white'}`}>
                                             {name}
                                         </h3>
                                         <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{selectedYear}</span>
                                     </div>
-                                    <div className="bg-[#0b0f1a] border border-white/5 px-2.5 py-1 rounded text-[10px] font-black text-gray-400 uppercase tracking-tight">
-                                        {data.ops} OPS
+                                    <div className="flex flex-col items-end gap-1.5">
+                                        <div className="bg-[#0d1121] border border-white/5 px-2 py-1 rounded text-[11px] font-bold text-gray-400">
+                                            {data.ops} OPS
+                                        </div>
+                                        {isCurrentMonth && (
+                                            <span className="text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Mês Atual</span>
+                                        )}
                                     </div>
                                 </div>
 
                                 <div className="space-y-4">
                                     <div className="space-y-2.5">
                                         <div className="flex justify-between items-center text-sm">
-                                            <p className="flex items-center gap-2 text-[10px] text-gray-500 font-bold uppercase tracking-tight">
-                                                <span className="text-[#00f7ff] opacity-80">$</span> TOTAL APOSTADO
+                                            <p className="flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
+                                                <span className="text-[#00f7ff]">$</span> Total Apostado
                                             </p>
-                                            <p className="font-black text-[#00f7ff] whitespace-nowrap">
+                                            <p className="font-bold text-[#00f7ff] whitespace-nowrap">
                                                 <MoneyDisplay value={data.staked} privacyMode={settings.privacyMode} />
                                             </p>
                                         </div>
                                         <div className="flex justify-between items-center text-sm">
-                                            <p className="flex items-center gap-2 text-[10px] text-gray-500 font-bold uppercase tracking-tight">
-                                                <span className="text-[#ff00e6] opacity-80">◎</span> TOTAL GANHO
+                                            <p className="flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
+                                                <span className="text-[#ff00e6]">◎</span> Total Ganho
                                             </p>
-                                            <p className="font-black text-[#ff00e6] whitespace-nowrap">
+                                            <p className="font-bold text-[#ff00e6] whitespace-nowrap">
                                                 <MoneyDisplay value={data.grossGain} privacyMode={settings.privacyMode} />
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div className="h-px bg-white/5 w-full my-1" />
+                                    <div className="h-px bg-white/5 w-full my-2" />
 
                                     <div className="flex justify-between items-end">
-                                        <div className="space-y-0.5">
-                                            <p className="flex items-center gap-1.5 text-[10px] text-gray-500 font-bold uppercase tracking-tight">
-                                                <Coins size={10} className="text-gray-600" /> LUCRO LÍQUIDO
+                                        <div className="space-y-1">
+                                            <p className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-tight">
+                                                <Coins size={10} /> Lucro Líquido
                                             </p>
-                                            <p className={`text-2xl font-black ${isProfit ? 'text-primary' : 'text-red-500'} whitespace-nowrap tracking-tight`}>
+                                            <p className={`text-xl font-bold ${isProfit ? 'text-primary' : 'text-red-500'} whitespace-nowrap`}>
                                                 <MoneyDisplay value={data.netProfit} privacyMode={settings.privacyMode} />
                                             </p>
                                         </div>
-                                        <div className="text-right pb-1">
-                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-tight mb-0.5">ROI</p>
-                                            <p className={`text-xl font-black ${isProfit ? 'text-white' : 'text-red-400'} whitespace-nowrap`}>
+                                        <div className="text-right">
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight mb-1">ROI</p>
+                                            <p className={`text-lg font-black ${isProfit ? 'text-white' : 'text-red-400'} whitespace-nowrap`}>
                                                 {data.roi.toFixed(2)}%
                                             </p>
                                         </div>
                                     </div>
 
                                     {hasData && (
-                                        <div className="pt-2 text-[10px] text-primary font-black uppercase tracking-[0.15em] text-center group-hover:text-primary transition-all opacity-80 group-hover:opacity-100">
-                                            CLIQUE PARA VER DETALHES
+                                        <div className="pt-2 text-[10px] text-gray-500 font-bold uppercase tracking-widest text-center group-hover:text-primary transition-colors">
+                                            Clique para ver detalhes
                                         </div>
                                     )}
                                 </div>
