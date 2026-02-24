@@ -167,7 +167,8 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                             onClick={() => hasData && setDetailMonth(index)}
                             className={`p-6 transition-all duration-300 bg-[#151b2e] border-white/5 group relative
                                 ${isCurrentMonth ? 'ring-2 ring-primary border-primary/40 shadow-[0_0_20px_rgba(23,186,164,0.15)]' : 'hover:border-white/10'}
-                                ${!hasData ? 'opacity-70 cursor-default' : 'hover:scale-[1.01] cursor-pointer hover:shadow-[0_0_30px_rgba(23,186,164,0.15)]'}
+                                ${hasData ? 'ring-1 ring-primary/30 shadow-[0_0_15px_rgba(23,186,164,0.1)]' : 'opacity-70 cursor-default'}
+                                ${hasData ? 'hover:scale-[1.01] cursor-pointer hover:shadow-[0_0_30px_rgba(23,186,164,0.15)]' : ''}
                             `}
                         >
                             <div className="relative z-10">
@@ -271,10 +272,6 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                                                         ? ((item as Bet).coverages?.[0]?.market || 'Aposta')
                                                         : 'Ganho Extra'}
                                                 </span>
-                                                <span className="text-gray-700 text-[10px]">•</span>
-                                                <span className="text-[10px] font-bold text-gray-500 uppercase">
-                                                    {isBet ? (item as Bet).mainBookmakerId : (item as ExtraGain).status}
-                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -283,9 +280,14 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                                         <p className={`text-base font-bold ${isPositive ? 'text-primary' : 'text-red-500'}`}>
                                             <MoneyDisplay value={profit || 0} privacyMode={settings.privacyMode} />
                                         </p>
-                                        <p className={`text-[10px] font-black ${isPositive ? 'text-primary/60' : 'text-red-500/60'}`}>
-                                            {isBet ? `${roi.toFixed(1)}% ROI` : '+100%'}
-                                        </p>
+                                        <div className="flex flex-col items-end gap-0.5">
+                                            <p className="text-[10px] font-bold text-gray-400">
+                                                {isBet ? `${roi.toFixed(1)}% ROI` : '+100%'}
+                                            </p>
+                                            <p className="text-[9px] font-medium text-gray-600 uppercase tracking-tighter">
+                                                {isBet ? (item as Bet).mainBookmakerId : (item as ExtraGain).status}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             );
