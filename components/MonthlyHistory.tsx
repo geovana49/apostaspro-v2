@@ -91,19 +91,19 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                     <p className="text-textMuted text-sm mt-1">Sua evolução financeira detalhada por mês.</p>
                 </div>
 
-                <div className="flex items-center gap-2 bg-[#151b2e] p-1 rounded-xl border border-white/10 shadow-lg">
+                <div className="flex items-center justify-between w-full sm:w-auto gap-2 bg-[#151b2e] p-1 rounded-xl border border-white/10 shadow-lg">
                     <button
                         onClick={() => setSelectedYear(prev => prev - 1)}
-                        className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-colors"
+                        className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-colors flex-1 sm:flex-none flex justify-center"
                     >
                         <ChevronLeft size={20} />
                     </button>
-                    <div className="px-4 py-1.5 bg-primary/10 rounded-lg border border-primary/20 text-primary font-bold text-sm">
+                    <div className="px-6 py-1.5 bg-primary/10 rounded-lg border border-primary/20 text-primary font-bold text-sm min-w-[100px] text-center">
                         {selectedYear}
                     </div>
                     <button
                         onClick={() => setSelectedYear(prev => prev + 1)}
-                        className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-colors"
+                        className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-colors flex-1 sm:flex-none flex justify-center"
                     >
                         <ChevronRight size={20} />
                     </button>
@@ -128,20 +128,20 @@ const MonthlyHistory: React.FC<MonthlyHistoryProps> = ({ bets, gains, settings }
                         </div>
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Investimento</p>
-                            <p className="text-lg sm:text-2xl font-bold text-white tracking-tighter">
+                            <p className="text-lg sm:text-2xl font-bold text-white tracking-tighter whitespace-nowrap">
                                 <MoneyDisplay value={yearSummary.staked} privacyMode={settings.privacyMode} />
                             </p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Retorno Bruto</p>
-                            <p className="text-lg sm:text-2xl font-bold text-white tracking-tighter">
+                            <p className="text-lg sm:text-2xl font-bold text-white tracking-tighter whitespace-nowrap">
                                 <MoneyDisplay value={yearSummary.grossGain} privacyMode={settings.privacyMode} />
                             </p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Lucro Líquido</p>
                             <div className="flex items-center gap-2">
-                                <p className={`text-lg sm:text-2xl font-bold ${yearSummary.netProfit >= 0 ? 'text-primary' : 'text-red-500'} tracking-tighter`}>
+                                <p className={`text-lg sm:text-2xl font-bold ${yearSummary.netProfit >= 0 ? 'text-primary' : 'text-red-500'} tracking-tighter whitespace-nowrap`}>
                                     <MoneyDisplay value={yearSummary.netProfit} privacyMode={settings.privacyMode} />
                                 </p>
                                 <span className={`text-xs px-2 py-0.5 rounded-full font-bold bg-white/5 ${yearSummary.roi >= 0 ? 'text-primary/70' : 'text-red-500/70'}`}>
