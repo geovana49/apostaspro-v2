@@ -30,6 +30,17 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [filterStatus, setFilterStatus] = useState<'pending' | 'completed'>('pending');
     const [customEmoji, setCustomEmoji] = useState('');
     const [isCustomEmojiActive, setIsCustomEmojiActive] = useState(false);
+    const [selectedStatus, setSelectedStatus] = useState('Não Feito');
+    const [statusEmoji, setStatusEmoji] = useState('⌛');
+    const [isCustomStatusActive, setIsCustomStatusActive] = useState(false);
+    const [customStatus, setCustomStatus] = useState('');
+
+    const defaultStatuses = [
+        { name: 'Não Feito', emoji: '⌛' },
+        { name: 'Fazendo', emoji: '▶️' },
+        { name: 'Feito', emoji: '✅' },
+        { name: 'Perdido', emoji: '❌' }
+    ];
 
     const emojis = [
         '🎰', '💰', '🔥', '⚠️', '✅', '❌', '⭐', '🎯', '💎', '🚀', '📌', '💡',
@@ -58,15 +69,21 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                 content: content.trim(),
                 emoji: isCustomEmojiActive && customEmoji ? customEmoji : selectedEmoji,
                 priority,
+                status: isCustomStatusActive && customStatus ? customStatus : selectedStatus,
+                statusEmoji: isCustomStatusActive ? '📌' : statusEmoji,
                 reminderDate: (tempDate && tempTime) ? `${tempDate}T${tempTime}` : null,
                 reminderEnabled: !!(tempDate && tempTime),
                 createdAt: new Date().toISOString(),
-                completed: false
+                completed: selectedStatus === 'Feito'
             };
             await FirestoreService.saveNote(currentUser.uid, newNote);
             setContent('');
             setCustomEmoji('');
             setIsCustomEmojiActive(false);
+            setCustomStatus('');
+            setIsCustomStatusActive(false);
+            setSelectedStatus('Não Feito');
+            setStatusEmoji('⌛');
         } catch (error) {
             console.error("[Notepad] Erro ao salvar nota:", error);
         }
@@ -121,9 +138,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
             {/* Nova Anotação Card */}
             <Card className="bg-[#121625]/80 backdrop-blur-xl border-white/5 relative overflow-hidden rounded-[32px]">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-                    <div className="flex items-center gap-3 px-3 py-1.5 bg-white/5 rounded-full border border-white/10">
+                    <div className="flex items-center gap-3">
                         <Pencil size={14} className="text-[#17baa4]" />
-                        <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Nova Anotação</span>
+                        <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Criar Nova Anotação</span>
                     </div>
                     <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-2 text-gray-500 hover:text-white transition-all">
                         {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
@@ -169,6 +186,45 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                     <span className={`text-2xl transition-all ${(!isCustomEmojiActive && selectedEmoji === e) ? 'scale-110' : ''}`}>{e}</span>
                                 </button>
                             ))}
+                        </div>
+
+                        {/* Status Selector */}
+                        <div className="flex flex-col gap-2.5">
+                            <div className="flex items-center gap-2 px-2">
+                                <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Status</span>
+                            </div>
+                            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide flex-nowrap px-1">
+                                {defaultStatuses.map((s) => (
+                                    <button
+                                        key={s.name}
+                                        onClick={() => {
+                                            setSelectedStatus(s.name);
+                                            setStatusEmoji(s.emoji);
+                                            setIsCustomStatusActive(false);
+                                        }}
+                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-bold transition-all border shrink-0 ${(!isCustomStatusActive && selectedStatus === s.name) ? 'bg-[#FFCC00]/20 border-[#FFCC00]/50 text-[#FFCC00] shadow-[0_0_15px_rgba(255,204,0,0.2)]' : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10'}`}
+                                    >
+                                        <span>{s.emoji}</span>
+                                        <span>{s.name}</span>
+                                    </button>
+                                ))}
+
+                                {/* Custom Status Input */}
+                                <div className={`flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl border transition-all shrink-0 ${isCustomStatusActive ? 'border-[#17baa4] shadow-[0_0_10px_rgba(23,186,164,0.3)]' : 'border-white/5'}`}>
+                                    <span className="text-[10px]">📌</span>
+                                    <input
+                                        type="text"
+                                        placeholder="Personalizar..."
+                                        className="bg-transparent border-none outline-none w-24 text-[10px] text-white placeholder:text-gray-600 font-bold"
+                                        value={customStatus}
+                                        onChange={(e) => {
+                                            setCustomStatus(e.target.value);
+                                            setIsCustomStatusActive(true);
+                                        }}
+                                        onFocus={() => setIsCustomStatusActive(true)}
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         {/* Bottom Row - Single Line Action Row */}
@@ -251,11 +307,18 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         .map(note => (
                             <Card key={note.id} className={`bg-[#121625]/60 border-white/5 transition-all duration-300 relative group overflow-hidden p-6`}>
                                 <div className="flex items-center justify-between mb-4">
-                                    <div className={`px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border border-white/5 ${getPriorityColor(note.priority)}`}>
-                                        {note.priority === 'high' ? 'Urgente' : note.priority === 'medium' ? 'Importante' : 'Normal'}
+                                    <div className="flex items-center gap-2">
+                                        <div className={`px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border border-white/5 ${getPriorityColor(note.priority)}`}>
+                                            {note.priority === 'high' ? 'Urgente' : note.priority === 'medium' ? 'Importante' : 'Normal'}
+                                        </div>
+                                        {note.status && (
+                                            <div className="px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border border-white/10 bg-white/5 text-gray-400 flex items-center gap-2">
+                                                <span>{note.statusEmoji || '📌'}</span>
+                                                <span>{note.status}</span>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                                        <button onClick={() => handleToggleComplete(note)} className="p-1.5 text-gray-500 hover:text-white bg-white/5 rounded-lg"><Check size={14} /></button>
                                         <button onClick={() => handleDeleteNote(note.id)} className="p-1.5 text-gray-500 hover:text-red-500 bg-white/5 rounded-lg"><Trash size={14} /></button>
                                     </div>
                                 </div>

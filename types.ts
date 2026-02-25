@@ -142,6 +142,8 @@ export interface NotepadNote {
   content: string;
   emoji: string;
   priority: 'low' | 'medium' | 'high';
+  status: string;
+  statusEmoji: string;
   reminderDate?: string;
   reminderEnabled: boolean;
   createdAt: string;
