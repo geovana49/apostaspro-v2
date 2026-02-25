@@ -309,8 +309,14 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                     <div
                                         style={{
                                             position: 'fixed',
-                                            top: schedulerRef.current ? schedulerRef.current.getBoundingClientRect().top - 220 : '50%',
-                                            left: schedulerRef.current ? schedulerRef.current.getBoundingClientRect().left : '50%',
+                                            top: schedulerRef.current
+                                                ? (schedulerRef.current.getBoundingClientRect().top > 300
+                                                    ? schedulerRef.current.getBoundingClientRect().top - 230
+                                                    : schedulerRef.current.getBoundingClientRect().bottom + 10)
+                                                : '50%',
+                                            left: schedulerRef.current
+                                                ? Math.max(10, Math.min(window.innerWidth - 220, schedulerRef.current.getBoundingClientRect().left))
+                                                : '50%',
                                         }}
                                         className="z-[999] p-4 bg-[#1a1f35] border border-white/10 rounded-2xl shadow-2xl flex flex-col gap-3 min-w-[200px] animate-in slide-in-from-bottom-2 duration-300"
                                     >
@@ -320,7 +326,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                 type="date"
                                                 value={tempDate}
                                                 onChange={(e) => setTempDate(e.target.value)}
-                                                className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#17baa4]/50"
+                                                onClick={(e) => e.currentTarget.showPicker?.()}
+                                                className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#17baa4]/50 cursor-pointer"
                                             />
                                         </div>
                                         <div className="flex flex-col gap-1.5">
@@ -329,7 +336,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                 type="time"
                                                 value={tempTime}
                                                 onChange={(e) => setTempTime(e.target.value)}
-                                                className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#17baa4]/50"
+                                                onClick={(e) => e.currentTarget.showPicker?.()}
+                                                className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#17baa4]/50 cursor-pointer"
                                             />
                                         </div>
                                         <button
@@ -444,10 +452,10 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                 </div>
             )}
 
-            {/* Notifications Modal */}
-            {showNotificationsModal && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-sm bg-black/60 shadow-2xl">
-                    <Card className="max-w-md w-full bg-[#1a1f35] border-white/10 shadow-2xl p-6 space-y-4 relative z-50">
+            {/* Notifications Modal - Portalized for visibility */}
+            {showNotificationsModal && createPortal(
+                <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 backdrop-blur-sm bg-black/60">
+                    <Card className="max-w-md w-full bg-[#1a1f35] border-white/10 shadow-2xl p-6 space-y-4 relative">
                         <div className="flex items-center justify-between border-b border-white/5 pb-4">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-[#17baa4]/10 rounded-xl"><Bell size={24} className="text-[#17baa4]" /></div>
@@ -470,7 +478,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2 text-[10px] font-bold text-[#17baa4] uppercase tracking-widest bg-[#17baa4]/10 px-2 py-1 rounded-lg">
                                                     <Clock size={12} />
-                                                    {new Date(note.reminderDate).toLocaleDateString('pt-BR')} {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                    {new Date(note.reminderDate!).toLocaleDateString('pt-BR')} {new Date(note.reminderDate!).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                                 </div>
                                                 <button
                                                     onClick={async () => {
@@ -495,7 +503,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                         <Button onClick={() => setShowNotificationsModal(false)} className="w-full bg-[#17baa4] hover:brightness-110 text-[#090c19] font-black h-12 rounded-xl mt-2 shadow-[0_4px_15px_rgba(23,186,164,0.3)]">Fechar</Button>
                     </Card>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
