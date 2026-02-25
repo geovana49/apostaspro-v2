@@ -133,46 +133,48 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             onChange={(e) => setContent(e.target.value)}
                         />
 
-                        {/* Emoji Picker Row - Full List */}
-                        <div className="flex flex-wrap gap-2">
+                        {/* Emoji Picker - Horizontal Carousel */}
+                        <div className="flex items-center gap-2 overflow-x-auto pb-4 custom-scrollbar-horizontal flex-nowrap scroll-smooth px-1">
                             {emojis.map(e => (
                                 <button
                                     key={e}
                                     onClick={() => setSelectedEmoji(e)}
-                                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all border ${selectedEmoji === e ? 'bg-[#17baa4]/20 border-[#17baa4]/40 scale-110 shadow-lg' : 'bg-white/5 border-white/5'}`}
+                                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all border shrink-0 ${selectedEmoji === e ? 'bg-[#17baa4]/20 border-[#17baa4]/40 scale-110 shadow-lg' : 'bg-white/5 border-white/5'}`}
                                 >
                                     <span className={`text-xl ${selectedEmoji === e ? '' : 'grayscale-[0.5]'}`}>{e}</span>
                                 </button>
                             ))}
                         </div>
 
-                        {/* Bottom Row - Priorities, Schedule, Save */}
-                        <div className="flex flex-col lg:flex-row items-center justify-between gap-6 pt-2">
-                            <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-                                <div className="flex gap-2">
-                                    <button onClick={() => setPriority('high')} className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${priority === 'high' ? 'bg-red-500/10 border-red-500/40 text-red-500' : 'bg-white/5 border-white/5 text-gray-500'}`}>
-                                        <TriangleAlert size={14} /> Urgente
-                                    </button>
-                                    <button onClick={() => setPriority('medium')} className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${priority === 'medium' ? 'bg-yellow-500/10 border-yellow-500/40 text-yellow-500' : 'bg-white/5 border-white/5 text-gray-500'}`}>
-                                        <Star size={14} /> Importante
-                                    </button>
-                                    <button onClick={() => setPriority('low')} className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${priority === 'low' ? 'bg-[#33b5e5]/20 border-[#33b5e5]/40 text-[#33b5e5]' : 'bg-white/5 border-white/5 text-gray-500'}`}>
-                                        <FileText size={14} /> Normal
-                                    </button>
-                                </div>
-
-                                <div className="flex flex-col gap-1.5 ml-0 lg:ml-4">
-                                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">AGENDAR LEMBRETE</span>
-                                    <button className="flex items-center justify-between gap-6 px-5 py-2.5 bg-black/40 border border-white/5 rounded-xl text-[10px] font-bold text-gray-400 group hover:border-white/10 transition-all">
-                                        <span>Selecionar Data e Hora</span>
-                                        <Bell size={14} className="opacity-40 group-hover:opacity-100" />
-                                    </button>
-                                </div>
+                        {/* Bottom Row - Precise Screenshot Layout */}
+                        <div className="space-y-6 pt-2">
+                            {/* Priority row */}
+                            <div className="flex flex-wrap items-center gap-3">
+                                <button onClick={() => setPriority('high')} className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${priority === 'high' ? 'bg-red-500/10 border-red-500/40 text-red-500' : 'bg-white/5 border-white/5 text-gray-500'}`}>
+                                    <TriangleAlert size={14} /> Urgente
+                                </button>
+                                <button onClick={() => setPriority('medium')} className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${priority === 'medium' ? 'bg-yellow-500/10 border-yellow-500/40 text-yellow-500' : 'bg-white/5 border-white/5 text-gray-500'}`}>
+                                    <Star size={14} /> Importante
+                                </button>
+                                <button onClick={() => setPriority('low')} className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${priority === 'low' ? 'bg-[#33b5e5]/20 border-[#33b5e5]/40 text-[#33b5e5]' : 'bg-white/5 border-white/5 text-gray-500'}`}>
+                                    <FileText size={14} /> Normal
+                                </button>
                             </div>
 
-                            <button onClick={handleAddNote} className="bg-[#17baa4] hover:bg-[#129482] text-[#090c19] px-10 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg flex items-center gap-2 w-full lg:w-auto justify-center active:scale-95">
-                                <Plus size={18} strokeWidth={3} /> SALVAR ANOTAÇÃO
-                            </button>
+                            {/* Schedule & Save row */}
+                            <div className="flex flex-col sm:flex-row items-end justify-between gap-4">
+                                <div className="flex flex-col gap-2 w-full sm:w-auto">
+                                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">AGENDAR LEMBRETE</span>
+                                    <button className="flex items-center justify-between gap-10 px-6 py-3 bg-black/40 border border-white/5 rounded-xl text-[11px] font-bold text-gray-400 group hover:border-white/10 transition-all min-w-[220px]">
+                                        <span>Selecionar Data e Hora</span>
+                                        <Bell size={15} className="opacity-40 group-hover:opacity-100" />
+                                    </button>
+                                </div>
+
+                                <button onClick={handleAddNote} className="bg-[#17baa4] hover:bg-[#129482] text-[#090c19] px-12 py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg flex items-center gap-3 w-full sm:w-auto justify-center active:scale-95">
+                                    <Plus size={20} strokeWidth={3} /> SALVAR ANOTAÇÃO
+                                </button>
+                            </div>
                         </div>
 
                         {/* Legend Row */}
