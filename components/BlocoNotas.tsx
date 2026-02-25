@@ -20,7 +20,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('low');
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [tempDate, setTempDate] = useState(new Date().toISOString().split('T')[0]);
-    const [tempTime, setTempTime] = useState('12:00');
+    const [tempTime, setTempTime] = useState(new Date().toTimeString().slice(0, 5));
     const [showBlockedGuide, setShowBlockedGuide] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>(
@@ -121,7 +121,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
             setStatusEmoji('⌛');
             setShowScheduler(false);
             setTempDate(new Date().toISOString().split('T')[0]);
-            setTempTime('12:00');
+            setTempTime(new Date().toTimeString().slice(0, 5));
         } catch (error) {
             console.error("[Notepad] Erro ao salvar nota:", error);
         }
