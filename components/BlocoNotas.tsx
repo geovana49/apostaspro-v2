@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
     StickyNote, Trash2, Plus, Bell, BellOff, ChevronUp, ChevronDown,
     TriangleAlert, Star, Check, Calendar, Clock, X, Search, PenLine,
@@ -36,6 +37,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [customStatus, setCustomStatus] = useState('');
     const [showScheduler, setShowScheduler] = useState(false);
     const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+    const schedulerRef = useRef<HTMLButtonElement>(null);
 
     const defaultStatuses = [
         { name: 'Não Feito', emoji: '⌛' },
@@ -175,7 +177,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     >
                         <div className="relative">
                             <Bell size={18} className="text-[#17baa4]" />
-                            {notes.filter(n => n.reminderEnabled && new Date(n.reminderDate) > new Date()).length > 0 && (
+                            {notes.filter(n => n.reminderEnabled).length > 0 && (
                                 <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-[#1a1f35] animate-pulse" />
                             )}
                         </div>
@@ -295,6 +297,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             <div className="flex flex-col gap-1 shrink-0 ml-1 relative">
                                 <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-1 leading-none">Agendar</span>
                                 <button
+                                    ref={schedulerRef}
                                     onClick={() => setShowScheduler(!showScheduler)}
                                     className={`flex items-center justify-between gap-6 px-4 py-2.5 bg-black/30 border rounded-xl text-[11.5px] font-bold transition-all min-w-[180px] group ${showScheduler || (tempDate && tempTime) ? 'border-[#17baa4]/50 text-white' : 'border-white/5 text-gray-300 hover:border-[#17baa4]/40'}`}
                                 >
@@ -302,8 +305,15 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                     <Bell size={15} className={`transition-all ${showScheduler || (tempDate && tempTime) ? 'text-[#17baa4] opacity-100' : 'opacity-40 group-hover:opacity-100'}`} />
                                 </button>
 
-                                {showScheduler && (
-                                    <div className="absolute top-[110%] left-0 z-50 p-4 bg-[#1a1f35] border border-white/10 rounded-2xl shadow-2xl flex flex-col gap-3 min-w-[200px] animate-in slide-in-from-top-2 duration-300">
+                                {showScheduler && createPortal(
+                                    <div
+                                        style={{
+                                            position: 'fixed',
+                                            top: schedulerRef.current ? schedulerRef.current.getBoundingClientRect().top - 220 : '50%',
+                                            left: schedulerRef.current ? schedulerRef.current.getBoundingClientRect().left : '50%',
+                                        }}
+                                        className="z-[999] p-4 bg-[#1a1f35] border border-white/10 rounded-2xl shadow-2xl flex flex-col gap-3 min-w-[200px] animate-in slide-in-from-bottom-2 duration-300"
+                                    >
                                         <div className="flex flex-col gap-1.5">
                                             <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Data</label>
                                             <input
@@ -328,7 +338,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                         >
                                             Confirmar
                                         </button>
-                                    </div>
+                                    </div>,
+                                    document.body
                                 )}
                             </div>
 
@@ -446,10 +457,10 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         </div>
 
                         <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
-                            {notes.filter(n => n.reminderEnabled && new Date(n.reminderDate) > new Date()).length > 0 ? (
+                            {notes.filter(n => n.reminderEnabled).length > 0 ? (
                                 notes
-                                    .filter(n => n.reminderEnabled && new Date(n.reminderDate) > new Date())
-                                    .sort((a, b) => new Date(a.reminderDate).getTime() - new Date(b.reminderDate).getTime())
+                                    .filter(n => n.reminderEnabled)
+                                    .sort((a, b) => new Date(a.reminderDate!).getTime() - new Date(b.reminderDate!).getTime())
                                     .map(note => (
                                         <div key={note.id} className="p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-[#17baa4]/30 transition-all group">
                                             <div className="flex items-center gap-3 mb-2">
