@@ -101,41 +101,41 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
     // Subscribe to saved custom statuses and emojis
     useEffect(() => {
-        if (!currentUser?.id) return;
+        if (!currentUser?.uid) return;
         const unsubStatuses = FirestoreService.subscribeToCollection<{ id: string, name: string, emoji: string }>(
-            currentUser.id, 'notepad_statuses', (items) => setSavedCustomStatuses(items)
+            currentUser.uid, 'notepad_statuses', (items) => setSavedCustomStatuses(items)
         );
         const unsubEmojis = FirestoreService.subscribeToCollection<{ id: string, emoji: string }>(
-            currentUser.id, 'notepad_emojis', (items) => setSavedCustomEmojis(items)
+            currentUser.uid, 'notepad_emojis', (items) => setSavedCustomEmojis(items)
         );
         return () => { unsubStatuses(); unsubEmojis(); };
-    }, [currentUser?.id]);
+    }, [currentUser?.uid]);
 
     const handleSaveCustomStatus = async () => {
-        if (!currentUser || !customStatus.trim()) return;
+        if (!currentUser?.uid || !customStatus.trim()) return;
         const item = { id: `cs_${Date.now()}`, name: customStatus.trim(), emoji: '📌' };
-        await FirestoreService.saveItem(currentUser.id, 'notepad_statuses', item);
+        await FirestoreService.saveItem(currentUser.uid, 'notepad_statuses', item);
         setCustomStatus('');
         setIsCustomStatusActive(false);
     };
 
     const handleDeleteCustomStatus = async (id: string) => {
-        if (!currentUser) return;
-        await FirestoreService.deleteItem(currentUser.id, 'notepad_statuses', id);
+        if (!currentUser?.uid) return;
+        await FirestoreService.deleteItem(currentUser.uid, 'notepad_statuses', id);
     };
 
     const handleSaveCustomEmoji = async () => {
-        if (!currentUser || !customEmoji.trim()) return;
+        if (!currentUser?.uid || !customEmoji.trim()) return;
         const item = { id: `ce_${Date.now()}`, emoji: customEmoji.trim() };
-        await FirestoreService.saveItem(currentUser.id, 'notepad_emojis', item);
+        await FirestoreService.saveItem(currentUser.uid, 'notepad_emojis', item);
         setSelectedEmoji(customEmoji.trim());
         setCustomEmoji('');
         setIsCustomEmojiActive(false);
     };
 
     const handleDeleteCustomEmoji = async (id: string) => {
-        if (!currentUser) return;
-        await FirestoreService.deleteItem(currentUser.id, 'notepad_emojis', id);
+        if (!currentUser?.uid) return;
+        await FirestoreService.deleteItem(currentUser.uid, 'notepad_emojis', id);
     };
 
     const handleAddNote = async () => {
