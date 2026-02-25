@@ -433,17 +433,17 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     <div className="flex flex-col gap-5 px-1">
                         <div className="flex flex-wrap items-center justify-between gap-4">
                             <div className="flex flex-wrap items-center gap-3">
-                                <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest min-w-[70px]">Prioridade:</span>
+                                <span className="text-[12px] font-medium text-gray-500 min-w-[70px]">Prioridade:</span>
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <button onClick={() => setFilterPriority('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all ${filterPriority === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5' : 'bg-white/5 border border-white/5 text-gray-400 hover:text-white'}`}>Todas</button>
-                                    <button onClick={() => setFilterPriority('high')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'high' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
-                                        <div className="w-1.5 h-1.5 rounded-full bg-red-500" /> Urgente
+                                    <button onClick={() => setFilterPriority('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`}>Todas</button>
+                                    <button onClick={() => setFilterPriority('high')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'high' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
+                                        <div className="w-2 h-2 rounded-full bg-[#EF4444]" /> 🔥 Urgente
                                     </button>
-                                    <button onClick={() => setFilterPriority('medium')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'medium' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
-                                        <div className="w-1.5 h-1.5 rounded-full bg-yellow-500" /> Importante
+                                    <button onClick={() => setFilterPriority('medium')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'medium' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
+                                        <div className="w-2 h-2 rounded-full bg-[#F59E0B]" /> ⚡ Importante
                                     </button>
-                                    <button onClick={() => setFilterPriority('low')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'low' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
-                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Normal
+                                    <button onClick={() => setFilterPriority('low')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'low' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
+                                        <div className="w-2 h-2 rounded-full bg-[#3B82F6]" /> 📄 Normal
                                     </button>
                                 </div>
                             </div>
@@ -464,16 +464,16 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         </div>
 
                         <div className="flex flex-wrap items-center gap-3">
-                            <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest min-w-[70px]">Status:</span>
+                            <span className="text-[12px] font-medium text-gray-500 min-w-[70px]">Status:</span>
                             <div className="flex flex-wrap items-center gap-2">
-                                <button onClick={() => setFilterStatus('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all ${filterStatus === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5' : 'bg-white/5 border border-white/5 text-gray-400 hover:text-white'}`}>Todos</button>
+                                <button onClick={() => setFilterStatus('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterStatus === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>Todos</button>
                                 {defaultStatuses.map(s => (
                                     <button
                                         key={s.name}
                                         onClick={() => setFilterStatus(s.name)}
-                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterStatus === s.name ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5' : 'bg-white/5 border border-white/5 text-gray-300 hover:text-white'}`}
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterStatus === s.name ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border border-white/5 text-gray-300 hover:text-white'}`}
                                     >
-                                        <div className={`w-1.5 h-1.5 rounded-full ${s.dot}`} /> {s.name}
+                                        <div className={`w-1.5 h-1.5 rounded-full ${s.dot}`} /> {s.emoji} {s.name}
                                     </button>
                                 ))}
                             </div>
