@@ -234,7 +234,7 @@ const Layout: React.FC<LayoutProps> = ({
                   {item.icon}
                   {/* Badge */}
                   {item.id === Page.NOTES && notesCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-[18px] h-[18px] rounded-full bg-[#facc15] text-[#0f172a] text-[10px] font-black shadow-[0_0_15px_rgba(250,204,21,0.5)] border border-yellow-500/30 animate-pulse animate-in zoom-in duration-300">
+                    <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-[18px] h-[18px] rounded-full bg-[#ffff00] text-[#0f172a] text-[10px] font-black shadow-[0_0_15px_rgba(255,255,0,0.6)] border border-yellow-400/30 animate-pulse animate-in zoom-in duration-300">
                       {notesCount}
                     </span>
                   )}
