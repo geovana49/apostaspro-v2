@@ -173,8 +173,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     <button
                         onClick={handleRequestPermission}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[11px] font-bold transition-all border shadow-lg justify-center h-11 ${permissionStatus === 'granted'
-                                ? 'bg-[#eab308]/10 border-[#eab308]/20 text-[#eab308]'
-                                : 'bg-[#eab308] border-[#eab308] text-[#090c19] hover:brightness-110 active:scale-95'
+                            ? 'bg-[#eab308]/10 border-[#eab308]/20 text-[#eab308]'
+                            : 'bg-[#eab308] border-[#eab308] text-[#090c19] hover:brightness-110 active:scale-95'
                             }`}
                     >
                         <Bell size={16} className={permissionStatus === 'granted' ? '' : 'animate-pulse'} />
@@ -187,8 +187,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             if (isSelectionMode) setSelectedNoteIds([]);
                         }}
                         className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[11px] font-bold transition-all border h-11 ${isSelectionMode
-                                ? 'bg-blue-500/20 border-blue-500/40 text-blue-400'
-                                : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                            ? 'bg-blue-500/20 border-blue-500/40 text-blue-400'
+                            : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
                             }`}
                     >
                         <Check size={16} className={isSelectionMode ? 'text-blue-400' : 'opacity-40'} />
@@ -316,7 +316,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                 <div className="flex items-center gap-3 shrink-0">
                     <button className="flex items-center gap-2 px-4 py-2.5 bg-white/5 border border-white/5 rounded-xl text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-white transition-all h-10">
-                        <ArrowDownWideArrow size={14} className="opacity-40" />
+                        <ArrowDownWideNarrow size={14} className="opacity-40" />
                         <span>Data de entrega</span>
                     </button>
                     <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/5 h-10">
