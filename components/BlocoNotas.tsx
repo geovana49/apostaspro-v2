@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import {
     StickyNote, Trash2, Plus, Bell, BellOff, ChevronUp, ChevronDown,
     TriangleAlert, Star, Check, Calendar, Clock, X, Search, PenLine,
-    Folder, Flame, Zap, FileText, LayoutGrid, List as ListIcon, Trash, ArrowDownWideNarrow, Pencil
+    Folder, Flame, Zap, FileText, LayoutGrid, List as ListIcon, Trash, ArrowDownUp, Pencil
 } from 'lucide-react';
 import { User, NotepadNote } from '../types';
 import { FirestoreService } from '../services/firestoreService';
@@ -41,10 +41,10 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const schedulerRef = useRef<HTMLButtonElement>(null);
 
     const defaultStatuses = [
-        { name: 'Não Feito', emoji: '⌛', color: 'text-white', dot: 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.4)]', active: 'bg-white/20 border-white/40 text-white shadow-[0_0_15px_rgba(255,255,255,0.2)]' },
-        { name: 'Fazendo', emoji: '▶️', color: 'text-[#FFE600]', dot: 'bg-[#FFE600] shadow-[0_0_8px_rgba(255,230,0,0.5)]', active: 'bg-[#FFE600]/30 border-[#FFE600]/60 text-[#FFE600] shadow-[0_0_20px_rgba(255,230,0,0.3)]' },
-        { name: 'Feito', emoji: '✅', color: 'text-[#00FFD1]', dot: 'bg-[#00FFD1] shadow-[0_0_8px_rgba(0,255,209,0.5)]', active: 'bg-[#00FFD1]/20 border-[#00FFD1]/50 text-[#00FFD1] shadow-[0_0_20px_rgba(0,255,209,0.3)]' },
-        { name: 'Perdido', emoji: '❌', color: 'text-[#FF3D3D]', dot: 'bg-[#FF3D3D] shadow-[0_0_8px_rgba(255,61,61,0.5)]', active: 'bg-[#FF3D3D]/20 border-[#FF3D3D]/50 text-[#FF3D3D] shadow-[0_0_20px_rgba(255,61,61,0.3)]' }
+        { name: 'Não Feito', emoji: '⌛', color: 'text-white', dot: 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.4)]', active: 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5' },
+        { name: 'Fazendo', emoji: '▶️', color: 'text-[#FFE600]', dot: 'bg-[#FFE600] shadow-[0_0_8px_rgba(255,230,0,0.5)]', active: 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5' },
+        { name: 'Feito', emoji: '✅', color: 'text-[#00FFD1]', dot: 'bg-[#00FFD1] shadow-[0_0_8px_rgba(0,255,209,0.5)]', active: 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5' },
+        { name: 'Perdido', emoji: '❌', color: 'text-[#FF3D3D]', dot: 'bg-[#FF3D3D] shadow-[0_0_8px_rgba(255,61,61,0.5)]', active: 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5' }
     ];
 
     const emojis = [
@@ -201,7 +201,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
                     <div className="flex items-center gap-3">
                         <Pencil size={14} className="text-[#17baa4]" />
-                        <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Criar Nova Anotação</span>
+                        <span className="text-[11px] font-medium text-white tracking-wide">Criar Nova Anotação</span>
                     </div>
                     <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-2 text-gray-500 hover:text-white transition-all">
                         {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
@@ -252,7 +252,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         {/* Status Selector */}
                         <div className="flex flex-col gap-2.5">
                             <div className="flex items-center gap-2 px-2">
-                                <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Status</span>
+                                <span className="text-[10px] font-medium text-white/40 tracking-wide">Status</span>
                             </div>
                             <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide flex-nowrap px-1">
                                 {defaultStatuses.map((s) => (
@@ -290,22 +290,25 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                         {/* Bottom Row - Single Line Action Row */}
                         <div className="flex items-end gap-4 w-full py-2 overflow-x-auto scrollbar-hide flex-nowrap pr-20">
-                            <div className="flex gap-2 shrink-0">
-                                <button onClick={() => setPriority('high')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-[9.5px] font-black uppercase tracking-widest border transition-all ${priority === 'high' ? 'bg-[#FF3D3D]/20 border-[#FF3D3D]/60 text-[#FF3D3D] shadow-[0_0_15px_rgba(255,61,61,0.3)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
-                                    <TriangleAlert size={13} /> Urgente
-                                </button>
-                                <button onClick={() => setPriority('medium')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-[9.5px] font-black uppercase tracking-widest border transition-all ${priority === 'medium' ? 'bg-[#FFE600]/20 border-[#FFE600]/60 text-[#FFE600] shadow-[0_0_15px_rgba(255,230,0,0.3)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
-                                    <Star size={13} /> Importante
-                                </button>
-                                <button onClick={() => setPriority('low')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-[9.5px] font-black uppercase tracking-widest border transition-all ${priority === 'low' ? 'bg-[#3B82F6]/20 border-[#3B82F6]/60 text-[#3B82F6] shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
-                                    <FileText size={13} /> Normal
-                                </button>
+                            <div className="flex flex-col gap-2 shrink-0">
+                                <span className="text-[10px] font-medium text-white/40 tracking-wide ml-1">Prioridade</span>
+                                <div className="flex gap-2">
+                                    <button onClick={() => setPriority('high')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-[11px] font-medium border transition-all ${priority === 'high' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
+                                        <TriangleAlert size={14} /> Urgente
+                                    </button>
+                                    <button onClick={() => setPriority('medium')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-[11px] font-medium border transition-all ${priority === 'medium' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
+                                        <Star size={14} /> Importante
+                                    </button>
+                                    <button onClick={() => setPriority('low')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-[11px] font-medium border transition-all ${priority === 'low' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
+                                        <FileText size={14} /> Normal
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="h-6 w-px bg-white/5 shrink-0 mx-1" />
 
-                            <div className="flex flex-col gap-1 shrink-0 ml-1 relative">
-                                <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-1 leading-none">Agendar</span>
+                            <div className="flex flex-col gap-2 shrink-0 ml-1 relative">
+                                <span className="text-[10px] font-medium text-white/40 tracking-wide ml-1">Agendar</span>
                                 <button
                                     ref={schedulerRef}
                                     className={`flex items-center justify-between gap-6 px-4 py-2.5 bg-black/30 border rounded-xl text-[11.5px] font-bold transition-all min-w-[180px] group ${showScheduler || (tempDate && tempTime) ? 'border-[#17baa4]/50 text-white' : 'border-white/5 text-gray-300 hover:border-[#17baa4]/40'}`}
@@ -385,8 +388,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 )}
                             </div>
 
-                            <button onClick={handleAddNote} className="bg-[#17baa4] hover:bg-[#129482] text-[#090c19] px-7 py-2.5 rounded-xl font-black text-[11.5px] uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(23,186,164,0.4)] flex items-center gap-2 shrink-0 active:scale-95 translate-y-[-1px]">
-                                <Plus size={16} strokeWidth={3} /> SALVAR ANOTAÇÃO
+                            <button onClick={handleAddNote} className="bg-[#3B82F6] hover:bg-[#2563EB] text-white px-7 py-2.5 rounded-xl font-bold text-[13px] transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] flex items-center gap-2 shrink-0 active:scale-95 translate-y-[-1px]">
+                                <Plus size={18} strokeWidth={2.5} /> Salvar anotação
                             </button>
 
                             {/* Spacer to prevent clipping on the right */}
@@ -432,15 +435,15 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             <div className="flex flex-wrap items-center gap-3">
                                 <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest min-w-[70px]">Prioridade:</span>
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <button onClick={() => setFilterPriority('all')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${filterPriority === 'all' ? 'bg-[#3B82F6] border border-[#3B82F6]/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>Todas</button>
-                                    <button onClick={() => setFilterPriority('high')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${filterPriority === 'high' ? 'bg-[#3B82F6] border border-[#3B82F6]/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
-                                        <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]" /> 🔥 Urgente
+                                    <button onClick={() => setFilterPriority('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all ${filterPriority === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5' : 'bg-white/5 border border-white/5 text-gray-400 hover:text-white'}`}>Todas</button>
+                                    <button onClick={() => setFilterPriority('high')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'high' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-red-500" /> Urgente
                                     </button>
-                                    <button onClick={() => setFilterPriority('medium')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${filterPriority === 'medium' ? 'bg-[#3B82F6] border border-[#3B82F6]/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
-                                        <div className="w-2 h-2 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.4)]" /> ⚡ Importante
+                                    <button onClick={() => setFilterPriority('medium')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'medium' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-yellow-500" /> Importante
                                     </button>
-                                    <button onClick={() => setFilterPriority('low')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${filterPriority === 'low' ? 'bg-[#3B82F6] border border-[#3B82F6]/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
-                                        <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]" /> 📄 Normal
+                                    <button onClick={() => setFilterPriority('low')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'low' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Normal
                                     </button>
                                 </div>
                             </div>
@@ -448,10 +451,10 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => setSortBy(sortBy === 'newest' ? 'oldest' : 'newest')}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 border ${sortBy === 'newest' ? 'bg-[#17baa4]/20 border-[#17baa4]/30 text-[#17baa4]' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all active:scale-95 border ${sortBy === 'newest' ? 'bg-white/5 border-white/10 text-white' : 'bg-white/5 border-white/10 text-gray-300'}`}
                                 >
-                                    <ArrowDownWideNarrow size={14} className={sortBy === 'oldest' ? 'rotate-180' : ''} />
-                                    {sortBy === 'newest' ? 'Mais Recentes' : 'Mais Antigas'}
+                                    <ArrowDownUp size={14} />
+                                    Data de entrega
                                 </button>
                                 <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/5">
                                     <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[#17baa4]/20 text-[#17baa4] shadow-sm' : 'text-gray-500 hover:text-white'}`}><ListIcon size={14} /></button>
@@ -463,14 +466,14 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         <div className="flex flex-wrap items-center gap-3">
                             <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest min-w-[70px]">Status:</span>
                             <div className="flex flex-wrap items-center gap-2">
-                                <button onClick={() => setFilterStatus('all')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'all' ? 'bg-[#3B82F6] border border-[#3B82F6]/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]' : 'bg-white/5 border border-white/10 text-gray-300 hover:text-white'}`}>Todos</button>
+                                <button onClick={() => setFilterStatus('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all ${filterStatus === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5' : 'bg-white/5 border border-white/5 text-gray-400 hover:text-white'}`}>Todos</button>
                                 {defaultStatuses.map(s => (
                                     <button
                                         key={s.name}
                                         onClick={() => setFilterStatus(s.name)}
-                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${filterStatus === s.name ? 'bg-[#3B82F6] border border-[#3B82F6]/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]' : 'bg-white/5 border border-white/10 text-gray-300 hover:text-white'}`}
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterStatus === s.name ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5' : 'bg-white/5 border border-white/5 text-gray-300 hover:text-white'}`}
                                     >
-                                        <div className={`w-2 h-2 rounded-full ${s.dot}`} /> {s.emoji} {s.name}
+                                        <div className={`w-1.5 h-1.5 rounded-full ${s.dot}`} /> {s.name}
                                     </button>
                                 ))}
                             </div>
@@ -484,56 +487,52 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     </div>
                     <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "flex flex-col gap-3"}>
                         {filteredNotes.map(note => (
-                            <Card key={note.id} className={`bg-[#121625]/80 border-white/5 transition-all duration-300 relative group overflow-hidden p-6 hover:border-[#17baa4]/30 flex gap-4 items-start`}>
-                                <div className="pt-2 shrink-0">
-                                    <button
-                                        onClick={() => handleToggleComplete(note)}
-                                        className={`w-4 h-4 rounded-md border transition-all flex items-center justify-center ${note.completed ? 'bg-[#00FFD1] border-[#00FFD1] text-[#090c19]' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
-                                    >
-                                        {note.completed && <Check size={10} strokeWidth={4} />}
-                                    </button>
-                                </div>
+                            <Card key={note.id} className="bg-[#1a2236]/80 border-white/5 transition-all duration-300 relative group overflow-hidden p-5 hover:border-[#3B82F6]/30 flex flex-col gap-4">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="shrink-0 flex items-center">
+                                            <button
+                                                onClick={() => handleToggleComplete(note)}
+                                                className={`w-4 h-4 rounded-md border transition-all flex items-center justify-center ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
+                                            >
+                                                {note.completed && <Check size={10} strokeWidth={4} />}
+                                            </button>
+                                        </div>
 
-                                <div className="flex-1">
-                                    <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-2">
                                             {/* Priority Badge */}
-                                            <div className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border flex items-center gap-1.5 ${note.priority === 'high' ? 'bg-red-500/10 border-red-500/30 text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]' :
-                                                note.priority === 'medium' ? 'bg-[#FFE600]/10 border-[#FFE600]/30 text-[#FFE600] shadow-[0_0_10px_rgba(255,230,0,0.2)]' :
-                                                    'bg-[#3B82F6]/10 border-[#3B82F6]/30 text-[#3B82F6] shadow-[0_0_10px_rgba(59,130,246,0.2)]'
-                                                }`}>
+                                            <div className="px-3 py-1.5 rounded-xl text-[11px] font-medium border flex items-center gap-1.5 border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5">
                                                 <span className="flex items-center gap-1">
-                                                    {note.priority === 'high' ? '🔥 URGENTE' : note.priority === 'medium' ? '⚡ IMPORTANTE' : '📄 NORMAL'}
-                                                    <ChevronDown size={8} />
+                                                    {note.priority === 'high' ? '🔥 Urgente' : note.priority === 'medium' ? '⚡ Importante' : '📄 Normal'}
+                                                    <ChevronDown size={10} />
                                                 </span>
                                             </div>
 
                                             {/* Status Badge */}
                                             {note.status && (
-                                                <div className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border flex items-center gap-1.5 ${note.status === 'Feito' ? 'bg-[#00FFD1]/10 border-[#00FFD1]/30 text-[#00FFD1]' :
-                                                    note.status === 'Fazendo' ? 'bg-[#FFE600]/10 border-[#FFE600]/30 text-[#FFE600]' :
-                                                        note.status === 'Perdido' ? 'bg-red-500/10 border-red-500/30 text-red-500' :
-                                                            'bg-white/10 border-white/20 text-white'
-                                                    }`}>
+                                                <div className="px-3 py-1.5 rounded-xl text-[11px] font-medium border flex items-center gap-1.5 border-white/10 text-gray-400 bg-white/5">
                                                     <span className="flex items-center gap-1">
-                                                        {note.statusEmoji} {note.status.toUpperCase()}
-                                                        <ChevronDown size={8} />
+                                                        {note.statusEmoji} {note.status}
+                                                        <ChevronDown size={10} />
                                                     </span>
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="flex items-center gap-4 ml-auto">
-                                            <button className="text-white/40 hover:text-white transition-all"><PenLine size={14} /></button>
-                                            <button className="text-white/40 hover:text-white transition-all"><Folder size={14} /></button>
-                                            <button onClick={() => handleDeleteNote(note.id)} className="text-white/40 hover:text-red-500 transition-all"><Trash2 size={14} /></button>
-                                        </div>
                                     </div>
-                                    <p className={`text-white text-[13px] md:text-sm leading-relaxed mb-4 ${note.completed ? 'opacity-30 italic line-through' : 'font-medium'}`}>
+
+                                    <div className="flex items-center gap-4 text-gray-500">
+                                        <button className="hover:text-white transition-all"><PenLine size={16} /></button>
+                                        <button className="hover:text-white transition-all"><Folder size={16} /></button>
+                                        <button onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={16} /></button>
+                                    </div>
+                                </div>
+
+                                <div className="pl-7 space-y-2">
+                                    <p className={`text-white text-sm leading-relaxed ${note.completed ? 'opacity-30 italic line-through' : 'font-medium'}`}>
                                         {note.content} {note.emoji}
                                     </p>
-                                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2 mt-2">
-                                        <Clock size={10} className="text-[#3B82F6]" />
-                                        {new Date(note.createdAt).toLocaleDateString('pt-BR')} {new Date(note.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                    <div className="text-[11px] font-medium text-gray-500 flex items-center gap-2">
+                                        {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}, {new Date(note.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                     </div>
                                 </div>
                             </Card>
