@@ -382,7 +382,7 @@ const App: React.FC = () => {
             isOnline={isOnline}
             isSyncing={isSyncing}
             onForceSync={handleForceSync}
-            notesCount={notes.filter(n => n.reminderEnabled && n.reminderDate && new Date(n.reminderDate) > new Date()).length}
+            notesCount={notes.filter(n => !n.completed).length}
           >
             <Suspense fallback={<PageLoader />}>
               {activePage === Page.OVERVIEW && <Overview bets={bets} gains={gains} settings={settings} setSettings={setSettings} bookmakers={bookmakers} />}
