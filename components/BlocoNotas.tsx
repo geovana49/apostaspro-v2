@@ -101,7 +101,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
     // Subscribe to saved custom statuses and emojis
     useEffect(() => {
-        if (!currentUser) return;
+        if (!currentUser?.id) return;
         const unsubStatuses = FirestoreService.subscribeToCollection<{ id: string, name: string, emoji: string }>(
             currentUser.id, 'notepad_statuses', (items) => setSavedCustomStatuses(items)
         );
@@ -109,7 +109,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
             currentUser.id, 'notepad_emojis', (items) => setSavedCustomEmojis(items)
         );
         return () => { unsubStatuses(); unsubEmojis(); };
-    }, [currentUser]);
+    }, [currentUser?.id]);
 
     const handleSaveCustomStatus = async () => {
         if (!currentUser || !customStatus.trim()) return;
