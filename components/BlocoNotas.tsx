@@ -172,7 +172,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         </div>
 
                         {/* Bottom Row - Single Line Action Row */}
-                        <div className="flex items-center gap-3 w-full py-2 overflow-x-auto scrollbar-hide flex-nowrap pr-12">
+                        <div className="flex items-center gap-3 w-full py-2 overflow-x-auto scrollbar-hide flex-nowrap pr-24">
                             <div className="flex gap-2 shrink-0">
                                 <button onClick={() => setPriority('high')} className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${priority === 'high' ? 'bg-red-500/10 border-red-500/40 text-red-500' : 'bg-white/5 border-white/5 text-gray-500'}`}>
                                     <TriangleAlert size={14} /> Urgente
@@ -187,7 +187,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                             <div className="h-6 w-px bg-white/5 shrink-0 mx-1" />
 
-                            <div className="flex flex-col gap-1 shrink-0 ml-8">
+                            <div className="flex flex-col gap-1 shrink-0 ml-4">
                                 <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 leading-none">Agendar</span>
                                 <button
                                     onClick={() => {/* schedule trigger */ }}
@@ -198,7 +198,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 </button>
                             </div>
 
-                            <button onClick={handleAddNote} className="bg-[#17baa4] hover:bg-[#129482] text-[#090c19] px-8 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(23,186,164,0.4)] flex items-center gap-2 shrink-0 ml-auto active:scale-95">
+                            <button onClick={handleAddNote} className="bg-[#17baa4] hover:bg-[#129482] text-[#090c19] px-8 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(23,186,164,0.4)] flex items-center gap-2 shrink-0 active:scale-95">
                                 <Plus size={16} strokeWidth={3} /> SALVAR ANOTAÇÃO
                             </button>
                         </div>
