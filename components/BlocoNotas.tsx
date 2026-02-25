@@ -37,8 +37,10 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [customStatus, setCustomStatus] = useState('');
     const [showScheduler, setShowScheduler] = useState(false);
     const [showNotificationsModal, setShowNotificationsModal] = useState(false);
-    const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
+    const [sortBy, setSortBy] = useState<'date' | 'newest' | 'oldest' | 'alpha'>('date');
+    const [showSortDropdown, setShowSortDropdown] = useState(false);
     const schedulerRef = useRef<HTMLButtonElement>(null);
+    const sortRef = useRef<HTMLDivElement>(null);
     const [savedCustomStatuses, setSavedCustomStatuses] = useState<{ id: string, name: string, emoji: string }[]>([]);
     const [savedCustomEmojis, setSavedCustomEmojis] = useState<{ id: string, emoji: string }[]>([]);
 
@@ -98,6 +100,17 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
         const interval = setInterval(checkNotifications, 30000);
         return () => clearInterval(interval);
     }, [notes, permissionStatus, currentUser]);
+
+    // Close sort dropdown on click outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
+                setShowSortDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     // Subscribe to saved custom statuses and emojis
     useEffect(() => {
@@ -200,8 +213,16 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
         // Sorting
         result.sort((a, b) => {
-            const dateA = a.reminderDate ? new Date(a.reminderDate).getTime() : new Date(a.createdAt).getTime();
-            const dateB = b.reminderDate ? new Date(b.reminderDate).getTime() : new Date(b.createdAt).getTime();
+            if (sortBy === 'alpha') {
+                return a.content.localeCompare(b.content, 'pt-BR');
+            }
+            if (sortBy === 'date') {
+                const dateA = a.reminderDate ? new Date(a.reminderDate).getTime() : Infinity;
+                const dateB = b.reminderDate ? new Date(b.reminderDate).getTime() : Infinity;
+                return dateA - dateB;
+            }
+            const dateA = new Date(a.createdAt).getTime();
+            const dateB = new Date(b.createdAt).getTime();
             return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
         });
 
@@ -553,14 +574,39 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             </div>
 
                             <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => setSortBy(sortBy === 'newest' ? 'oldest' : 'newest')}
-                                    title={sortBy === 'newest' ? 'Ordenado por mais recentes — clique para inverter' : 'Ordenado por mais antigos — clique para inverter'}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all active:scale-95 border ${sortBy === 'newest' ? 'bg-white/5 border-white/10 text-white' : 'bg-white/5 border-white/10 text-gray-300'}`}
-                                >
-                                    <ArrowDownUp size={14} />
-                                    Data de entrega
-                                </button>
+                                <div className="relative" ref={sortRef}>
+                                    <button
+                                        onClick={() => setShowSortDropdown(!showSortDropdown)}
+                                        title="Clique para escolher a ordenação"
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all active:scale-95 border bg-white/5 border-white/10 ${showSortDropdown ? 'text-[#3B82F6] border-[#3B82F6]/30' : 'text-white'}`}
+                                    >
+                                        <ArrowDownUp size={14} />
+                                        {sortBy === 'date' ? 'Data de entrega' : sortBy === 'newest' ? 'Mais recente' : sortBy === 'oldest' ? 'Mais antigo' : 'Alfabética'}
+                                    </button>
+                                    {showSortDropdown && (
+                                        <div className="absolute top-full right-0 mt-2 w-56 bg-[#151a2e] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in slide-in-from-top-2 duration-200">
+                                            <div className="px-4 py-2.5 border-b border-white/5">
+                                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Ordenar Lista</span>
+                                            </div>
+                                            {[
+                                                { key: 'date' as const, label: 'Data de entrega', icon: <Calendar size={14} /> },
+                                                { key: 'newest' as const, label: 'Mais recente primeiro', icon: <ChevronDown size={14} /> },
+                                                { key: 'oldest' as const, label: 'Mais antigo primeiro', icon: <ChevronUp size={14} /> },
+                                                { key: 'alpha' as const, label: 'Ordem alfabética', icon: <FileText size={14} /> },
+                                            ].map(opt => (
+                                                <button
+                                                    key={opt.key}
+                                                    onClick={() => { setSortBy(opt.key); setShowSortDropdown(false); }}
+                                                    title={opt.label}
+                                                    className={`flex items-center gap-3 w-full px-4 py-2.5 text-left text-[12px] font-medium transition-all hover:bg-white/5 ${sortBy === opt.key ? 'text-[#3B82F6]' : 'text-gray-400'}`}
+                                                >
+                                                    {opt.icon}
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                                 <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/5">
                                     <button title="Visualizar em lista" onClick={() => setViewMode('list')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[#17baa4]/20 text-[#17baa4] shadow-sm' : 'text-gray-500 hover:text-white'}`}><ListIcon size={14} /></button>
                                     <button title="Visualizar em grade" onClick={() => setViewMode('grid')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-[#17baa4]/20 text-[#17baa4] shadow-sm' : 'text-gray-500 hover:text-white'}`}><LayoutGrid size={14} /></button>
@@ -609,59 +655,127 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             {filteredNotes.length} {filteredNotes.length === 1 ? 'NOTA' : 'NOTAS'}
                         </span>
                     </div>
-                    <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "flex flex-col gap-3"}>
-                        {filteredNotes.map(note => (
-                            <Card key={note.id} className="bg-[#1a2236]/80 border-white/5 transition-all duration-300 relative group overflow-hidden p-5 hover:border-[#3B82F6]/30 flex flex-col gap-4">
-                                <div className="flex items-center justify-between gap-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="shrink-0 flex items-center">
-                                            <button
-                                                onClick={() => handleToggleComplete(note)}
-                                                className={`w-4 h-4 rounded-md border transition-all flex items-center justify-center ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
-                                            >
-                                                {note.completed && <Check size={10} strokeWidth={4} />}
-                                            </button>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                            {/* Priority Badge */}
-                                            <div className="px-3 py-1.5 rounded-xl text-[11px] font-medium border flex items-center gap-1.5 border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5">
-                                                <span className="flex items-center gap-1">
-                                                    {note.priority === 'high' ? '🔥 Urgente' : note.priority === 'medium' ? '⚡ Importante' : '📄 Normal'}
-                                                    <ChevronDown size={10} />
-                                                </span>
-                                            </div>
-
-                                            {/* Status Badge */}
-                                            {note.status && (
-                                                <div className="px-3 py-1.5 rounded-xl text-[11px] font-medium border flex items-center gap-1.5 border-white/10 text-gray-400 bg-white/5">
-                                                    <span className="flex items-center gap-1">
-                                                        {note.statusEmoji} {note.status}
-                                                        <ChevronDown size={10} />
-                                                    </span>
+                    {viewMode === 'grid' ? (
+                        /* Kanban Board View - Grouped by Priority */
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {[
+                                { key: 'high' as const, label: '🔥 Urgente', sub: 'Queima de FreeBet', color: '#ff4444', dot: 'bg-[#ff4444]', border: 'border-[#ff4444]/20', bg: 'bg-[#ff4444]/5', badge: 'bg-[#ff4444]' },
+                                { key: 'medium' as const, label: '⚡ Importante', sub: 'Possível Duplo', color: '#F59E0B', dot: 'bg-[#F59E0B]', border: 'border-[#F59E0B]/20', bg: 'bg-[#F59E0B]/5', badge: 'bg-[#F59E0B]' },
+                                { key: 'low' as const, label: '📄 Normal', sub: 'Sem duplo / Vale Giros', color: '#3B82F6', dot: 'bg-[#3B82F6]', border: 'border-[#3B82F6]/20', bg: 'bg-[#3B82F6]/5', badge: 'bg-[#3B82F6]' },
+                            ].map(col => {
+                                const colNotes = filteredNotes.filter(n => n.priority === col.key);
+                                return (
+                                    <div key={col.key} className={`rounded-2xl border ${col.border} ${col.bg} overflow-hidden flex flex-col`}>
+                                        {/* Column Header */}
+                                        <div className="flex items-center justify-between px-4 py-3">
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-2 h-2 rounded-full ${col.dot}`} />
+                                                    <span className="text-[13px] font-bold text-white">{col.label}</span>
                                                 </div>
+                                                <span className="text-[10px] text-gray-500 ml-4">{col.sub}</span>
+                                            </div>
+                                            <span className={`${col.badge} text-[10px] font-black text-white w-5 h-5 rounded-md flex items-center justify-center`}>{colNotes.length}</span>
+                                        </div>
+                                        {/* Column Notes */}
+                                        <div className="flex flex-col gap-2 px-3 pb-3 min-h-[80px]">
+                                            {colNotes.length === 0 ? (
+                                                <div className="text-center text-gray-600 text-[11px] py-6 font-medium">Nenhuma nota</div>
+                                            ) : (
+                                                colNotes.map(note => (
+                                                    <div key={note.id} className="bg-[#1a2236]/80 border border-white/5 rounded-xl p-3 hover:border-[#3B82F6]/30 transition-all group flex flex-col gap-2">
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-2">
+                                                                <button
+                                                                    title={note.completed ? 'Desmarcar como concluída' : 'Marcar como concluída'}
+                                                                    onClick={() => handleToggleComplete(note)}
+                                                                    className={`w-4 h-4 rounded-md border transition-all flex items-center justify-center shrink-0 ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
+                                                                >
+                                                                    {note.completed && <Check size={10} strokeWidth={4} />}
+                                                                </button>
+                                                                {note.status && (
+                                                                    <div className="px-2 py-1 rounded-lg text-[9px] font-bold border border-white/10 text-gray-400 bg-white/5 flex items-center gap-1 uppercase">
+                                                                        {note.statusEmoji} {note.status}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity text-gray-500">
+                                                                <button title="Editar nota" className="hover:text-white transition-all"><PenLine size={12} /></button>
+                                                                <button title="Mover para pasta" className="hover:text-white transition-all"><Folder size={12} /></button>
+                                                                <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={12} /></button>
+                                                            </div>
+                                                        </div>
+                                                        <p className={`text-white text-[12px] leading-relaxed ${note.completed ? 'opacity-30 italic line-through' : 'font-medium'}`}>
+                                                            {note.content} {note.emoji}
+                                                        </p>
+                                                        <div className="text-[10px] font-medium text-gray-600">
+                                                            {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}, {new Date(note.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                        </div>
+                                                    </div>
+                                                ))
                                             )}
                                         </div>
                                     </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        /* List View */
+                        <div className="flex flex-col gap-3">
+                            {filteredNotes.map(note => (
+                                <Card key={note.id} className="bg-[#1a2236]/80 border-white/5 transition-all duration-300 relative group overflow-hidden p-5 hover:border-[#3B82F6]/30 flex flex-col gap-4">
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="shrink-0 flex items-center">
+                                                <button
+                                                    title={note.completed ? 'Desmarcar como concluída' : 'Marcar como concluída'}
+                                                    onClick={() => handleToggleComplete(note)}
+                                                    className={`w-4 h-4 rounded-md border transition-all flex items-center justify-center ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
+                                                >
+                                                    {note.completed && <Check size={10} strokeWidth={4} />}
+                                                </button>
+                                            </div>
 
-                                    <div className="flex items-center gap-4 text-gray-500">
-                                        <button className="hover:text-white transition-all"><PenLine size={16} /></button>
-                                        <button className="hover:text-white transition-all"><Folder size={16} /></button>
-                                        <button onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={16} /></button>
-                                    </div>
-                                </div>
+                                            <div className="flex items-center gap-2">
+                                                {/* Priority Badge */}
+                                                <div title={`Prioridade: ${note.priority === 'high' ? 'Urgente' : note.priority === 'medium' ? 'Importante' : 'Normal'}`} className="px-3 py-1.5 rounded-xl text-[11px] font-medium border flex items-center gap-1.5 border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5">
+                                                    <span className="flex items-center gap-1">
+                                                        {note.priority === 'high' ? '🔥 Urgente' : note.priority === 'medium' ? '⚡ Importante' : '📄 Normal'}
+                                                        <ChevronDown size={10} />
+                                                    </span>
+                                                </div>
 
-                                <div className="pl-7 space-y-2">
-                                    <p className={`text-white text-sm leading-relaxed ${note.completed ? 'opacity-30 italic line-through' : 'font-medium'}`}>
-                                        {note.content} {note.emoji}
-                                    </p>
-                                    <div className="text-[11px] font-medium text-gray-500 flex items-center gap-2">
-                                        {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}, {new Date(note.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                {/* Status Badge */}
+                                                {note.status && (
+                                                    <div title={`Status: ${note.status}`} className="px-3 py-1.5 rounded-xl text-[11px] font-medium border flex items-center gap-1.5 border-white/10 text-gray-400 bg-white/5">
+                                                        <span className="flex items-center gap-1">
+                                                            {note.statusEmoji} {note.status}
+                                                            <ChevronDown size={10} />
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-4 text-gray-500">
+                                            <button title="Editar nota" className="hover:text-white transition-all"><PenLine size={16} /></button>
+                                            <button title="Mover para pasta" className="hover:text-white transition-all"><Folder size={16} /></button>
+                                            <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={16} /></button>
+                                        </div>
                                     </div>
-                                </div>
-                            </Card>
-                        ))}
-                    </div>
+
+                                    <div className="pl-7 space-y-2">
+                                        <p className={`text-white text-sm leading-relaxed ${note.completed ? 'opacity-30 italic line-through' : 'font-medium'}`}>
+                                            {note.content} {note.emoji}
+                                        </p>
+                                        <div className="text-[11px] font-medium text-gray-500 flex items-center gap-2">
+                                            {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}, {new Date(note.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                        </div>
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
