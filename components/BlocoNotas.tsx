@@ -225,6 +225,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                 {permissionStatus !== 'granted' ? (
                     <button
                         onClick={handleRequestPermission}
+                        title="Clique para ativar notificações de lembrete"
                         className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all bg-[#FFCC00]/10 border border-[#FFCC00]/30 text-[#FFCC00] hover:brightness-110 active:scale-95 shadow-[0_0_15px_rgba(255,204,0,0.2)] h-11 ${permissionStatus === 'default' ? 'animate-pulse' : ''}`}
                     >
                         <Bell size={16} />
@@ -244,7 +245,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         <Pencil size={16} className="text-[#17baa4]" />
                         <span className="text-[14px] font-semibold text-white tracking-wide">Criar Nova Anotação</span>
                     </div>
-                    <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-2 text-gray-500 hover:text-white transition-all">
+                    <button onClick={() => setIsCollapsed(!isCollapsed)} title={isCollapsed ? 'Expandir formulário de criação' : 'Recolher formulário de criação'} className="p-2 text-gray-500 hover:text-white transition-all">
                         {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
                     </button>
                 </div>
@@ -254,6 +255,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         <textarea
                             className="w-full bg-black/20 border border-white/5 rounded-2xl px-6 py-5 text-white text-sm focus:ring-1 focus:ring-[#17baa4]/50 outline-none transition-all min-h-[120px] resize-none placeholder:text-gray-600"
                             placeholder="Anotar procedimento... (ex: 🎰 Bet365 - Missão 50 giros)"
+                            title="Escreva o conteúdo da sua anotação aqui"
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
                         />
@@ -261,7 +263,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         {/* Emoji Picker - Horizontal Carousel */}
                         <div className="flex items-center gap-2 overflow-x-auto pb-4 custom-scrollbar-horizontal flex-nowrap scroll-smooth px-1 ml-1">
                             {/* Custom Emoji Input */}
-                            <div className={`flex items-center gap-2 px-3 py-1 bg-white/5 rounded-xl border transition-all shrink-0 ${isCustomEmojiActive ? 'border-[#3B82F6] shadow-[0_0_10px_rgba(59,130,246,0.3)]' : 'border-white/10'}`}>
+                            <div title="Digite um emoji personalizado e clique ✓ para salvar" className={`flex items-center gap-2 px-3 py-1 bg-white/5 rounded-xl border transition-all shrink-0 ${isCustomEmojiActive ? 'border-[#3B82F6] shadow-[0_0_10px_rgba(59,130,246,0.3)]' : 'border-white/10'}`}>
                                 <Plus size={14} className="text-[#3B82F6]" />
                                 <input
                                     type="text"
@@ -296,6 +298,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                     </button>
                                     <button
                                         onClick={() => handleDeleteCustomEmoji(ce.id)}
+                                        title="Remover este emoji personalizado"
                                         className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover/emoji:opacity-100 transition-opacity"
                                     >
                                         <X size={8} className="text-white" />
@@ -327,6 +330,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 {defaultStatuses.map((s) => (
                                     <button
                                         key={s.name}
+                                        title={`Definir status como "${s.name}"`}
                                         onClick={() => {
                                             setSelectedStatus(s.name);
                                             setStatusEmoji(s.emoji);
@@ -340,7 +344,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 ))}
 
                                 {/* Custom Status Input */}
-                                <div className={`flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl border transition-all shrink-0 ${isCustomStatusActive ? 'bg-white/10 border-white/30 shadow-[0_0_10px_rgba(255,255,255,0.1)]' : 'border-white/10'}`}>
+                                <div title="Digite um status personalizado e clique ✓ para salvar" className={`flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl border transition-all shrink-0 ${isCustomStatusActive ? 'bg-white/10 border-white/30 shadow-[0_0_10px_rgba(255,255,255,0.1)]' : 'border-white/10'}`}>
                                     <span className="text-[10px]">📌</span>
                                     <input
                                         type="text"
@@ -377,6 +381,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                         </button>
                                         <button
                                             onClick={() => handleDeleteCustomStatus(cs.id)}
+                                            title="Remover este status personalizado"
                                             className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover/status:opacity-100 transition-opacity"
                                         >
                                             <X size={8} className="text-white" />
@@ -391,13 +396,13 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             <div className="flex flex-col gap-2 shrink-0">
                                 <span className="text-[10px] font-medium text-white/40 tracking-wide ml-1">Prioridade</span>
                                 <div className="flex gap-2">
-                                    <button onClick={() => setPriority('high')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium border transition-all ${priority === 'high' ? 'bg-red-500/10 border-red-500/40 text-red-500' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
+                                    <button title="Prioridade urgente — Queima de FreeBet" onClick={() => setPriority('high')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium border transition-all ${priority === 'high' ? 'bg-red-500/10 border-red-500/40 text-red-500' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
                                         <TriangleAlert size={14} /> Urgente
                                     </button>
-                                    <button onClick={() => setPriority('medium')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium border transition-all ${priority === 'medium' ? 'bg-[#FFE600]/10 border-[#FFE600]/40 text-[#FFE600]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
+                                    <button title="Prioridade importante — Possível Duplo" onClick={() => setPriority('medium')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium border transition-all ${priority === 'medium' ? 'bg-[#FFE600]/10 border-[#FFE600]/40 text-[#FFE600]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
                                         <Star size={14} /> Importante
                                     </button>
-                                    <button onClick={() => setPriority('low')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium border transition-all ${priority === 'low' ? 'bg-[#3B82F6]/10 border-[#3B82F6]/40 text-[#3B82F6]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
+                                    <button title="Prioridade normal — Sem duplo / Vale Giros" onClick={() => setPriority('low')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium border transition-all ${priority === 'low' ? 'bg-[#3B82F6]/10 border-[#3B82F6]/40 text-[#3B82F6]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
                                         <FileText size={14} /> Normal
                                     </button>
                                 </div>
@@ -409,6 +414,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 <span className="text-[10px] font-medium text-white/40 tracking-wide ml-1">Agendar</span>
                                 <button
                                     ref={schedulerRef}
+                                    title="Agendar data e hora para lembrete desta nota"
                                     className={`flex items-center justify-between gap-6 px-4 py-2.5 bg-black/30 border rounded-xl text-[11.5px] font-bold transition-all min-w-[180px] group ${showScheduler || (tempDate && tempTime) ? 'border-[#17baa4]/50 text-white' : 'border-white/5 text-gray-300 hover:border-[#17baa4]/40'}`}
                                 >
                                     <div className="flex-1 text-left" onClick={() => setShowScheduler(!showScheduler)}>
@@ -425,7 +431,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                             }
                                         }}
                                     >
-                                        <Bell size={15} className={`transition-all ${showScheduler || (tempDate && tempTime) ? 'text-[#17baa4] opacity-100' : 'opacity-40 group-hover:opacity-100'}`} />
+                                        <Bell size={15} className={`transition-all ${showScheduler || (tempDate && tempTime) ? 'text-[#17baa4] opacity-100' : 'opacity-40 group-hover:opacity-100'}`} title="Ver notificações agendadas" />
                                         {notes.filter(n => n.reminderEnabled).length > 0 && (
                                             <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-[#1a1f35]" />
                                         )}
@@ -486,7 +492,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 )}
                             </div>
 
-                            <button onClick={handleAddNote} className="bg-[#17baa4] hover:bg-[#129482] text-[#090c19] px-7 py-2.5 rounded-xl font-black text-[13px] transition-all shadow-[0_0_20px_rgba(23,186,164,0.4)] flex items-center gap-2 shrink-0 active:scale-95 translate-y-[-1px]">
+                            <button title="Salvar esta anotação no bloco de notas" onClick={handleAddNote} className="bg-[#17baa4] hover:bg-[#129482] text-[#090c19] px-7 py-2.5 rounded-xl font-black text-[13px] transition-all shadow-[0_0_20px_rgba(23,186,164,0.4)] flex items-center gap-2 shrink-0 active:scale-95 translate-y-[-1px]">
                                 <Plus size={18} strokeWidth={2.5} /> Salvar anotação
                             </button>
 
@@ -533,14 +539,14 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             <div className="flex flex-wrap items-center gap-1.5">
                                 <span className="text-[12px] font-medium text-gray-500">Prioridade:</span>
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <button onClick={() => setFilterPriority('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`}>Todas</button>
-                                    <button onClick={() => setFilterPriority('high')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'high' ? 'border-[#EF4444] text-[#EF4444] bg-[#EF4444]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
+                                    <button title="Mostrar todas as prioridades" onClick={() => setFilterPriority('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`}>Todas</button>
+                                    <button title="Filtrar por prioridade urgente" onClick={() => setFilterPriority('high')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'high' ? 'border-[#EF4444] text-[#EF4444] bg-[#EF4444]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
                                         <div className="w-2 h-2 rounded-full bg-[#EF4444]" /> 🔥 Urgente
                                     </button>
-                                    <button onClick={() => setFilterPriority('medium')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'medium' ? 'border-[#F59E0B] text-[#F59E0B] bg-[#F59E0B]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
+                                    <button title="Filtrar por prioridade importante" onClick={() => setFilterPriority('medium')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'medium' ? 'border-[#F59E0B] text-[#F59E0B] bg-[#F59E0B]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
                                         <div className="w-2 h-2 rounded-full bg-[#F59E0B]" /> ⚡ Importante
                                     </button>
-                                    <button onClick={() => setFilterPriority('low')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'low' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
+                                    <button title="Filtrar por prioridade normal" onClick={() => setFilterPriority('low')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'low' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
                                         <div className="w-2 h-2 rounded-full bg-[#3B82F6]" /> 📄 Normal
                                     </button>
                                 </div>
@@ -549,14 +555,15 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => setSortBy(sortBy === 'newest' ? 'oldest' : 'newest')}
+                                    title={sortBy === 'newest' ? 'Ordenado por mais recentes — clique para inverter' : 'Ordenado por mais antigos — clique para inverter'}
                                     className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all active:scale-95 border ${sortBy === 'newest' ? 'bg-white/5 border-white/10 text-white' : 'bg-white/5 border-white/10 text-gray-300'}`}
                                 >
                                     <ArrowDownUp size={14} />
                                     Data de entrega
                                 </button>
                                 <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/5">
-                                    <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[#17baa4]/20 text-[#17baa4] shadow-sm' : 'text-gray-500 hover:text-white'}`}><ListIcon size={14} /></button>
-                                    <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-[#17baa4]/20 text-[#17baa4] shadow-sm' : 'text-gray-500 hover:text-white'}`}><LayoutGrid size={14} /></button>
+                                    <button title="Visualizar em lista" onClick={() => setViewMode('list')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[#17baa4]/20 text-[#17baa4] shadow-sm' : 'text-gray-500 hover:text-white'}`}><ListIcon size={14} /></button>
+                                    <button title="Visualizar em grade" onClick={() => setViewMode('grid')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-[#17baa4]/20 text-[#17baa4] shadow-sm' : 'text-gray-500 hover:text-white'}`}><LayoutGrid size={14} /></button>
                                 </div>
                             </div>
                         </div>
@@ -564,7 +571,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         <div className="flex items-center gap-1.5">
                             <span className="text-[12px] font-medium text-gray-500 shrink-0">Status:</span>
                             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-nowrap pb-1">
-                                <button onClick={() => setFilterStatus('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterStatus === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}>Todos</button>
+                                <button title="Mostrar todos os status" onClick={() => setFilterStatus('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterStatus === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}>Todos</button>
                                 {defaultStatuses.map(s => {
                                     const colorMap: Record<string, string> = {
                                         'Não Feito': 'border-white/40 text-white bg-white/10',
@@ -575,6 +582,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                     return (
                                         <button
                                             key={s.name}
+                                            title={`Filtrar por status "${s.name}"`}
                                             onClick={() => setFilterStatus(s.name)}
                                             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterStatus === s.name ? (colorMap[s.name] || 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10') : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}
                                         >
@@ -585,6 +593,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 {savedCustomStatuses.map(cs => (
                                     <button
                                         key={cs.id}
+                                        title={`Filtrar por status personalizado "${cs.name}"`}
                                         onClick={() => setFilterStatus(cs.name)}
                                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterStatus === cs.name ? 'border-[#17baa4]/50 text-[#17baa4] bg-[#17baa4]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}
                                     >
