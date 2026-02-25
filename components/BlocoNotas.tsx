@@ -172,34 +172,34 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         </div>
 
                         {/* Bottom Row - Single Line Action Row */}
-                        <div className="flex items-center gap-3 w-full py-2 overflow-x-auto scrollbar-hide flex-nowrap pr-24">
-                            <div className="flex gap-2.5 shrink-0">
-                                <button onClick={() => setPriority('high')} className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-[10.5px] font-black uppercase tracking-widest border transition-all ${priority === 'high' ? 'bg-red-500/10 border-red-500/40 text-red-500' : 'bg-white/5 border-white/5 text-gray-500'}`}>
-                                    <TriangleAlert size={14} /> Urgente
+                        <div className="flex items-end gap-4 w-full py-2 overflow-x-auto scrollbar-hide flex-nowrap pr-20">
+                            <div className="flex gap-2 shrink-0">
+                                <button onClick={() => setPriority('high')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-[9.5px] font-black uppercase tracking-widest border transition-all ${priority === 'high' ? 'bg-red-500/10 border-red-500/40 text-red-500' : 'bg-white/5 border-white/5 text-gray-400 hover:text-gray-300'}`}>
+                                    <TriangleAlert size={13} /> Urgente
                                 </button>
-                                <button onClick={() => setPriority('medium')} className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-[10.5px] font-black uppercase tracking-widest border transition-all ${priority === 'medium' ? 'bg-[#FFCC00]/10 border-[#FFCC00]/40 text-[#FFCC00]' : 'bg-white/5 border-white/5 text-gray-500'}`}>
-                                    <Star size={14} /> Importante
+                                <button onClick={() => setPriority('medium')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-[9.5px] font-black uppercase tracking-widest border transition-all ${priority === 'medium' ? 'bg-[#FFCC00]/10 border-[#FFCC00]/40 text-[#FFCC00]' : 'bg-white/5 border-white/5 text-gray-400 hover:text-gray-300'}`}>
+                                    <Star size={13} /> Importante
                                 </button>
-                                <button onClick={() => setPriority('low')} className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-[10.5px] font-black uppercase tracking-widest border transition-all ${priority === 'low' ? 'bg-[#33b5e5]/10 border-[#33b5e5]/40 text-[#33b5e5]' : 'bg-white/5 border-white/5 text-gray-500'}`}>
-                                    <FileText size={14} /> Normal
+                                <button onClick={() => setPriority('low')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-[9.5px] font-black uppercase tracking-widest border transition-all ${priority === 'low' ? 'bg-[#33b5e5]/10 border-[#33b5e5]/40 text-[#33b5e5]' : 'bg-white/5 border-white/5 text-gray-400 hover:text-gray-300'}`}>
+                                    <FileText size={13} /> Normal
                                 </button>
                             </div>
 
                             <div className="h-6 w-px bg-white/5 shrink-0 mx-1" />
 
-                            <div className="flex flex-col gap-1 shrink-0 ml-4">
-                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 leading-none">Agendar</span>
+                            <div className="flex flex-col gap-1 shrink-0 ml-1">
+                                <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-1 leading-none">Agendar</span>
                                 <button
                                     onClick={() => {/* schedule trigger */ }}
-                                    className="flex items-center justify-between gap-10 px-6 py-3.5 bg-black/30 border border-white/5 rounded-xl text-[12.5px] font-bold text-gray-300 group hover:border-[#17baa4]/40 transition-all min-w-[200px]"
+                                    className="flex items-center justify-between gap-6 px-4 py-2.5 bg-black/30 border border-white/5 rounded-xl text-[11.5px] font-bold text-gray-300 group hover:border-[#17baa4]/40 transition-all min-w-[180px]"
                                 >
                                     <span>Data e Hora</span>
-                                    <Bell size={16} className="opacity-40 group-hover:opacity-100 text-[#17baa4]" />
+                                    <Bell size={15} className="opacity-40 group-hover:opacity-100 text-[#17baa4]" />
                                 </button>
                             </div>
 
-                            <button onClick={handleAddNote} className="bg-[#17baa4] hover:bg-[#129482] text-[#090c19] px-10 py-3.5 rounded-xl font-black text-[12px] uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(23,186,164,0.4)] flex items-center gap-3 shrink-0 active:scale-95">
-                                <Plus size={18} strokeWidth={3} /> SALVAR ANOTAÇÃO
+                            <button onClick={handleAddNote} className="bg-[#17baa4] hover:bg-[#129482] text-[#090c19] px-7 py-2.5 rounded-xl font-black text-[11.5px] uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(23,186,164,0.4)] flex items-center gap-2 shrink-0 active:scale-95 translate-y-[-1px]">
+                                <Plus size={16} strokeWidth={3} /> SALVAR ANOTAÇÃO
                             </button>
 
                             {/* Spacer to prevent clipping on the right */}
