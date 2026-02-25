@@ -172,7 +172,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         </div>
 
                         {/* Bottom Row - Single Line Action Row */}
-                        <div className="flex items-center gap-3 w-full py-2 overflow-x-auto custom-scrollbar-horizontal flex-nowrap pr-8">
+                        <div className="flex items-center gap-3 w-full py-2 overflow-x-auto scrollbar-hide flex-nowrap pr-12">
                             <div className="flex gap-2 shrink-0">
                                 <button onClick={() => setPriority('high')} className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${priority === 'high' ? 'bg-red-500/10 border-red-500/40 text-red-500' : 'bg-white/5 border-white/5 text-gray-500'}`}>
                                     <TriangleAlert size={14} /> Urgente
