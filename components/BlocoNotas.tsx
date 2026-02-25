@@ -28,6 +28,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>(
         'Notification' in window ? Notification.permission : 'denied'
     );
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [filterPriority, setFilterPriority] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+    const [filterStatus, setFilterStatus] = useState<'pending' | 'completed'>('pending');
 
     const emojis = [
         '🎰', '💰', '🔥', '⚠️', '✅', '❌', '⭐', '🎯', '💎', '🚀', '📌', '💡',
@@ -131,6 +134,24 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
         await FirestoreService.saveNote(currentUser.uid, updatedNote);
     };
 
+    const handleToggleComplete = async (note: NotepadNote) => {
+        if (!currentUser) return;
+        const updatedNote = { ...note, completed: !note.completed };
+        await FirestoreService.saveNote(currentUser.uid, updatedNote);
+    };
+
+    const handleClearCompleted = async () => {
+        if (!currentUser) return;
+        const completedNotes = notes.filter(n => n.completed);
+        if (completedNotes.length === 0) return;
+
+        if (confirm(`Deseja excluir permanentemente as ${completedNotes.length} notas concluídas?`)) {
+            for (const note of completedNotes) {
+                await FirestoreService.deleteNote(currentUser.uid, note.id);
+            }
+        }
+    };
+
     const getPriorityColor = (p: string) => {
         switch (p) {
             case 'high': return 'text-red-400 bg-red-500/10 border-red-500/20';
@@ -151,38 +172,89 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <style>
+                {`
+                @keyframes pulse-neon {
+                    0%, 100% { opacity: 0.8; filter: brightness(1); }
+                    50% { opacity: 1; filter: brightness(1.3); }
+                }
+                @keyframes shimmer {
+                    from { transform: translateX(-100%) skewX(-20deg); }
+                    to { transform: translateX(200%) skewX(-20deg); }
+                }
+                .animate-pulse-neon {
+                    animation: pulse-neon 2s ease-in-out infinite;
+                }
+                .shimmer-effect::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 50%;
+                    height: 100%;
+                    background: linear-gradient(
+                        to right,
+                        transparent,
+                        rgba(255, 255, 255, 0.05),
+                        transparent
+                    );
+                    transform: translateX(-100%) skewX(-20deg);
+                    transition: none;
+                }
+                .group:hover .shimmer-effect::after {
+                    animation: shimmer 1s ease-in-out forwards;
+                }
+                `}
+            </style>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative z-10">
                 <div className="flex items-center gap-3 w-full sm:w-auto">
-                    <div className="p-2 bg-primary/10 rounded-xl shrink-0">
-                        <StickyNote size={24} className="text-primary sm:size-8" />
+                    <div className="p-2.5 bg-primary/10 rounded-2xl shrink-0 border border-primary/10 shadow-lg shadow-primary/5">
+                        <StickyNote size={28} className="text-primary sm:size-8" />
                     </div>
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2">
                             Bloco de Notas
+                            <span className="hidden sm:inline-flex px-2 py-0.5 rounded-lg bg-white/5 border border-white/5 text-[10px] text-gray-500 font-bold uppercase tracking-widest">{notes.length} Notas</span>
                         </h1>
                         <p className="text-gray-500 text-xs sm:text-sm font-medium">Anote procedimentos e tarefas rápidas</p>
                     </div>
                 </div>
 
-                {/* Relocated Notification Button */}
-                <div className="shrink-0 w-full sm:w-auto">
-                    {permissionStatus === 'granted' ? (
-                        <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[9px] xs:text-[10px] sm:text-[11px] font-bold bg-primary/10 border border-primary/20 text-primary shadow-lg shadow-primary/5 whitespace-nowrap justify-center sm:justify-start">
-                            <Bell size={13} className="sm:size-[14px]" />
-                            <span>Notificações Ativas</span>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                    {/* Search Bar Integrated in Header */}
+                    <div className="relative group min-w-[240px]">
+                        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                            <Search className="w-4 h-4 text-gray-500 group-focus-within:text-primary transition-colors" />
                         </div>
-                    ) : (permissionStatus === 'default' || permissionStatus === 'denied') && (
-                        <button
-                            onClick={handleRequestPermission}
-                            className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[9px] xs:text-[10px] sm:text-[11px] font-bold transition-all border shadow-lg whitespace-nowrap w-full sm:w-auto justify-center sm:justify-start ${permissionStatus === 'denied'
-                                ? 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20'
-                                : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500 hover:bg-yellow-500/20 animate-pulse'
-                                }`}
-                        >
-                            {permissionStatus === 'denied' ? <BellOff size={14} className="sm:size-[15px]" /> : <Bell size={14} className="sm:size-[15px] animate-pulse" />}
-                            <span>{permissionStatus === 'denied' ? 'Notificações Bloqueadas' : 'Ativar Notificações'}</span>
-                        </button>
-                    )}
+                        <input
+                            type="search"
+                            placeholder="Buscar..."
+                            className="w-full bg-[#1a1f35]/40 border border-white/10 rounded-xl pl-11 pr-4 h-11 text-sm text-white focus:outline-none focus:border-primary/50 focus:bg-[#1a1f35]/80 transition-all backdrop-blur-md"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    {/* Relocated Notification Button */}
+                    <div className="shrink-0">
+                        {permissionStatus === 'granted' ? (
+                            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] sm:text-[11px] font-bold bg-primary/10 border border-primary/20 text-primary shadow-lg shadow-primary/5 whitespace-nowrap justify-center h-11">
+                                <Bell size={14} />
+                                <span>Notificações Ativas</span>
+                            </div>
+                        ) : (permissionStatus === 'default' || permissionStatus === 'denied') && (
+                            <button
+                                onClick={handleRequestPermission}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] sm:text-[11px] font-bold transition-all border shadow-lg whitespace-nowrap w-full sm:w-auto justify-center h-11 ${permissionStatus === 'denied'
+                                    ? 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20'
+                                    : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500 hover:bg-yellow-500/20 animate-pulse'
+                                    }`}
+                            >
+                                {permissionStatus === 'denied' ? <BellOff size={15} /> : <Bell size={15} className="animate-pulse" />}
+                                <span>{permissionStatus === 'denied' ? 'Bloqueadas' : 'Ativar Alertas'}</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -190,14 +262,16 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
             <Card className="bg-gradient-to-br from-[#1a1f35] to-[#0d1425] border-gray-800/50 relative overflow-hidden pb-4 transition-all duration-300">
                 {/* Responsive Header Container */}
                 {/* Compact Header for Input Card - Just the collapse toggle */}
-                <div className="flex items-center justify-between px-4 sm:px-6 pt-6 pb-2 relative z-20">
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/5 rounded-xl backdrop-blur-sm">
-                        <PenLine size={14} className="text-primary" />
-                        <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest leading-none">Nova Anotação</span>
+                <div className="flex items-center justify-between px-4 sm:px-8 pt-8 pb-4 relative z-20">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
+                            <Plus size={16} className="text-primary" />
+                        </div>
+                        <span className="text-xs font-black text-white uppercase tracking-[0.2em]">Crie uma Anotação</span>
                     </div>
                     <button
                         onClick={() => setIsCollapsed(!isCollapsed)}
-                        className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all flex items-center justify-center sm:bg-transparent sm:border-none"
+                        className={`p-2 rounded-xl transition-all flex items-center justify-center ${isCollapsed ? 'bg-primary/10 text-primary' : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'}`}
                     >
                         {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
                     </button>
@@ -205,7 +279,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                 {
                     !isCollapsed && (
-                        <div className="p-4 md:p-6 pt-0 space-y-4">
+                        <div className="p-4 md:p-8 pt-0 space-y-6">
                             <div className="space-y-4">
                                 <textarea
                                     className="w-full bg-[#090c19] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all min-h-[100px] resize-none"
@@ -224,12 +298,15 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                             <button
                                                 key={e}
                                                 onClick={() => setSelectedEmoji(e)}
-                                                className={`w-11 h-11 shrink-0 flex items-center justify-center rounded-[18px] text-xl transition-all duration-300 ${selectedEmoji === e
-                                                    ? 'bg-primary/20 text-white shadow-[0_0_20px_rgba(23,186,164,0.2)] scale-110 border-primary/50'
-                                                    : 'bg-white/5 border border-white/10 text-gray-400 hover:bg-white/10 hover:border-white/20 hover:scale-105'
-                                                    } border backdrop-blur-md`}
+                                                className={`w-12 h-12 shrink-0 flex items-center justify-center rounded-[20px] text-xl transition-all duration-500 ${selectedEmoji === e
+                                                    ? 'bg-primary/30 text-white shadow-[0_0_25px_rgba(23,186,164,0.4)] scale-110 border-primary/60 ring-2 ring-primary/20'
+                                                    : 'bg-white/5 border border-white/10 text-gray-400 hover:bg-white/10 hover:border-white/20 hover:scale-110 hover:-translate-y-1'
+                                                    } border backdrop-blur-md relative overflow-hidden group/emoji`}
                                             >
-                                                {e}
+                                                {selectedEmoji === e && (
+                                                    <div className="absolute inset-0 bg-primary/10 animate-pulse" />
+                                                )}
+                                                <span className="relative z-10">{e}</span>
                                             </button>
                                         ))}
                                     </div>
@@ -321,14 +398,36 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                                                 {showDatePicker && (
                                                     <div
-                                                        className="absolute bottom-12 left-0 w-72 bg-[#1a1f35] border border-white/10 rounded-2xl shadow-2xl z-[150] p-5 animate-in slide-in-from-bottom-2 duration-300"
+                                                        className="absolute bottom-12 left-0 w-80 bg-[#1a1f35] border border-white/10 rounded-3xl shadow-2xl z-[150] p-5 animate-in slide-in-from-bottom-2 duration-300 backdrop-blur-xl"
                                                         onClick={(e) => e.stopPropagation()}
                                                     >
                                                         <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
-                                                            <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Configurar Alerta</span>
-                                                            <button onClick={() => setShowDatePicker(false)} className="text-gray-500 hover:text-white">
-                                                                <X size={14} />
+                                                            <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">Configurar Alerta</span>
+                                                            <button onClick={() => setShowDatePicker(false)} className="text-gray-500 hover:text-white p-1">
+                                                                <X size={16} />
                                                             </button>
+                                                        </div>
+
+                                                        {/* Quick Presets */}
+                                                        <div className="grid grid-cols-2 gap-2 mb-4">
+                                                            {[
+                                                                { label: '+1 Hora', value: () => { const d = new Date(); d.setHours(d.getHours() + 1); return d; } },
+                                                                { label: '+3 Horas', value: () => { const d = new Date(); d.setHours(d.getHours() + 3); return d; } },
+                                                                { label: 'Amanhã', value: () => { const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(9, 0, 0, 0); return d; } },
+                                                                { label: 'Próx. Seg', value: () => { const d = new Date(); d.setDate(d.getDate() + ((1 + 7 - d.getDay()) % 7 || 7)); d.setHours(9, 0, 0, 0); return d; } }
+                                                            ].map((preset) => (
+                                                                <button
+                                                                    key={preset.label}
+                                                                    onClick={() => {
+                                                                        const date = preset.value();
+                                                                        setTempDate(date.toISOString().split('T')[0]);
+                                                                        setTempTime(date.toTimeString().split(' ')[0].substring(0, 5));
+                                                                    }}
+                                                                    className="px-3 py-2 bg-white/5 border border-white/5 rounded-xl text-[10px] font-bold text-gray-400 hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-all uppercase tracking-tighter"
+                                                                >
+                                                                    {preset.label}
+                                                                </button>
+                                                            ))}
                                                         </div>
 
                                                         <div className="space-y-4">
@@ -382,15 +481,15 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                         setReminderDate('');
                                                                         setShowDatePicker(false);
                                                                     }}
-                                                                    className="flex-1 bg-white/5 hover:bg-white/10 text-gray-400 text-[10px] font-bold py-2.5 rounded-xl transition-all"
+                                                                    className="flex-1 bg-white/5 hover:bg-white/10 text-gray-400 text-[10px] font-bold py-3 rounded-xl transition-all"
                                                                 >
                                                                     LIMPAR
                                                                 </button>
                                                                 <button
                                                                     onClick={handleConfirmReminder}
-                                                                    className="flex-1 bg-primary text-[#090c19] text-[10px] font-black py-2.5 rounded-xl hover:scale-[1.02] transition-all shadow-lg shadow-primary/20"
+                                                                    className="flex-1 bg-primary text-[#090c19] text-[10px] font-black py-3 rounded-xl hover:scale-[1.02] transition-all shadow-lg shadow-primary/20"
                                                                 >
-                                                                    DEFINIR
+                                                                    CONFIRMAR
                                                                 </button>
                                                             </div>
                                                         </div>
@@ -418,26 +517,38 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
             {/* Upcoming Reminders Section */}
             {
                 upcomingReminders.length > 0 && (
-                    <div className="space-y-3 animate-in fade-in slide-in-from-left-4 duration-500">
-                        <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest px-1">
-                            <Bell size={14} className="animate-bounce" /> Próximos Lembretes
+                    <div className="space-y-3 animate-in fade-in slide-in-from-left-4 duration-500 relative z-30">
+                        <div className="flex items-center justify-between px-1">
+                            <div className="flex items-center gap-2 text-primary font-bold text-[10px] uppercase tracking-[0.2em]">
+                                <Bell size={14} className="animate-bounce" /> Próximos Alertar
+                            </div>
+                            <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">{upcomingReminders.length} Pendentes</span>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             {upcomingReminders.slice(0, 3).map(rem => (
-                                <div key={rem.id} className="bg-primary/5 border border-primary/20 rounded-xl p-3 flex items-start gap-3 relative group overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-16 h-16 bg-primary/10 rounded-full -mr-8 -mt-8 blur-2xl group-hover:bg-primary/20 transition-all" />
-                                    <span className="text-xl shrink-0">{rem.emoji}</span>
+                                <div key={rem.id} className="bg-[#1a1f35]/60 backdrop-blur-md border border-primary/20 rounded-2xl p-4 flex items-start gap-4 relative group overflow-hidden hover:bg-[#1a1f35]/80 transition-all hover:scale-[1.02] duration-300 shadow-lg shadow-black/20">
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full -mr-12 -mt-12 blur-3xl group-hover:bg-primary/20 transition-all" />
+                                    <div className="w-12 h-12 shrink-0 bg-white/5 rounded-xl border border-white/5 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                                        {rem.emoji}
+                                    </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[11px] text-white font-bold truncate">{rem.content}</p>
-                                        <p className="text-[10px] text-primary/70 font-medium">
-                                            {new Date(rem.reminderDate!).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                                        </p>
+                                        <p className="text-[12px] text-white font-bold truncate mb-1">{rem.content}</p>
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-1 text-[10px] text-primary/80 font-bold">
+                                                <Clock size={10} />
+                                                {new Date(rem.reminderDate!).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                            </div>
+                                            <div className="w-1 h-1 rounded-full bg-white/20" />
+                                            <div className="text-[10px] text-gray-500 font-medium">
+                                                {new Date(rem.reminderDate!).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
                             {upcomingReminders.length > 3 && (
-                                <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center justify-center text-[10px] text-gray-500 font-bold uppercase tracking-tighter">
-                                    + {upcomingReminders.length - 3} outros agendados
+                                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-center text-[10px] text-gray-500 font-bold uppercase tracking-widest hover:bg-white/10 transition-colors cursor-pointer backdrop-blur-sm">
+                                    + {upcomingReminders.length - 3} outros alertas
                                 </div>
                             )}
                         </div>
@@ -446,38 +557,120 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
             }
 
             {/* Search Bar & Notes List Area */}
-            <div className="space-y-4">
-                <div className="relative group">
-                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                        <Search className="w-4 h-4 text-gray-500 group-focus-within:text-primary transition-colors" />
+            <div className="space-y-6">
+                {/* Toolbar: Filters & View Toggles */}
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-[#1a1f35]/40 backdrop-blur-md border border-white/5 rounded-[24px] p-2 sm:p-3 shadow-xl">
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 custom-scrollbar-horizontal">
+                        {[
+                            { id: 'all', label: 'Todas', icon: StickyNote },
+                            { id: 'high', label: 'Urgente', icon: TriangleAlert, color: 'text-red-400' },
+                            { id: 'medium', label: 'Importante', icon: Star, color: 'text-yellow-400' },
+                            { id: 'low', label: 'Normal', icon: Check, color: 'text-blue-400' }
+                        ].map((btn) => (
+                            <button
+                                key={btn.id}
+                                onClick={() => setFilterPriority(btn.id as any)}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border whitespace-nowrap ${filterPriority === btn.id
+                                    ? 'bg-primary/20 border-primary/40 text-primary shadow-[0_0_15px_rgba(23,186,164,0.2)]'
+                                    : 'bg-white/5 border-white/5 text-gray-500 hover:bg-white/10 hover:border-white/20'
+                                    }`}
+                            >
+                                <btn.icon size={12} className={btn.color || ''} />
+                                {btn.label}
+                            </button>
+                        ))}
                     </div>
-                    <input
-                        type="search"
-                        placeholder="Pesquisar anotações..."
-                        className="w-full bg-[#1a1f35]/50 border border-white/5 rounded-2xl pl-11 pr-4 h-12 text-sm text-white focus:outline-none focus:border-primary/50 focus:bg-[#1a1f35] transition-all backdrop-blur-sm"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+
+                    <div className="flex items-center justify-between md:justify-end gap-3 border-t md:border-t-0 border-white/5 pt-3 md:pt-0">
+                        {/* Status Tabs */}
+                        <div className="flex p-1 bg-black/20 rounded-xl border border-white/5">
+                            <button
+                                onClick={() => setFilterStatus('pending')}
+                                className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${filterStatus === 'pending'
+                                    ? 'bg-primary text-[#090c19] shadow-lg'
+                                    : 'text-gray-500 hover:text-white'
+                                    }`}
+                            >
+                                Pendentes
+                            </button>
+                            <button
+                                onClick={() => setFilterStatus('completed')}
+                                className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${filterStatus === 'completed'
+                                    ? 'bg-primary text-[#090c19] shadow-lg'
+                                    : 'text-gray-500 hover:text-white'
+                                    }`}
+                            >
+                                Concluídas
+                            </button>
+                        </div>
+
+                        {/* View Toggle */}
+                        <div className="flex items-center gap-1 bg-black/20 p-1 rounded-xl border border-white/5">
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white/10 text-primary shadow-inner' : 'text-gray-500 hover:text-white'}`}
+                                title="Visualização em Grade"
+                            >
+                                <div className="grid grid-cols-2 gap-0.5 w-4 h-4">
+                                    <div className="bg-current rounded-[1px]" />
+                                    <div className="bg-current rounded-[1px]" />
+                                    <div className="bg-current rounded-[1px]" />
+                                    <div className="bg-current rounded-[1px]" />
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white/10 text-primary shadow-inner' : 'text-gray-500 hover:text-white'}`}
+                                title="Visualização em Lista"
+                            >
+                                <div className="flex flex-col gap-0.5 w-4 h-4">
+                                    <div className="w-full h-1 bg-current rounded-[1px]" />
+                                    <div className="w-full h-1 bg-current rounded-[1px]" />
+                                    <div className="w-full h-1 bg-current rounded-[1px]" />
+                                </div>
+                            </button>
+                        </div>
+
+                        {filterStatus === 'completed' && (
+                            <button
+                                onClick={handleClearCompleted}
+                                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/20 transition-all ml-auto md:ml-0"
+                            >
+                                <Trash2 size={12} />
+                                <span className="hidden sm:inline">Limpar Tudo</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Notes List */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-20">
+                <div className={`pb-20 ${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'flex flex-col gap-3'}`}>
                     {notes
-                        .filter(note => note.content.toLowerCase().includes(searchTerm.toLowerCase()))
+                        .filter(note => {
+                            const matchesSearch = note.content.toLowerCase().includes(searchTerm.toLowerCase());
+                            const matchesPriority = filterPriority === 'all' || note.priority === filterPriority;
+                            const matchesStatus = filterStatus === 'all' ||
+                                (filterStatus === 'pending' ? !note.completed : note.completed);
+                            return matchesSearch && matchesPriority && matchesStatus;
+                        })
                         .map((note) => (
-                            <Card key={note.id} className="bg-[#121625]/80 backdrop-blur-sm border-white/5 p-4 md:p-6 group relative overflow-hidden transition-all hover:bg-[#121625] hover:border-primary/20 hover:translate-y-[-2px] duration-300">
+                            <Card key={note.id} className={`bg-[#121625]/80 backdrop-blur-sm border-white/5 transition-all duration-500 shadow-2xl relative overflow-hidden group ${viewMode === 'grid' ? 'p-4 md:p-6 hover:-translate-y-2 hover:translate-x-1 hover:scale-[1.01]' : 'p-3 flex items-center gap-4 hover:translate-x-1'
+                                } ${note.completed ? 'opacity-60 grayscale-[0.3]' : ''} ${note.priority === 'high' ? 'hover:shadow-[0_20px_40px_rgba(239,68,68,0.1)] hover:border-red-500/30' :
+                                    note.priority === 'medium' ? 'hover:shadow-[0_20px_40px_rgba(234,179,8,0.1)] hover:border-yellow-500/30' :
+                                        'hover:shadow-[0_20px_40px_rgba(59,130,246,0.1)] hover:border-blue-500/30'
+                                }`}>
                                 {/* Priority Neon Active Border */}
-                                <div className={`absolute top-0 left-0 w-1 h-full ${note.priority === 'high' ? 'bg-gradient-to-b from-red-500 to-red-900 shadow-[0_0_10px_rgba(239,68,68,0.5)]' :
-                                    note.priority === 'medium' ? 'bg-gradient-to-b from-yellow-500 to-yellow-900 shadow-[0_0_10px_rgba(234,179,8,0.5)]' :
-                                        'bg-gradient-to-b from-blue-500 to-blue-900 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
-                                    }`} />
+                                <div className={`absolute top-0 left-0 w-1 h-full shimmer-effect ${note.priority === 'high' ? 'bg-gradient-to-b from-red-500 via-red-500/50 to-transparent shadow-[4px_0_15px_rgba(239,68,68,0.5)]' :
+                                        note.priority === 'medium' ? 'bg-gradient-to-b from-yellow-500 via-yellow-500/50 to-transparent shadow-[4px_0_15px_rgba(234,179,8,0.5)]' :
+                                            'bg-gradient-to-b from-blue-500 via-blue-500/50 to-transparent shadow-[4px_0_15px_rgba(59,130,246,0.5)]'
+                                    } ${!note.completed ? 'animate-pulse-neon' : 'opacity-30'}`} />
 
-                                <div className="flex gap-4 md:gap-8 items-start relative pb-2">
-                                    <div className="relative shrink-0 ml-5 h-full flex items-center justify-center pt-2">
-                                        <div className="text-3xl bg-gradient-to-br from-white/10 to-transparent w-14 h-14 md:w-16 md:h-16 rounded-[22px] flex items-center justify-center border border-white/10 group-hover:scale-110 transition-all duration-500 shadow-2xl group-hover:border-primary/40 backdrop-blur-sm">
+                                <div className={`flex items-start relative w-full ${viewMode === 'grid' ? 'gap-4 md:gap-8 pb-2' : 'gap-4'}`}>
+                                    <div className={`relative shrink-0 flex items-center justify-center ${viewMode === 'grid' ? 'ml-5 pt-2' : 'ml-2'}`}>
+                                        <div className={`${viewMode === 'grid' ? 'text-3xl w-14 h-14 md:w-16 md:h-16 rounded-[22px]' : 'text-xl w-10 h-10 rounded-xl'} bg-gradient-to-br from-white/10 to-transparent flex items-center justify-center border border-white/10 group-hover:scale-110 transition-all duration-500 shadow-2xl group-hover:border-primary/40 backdrop-blur-sm`}>
                                             {note.emoji}
                                         </div>
-                                        {note.reminderEnabled && note.reminderDate && (
+                                        {note.reminderEnabled && note.reminderDate && !note.completed && (
                                             <div className="absolute top-0 -right-1 w-6 h-6 rounded-lg bg-primary text-[#090c19] flex items-center justify-center shadow-[0_0_10px_#17baa4] animate-pulse ring-2 ring-[#121625]">
                                                 <Bell size={12} strokeWidth={3} />
                                             </div>
@@ -485,19 +678,28 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                     </div>
 
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center justify-between mb-2">
                                             <div className="flex items-center gap-2">
                                                 <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.1em] border ${getPriorityColor(note.priority)}`}>
                                                     {note.priority === 'high' ? 'Urgente' : note.priority === 'medium' ? 'Importante' : 'Normal'}
                                                 </span>
                                                 {note.reminderDate && (
-                                                    <span className={`text-[10px] font-bold flex items-center gap-1 ${note.reminderEnabled ? 'text-primary' : 'text-gray-600'}`}>
+                                                    <span className={`text-[10px] font-bold flex items-center gap-1 ${note.reminderEnabled && !note.completed ? 'text-primary' : 'text-gray-600'}`}>
                                                         <Calendar size={10} /> {new Date(note.reminderDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
                                                     </span>
                                                 )}
                                             </div>
-                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity translate-x-4 group-hover:translate-x-0 duration-300">
-                                                {note.reminderDate && (
+
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0 duration-300">
+                                                <button
+                                                    onClick={() => handleToggleComplete(note)}
+                                                    className={`p-1.5 rounded-xl transition-all hover:scale-110 ${note.completed ? 'text-green-400 bg-green-500/10' : 'text-gray-500 bg-white/5 hover:text-green-400'}`}
+                                                    title={note.completed ? "Desmarcar como concluída" : "Marcar como concluída"}
+                                                >
+                                                    <Check size={14} strokeWidth={3} />
+                                                </button>
+
+                                                {note.reminderDate && !note.completed && (
                                                     <button
                                                         onClick={() => handleToggleReminder(note)}
                                                         className={`p-1.5 rounded-xl transition-all hover:scale-110 ${note.reminderEnabled ? 'text-primary bg-primary/10' : 'text-gray-500 bg-white/5'}`}
@@ -505,6 +707,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                         {note.reminderEnabled ? <Bell size={14} /> : <BellOff size={14} />}
                                                     </button>
                                                 )}
+
                                                 <button
                                                     onClick={() => handleDeleteNote(note.id)}
                                                     className="p-1.5 rounded-xl text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all hover:scale-110"
@@ -514,34 +717,48 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                             </div>
                                         </div>
 
-                                        <p className="text-gray-200 text-sm md:text-base leading-relaxed break-words line-clamp-4 group-hover:line-clamp-none transition-all duration-300">
+                                        <p className={`text-gray-200 leading-relaxed break-words transition-all duration-300 ${note.completed ? 'line-through text-gray-500 italic' : ''
+                                            } ${viewMode === 'grid' ? 'text-sm md:text-base line-clamp-4 group-hover:line-clamp-none' : 'text-xs md:text-sm line-clamp-1'}`}>
                                             {note.content}
                                         </p>
 
-                                        <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-gray-600">
-                                            <span className="flex items-center gap-1.5">
-                                                <Clock size={10} /> {new Date(note.createdAt).toLocaleDateString('pt-BR')}
-                                            </span>
-                                            {note.reminderDate && note.reminderEnabled && (
-                                                <span className="text-primary/60 flex items-center gap-1">
-                                                    Alerta {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                        {viewMode === 'grid' && (
+                                            <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-gray-600">
+                                                <span className="flex items-center gap-1.5">
+                                                    <Clock size={10} /> {new Date(note.createdAt).toLocaleDateString('pt-BR')}
                                                 </span>
-                                            )}
-                                        </div>
+                                                {note.reminderDate && note.reminderEnabled && !note.completed && (
+                                                    <span className="text-primary/60 flex items-center gap-1">
+                                                        Alerta {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </Card>
                         ))}
 
-                    {notes.filter(note => note.content.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
-                        <div className="col-span-full py-24 text-center space-y-4">
-                            <div className="w-24 h-24 bg-white/5 rounded-[40px] flex items-center justify-center mx-auto mb-6 border border-white/5 shadow-inner">
-                                <StickyNote size={48} className="text-gray-700 opacity-20" />
+                    {notes.filter(note => {
+                        const matchesSearch = note.content.toLowerCase().includes(searchTerm.toLowerCase());
+                        const matchesPriority = filterPriority === 'all' || note.priority === filterPriority;
+                        const matchesStatus = filterStatus === 'all' || (filterStatus === 'pending' ? !note.completed : note.completed);
+                        return matchesSearch && matchesPriority && matchesStatus;
+                    }).length === 0 && (
+                            <div className="col-span-full py-32 text-center space-y-8 relative overflow-hidden rounded-[40px] border border-white/5 bg-[#1a1f35]/20 backdrop-blur-xl group">
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 opacity-50" />
+                                <div className="relative z-10">
+                                    <div className="w-28 h-28 bg-gradient-to-br from-primary/20 to-primary/5 rounded-[45px] flex items-center justify-center mx-auto mb-8 border border-primary/20 shadow-[0_0_50px_rgba(23,186,164,0.1)] group-hover:scale-110 transition-transform duration-700">
+                                        <StickyNote size={56} className="text-primary opacity-40 animate-bounce" />
+                                    </div>
+                                    <h3 className="text-white text-2xl font-black uppercase tracking-widest">Nenhuma nota encontrada</h3>
+                                    <div className="h-1 w-20 bg-primary/30 mx-auto my-4 rounded-full" />
+                                    <p className="text-gray-500 text-sm max-w-[300px] mx-auto leading-relaxed font-medium">
+                                        Sua lista está limpa. Comece a organizar seus procedimentos e alertas agora mesmo!
+                                    </p>
+                                </div>
                             </div>
-                            <h3 className="text-white text-lg font-bold">Nenhuma anotação encontrada</h3>
-                            <p className="text-gray-500 text-sm max-w-[240px] mx-auto">Tente usar outros termos de pesquisa ou adicione uma nova nota acima.</p>
-                        </div>
-                    )}
+                        )}
                 </div>
             </div>
 

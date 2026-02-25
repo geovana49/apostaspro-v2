@@ -145,4 +145,5 @@ export interface NotepadNote {
   reminderDate?: string;
   reminderEnabled: boolean;
   createdAt: string;
+  completed?: boolean;
 }
