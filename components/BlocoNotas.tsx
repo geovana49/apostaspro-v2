@@ -162,15 +162,15 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                         setSelectedEmoji(e);
                                         setIsCustomEmojiActive(false);
                                     }}
-                                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all border shrink-0 ${(!isCustomEmojiActive && selectedEmoji === e) ? 'bg-[#17baa4] border-[#17baa4] scale-110 shadow-[0_0_20px_rgba(23,186,164,0.5)]' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
+                                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all border shrink-0 ${(!isCustomEmojiActive && selectedEmoji === e) ? 'bg-[#17baa4]/20 border-[#17baa4] scale-110 shadow-[0_0_20px_rgba(23,186,164,0.3)]' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
                                 >
-                                    <span className={`text-xl transition-all ${(!isCustomEmojiActive && selectedEmoji === e) ? 'scale-125' : 'grayscale-[0.3] opacity-60'}`}>{e}</span>
+                                    <span className={`text-xl transition-all ${(!isCustomEmojiActive && selectedEmoji === e) ? 'scale-125' : ''}`}>{e}</span>
                                 </button>
                             ))}
                         </div>
 
                         {/* Bottom Row - Single Line Action Row */}
-                        <div className="flex items-center gap-3 w-full bg-black/20 p-2 rounded-2xl border border-white/5 overflow-x-auto custom-scrollbar-horizontal flex-nowrap">
+                        <div className="flex items-center gap-3 w-full py-2 overflow-x-auto custom-scrollbar-horizontal flex-nowrap">
                             <div className="flex gap-2 shrink-0">
                                 <button onClick={() => setPriority('high')} className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${priority === 'high' ? 'bg-red-500/10 border-red-500/40 text-red-500' : 'bg-white/5 border-white/5 text-gray-500'}`}>
                                     <TriangleAlert size={14} /> Urgente
