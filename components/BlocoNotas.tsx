@@ -34,6 +34,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [statusEmoji, setStatusEmoji] = useState('⌛');
     const [isCustomStatusActive, setIsCustomStatusActive] = useState(false);
     const [customStatus, setCustomStatus] = useState('');
+    const [showScheduler, setShowScheduler] = useState(false);
+    const [showNotificationsModal, setShowNotificationsModal] = useState(false);
 
     const defaultStatuses = [
         { name: 'Não Feito', emoji: '⌛' },
@@ -60,6 +62,38 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
         }
     };
 
+    useEffect(() => {
+        const checkNotifications = async () => {
+            if (permissionStatus !== 'granted') return;
+
+            const now = new Date();
+            const dueNotes = notes.filter(n =>
+                n.reminderEnabled &&
+                !n.notified &&
+                n.reminderDate &&
+                new Date(n.reminderDate) <= now
+            );
+
+            for (const note of dueNotes) {
+                try {
+                    new Notification(`Lembrete: Bloco de Notas`, {
+                        body: note.content,
+                        icon: '/favicon.ico'
+                    });
+
+                    if (currentUser) {
+                        await FirestoreService.saveNote(currentUser.uid, { ...note, notified: true });
+                    }
+                } catch (error) {
+                    console.error("Erro ao disparar notificação:", error);
+                }
+            }
+        };
+
+        const interval = setInterval(checkNotifications, 30000);
+        return () => clearInterval(interval);
+    }, [notes, permissionStatus, currentUser]);
+
     const handleAddNote = async () => {
         if (!currentUser) return;
         if (!content.trim()) return;
@@ -82,8 +116,10 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
             setIsCustomEmojiActive(false);
             setCustomStatus('');
             setIsCustomStatusActive(false);
-            setSelectedStatus('Não Feito');
             setStatusEmoji('⌛');
+            setShowScheduler(false);
+            setTempDate(new Date().toISOString().split('T')[0]);
+            setTempTime('12:00');
         } catch (error) {
             console.error("[Notepad] Erro ao salvar nota:", error);
         }
@@ -124,13 +160,26 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     </div>
                 </div>
 
-                {permissionStatus !== 'granted' && (
+                {permissionStatus !== 'granted' ? (
                     <button
                         onClick={handleRequestPermission}
                         className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all bg-[#FFCC00]/10 border border-[#FFCC00]/30 text-[#FFCC00] hover:brightness-110 active:scale-95 shadow-[0_0_15px_rgba(255,204,0,0.2)] h-11 ${permissionStatus === 'default' ? 'animate-pulse' : ''}`}
                     >
                         <Bell size={16} />
                         <span>Ativar Notificações</span>
+                    </button>
+                ) : (
+                    <button
+                        onClick={() => setShowNotificationsModal(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 active:scale-95 shadow-sm"
+                    >
+                        <div className="relative">
+                            <Bell size={18} className="text-[#17baa4]" />
+                            {notes.filter(n => n.reminderEnabled && new Date(n.reminderDate) > new Date()).length > 0 && (
+                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-[#1a1f35] animate-pulse" />
+                            )}
+                        </div>
+                        <span>Lembretes</span>
                     </button>
                 )}
             </div>
@@ -243,15 +292,44 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                             <div className="h-6 w-px bg-white/5 shrink-0 mx-1" />
 
-                            <div className="flex flex-col gap-1 shrink-0 ml-1">
+                            <div className="flex flex-col gap-1 shrink-0 ml-1 relative">
                                 <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-1 leading-none">Agendar</span>
                                 <button
-                                    onClick={() => {/* schedule trigger */ }}
-                                    className="flex items-center justify-between gap-6 px-4 py-2.5 bg-black/30 border border-white/5 rounded-xl text-[11.5px] font-bold text-gray-300 group hover:border-[#17baa4]/40 transition-all min-w-[180px]"
+                                    onClick={() => setShowScheduler(!showScheduler)}
+                                    className={`flex items-center justify-between gap-6 px-4 py-2.5 bg-black/30 border rounded-xl text-[11.5px] font-bold transition-all min-w-[180px] group ${showScheduler || (tempDate && tempTime) ? 'border-[#17baa4]/50 text-white' : 'border-white/5 text-gray-300 hover:border-[#17baa4]/40'}`}
                                 >
-                                    <span>Data e Hora</span>
-                                    <Bell size={15} className="opacity-40 group-hover:opacity-100 text-[#17baa4]" />
+                                    <span>{showScheduler ? 'Selecionando...' : (tempDate && tempTime ? `${new Date(tempDate).toLocaleDateString('pt-BR')} ${tempTime}` : 'Data e Hora')}</span>
+                                    <Bell size={15} className={`transition-all ${showScheduler || (tempDate && tempTime) ? 'text-[#17baa4] opacity-100' : 'opacity-40 group-hover:opacity-100'}`} />
                                 </button>
+
+                                {showScheduler && (
+                                    <div className="absolute top-[110%] left-0 z-50 p-4 bg-[#1a1f35] border border-white/10 rounded-2xl shadow-2xl flex flex-col gap-3 min-w-[200px] animate-in slide-in-from-top-2 duration-300">
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Data</label>
+                                            <input
+                                                type="date"
+                                                value={tempDate}
+                                                onChange={(e) => setTempDate(e.target.value)}
+                                                className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#17baa4]/50"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Hora</label>
+                                            <input
+                                                type="time"
+                                                value={tempTime}
+                                                onChange={(e) => setTempTime(e.target.value)}
+                                                className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#17baa4]/50"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={() => setShowScheduler(false)}
+                                            className="w-full bg-[#17baa4] text-[#090c19] py-2 rounded-lg text-[10px] font-black uppercase tracking-widest mt-1"
+                                        >
+                                            Confirmar
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                             <button onClick={handleAddNote} className="bg-[#17baa4] hover:bg-[#129482] text-[#090c19] px-7 py-2.5 rounded-xl font-black text-[11.5px] uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(23,186,164,0.4)] flex items-center gap-2 shrink-0 active:scale-95 translate-y-[-1px]">
@@ -317,6 +395,12 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                 <span>{note.status}</span>
                                             </div>
                                         )}
+                                        {note.reminderEnabled && note.reminderDate && (
+                                            <div className="px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border border-[#17baa4]/20 bg-[#17baa4]/5 text-[#17baa4] flex items-center gap-2">
+                                                <Clock size={12} />
+                                                <span>{new Date(note.reminderDate) > new Date() ? 'Agendado' : 'Notificado'}</span>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
                                         <button onClick={() => handleDeleteNote(note.id)} className="p-1.5 text-gray-500 hover:text-red-500 bg-white/5 rounded-lg"><Trash size={14} /></button>
@@ -345,6 +429,60 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             <button onClick={() => setShowBlockedGuide(false)} className="text-gray-500 hover:text-white"><X size={20} /></button>
                         </div>
                         <Button onClick={() => setShowBlockedGuide(false)} className="w-full bg-[#17baa4] hover:brightness-110 text-[#090c19] font-black h-12 rounded-xl">Entendi</Button>
+                    </Card>
+                </div>
+            )}
+
+            {/* Notifications Modal */}
+            {showNotificationsModal && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-sm bg-black/60 shadow-2xl">
+                    <Card className="max-w-md w-full bg-[#1a1f35] border-white/10 shadow-2xl p-6 space-y-4 relative z-50">
+                        <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-[#17baa4]/10 rounded-xl"><Bell size={24} className="text-[#17baa4]" /></div>
+                                <h3 className="text-lg font-bold text-white">Próximos Lembretes</h3>
+                            </div>
+                            <button onClick={() => setShowNotificationsModal(false)} className="text-gray-500 hover:text-white transition-all"><X size={20} /></button>
+                        </div>
+
+                        <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                            {notes.filter(n => n.reminderEnabled && new Date(n.reminderDate) > new Date()).length > 0 ? (
+                                notes
+                                    .filter(n => n.reminderEnabled && new Date(n.reminderDate) > new Date())
+                                    .sort((a, b) => new Date(a.reminderDate).getTime() - new Date(b.reminderDate).getTime())
+                                    .map(note => (
+                                        <div key={note.id} className="p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-[#17baa4]/30 transition-all group">
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <span className="text-xl">{note.emoji}</span>
+                                                <p className="text-sm font-medium text-white line-clamp-2 leading-relaxed flex-1">{note.content}</p>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2 text-[10px] font-bold text-[#17baa4] uppercase tracking-widest bg-[#17baa4]/10 px-2 py-1 rounded-lg">
+                                                    <Clock size={12} />
+                                                    {new Date(note.reminderDate).toLocaleDateString('pt-BR')} {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                </div>
+                                                <button
+                                                    onClick={async () => {
+                                                        if (currentUser) {
+                                                            await FirestoreService.saveNote(currentUser.uid, { ...note, reminderEnabled: false });
+                                                        }
+                                                    }}
+                                                    className="text-[9px] font-black text-gray-500 hover:text-red-500 uppercase tracking-widest transition-all"
+                                                >
+                                                    Remover Alerta
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                            ) : (
+                                <div className="py-12 flex flex-col items-center justify-center text-center opacity-40">
+                                    <BellOff size={40} className="mb-4 text-gray-400" />
+                                    <p className="text-sm font-medium text-gray-400">Nenhum lembrete futuro agendado.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <Button onClick={() => setShowNotificationsModal(false)} className="w-full bg-[#17baa4] hover:brightness-110 text-[#090c19] font-black h-12 rounded-xl mt-2 shadow-[0_4px_15px_rgba(23,186,164,0.3)]">Fechar</Button>
                     </Card>
                 </div>
             )}
