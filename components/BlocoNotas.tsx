@@ -263,7 +263,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                             setStatusEmoji(s.emoji);
                                             setIsCustomStatusActive(false);
                                         }}
-                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${(!isCustomStatusActive && selectedStatus === s.name) ? s.active : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10'}`}
+                                        className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${(!isCustomStatusActive && selectedStatus === s.name) ? s.active : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10'}`}
                                     >
                                         <div className={`w-2 h-2 rounded-full ${s.dot}`} />
                                         <span>{s.emoji}</span>
