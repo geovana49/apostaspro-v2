@@ -110,9 +110,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                 {permissionStatus !== 'granted' && (
                     <button
                         onClick={handleRequestPermission}
-                        className={`flex items-center gap-2 px-8 py-3 rounded-xl text-[12px] font-black uppercase tracking-widest transition-all bg-[#ffff00]/10 border border-[#ffff00]/30 text-[#ffff00] hover:brightness-125 active:scale-95 shadow-[0_0_20px_rgba(255,255,0,0.2)] h-12 ${permissionStatus === 'default' ? 'animate-pulse' : ''}`}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all bg-[#FFCC00]/10 border border-[#FFCC00]/30 text-[#FFCC00] hover:brightness-110 active:scale-95 shadow-[0_0_15px_rgba(255,204,0,0.2)] h-11 ${permissionStatus === 'default' ? 'animate-pulse' : ''}`}
                     >
-                        <Bell size={18} />
+                        <Bell size={16} />
                         <span>Ativar Notificações</span>
                     </button>
                 )}
@@ -173,33 +173,33 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                         {/* Bottom Row - Single Line Action Row */}
                         <div className="flex items-center gap-3 w-full py-2 overflow-x-auto scrollbar-hide flex-nowrap pr-24">
-                            <div className="flex gap-3 shrink-0">
-                                <button onClick={() => setPriority('high')} className={`flex items-center justify-center gap-2 px-7 py-4 rounded-xl text-[12px] font-black uppercase tracking-widest border transition-all ${priority === 'high' ? 'bg-red-500/10 border-red-500/40 text-red-500' : 'bg-white/5 border-white/5 text-gray-500'}`}>
-                                    <TriangleAlert size={16} /> Urgente
+                            <div className="flex gap-2.5 shrink-0">
+                                <button onClick={() => setPriority('high')} className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-[10.5px] font-black uppercase tracking-widest border transition-all ${priority === 'high' ? 'bg-red-500/10 border-red-500/40 text-red-500' : 'bg-white/5 border-white/5 text-gray-500'}`}>
+                                    <TriangleAlert size={14} /> Urgente
                                 </button>
-                                <button onClick={() => setPriority('medium')} className={`flex items-center justify-center gap-2 px-7 py-4 rounded-xl text-[12px] font-black uppercase tracking-widest border transition-all ${priority === 'medium' ? 'bg-[#ffff00]/10 border-[#ffff00]/40 text-[#ffff00]' : 'bg-white/5 border-white/5 text-gray-500'}`}>
-                                    <Star size={16} /> Importante
+                                <button onClick={() => setPriority('medium')} className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-[10.5px] font-black uppercase tracking-widest border transition-all ${priority === 'medium' ? 'bg-[#FFCC00]/10 border-[#FFCC00]/40 text-[#FFCC00]' : 'bg-white/5 border-white/5 text-gray-500'}`}>
+                                    <Star size={14} /> Importante
                                 </button>
-                                <button onClick={() => setPriority('low')} className={`flex items-center justify-center gap-2 px-7 py-4 rounded-xl text-[12px] font-black uppercase tracking-widest border transition-all ${priority === 'low' ? 'bg-[#33b5e5]/10 border-[#33b5e5]/40 text-[#33b5e5]' : 'bg-white/5 border-white/5 text-gray-500'}`}>
-                                    <FileText size={16} /> Normal
+                                <button onClick={() => setPriority('low')} className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-[10.5px] font-black uppercase tracking-widest border transition-all ${priority === 'low' ? 'bg-[#33b5e5]/10 border-[#33b5e5]/40 text-[#33b5e5]' : 'bg-white/5 border-white/5 text-gray-500'}`}>
+                                    <FileText size={14} /> Normal
                                 </button>
                             </div>
 
                             <div className="h-6 w-px bg-white/5 shrink-0 mx-1" />
 
-                            <div className="flex flex-col gap-1 shrink-0 ml-5">
-                                <span className="text-[11px] font-black text-gray-500 uppercase tracking-[0.2em] ml-2 leading-none">Agendar</span>
+                            <div className="flex flex-col gap-1 shrink-0 ml-4">
+                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 leading-none">Agendar</span>
                                 <button
                                     onClick={() => {/* schedule trigger */ }}
-                                    className="flex items-center justify-between gap-12 px-8 py-4.5 bg-black/30 border border-white/5 rounded-xl text-[14px] font-bold text-gray-300 group hover:border-[#17baa4]/40 transition-all min-w-[230px]"
+                                    className="flex items-center justify-between gap-10 px-6 py-3.5 bg-black/30 border border-white/5 rounded-xl text-[12.5px] font-bold text-gray-300 group hover:border-[#17baa4]/40 transition-all min-w-[200px]"
                                 >
                                     <span>Data e Hora</span>
-                                    <Bell size={18} className="opacity-40 group-hover:opacity-100 text-[#17baa4]" />
+                                    <Bell size={16} className="opacity-40 group-hover:opacity-100 text-[#17baa4]" />
                                 </button>
                             </div>
 
-                            <button onClick={handleAddNote} className="bg-[#17baa4] hover:bg-[#129482] text-[#090c19] px-14 py-4.5 rounded-xl font-black text-[14px] uppercase tracking-widest transition-all shadow-[0_0_30px_rgba(23,186,164,0.6)] flex items-center gap-3 shrink-0 active:scale-95">
-                                <Plus size={20} strokeWidth={3} /> SALVAR ANOTAÇÃO
+                            <button onClick={handleAddNote} className="bg-[#17baa4] hover:bg-[#129482] text-[#090c19] px-10 py-3.5 rounded-xl font-black text-[12px] uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(23,186,164,0.4)] flex items-center gap-3 shrink-0 active:scale-95">
+                                <Plus size={18} strokeWidth={3} /> SALVAR ANOTAÇÃO
                             </button>
 
                             {/* Spacer to prevent clipping on the right */}
