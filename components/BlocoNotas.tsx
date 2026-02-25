@@ -17,9 +17,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [content, setContent] = useState('');
     const [selectedEmoji, setSelectedEmoji] = useState('📌');
     const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('low');
-    const [reminderDate, setReminderDate] = useState('');
     const [isCollapsed, setIsCollapsed] = useState(false);
-    const [showDatePicker, setShowDatePicker] = useState(false);
     const [tempDate, setTempDate] = useState(new Date().toISOString().split('T')[0]);
     const [tempTime, setTempTime] = useState('12:00');
     const [showBlockedGuide, setShowBlockedGuide] = useState(false);
@@ -27,7 +25,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>(
         'Notification' in window ? Notification.permission : 'denied'
     );
-    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
     const [filterPriority, setFilterPriority] = useState<'all' | 'high' | 'medium' | 'low'>('all');
     const [filterStatus, setFilterStatus] = useState<'pending' | 'completed'>('pending');
     const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -36,8 +34,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const emojis = [
         '🎰', '💰', '🔥', '⚠️', '✅', '❌', '⭐', '🎯', '💎', '🚀', '📌', '💡',
         '🏆', '⚽', '🏀', '🎲', '🃏', '💸', '📊', '📈', '🔔', '🔒', '🎁', '🏅',
-        '💳', '🏦', '📝', '⏰', '🧮', '💪', '👑', '🎉', '📱', '🔑', '🛡️', '⚡',
-        '🎁', '🆕', '🎂'
+        '💳', '🏦', '📝', '⏰', '🧮', '💪', '👑', '🎉', '📱', '🔑', '🛡️', '⚡'
     ];
 
     const handleRequestPermission = async () => {
@@ -110,32 +107,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
         await FirestoreService.saveNote(currentUser.uid, updatedNote);
     };
 
-    const handleBulkDelete = async () => {
-        if (!currentUser || selectedNoteIds.length === 0) return;
-        if (confirm(`Excluir ${selectedNoteIds.length} nota(s)?`)) {
-            for (const id of selectedNoteIds) await FirestoreService.deleteNote(currentUser.uid, id);
-            setSelectedNoteIds([]);
-            setIsSelectionMode(false);
-        }
-    };
-
-    const handleBulkComplete = async () => {
-        if (!currentUser || selectedNoteIds.length === 0) return;
-        for (const id of selectedNoteIds) {
-            const note = notes.find(n => n.id === id);
-            if (note) await FirestoreService.saveNote(currentUser.uid, { ...note, completed: true });
-        }
-        setSelectedNoteIds([]);
-        setIsSelectionMode(false);
-    };
-
     const toggleNoteSelection = (id: string) => {
         setSelectedNoteIds(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
-    };
-
-    const handleSelectAll = (filteredNotes: NotepadNote[]) => {
-        const allIds = filteredNotes.map(n => n.id);
-        setSelectedNoteIds(selectedNoteIds.length === allIds.length && allIds.length > 0 ? [] : allIds);
     };
 
     const getPriorityColor = (p: string) => {
@@ -146,25 +119,16 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
         }
     };
 
-    const pendingNotesCount = notes.filter(n => !n.completed).length;
-
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
-            {/* Header - Precise Matching Red Box 1 & 2 */}
+            {/* Header - Classic Design */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative z-10">
                 <div className="flex items-center gap-3 w-full sm:w-auto">
-                    <div className="p-2.5 bg-[#17baa4]/10 rounded-2xl shrink-0 border border-[#17baa4]/10 shadow-lg">
+                    <div className="p-2.5 bg-[#17baa4]/10 rounded-2xl shrink-0 border border-[#17baa4]/10">
                         <Folder size={28} className="text-[#17baa4]" />
                     </div>
                     <div>
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Bloco de Notas</h1>
-                            {pendingNotesCount > 0 && (
-                                <span className="px-3 py-1 rounded-lg bg-[#eab308] text-[#090c19] text-[10px] font-black uppercase tracking-wider">
-                                    {pendingNotesCount} pendente
-                                </span>
-                            )}
-                        </div>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Bloco de Notas</h1>
                         <p className="text-gray-500 text-xs sm:text-sm font-medium">Anote procedimentos e tarefas rápidas</p>
                     </div>
                 </div>
@@ -172,12 +136,12 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                     <button
                         onClick={handleRequestPermission}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[11px] font-bold transition-all border shadow-lg justify-center h-11 ${permissionStatus === 'granted'
-                            ? 'bg-[#eab308]/10 border-[#eab308]/20 text-[#eab308]'
-                            : 'bg-[#eab308] border-[#eab308] text-[#090c19] hover:brightness-110 active:scale-95'
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[11px] font-bold transition-all border shadow-lg justify-center h-10 ${permissionStatus === 'granted'
+                                ? 'bg-[#eab308]/10 border-[#eab308]/20 text-[#eab308]'
+                                : 'bg-[#eab308] border-[#eab308] text-[#090c19] hover:brightness-110 active:scale-95'
                             }`}
                     >
-                        <Bell size={16} className={permissionStatus === 'granted' ? '' : 'animate-pulse'} />
+                        <Bell size={15} className={permissionStatus === 'granted' ? '' : 'animate-pulse'} />
                         <span>{permissionStatus === 'granted' ? 'Notificações Ativas' : 'Ativar Notificações'}</span>
                     </button>
 
@@ -186,9 +150,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             setIsSelectionMode(!isSelectionMode);
                             if (isSelectionMode) setSelectedNoteIds([]);
                         }}
-                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[11px] font-bold transition-all border h-11 ${isSelectionMode
-                            ? 'bg-blue-500/20 border-blue-500/40 text-blue-400'
-                            : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[11px] font-bold transition-all border h-10 ${isSelectionMode
+                                ? 'bg-blue-500/20 border-blue-500/40 text-blue-400'
+                                : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
                             }`}
                     >
                         <Check size={16} className={isSelectionMode ? 'text-blue-400' : 'opacity-40'} />
@@ -197,7 +161,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                 </div>
             </div>
 
-            {/* Nova Anotação Card - Precision Layout */}
+            {/* Nova Anotação Card - Precision Layout from Screenshot */}
             <Card className="bg-[#121625]/80 backdrop-blur-xl border-white/5 relative overflow-hidden rounded-[32px]">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
                     <div className="flex items-center gap-3 px-3 py-1.5 bg-white/5 rounded-full border border-white/10">
@@ -218,8 +182,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             onChange={(e) => setContent(e.target.value)}
                         />
 
+                        {/* Emoji Picker Row */}
                         <div className="flex flex-wrap gap-2">
-                            {emojis.slice(0, 16).map(e => (
+                            {emojis.slice(0, 15).map(e => (
                                 <button
                                     key={e}
                                     onClick={() => setSelectedEmoji(e)}
@@ -230,41 +195,47 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             ))}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <div className="flex items-center gap-3">
-                                <div className="flex-1 space-y-1.5">
+                        {/* Bottom Row - Precise Screenshot Layout */}
+                        <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6">
+                            <div className="flex flex-col sm:flex-row gap-6 w-full lg:w-auto">
+                                {/* Date/Time Block */}
+                                <div className="space-y-1.5 min-w-[140px]">
                                     <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                                         <Calendar size={12} className="text-[#17baa4]" /> DD/MM/AAAA
                                     </span>
-                                    <input type="date" className="w-full bg-black/30 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none color-scheme-dark" value={tempDate} onChange={e => setTempDate(e.target.value)} />
+                                    <div className="flex items-center bg-black/30 border border-white/5 rounded-xl px-4 py-3 text-xs text-white">
+                                        <input type="date" className="bg-transparent border-none outline-none w-full color-scheme-dark" value={tempDate} onChange={e => setTempDate(e.target.value)} />
+                                    </div>
                                 </div>
-                                <div className="flex-1 space-y-1.5">
+                                <div className="space-y-1.5 min-w-[100px]">
                                     <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                                         <Clock size={12} className="text-blue-400" /> --:--
                                     </span>
-                                    <input type="time" className="w-full bg-black/30 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none color-scheme-dark" value={tempTime} onChange={e => setTempTime(e.target.value)} />
+                                    <div className="flex items-center bg-black/30 border border-white/5 rounded-xl px-4 py-3 text-xs text-white">
+                                        <input type="time" className="bg-transparent border-none outline-none w-full color-scheme-dark" value={tempTime} onChange={e => setTempTime(e.target.value)} />
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="flex flex-col gap-1.5 lg:col-span-2">
-                                <div className="flex items-center gap-1.5 mb-1 ml-1">
-                                    <Zap size={12} className="text-[#17baa4]" />
-                                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Prioridade:</span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="flex gap-2 flex-grow">
+                                {/* Priority Block */}
+                                <div className="space-y-1.5 flex-1 min-w-[280px]">
+                                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                                        <Zap size={12} className="text-[#17baa4]" /> PRIORIDADE:
+                                    </span>
+                                    <div className="flex gap-2">
                                         <button onClick={() => setPriority('high')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${priority === 'high' ? 'bg-red-500/10 border-red-500/40 text-red-500' : 'bg-white/5 border-white/5 text-gray-500'}`}><Flame size={12} /> Urgente</button>
                                         <button onClick={() => setPriority('medium')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${priority === 'medium' ? 'bg-yellow-500/10 border-yellow-500/40 text-yellow-500' : 'bg-white/5 border-white/5 text-gray-500'}`}><Zap size={12} /> Importante</button>
                                         <button onClick={() => setPriority('low')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${priority === 'low' ? 'bg-blue-500/20 border-blue-500/60 text-white shadow-lg' : 'bg-white/5 border-white/5 text-gray-500'}`}><FileText size={12} /> Normal</button>
                                     </div>
-                                    <button onClick={handleAddNote} className="bg-[#17baa4] hover:bg-[#129482] text-[#090c19] px-7 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg flex items-center gap-2 active:scale-95">
-                                        <Plus size={18} strokeWidth={3} /> Adicionar
-                                    </button>
                                 </div>
                             </div>
+
+                            <button onClick={handleAddNote} className="bg-[#17baa4] hover:bg-[#129482] text-[#090c19] px-10 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg flex items-center gap-2 w-full lg:w-auto justify-center active:scale-95">
+                                <Plus size={18} strokeWidth={3} /> Salvar Anotação
+                            </button>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[9px] font-bold text-gray-500 uppercase tracking-widest opacity-60 pl-1">
+                        {/* Legends */}
+                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[9px] font-bold text-gray-500 uppercase tracking-widest opacity-60 pl-1 pt-2">
                             <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-red-500" /> Urgente = Queima de FreeBet</div>
                             <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-yellow-500" /> Importante = Possível Duplo</div>
                             <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Normal = Sem duplo / Vale Giros</div>
@@ -272,6 +243,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     </div>
                 )}
 
+                {/* Search Bar at bottom of creator card */}
                 <div className="p-6 border-t border-white/5 bg-white/[0.02]">
                     <div className="relative">
                         <Search size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -286,126 +258,45 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                 </div>
             </Card>
 
-            {/* SUAS NOTAS Separator - Precise Red Box 3 */}
-            <div className="flex items-center gap-6 pt-10 pb-6 overflow-hidden">
-                <div className="h-[1px] flex-grow bg-white/5" />
-                <span className="text-[10px] font-black text-gray-600 uppercase tracking-[0.4em] whitespace-nowrap">Suas Notas</span>
-                <div className="h-[1px] flex-grow bg-white/5" />
-            </div>
-
-            {/* Filter Toolbar - Precise Red Box 3 */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-2.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 custom-scrollbar-horizontal">
-                    <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest mr-2 shrink-0">Filtrar:</span>
-                    {[
-                        { id: 'all', label: 'Todas', color: 'bg-[#33b5e5]' },
-                        { id: 'high', label: 'Urgente', color: 'bg-[#ff4444]' },
-                        { id: 'medium', label: 'Importante', color: 'bg-[#ffbb33]' },
-                        { id: 'low', label: 'Normal', color: 'bg-[#33b5e5]' }
-                    ].map(f => (
-                        <button
-                            key={f.id}
-                            onClick={() => setFilterPriority(f.id as any)}
-                            className={`flex items-center gap-2.5 px-4 py-2 rounded-full border text-[10px] font-black uppercase tracking-widest transition-all ${filterPriority === f.id ? 'bg-white/10 border-white/20 text-white' : 'bg-white/5 border-white/5 text-gray-500 hover:bg-white/10'}`}
-                        >
-                            <div className={`w-1.5 h-1.5 rounded-full ${f.color} ${filterPriority === f.id ? 'shadow-[0_0_8px_rgba(51,181,229,0.5)] scale-125' : ''}`} />
-                            {f.label}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="flex items-center gap-3 shrink-0">
-                    <button className="flex items-center gap-2 px-4 py-2.5 bg-white/5 border border-white/5 rounded-xl text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-white transition-all h-10">
-                        <ArrowDownWideNarrow size={14} className="opacity-40" />
-                        <span>Data de entrega</span>
-                    </button>
-                    <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/5 h-10">
-                        <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white/10 text-[#17baa4]' : 'text-gray-600 hover:text-white'}`}><ListIcon size={16} /></button>
-                        <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white/10 text-[#17baa4]' : 'text-gray-600 hover:text-white'}`}><LayoutGrid size={16} /></button>
-                    </div>
+            {/* List Header */}
+            <div className="flex items-center justify-between pt-4">
+                <h3 className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em]">Suas Notas</h3>
+                <div className="flex items-center gap-1.5 bg-white/5 p-1 rounded-xl border border-white/5">
+                    <button onClick={() => setFilterStatus('pending')} className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'pending' ? 'bg-white/5 text-[#17baa4]' : 'text-gray-600 hover:text-white'}`}>Pendentes</button>
+                    <button onClick={() => setFilterStatus('completed')} className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'completed' ? 'bg-white/5 text-[#17baa4]' : 'text-gray-600 hover:text-white'}`}>Concluídas</button>
                 </div>
             </div>
 
-            {/* Selection Toolbar */}
-            {isSelectionMode && (
-                <div className="bg-[#1a1f35]/90 backdrop-blur-2xl border border-[#17baa4]/40 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 animate-in slide-in-from-top-4 duration-500 shadow-2xl">
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                            <Check size={14} className="text-blue-400" strokeWidth={3} />
-                            <span className="text-[11px] font-black text-white uppercase tracking-wider">{selectedNoteIds.length} selecionadas</span>
-                        </div>
-                        <button onClick={() => handleSelectAll(notes)} className="text-[10px] font-black text-blue-400 uppercase tracking-widest hover:underline">Selecionar todas</button>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <button onClick={handleBulkComplete} className="bg-[#17baa4] text-[#090c19] px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 active:scale-95" disabled={selectedNoteIds.length === 0}>Concluir</button>
-                        <button onClick={handleBulkDelete} className="bg-red-500/10 border border-red-500/20 text-red-500 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white active:scale-95" disabled={selectedNoteIds.length === 0}>Excluir</button>
-                    </div>
-                </div>
-            )}
-
-            <div className="space-y-8">
-                {/* PENDENTES Section Header */}
-                <div className="px-1 flex items-center justify-between">
-                    <h3 className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em]">Pendentes</h3>
-                    <div className="flex items-center gap-1.5 bg-white/5 p-1 rounded-xl border border-white/5 h-9">
-                        <button onClick={() => setFilterStatus('pending')} className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'pending' ? 'bg-white/5 text-[#17baa4]' : 'text-gray-600 hover:text-white'}`}>Pendentes</button>
-                        <div className="w-[1px] h-3 bg-white/5" />
-                        <button onClick={() => setFilterStatus('completed')} className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'completed' ? 'bg-white/5 text-[#17baa4]' : 'text-gray-600 hover:text-white'}`}>Concluídas</button>
-                    </div>
-                </div>
-
-                <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "flex flex-col gap-3"}>
-                    {notes
-                        .filter(note => {
-                            const matchesSearch = note.content.toLowerCase().includes(searchTerm.toLowerCase());
-                            const matchesPriority = filterPriority === 'all' || note.priority === filterPriority;
-                            const matchesStatus = filterStatus === 'pending' ? !note.completed : note.completed;
-                            return matchesSearch && matchesPriority && matchesStatus;
-                        })
-                        .map(note => (
-                            <Card key={note.id} className={`bg-[#121625]/60 border-white/5 transition-all duration-300 relative group overflow-hidden hover:border-white/10 ${selectedNoteIds.includes(note.id) ? 'border-blue-500/40 bg-blue-500/5 ring-1 ring-blue-500/20' : ''} ${viewMode === 'grid' ? 'p-6' : 'p-3 flex items-center gap-4'}`}>
-                                {/* Checkbox on far left - Red Box 3 */}
-                                <div
-                                    className={`shrink-0 w-5 h-5 rounded-md border-2 transition-all flex items-center justify-center cursor-pointer z-20 ${selectedNoteIds.includes(note.id) ? 'bg-blue-500 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]' : 'border-white/20 hover:border-blue-500/50'}`}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        toggleNoteSelection(note.id);
-                                    }}
-                                >
-                                    {selectedNoteIds.includes(note.id) && <Check size={12} className="text-white" strokeWidth={4} />}
-                                </div>
-
-                                <div className="flex flex-col h-full w-full">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div className="flex items-center gap-2">
-                                            {/* Priority Badge - Internal Top Left - Red Box 3 */}
-                                            <span className={`px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider border border-white/5 ${getPriorityColor(note.priority)}`}>
-                                                {note.priority === 'high' ? 'Urgente' : note.priority === 'medium' ? 'Importante' : 'Normal'}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all translate-x-1 group-hover:translate-x-0">
-                                            <button onClick={() => handleToggleComplete(note)} className="p-1.5 text-gray-600 hover:text-white bg-white/5 rounded-lg"><Check size={14} /></button>
-                                            <button className="p-1.5 text-gray-600 hover:text-white bg-white/5 rounded-lg"><Pencil size={14} /></button>
-                                            <button onClick={() => handleDeleteNote(note.id)} className="p-1.5 text-gray-600 hover:text-red-500 bg-white/5 rounded-lg"><Trash size={14} /></button>
-                                        </div>
+            <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "flex flex-col gap-3"}>
+                {notes
+                    .filter(note => {
+                        const matchesSearch = note.content.toLowerCase().includes(searchTerm.toLowerCase());
+                        const matchesPriority = filterPriority === 'all' || note.priority === filterPriority;
+                        const matchesStatus = filterStatus === 'pending' ? !note.completed : note.completed;
+                        return matchesSearch && matchesPriority && matchesStatus;
+                    })
+                    .map(note => (
+                        <Card key={note.id} className={`bg-[#121625]/60 border-white/5 transition-all duration-300 relative group overflow-hidden ${selectedNoteIds.includes(note.id) ? 'border-blue-500/40 bg-blue-500/5' : ''} ${viewMode === 'grid' ? 'p-6' : 'p-4 flex items-center gap-4'}`}>
+                            <div className="flex-1">
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider border border-white/5 ${getPriorityColor(note.priority)}`}>
+                                        {note.priority === 'high' ? 'Urgente' : note.priority === 'medium' ? 'Importante' : 'Normal'}
                                     </div>
-
-                                    {/* Main Content */}
-                                    <div className={`text-white text-[13px] md:text-sm leading-relaxed mb-4 ${note.completed ? 'opacity-30 italic line-through' : 'font-medium'}`}>
-                                        {note.content} {note.emoji}
-                                    </div>
-
-                                    {/* Date Footer - Red Box 3 style */}
-                                    <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest flex items-center gap-2 mt-auto">
-                                        <span>{new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
-                                        <span className="opacity-40">,</span>
-                                        <span>{new Date(note.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                        <button onClick={() => handleToggleComplete(note)} className="p-1 text-gray-500 hover:text-white"><Check size={14} /></button>
+                                        <button onClick={() => handleDeleteNote(note.id)} className="p-1 text-gray-500 hover:text-red-500"><Trash size={14} /></button>
                                     </div>
                                 </div>
-                            </Card>
-                        ))
-                    }
-                </div>
+                                <p className={`text-white text-sm ${note.completed ? 'opacity-30 italic line-through' : ''}`}>
+                                    {note.content} {note.emoji}
+                                </p>
+                                <div className="mt-3 text-[10px] font-bold text-gray-600 uppercase tracking-widest">
+                                    {new Date(note.createdAt).toLocaleDateString('pt-BR')} {new Date(note.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                            </div>
+                        </Card>
+                    ))
+                }
             </div>
 
             {showBlockedGuide && (
