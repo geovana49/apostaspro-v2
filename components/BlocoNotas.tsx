@@ -162,10 +162,19 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     </div>
                 </div>
 
-                <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Bloco de Notas</h1>
-                    <p className="text-gray-500 text-xs sm:text-sm font-medium">Anote procedimentos e tarefas rápidas</p>
-                </div>
+                {permissionStatus !== 'granted' ? (
+                    <button
+                        onClick={handleRequestPermission}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all bg-[#FFCC00]/10 border border-[#FFCC00]/30 text-[#FFCC00] hover:brightness-110 active:scale-95 shadow-[0_0_15px_rgba(255,204,0,0.2)] h-11 ${permissionStatus === 'default' ? 'animate-pulse' : ''}`}
+                    >
+                        <Bell size={16} />
+                        <span>Ativar Notificações</span>
+                    </button>
+                ) : (
+                    <div className="opacity-0 pointer-events-none">
+                        <Bell size={16} />
+                    </div>
+                )}
             </div>
 
             {/* Nova Anotação Card */}
@@ -278,39 +287,30 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                             <div className="flex flex-col gap-1 shrink-0 ml-1 relative">
                                 <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-1 leading-none">Agendar</span>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        ref={schedulerRef}
-                                        onClick={() => setShowScheduler(!showScheduler)}
-                                        className={`flex items-center justify-between gap-6 px-4 py-2.5 bg-black/30 border rounded-xl text-[11.5px] font-bold transition-all min-w-[180px] group ${showScheduler || (tempDate && tempTime) ? 'border-[#17baa4]/50 text-white' : 'border-white/5 text-gray-300 hover:border-[#17baa4]/40'}`}
+                                <button
+                                    ref={schedulerRef}
+                                    className={`flex items-center justify-between gap-6 px-4 py-2.5 bg-black/30 border rounded-xl text-[11.5px] font-bold transition-all min-w-[180px] group ${showScheduler || (tempDate && tempTime) ? 'border-[#17baa4]/50 text-white' : 'border-white/5 text-gray-300 hover:border-[#17baa4]/40'}`}
+                                >
+                                    <div className="flex-1 text-left" onClick={() => setShowScheduler(!showScheduler)}>
+                                        {showScheduler ? 'Selecionando...' : (tempDate && tempTime ? `${new Date(tempDate).toLocaleDateString('pt-BR')} ${tempTime}` : 'Data e Hora')}
+                                    </div>
+                                    <div
+                                        className="relative p-1 -mr-1 cursor-pointer"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (tempDate && tempTime || notes.some(n => n.reminderEnabled)) {
+                                                setShowNotificationsModal(true);
+                                            } else {
+                                                setShowScheduler(!showScheduler);
+                                            }
+                                        }}
                                     >
-                                        <span>{showScheduler ? 'Selecionando...' : (tempDate && tempTime ? `${new Date(tempDate).toLocaleDateString('pt-BR')} ${tempTime}` : 'Data e Hora')}</span>
-                                        <Calendar size={15} className={`transition-all ${showScheduler || (tempDate && tempTime) ? 'text-[#17baa4] opacity-100' : 'opacity-40 group-hover:opacity-100'}`} />
-                                    </button>
-
-                                    {permissionStatus !== 'granted' ? (
-                                        <button
-                                            onClick={handleRequestPermission}
-                                            title="Ativar Notificações"
-                                            className={`p-2.5 rounded-xl transition-all bg-[#FFCC00]/10 border border-[#FFCC00]/30 text-[#FFCC00] hover:brightness-110 active:scale-95`}
-                                        >
-                                            <Bell size={18} />
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={() => setShowNotificationsModal(true)}
-                                            title="Ver Lembretes"
-                                            className="p-2.5 rounded-xl transition-all bg-white/5 border border-white/10 text-[#17baa4] hover:text-white hover:bg-white/10 active:scale-95"
-                                        >
-                                            <div className="relative">
-                                                <Bell size={18} />
-                                                {notes.filter(n => n.reminderEnabled).length > 0 && (
-                                                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-[#1a1f35]" />
-                                                )}
-                                            </div>
-                                        </button>
-                                    )}
-                                </div>
+                                        <Bell size={15} className={`transition-all ${showScheduler || (tempDate && tempTime) ? 'text-[#17baa4] opacity-100' : 'opacity-40 group-hover:opacity-100'}`} />
+                                        {notes.filter(n => n.reminderEnabled).length > 0 && (
+                                            <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-[#1a1f35]" />
+                                        )}
+                                    </div>
+                                </button>
 
                                 {showScheduler && createPortal(
                                     <div
