@@ -530,8 +530,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     {/* Filter Bar with Sort and View Toggle */}
                     <div className="flex flex-col gap-5 px-1">
                         <div className="flex flex-wrap items-center justify-between gap-4">
-                            <div className="flex flex-wrap items-center gap-3">
-                                <span className="text-[12px] font-medium text-gray-500 min-w-[70px]">Prioridade:</span>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="text-[12px] font-medium text-gray-500">Prioridade:</span>
                                 <div className="flex flex-wrap items-center gap-2">
                                     <button onClick={() => setFilterPriority('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`}>Todas</button>
                                     <button onClick={() => setFilterPriority('high')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'high' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
@@ -561,8 +561,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-3">
-                            <span className="text-[12px] font-medium text-gray-500 min-w-[70px]">Status:</span>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-[12px] font-medium text-gray-500">Status:</span>
                             <div className="flex flex-wrap items-center gap-2">
                                 <button onClick={() => setFilterStatus('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterStatus === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}>Todos</button>
                                 {defaultStatuses.map(s => (
