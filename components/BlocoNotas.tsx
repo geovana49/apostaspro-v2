@@ -584,26 +584,28 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                         {sortBy === 'date' ? 'Data de entrega' : sortBy === 'newest' ? 'Mais recente' : sortBy === 'oldest' ? 'Mais antigo' : 'Alfabética'}
                                     </button>
                                     {showSortDropdown && (
-                                        <div className="absolute top-full right-0 mt-2 w-56 bg-[#151a2e] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in slide-in-from-top-2 duration-200">
+                                        <div className="absolute top-full right-0 mt-2 w-56 bg-[#0d1120]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] z-50 overflow-hidden animate-in slide-in-from-top-2 duration-200">
                                             <div className="px-4 py-2.5 border-b border-white/5">
                                                 <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Ordenar Lista</span>
                                             </div>
-                                            {[
-                                                { key: 'date' as const, label: 'Data de entrega', icon: <Calendar size={14} /> },
-                                                { key: 'newest' as const, label: 'Mais recente primeiro', icon: <ChevronDown size={14} /> },
-                                                { key: 'oldest' as const, label: 'Mais antigo primeiro', icon: <ChevronUp size={14} /> },
-                                                { key: 'alpha' as const, label: 'Ordem alfabética', icon: <FileText size={14} /> },
-                                            ].map(opt => (
-                                                <button
-                                                    key={opt.key}
-                                                    onClick={() => { setSortBy(opt.key); setShowSortDropdown(false); }}
-                                                    title={opt.label}
-                                                    className={`flex items-center gap-3 w-full px-4 py-2.5 text-left text-[12px] font-medium transition-all hover:bg-white/5 ${sortBy === opt.key ? 'text-[#3B82F6]' : 'text-gray-400'}`}
-                                                >
-                                                    {opt.icon}
-                                                    {opt.label}
-                                                </button>
-                                            ))}
+                                            <div className="py-1">
+                                                {[
+                                                    { key: 'date' as const, label: 'Data de entrega', icon: <Calendar size={14} /> },
+                                                    { key: 'newest' as const, label: 'Mais recente primeiro', icon: <ChevronDown size={14} /> },
+                                                    { key: 'oldest' as const, label: 'Mais antigo primeiro', icon: <ChevronUp size={14} /> },
+                                                    { key: 'alpha' as const, label: 'Ordem alfabética', icon: <FileText size={14} /> },
+                                                ].map(opt => (
+                                                    <button
+                                                        key={opt.key}
+                                                        onClick={() => { setSortBy(opt.key); setShowSortDropdown(false); }}
+                                                        title={opt.label}
+                                                        className={`flex items-center gap-3 w-full px-4 py-2.5 text-left text-[12px] font-medium transition-all hover:bg-white/5 ${sortBy === opt.key ? 'text-[#17baa4]' : 'text-gray-400 hover:text-gray-200'}`}
+                                                    >
+                                                        {opt.icon}
+                                                        {opt.label}
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
