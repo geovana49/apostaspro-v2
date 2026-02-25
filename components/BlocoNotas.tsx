@@ -687,7 +687,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                 colNotes.map(note => (
                                                     <div key={note.id} className="bg-[#1a2236]/80 border border-white/5 rounded-xl p-3 hover:border-[#3B82F6]/30 transition-all group flex flex-col gap-2">
                                                         <div className="flex items-center justify-between">
-                                                            <div className="flex items-center gap-2">
+                                                            <div className="flex items-center gap-2 min-w-0">
+                                                                <span className="text-lg shrink-0">{note.emoji}</span>
                                                                 <button
                                                                     title={note.completed ? 'Desmarcar como concluída' : 'Marcar como concluída'}
                                                                     onClick={() => handleToggleComplete(note)}
@@ -696,19 +697,19 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                     {note.completed && <Check size={10} strokeWidth={4} />}
                                                                 </button>
                                                                 {note.status && (
-                                                                    <div className="px-2 py-1 rounded-lg text-[9px] font-bold border border-white/10 text-gray-400 bg-white/5 flex items-center gap-1 uppercase">
+                                                                    <div className="px-2 py-1 rounded-lg text-[9px] font-bold border border-white/10 text-gray-400 bg-white/5 flex items-center gap-1 uppercase shrink-0">
                                                                         {note.statusEmoji} {note.status}
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity text-gray-500">
+                                                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 shrink-0">
                                                                 <button title="Editar nota" className="hover:text-white transition-all"><PenLine size={12} /></button>
                                                                 <button title="Mover para pasta" className="hover:text-white transition-all"><Folder size={12} /></button>
                                                                 <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={12} /></button>
                                                             </div>
                                                         </div>
-                                                        <p className={`text-white text-[12px] leading-relaxed ${note.completed ? 'opacity-30 italic line-through' : 'font-medium'}`}>
-                                                            {note.content} {note.emoji}
+                                                        <p className={`text-white text-[12px] leading-relaxed pl-[26px] ${note.completed ? 'opacity-30 italic line-through' : 'font-medium'}`}>
+                                                            {note.content}
                                                         </p>
                                                         <div className="text-[10px] font-medium text-gray-600">
                                                             {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}, {new Date(note.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
