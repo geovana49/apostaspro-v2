@@ -41,10 +41,10 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const schedulerRef = useRef<HTMLButtonElement>(null);
 
     const defaultStatuses = [
-        { name: 'Não Feito', emoji: '⌛', color: 'text-gray-400', dot: 'bg-gray-500', active: 'bg-white/10 border-white/20 text-white shadow-[0_0_15px_rgba(255,255,255,0.1)]' },
-        { name: 'Fazendo', emoji: '▶️', color: 'text-[#FFCC00]', dot: 'bg-[#FFCC00]', active: 'bg-[#FFCC00]/20 border-[#FFCC00]/50 text-[#FFCC00] shadow-[0_0_15px_rgba(255,204,0,0.2)]' },
-        { name: 'Feito', emoji: '✅', color: 'text-[#17baa4]', dot: 'bg-[#17baa4]', active: 'bg-[#17baa4]/20 border-[#17baa4]/50 text-[#17baa4] shadow-[0_0_15px_rgba(23,186,164,0.2)]' },
-        { name: 'Perdido', emoji: '❌', color: 'text-red-500', dot: 'bg-red-500', active: 'bg-red-500/20 border-red-500/50 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]' }
+        { name: 'Não Feito', emoji: '⌛', color: 'text-white', dot: 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.4)]', active: 'bg-white/20 border-white/40 text-white shadow-[0_0_15px_rgba(255,255,255,0.2)]' },
+        { name: 'Fazendo', emoji: '▶️', color: 'text-[#FFE600]', dot: 'bg-[#FFE600] shadow-[0_0_8px_rgba(255,230,0,0.5)]', active: 'bg-[#FFE600]/30 border-[#FFE600]/60 text-[#FFE600] shadow-[0_0_20px_rgba(255,230,0,0.3)]' },
+        { name: 'Feito', emoji: '✅', color: 'text-[#00FFD1]', dot: 'bg-[#00FFD1] shadow-[0_0_8px_rgba(0,255,209,0.5)]', active: 'bg-[#00FFD1]/20 border-[#00FFD1]/50 text-[#00FFD1] shadow-[0_0_20px_rgba(0,255,209,0.3)]' },
+        { name: 'Perdido', emoji: '❌', color: 'text-[#FF3D3D]', dot: 'bg-[#FF3D3D] shadow-[0_0_8px_rgba(255,61,61,0.5)]', active: 'bg-[#FF3D3D]/20 border-[#FF3D3D]/50 text-[#FF3D3D] shadow-[0_0_20px_rgba(255,61,61,0.3)]' }
     ];
 
     const emojis = [
@@ -220,12 +220,12 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         {/* Emoji Picker - Horizontal Carousel */}
                         <div className="flex items-center gap-2 overflow-x-auto pb-4 custom-scrollbar-horizontal flex-nowrap scroll-smooth px-1 ml-1">
                             {/* Custom Emoji Input */}
-                            <div className={`flex items-center gap-2 px-3 py-1 bg-white/5 rounded-xl border transition-all shrink-0 ${isCustomEmojiActive ? 'border-[#17baa4] shadow-[0_0_10px_rgba(23,186,164,0.3)]' : 'border-white/5'}`}>
-                                <Plus size={14} className="text-[#17baa4]" />
+                            <div className={`flex items-center gap-2 px-3 py-1 bg-white/5 rounded-xl border transition-all shrink-0 ${isCustomEmojiActive ? 'border-[#3B82F6] shadow-[0_0_10px_rgba(59,130,246,0.3)]' : 'border-white/10'}`}>
+                                <Plus size={14} className="text-[#3B82F6]" />
                                 <input
                                     type="text"
                                     placeholder="Add Emoji"
-                                    className="bg-transparent border-none outline-none w-16 text-[10px] text-white placeholder:text-gray-600 font-bold"
+                                    className="bg-transparent border-none outline-none w-16 text-[10px] text-white placeholder:text-gray-500 font-bold"
                                     value={customEmoji}
                                     onChange={(e) => {
                                         setCustomEmoji(e.target.value);
@@ -242,7 +242,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                         setSelectedEmoji(e);
                                         setIsCustomEmojiActive(false);
                                     }}
-                                    className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border shrink-0 ${(!isCustomEmojiActive && selectedEmoji === e) ? 'bg-[#17baa4]/20 border-[#17baa4] scale-105 shadow-[0_0_15px_rgba(23,186,164,0.3)]' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
+                                    className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border shrink-0 ${(!isCustomEmojiActive && selectedEmoji === e) ? 'bg-[#3B82F6]/20 border-[#3B82F6] scale-105 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
                                 >
                                     <span className={`text-2xl transition-all ${(!isCustomEmojiActive && selectedEmoji === e) ? 'scale-110' : ''}`}>{e}</span>
                                 </button>
@@ -271,12 +271,12 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 ))}
 
                                 {/* Custom Status Input */}
-                                <div className={`flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl border transition-all shrink-0 ${isCustomStatusActive ? 'bg-white/10 border-white/20 shadow-[0_0_10px_rgba(255,255,255,0.1)]' : 'border-white/5'}`}>
+                                <div className={`flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl border transition-all shrink-0 ${isCustomStatusActive ? 'bg-white/10 border-white/30 shadow-[0_0_10px_rgba(255,255,255,0.1)]' : 'border-white/10'}`}>
                                     <span className="text-[10px]">📌</span>
                                     <input
                                         type="text"
                                         placeholder="Personalizar..."
-                                        className="bg-transparent border-none outline-none w-24 text-[10px] text-white placeholder:text-gray-600 font-bold"
+                                        className="bg-transparent border-none outline-none w-24 text-[10px] text-white placeholder:text-gray-500 font-bold"
                                         value={customStatus}
                                         onChange={(e) => {
                                             setCustomStatus(e.target.value);
@@ -291,13 +291,13 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         {/* Bottom Row - Single Line Action Row */}
                         <div className="flex items-end gap-4 w-full py-2 overflow-x-auto scrollbar-hide flex-nowrap pr-20">
                             <div className="flex gap-2 shrink-0">
-                                <button onClick={() => setPriority('high')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-[9.5px] font-black uppercase tracking-widest border transition-all ${priority === 'high' ? 'bg-red-500/10 border-red-500/40 text-red-500' : 'bg-white/5 border-white/5 text-gray-400 hover:text-gray-300'}`}>
+                                <button onClick={() => setPriority('high')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-[9.5px] font-black uppercase tracking-widest border transition-all ${priority === 'high' ? 'bg-[#FF3D3D]/20 border-[#FF3D3D]/60 text-[#FF3D3D] shadow-[0_0_15px_rgba(255,61,61,0.3)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
                                     <TriangleAlert size={13} /> Urgente
                                 </button>
-                                <button onClick={() => setPriority('medium')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-[9.5px] font-black uppercase tracking-widest border transition-all ${priority === 'medium' ? 'bg-[#FFCC00]/10 border-[#FFCC00]/40 text-[#FFCC00]' : 'bg-white/5 border-white/5 text-gray-400 hover:text-gray-300'}`}>
+                                <button onClick={() => setPriority('medium')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-[9.5px] font-black uppercase tracking-widest border transition-all ${priority === 'medium' ? 'bg-[#FFE600]/20 border-[#FFE600]/60 text-[#FFE600] shadow-[0_0_15px_rgba(255,230,0,0.3)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
                                     <Star size={13} /> Importante
                                 </button>
-                                <button onClick={() => setPriority('low')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-[9.5px] font-black uppercase tracking-widest border transition-all ${priority === 'low' ? 'bg-[#33b5e5]/10 border-[#33b5e5]/40 text-[#33b5e5]' : 'bg-white/5 border-white/5 text-gray-400 hover:text-gray-300'}`}>
+                                <button onClick={() => setPriority('low')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-[9.5px] font-black uppercase tracking-widest border transition-all ${priority === 'low' ? 'bg-[#3B82F6]/20 border-[#3B82F6]/60 text-[#3B82F6] shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
                                     <FileText size={13} /> Normal
                                 </button>
                             </div>
@@ -432,14 +432,14 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             <div className="flex flex-wrap items-center gap-3">
                                 <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest min-w-[70px]">Prioridade:</span>
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <button onClick={() => setFilterPriority('all')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${filterPriority === 'all' ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400' : 'bg-white/5 border border-white/5 text-gray-500 hover:text-white'}`}>Todas</button>
-                                    <button onClick={() => setFilterPriority('high')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${filterPriority === 'high' ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400' : 'bg-white/5 border border-white/5 text-gray-500 hover:text-white'}`}>
+                                    <button onClick={() => setFilterPriority('all')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${filterPriority === 'all' ? 'bg-[#3B82F6] border border-[#3B82F6]/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>Todas</button>
+                                    <button onClick={() => setFilterPriority('high')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${filterPriority === 'high' ? 'bg-[#3B82F6] border border-[#3B82F6]/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
                                         <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]" /> 🔥 Urgente
                                     </button>
-                                    <button onClick={() => setFilterPriority('medium')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${filterPriority === 'medium' ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400' : 'bg-white/5 border border-white/5 text-gray-500 hover:text-white'}`}>
+                                    <button onClick={() => setFilterPriority('medium')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${filterPriority === 'medium' ? 'bg-[#3B82F6] border border-[#3B82F6]/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
                                         <div className="w-2 h-2 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.4)]" /> ⚡ Importante
                                     </button>
-                                    <button onClick={() => setFilterPriority('low')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${filterPriority === 'low' ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400' : 'bg-white/5 border border-white/5 text-gray-500 hover:text-white'}`}>
+                                    <button onClick={() => setFilterPriority('low')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${filterPriority === 'low' ? 'bg-[#3B82F6] border border-[#3B82F6]/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
                                         <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]" /> 📄 Normal
                                     </button>
                                 </div>
@@ -463,12 +463,12 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         <div className="flex flex-wrap items-center gap-3">
                             <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest min-w-[70px]">Status:</span>
                             <div className="flex flex-wrap items-center gap-2">
-                                <button onClick={() => setFilterStatus('all')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'all' ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400' : 'bg-white/5 border border-white/5 text-gray-500 hover:text-white'}`}>Todos</button>
+                                <button onClick={() => setFilterStatus('all')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'all' ? 'bg-[#3B82F6] border border-[#3B82F6]/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]' : 'bg-white/5 border border-white/10 text-gray-300 hover:text-white'}`}>Todos</button>
                                 {defaultStatuses.map(s => (
                                     <button
                                         key={s.name}
                                         onClick={() => setFilterStatus(s.name)}
-                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${filterStatus === s.name ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400' : 'bg-white/5 border-white/5 text-gray-500 hover:text-white'}`}
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${filterStatus === s.name ? 'bg-[#3B82F6] border border-[#3B82F6]/50 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]' : 'bg-white/5 border border-white/10 text-gray-300 hover:text-white'}`}
                                     >
                                         <div className={`w-2 h-2 rounded-full ${s.dot}`} /> {s.emoji} {s.name}
                                     </button>
@@ -485,10 +485,10 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "flex flex-col gap-3"}>
                         {filteredNotes.map(note => (
                             <Card key={note.id} className={`bg-[#121625]/80 border-white/5 transition-all duration-300 relative group overflow-hidden p-6 hover:border-[#17baa4]/30 flex gap-4 items-start`}>
-                                <div className="pt-1.5 shrink-0">
+                                <div className="pt-2 shrink-0">
                                     <button
                                         onClick={() => handleToggleComplete(note)}
-                                        className={`w-4 h-4 rounded-md border transition-all flex items-center justify-center ${note.completed ? 'bg-[#17baa4] border-[#17baa4] text-white' : 'bg-white/5 border-white/10 hover:border-[#17baa4]/40'}`}
+                                        className={`w-4 h-4 rounded-md border transition-all flex items-center justify-center ${note.completed ? 'bg-[#00FFD1] border-[#00FFD1] text-[#090c19]' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
                                     >
                                         {note.completed && <Check size={10} strokeWidth={4} />}
                                     </button>
@@ -498,40 +498,41 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-2">
                                             {/* Priority Badge */}
-                                            <div className={`px-3 py-1.5 rounded-xl text-[9.5px] font-black uppercase tracking-widest border flex items-center gap-2 ${note.priority === 'high' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
-                                                note.priority === 'medium' ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500' :
-                                                    'bg-blue-500/10 border-blue-500/20 text-blue-500'
+                                            <div className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border flex items-center gap-1.5 ${note.priority === 'high' ? 'bg-red-500/10 border-red-500/30 text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]' :
+                                                note.priority === 'medium' ? 'bg-[#FFE600]/10 border-[#FFE600]/30 text-[#FFE600] shadow-[0_0_10px_rgba(255,230,0,0.2)]' :
+                                                    'bg-[#3B82F6]/10 border-[#3B82F6]/30 text-[#3B82F6] shadow-[0_0_10px_rgba(59,130,246,0.2)]'
                                                 }`}>
-                                                <span className="flex items-center gap-1.5">
+                                                <span className="flex items-center gap-1">
                                                     {note.priority === 'high' ? '🔥 URGENTE' : note.priority === 'medium' ? '⚡ IMPORTANTE' : '📄 NORMAL'}
-                                                    <ChevronDown size={10} />
+                                                    <ChevronDown size={8} />
                                                 </span>
                                             </div>
 
                                             {/* Status Badge */}
                                             {note.status && (
-                                                <div className={`px-3 py-1.5 rounded-xl text-[9.5px] font-black uppercase tracking-widest border flex items-center gap-2 ${note.status === 'Feito' ? 'bg-[#17baa4]/10 border-[#17baa4]/20 text-[#17baa4]' :
-                                                    note.status === 'Fazendo' ? 'bg-[#FFCC00]/10 border-[#FFCC00]/20 text-[#FFCC00]' :
-                                                        note.status === 'Perdido' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
-                                                            'bg-white/10 border-white/20 text-gray-400'
+                                                <div className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border flex items-center gap-1.5 ${note.status === 'Feito' ? 'bg-[#00FFD1]/10 border-[#00FFD1]/30 text-[#00FFD1]' :
+                                                    note.status === 'Fazendo' ? 'bg-[#FFE600]/10 border-[#FFE600]/30 text-[#FFE600]' :
+                                                        note.status === 'Perdido' ? 'bg-red-500/10 border-red-500/30 text-red-500' :
+                                                            'bg-white/10 border-white/20 text-white'
                                                     }`}>
-                                                    <span className="flex items-center gap-1.5">
+                                                    <span className="flex items-center gap-1">
                                                         {note.statusEmoji} {note.status.toUpperCase()}
-                                                        <ChevronDown size={10} />
+                                                        <ChevronDown size={8} />
                                                     </span>
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="flex items-center gap-3">
-                                            <button className="text-gray-600 hover:text-white transition-all"><PenLine size={14} /></button>
-                                            <button className="text-gray-600 hover:text-white transition-all"><Folder size={14} /></button>
-                                            <button onClick={() => handleDeleteNote(note.id)} className="text-gray-600 hover:text-red-500 transition-all"><Trash2 size={14} /></button>
+                                        <div className="flex items-center gap-4 ml-auto">
+                                            <button className="text-white/40 hover:text-white transition-all"><PenLine size={14} /></button>
+                                            <button className="text-white/40 hover:text-white transition-all"><Folder size={14} /></button>
+                                            <button onClick={() => handleDeleteNote(note.id)} className="text-white/40 hover:text-red-500 transition-all"><Trash2 size={14} /></button>
                                         </div>
                                     </div>
                                     <p className={`text-white text-[13px] md:text-sm leading-relaxed mb-4 ${note.completed ? 'opacity-30 italic line-through' : 'font-medium'}`}>
                                         {note.content} {note.emoji}
                                     </p>
-                                    <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">
+                                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2 mt-2">
+                                        <Clock size={10} className="text-[#3B82F6]" />
                                         {new Date(note.createdAt).toLocaleDateString('pt-BR')} {new Date(note.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                     </div>
                                 </div>
