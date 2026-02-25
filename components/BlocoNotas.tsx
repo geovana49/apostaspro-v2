@@ -534,10 +534,10 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 <span className="text-[12px] font-medium text-gray-500">Prioridade:</span>
                                 <div className="flex flex-wrap items-center gap-2">
                                     <button onClick={() => setFilterPriority('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`}>Todas</button>
-                                    <button onClick={() => setFilterPriority('high')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'high' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
+                                    <button onClick={() => setFilterPriority('high')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'high' ? 'border-[#EF4444] text-[#EF4444] bg-[#EF4444]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
                                         <div className="w-2 h-2 rounded-full bg-[#EF4444]" /> 🔥 Urgente
                                     </button>
-                                    <button onClick={() => setFilterPriority('medium')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'medium' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
+                                    <button onClick={() => setFilterPriority('medium')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'medium' ? 'border-[#F59E0B] text-[#F59E0B] bg-[#F59E0B]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
                                         <div className="w-2 h-2 rounded-full bg-[#F59E0B]" /> ⚡ Importante
                                     </button>
                                     <button onClick={() => setFilterPriority('low')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'low' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
@@ -565,15 +565,23 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             <span className="text-[12px] font-medium text-gray-500">Status:</span>
                             <div className="flex flex-wrap items-center gap-2">
                                 <button onClick={() => setFilterStatus('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterStatus === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}>Todos</button>
-                                {defaultStatuses.map(s => (
-                                    <button
-                                        key={s.name}
-                                        onClick={() => setFilterStatus(s.name)}
-                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterStatus === s.name ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}
-                                    >
-                                        <div className={`w-2 h-2 rounded-full ${s.dot}`} /> {s.emoji} {s.name}
-                                    </button>
-                                ))}
+                                {defaultStatuses.map(s => {
+                                    const colorMap: Record<string, string> = {
+                                        'Não Feito': 'border-white/40 text-white bg-white/10',
+                                        'Fazendo': 'border-[#FFE600]/50 text-[#FFE600] bg-[#FFE600]/10',
+                                        'Feito': 'border-[#00FFD1]/50 text-[#00FFD1] bg-[#00FFD1]/10',
+                                        'Perdido': 'border-[#FF3D3D]/50 text-[#FF3D3D] bg-[#FF3D3D]/10'
+                                    };
+                                    return (
+                                        <button
+                                            key={s.name}
+                                            onClick={() => setFilterStatus(s.name)}
+                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterStatus === s.name ? (colorMap[s.name] || 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10') : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}
+                                        >
+                                            <div className={`w-2 h-2 rounded-full ${s.dot}`} /> {s.emoji} {s.name}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
