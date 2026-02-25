@@ -265,7 +265,6 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                         }}
                                         className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${(!isCustomStatusActive && selectedStatus === s.name) ? s.active : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10'}`}
                                     >
-                                        <div className={`w-2 h-2 rounded-full ${s.dot}`} />
                                         <span>{s.emoji}</span>
                                         <span>{s.name}</span>
                                     </button>
@@ -295,13 +294,13 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 <span className="text-[10px] font-medium text-white/40 tracking-wide ml-1">Prioridade</span>
                                 <div className="flex gap-2">
                                     <button onClick={() => setPriority('high')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium border transition-all ${priority === 'high' ? 'bg-red-500/10 border-red-500/40 text-red-500' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
-                                        <div className="w-2 h-2 rounded-full bg-[#EF4444]" /> <TriangleAlert size={14} /> Urgente
+                                        <TriangleAlert size={14} /> Urgente
                                     </button>
                                     <button onClick={() => setPriority('medium')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium border transition-all ${priority === 'medium' ? 'bg-[#FFE600]/10 border-[#FFE600]/40 text-[#FFE600]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
-                                        <div className="w-2 h-2 rounded-full bg-[#F59E0B]" /> <Star size={14} /> Importante
+                                        <Star size={14} /> Importante
                                     </button>
                                     <button onClick={() => setPriority('low')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium border transition-all ${priority === 'low' ? 'bg-[#3B82F6]/10 border-[#3B82F6]/40 text-[#3B82F6]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
-                                        <div className="w-2 h-2 rounded-full bg-[#3B82F6]" /> <FileText size={14} /> Normal
+                                        <FileText size={14} /> Normal
                                     </button>
                                 </div>
                             </div>
