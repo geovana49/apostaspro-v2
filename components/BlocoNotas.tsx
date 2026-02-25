@@ -185,14 +185,14 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                             <div className="h-6 w-px bg-white/5 shrink-0 mx-1" />
 
-                            <div className="flex flex-col gap-1 shrink-0">
-                                <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest ml-1 leading-none">Agendar</span>
+                            <div className="flex flex-col gap-1 shrink-0 ml-4">
+                                <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1 leading-none">Agendar</span>
                                 <button
                                     onClick={() => {/* schedule trigger */ }}
-                                    className="flex items-center justify-between gap-4 px-4 py-2 bg-black/30 border border-white/5 rounded-lg text-[10px] font-bold text-gray-400 group hover:border-[#17baa4]/40 transition-all min-w-[140px]"
+                                    className="flex items-center justify-between gap-8 px-5 py-3 bg-black/30 border border-white/5 rounded-xl text-[11px] font-bold text-gray-300 group hover:border-[#17baa4]/40 transition-all min-w-[180px]"
                                 >
                                     <span>Data e Hora</span>
-                                    <Bell size={13} className="opacity-40 group-hover:opacity-100 text-[#17baa4]" />
+                                    <Bell size={14} className="opacity-40 group-hover:opacity-100 text-[#17baa4]" />
                                 </button>
                             </div>
 
