@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import {
     StickyNote, Trash2, Plus, Bell, BellOff, ChevronUp, ChevronDown,
     TriangleAlert, Star, Check, Calendar, Clock, X, Search, PenLine,
-    Folder, Flame, Zap, FileText, LayoutGrid, List as ListIcon, Trash, ArrowDownUp, Pencil
+    Folder, Flame, Zap, FileText, LayoutGrid, List as ListIcon, Trash, ArrowDownUp, Pencil, CheckCircle2
 } from 'lucide-react';
 import { User, NotepadNote } from '../types';
 import { FirestoreService } from '../services/firestoreService';
@@ -39,6 +39,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [showNotificationsModal, setShowNotificationsModal] = useState(false);
     const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
     const schedulerRef = useRef<HTMLButtonElement>(null);
+    const [savedCustomStatuses, setSavedCustomStatuses] = useState<{ id: string, name: string, emoji: string }[]>([]);
+    const [savedCustomEmojis, setSavedCustomEmojis] = useState<{ id: string, emoji: string }[]>([]);
 
     const defaultStatuses = [
         { name: 'Não Feito', emoji: '⌛', color: 'text-white', dot: 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.4)]', active: 'bg-white/10 border-white/20 text-white shadow-[0_0_15px_rgba(255,255,255,0.1)]' },
@@ -96,6 +98,45 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
         const interval = setInterval(checkNotifications, 30000);
         return () => clearInterval(interval);
     }, [notes, permissionStatus, currentUser]);
+
+    // Subscribe to saved custom statuses and emojis
+    useEffect(() => {
+        if (!currentUser) return;
+        const unsubStatuses = FirestoreService.subscribeToCollection<{ id: string, name: string, emoji: string }>(
+            currentUser.id, 'notepad_statuses', (items) => setSavedCustomStatuses(items)
+        );
+        const unsubEmojis = FirestoreService.subscribeToCollection<{ id: string, emoji: string }>(
+            currentUser.id, 'notepad_emojis', (items) => setSavedCustomEmojis(items)
+        );
+        return () => { unsubStatuses(); unsubEmojis(); };
+    }, [currentUser]);
+
+    const handleSaveCustomStatus = async () => {
+        if (!currentUser || !customStatus.trim()) return;
+        const item = { id: `cs_${Date.now()}`, name: customStatus.trim(), emoji: '📌' };
+        await FirestoreService.saveItem(currentUser.id, 'notepad_statuses', item);
+        setCustomStatus('');
+        setIsCustomStatusActive(false);
+    };
+
+    const handleDeleteCustomStatus = async (id: string) => {
+        if (!currentUser) return;
+        await FirestoreService.deleteItem(currentUser.id, 'notepad_statuses', id);
+    };
+
+    const handleSaveCustomEmoji = async () => {
+        if (!currentUser || !customEmoji.trim()) return;
+        const item = { id: `ce_${Date.now()}`, emoji: customEmoji.trim() };
+        await FirestoreService.saveItem(currentUser.id, 'notepad_emojis', item);
+        setSelectedEmoji(customEmoji.trim());
+        setCustomEmoji('');
+        setIsCustomEmojiActive(false);
+    };
+
+    const handleDeleteCustomEmoji = async (id: string) => {
+        if (!currentUser) return;
+        await FirestoreService.deleteItem(currentUser.id, 'notepad_emojis', id);
+    };
 
     const handleAddNote = async () => {
         if (!currentUser) return;
@@ -232,8 +273,36 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                         setIsCustomEmojiActive(true);
                                     }}
                                     onFocus={() => setIsCustomEmojiActive(true)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') handleSaveCustomEmoji(); }}
                                 />
+                                {customEmoji.trim() && (
+                                    <button onClick={handleSaveCustomEmoji} className="text-[#3B82F6] hover:text-white transition-all" title="Salvar emoji">
+                                        <Check size={14} strokeWidth={3} />
+                                    </button>
+                                )}
                             </div>
+
+                            {/* Saved Custom Emojis */}
+                            {savedCustomEmojis.map(ce => (
+                                <div key={ce.id} className="relative group/emoji shrink-0">
+                                    <button
+                                        onClick={() => {
+                                            setSelectedEmoji(ce.emoji);
+                                            setIsCustomEmojiActive(false);
+                                        }}
+                                        className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border shrink-0 ${(!isCustomEmojiActive && selectedEmoji === ce.emoji) ? 'bg-[#3B82F6]/20 border-[#3B82F6] scale-105 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
+                                    >
+                                        <span className={`text-2xl transition-all ${(!isCustomEmojiActive && selectedEmoji === ce.emoji) ? 'scale-110' : ''}`}>{ce.emoji}</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteCustomEmoji(ce.id)}
+                                        className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover/emoji:opacity-100 transition-opacity"
+                                    >
+                                        <X size={8} className="text-white" />
+                                    </button>
+                                </div>
+                            ))}
+
 
                             {emojis.map(e => (
                                 <button
@@ -283,8 +352,37 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                             setIsCustomStatusActive(true);
                                         }}
                                         onFocus={() => setIsCustomStatusActive(true)}
+                                        onKeyDown={(e) => { if (e.key === 'Enter') handleSaveCustomStatus(); }}
                                     />
+                                    {customStatus.trim() && (
+                                        <button onClick={handleSaveCustomStatus} className="text-[#17baa4] hover:text-white transition-all" title="Salvar status">
+                                            <Check size={14} strokeWidth={3} />
+                                        </button>
+                                    )}
                                 </div>
+
+                                {/* Saved Custom Statuses */}
+                                {savedCustomStatuses.map(cs => (
+                                    <div key={cs.id} className="relative group/status shrink-0">
+                                        <button
+                                            onClick={() => {
+                                                setSelectedStatus(cs.name);
+                                                setStatusEmoji(cs.emoji);
+                                                setIsCustomStatusActive(false);
+                                            }}
+                                            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${(!isCustomStatusActive && selectedStatus === cs.name) ? 'bg-[#17baa4]/20 border-[#17baa4]/50 text-[#17baa4]' : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10'}`}
+                                        >
+                                            <span>{cs.emoji}</span>
+                                            <span>{cs.name}</span>
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteCustomStatus(cs.id)}
+                                            className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover/status:opacity-100 transition-opacity"
+                                        >
+                                            <X size={8} className="text-white" />
+                                        </button>
+                                    </div>
+                                ))}
                             </div>
                         </div>
 
