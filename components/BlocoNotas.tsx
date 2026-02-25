@@ -107,13 +107,15 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     </div>
                 </div>
 
-                <button
-                    onClick={handleRequestPermission}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-[11px] font-bold transition-all bg-[#eab308]/10 border border-[#eab308]/20 text-[#eab308] hover:brightness-110 active:scale-95 shadow-lg h-10"
-                >
-                    <Bell size={15} />
-                    <span>Ativar Notificações</span>
-                </button>
+                {permissionStatus !== 'granted' && (
+                    <button
+                        onClick={handleRequestPermission}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[11px] font-bold transition-all bg-[#ffd166]/10 border border-[#ffd166]/20 text-[#ffd166] hover:brightness-110 active:scale-95 shadow-lg h-10 ${permissionStatus === 'default' ? 'animate-pulse' : ''}`}
+                    >
+                        <Bell size={15} />
+                        <span>Ativar Notificações</span>
+                    </button>
+                )}
             </div>
 
             {/* Nova Anotação Card */}
@@ -170,7 +172,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         </div>
 
                         {/* Bottom Row - Single Line Action Row */}
-                        <div className="flex items-center gap-3 w-full py-2 overflow-x-auto custom-scrollbar-horizontal flex-nowrap">
+                        <div className="flex items-center gap-3 w-full py-2 overflow-x-auto custom-scrollbar-horizontal flex-nowrap pr-8">
                             <div className="flex gap-2 shrink-0">
                                 <button onClick={() => setPriority('high')} className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${priority === 'high' ? 'bg-red-500/10 border-red-500/40 text-red-500' : 'bg-white/5 border-white/5 text-gray-500'}`}>
                                     <TriangleAlert size={14} /> Urgente
@@ -185,14 +187,14 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                             <div className="h-6 w-px bg-white/5 shrink-0 mx-1" />
 
-                            <div className="flex flex-col gap-1 shrink-0 ml-4">
-                                <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1 leading-none">Agendar</span>
+                            <div className="flex flex-col gap-1 shrink-0 ml-8">
+                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 leading-none">Agendar</span>
                                 <button
                                     onClick={() => {/* schedule trigger */ }}
-                                    className="flex items-center justify-between gap-8 px-5 py-3 bg-black/30 border border-white/5 rounded-xl text-[11px] font-bold text-gray-300 group hover:border-[#17baa4]/40 transition-all min-w-[180px]"
+                                    className="flex items-center justify-between gap-10 px-6 py-3.5 bg-black/30 border border-white/5 rounded-xl text-[12px] font-bold text-gray-300 group hover:border-[#17baa4]/40 transition-all min-w-[200px]"
                                 >
                                     <span>Data e Hora</span>
-                                    <Bell size={14} className="opacity-40 group-hover:opacity-100 text-[#17baa4]" />
+                                    <Bell size={16} className="opacity-40 group-hover:opacity-100 text-[#17baa4]" />
                                 </button>
                             </div>
 
