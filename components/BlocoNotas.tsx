@@ -302,7 +302,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                     className={`flex items-center justify-between gap-6 px-4 py-2.5 bg-black/30 border rounded-xl text-[11.5px] font-bold transition-all min-w-[180px] group ${showScheduler || (tempDate && tempTime) ? 'border-[#17baa4]/50 text-white' : 'border-white/5 text-gray-300 hover:border-[#17baa4]/40'}`}
                                 >
                                     <span>{showScheduler ? 'Selecionando...' : (tempDate && tempTime ? `${new Date(tempDate).toLocaleDateString('pt-BR')} ${tempTime}` : 'Data e Hora')}</span>
-                                    <Bell size={15} className={`transition-all ${showScheduler || (tempDate && tempTime) ? 'text-[#17baa4] opacity-100' : 'opacity-40 group-hover:opacity-100'}`} />
+                                    <Clock size={15} className={`transition-all ${showScheduler || (tempDate && tempTime) ? 'text-[#17baa4] opacity-100' : 'opacity-40 group-hover:opacity-100'}`} />
                                 </button>
 
                                 {showScheduler && createPortal(
@@ -320,24 +320,32 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                         }}
                                         className="z-[999] p-4 bg-[#1a1f35] border border-white/10 rounded-2xl shadow-2xl flex flex-col gap-3 min-w-[200px] animate-in slide-in-from-bottom-2 duration-300"
                                     >
-                                        <div className="flex flex-col gap-1.5">
-                                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Data</label>
+                                        <div className="flex flex-col gap-1.5 cursor-pointer group/label" onClick={(e) => {
+                                            const input = (e.currentTarget.querySelector('input') as HTMLInputElement);
+                                            input?.showPicker?.();
+                                        }}>
+                                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest group-hover/label:text-[#17baa4] transition-colors">Data</label>
                                             <input
                                                 type="date"
                                                 value={tempDate}
                                                 onChange={(e) => setTempDate(e.target.value)}
-                                                onClick={(e) => e.currentTarget.showPicker?.()}
-                                                className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#17baa4]/50 cursor-pointer"
+                                                onClick={(e) => e.stopPropagation()}
+                                                onFocus={(e) => e.currentTarget.showPicker?.()}
+                                                className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#17baa4]/50 cursor-pointer w-full"
                                             />
                                         </div>
-                                        <div className="flex flex-col gap-1.5">
-                                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Hora</label>
+                                        <div className="flex flex-col gap-1.5 cursor-pointer group/label" onClick={(e) => {
+                                            const input = (e.currentTarget.querySelector('input') as HTMLInputElement);
+                                            input?.showPicker?.();
+                                        }}>
+                                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest group-hover/label:text-[#17baa4] transition-colors">Hora</label>
                                             <input
                                                 type="time"
                                                 value={tempTime}
                                                 onChange={(e) => setTempTime(e.target.value)}
-                                                onClick={(e) => e.currentTarget.showPicker?.()}
-                                                className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#17baa4]/50 cursor-pointer"
+                                                onClick={(e) => e.stopPropagation()}
+                                                onFocus={(e) => e.currentTarget.showPicker?.()}
+                                                className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#17baa4]/50 cursor-pointer w-full"
                                             />
                                         </div>
                                         <button
