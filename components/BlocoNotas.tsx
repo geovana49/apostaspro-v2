@@ -201,6 +201,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             <button onClick={handleAddNote} className="bg-[#17baa4] hover:bg-[#129482] text-[#090c19] px-8 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(23,186,164,0.4)] flex items-center gap-2 shrink-0 active:scale-95">
                                 <Plus size={16} strokeWidth={3} /> SALVAR ANOTAÇÃO
                             </button>
+
+                            {/* Spacer to prevent clipping on the right */}
+                            <div className="min-w-[40px] h-4 shrink-0" />
                         </div>
 
                         {/* Legend Row */}
