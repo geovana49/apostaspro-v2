@@ -138,7 +138,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         />
 
                         {/* Emoji Picker - Horizontal Carousel */}
-                        <div className="flex items-center gap-2 overflow-x-auto pb-4 custom-scrollbar-horizontal flex-nowrap scroll-smooth px-1">
+                        <div className="flex items-center gap-2 overflow-x-auto pb-4 custom-scrollbar-horizontal flex-nowrap scroll-smooth px-1 ml-1">
                             {/* Custom Emoji Input */}
                             <div className={`flex items-center gap-2 px-3 py-1 bg-white/5 rounded-xl border transition-all shrink-0 ${isCustomEmojiActive ? 'border-[#17baa4] shadow-[0_0_10px_rgba(23,186,164,0.3)]' : 'border-white/5'}`}>
                                 <Plus size={14} className="text-[#17baa4]" />
@@ -162,9 +162,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                         setSelectedEmoji(e);
                                         setIsCustomEmojiActive(false);
                                     }}
-                                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all border shrink-0 ${(!isCustomEmojiActive && selectedEmoji === e) ? 'bg-[#17baa4]/20 border-[#17baa4] scale-110 shadow-[0_0_20px_rgba(23,186,164,0.3)]' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
+                                    className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border shrink-0 ${(!isCustomEmojiActive && selectedEmoji === e) ? 'bg-[#17baa4]/20 border-[#17baa4] scale-105 shadow-[0_0_15px_rgba(23,186,164,0.3)]' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
                                 >
-                                    <span className={`text-xl transition-all ${(!isCustomEmojiActive && selectedEmoji === e) ? 'scale-125' : ''}`}>{e}</span>
+                                    <span className={`text-2xl transition-all ${(!isCustomEmojiActive && selectedEmoji === e) ? 'scale-110' : ''}`}>{e}</span>
                                 </button>
                             ))}
                         </div>
