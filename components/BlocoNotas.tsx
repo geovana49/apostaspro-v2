@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
     StickyNote, Trash2, Plus, Bell, BellOff, ChevronUp, ChevronDown,
@@ -28,7 +28,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     );
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
     const [filterPriority, setFilterPriority] = useState<'all' | 'high' | 'medium' | 'low'>('all');
-    const [filterStatus, setFilterStatus] = useState<'pending' | 'completed'>('pending');
+    const [filterStatus, setFilterStatus] = useState<string>('all');
     const [customEmoji, setCustomEmoji] = useState('');
     const [isCustomEmojiActive, setIsCustomEmojiActive] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState('Não Feito');
@@ -37,13 +37,14 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [customStatus, setCustomStatus] = useState('');
     const [showScheduler, setShowScheduler] = useState(false);
     const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+    const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
     const schedulerRef = useRef<HTMLButtonElement>(null);
 
     const defaultStatuses = [
-        { name: 'Não Feito', emoji: '⌛' },
-        { name: 'Fazendo', emoji: '▶️' },
-        { name: 'Feito', emoji: '✅' },
-        { name: 'Perdido', emoji: '❌' }
+        { name: 'Não Feito', emoji: '⌛', color: 'text-gray-400', dot: 'bg-gray-500', active: 'bg-white/10 border-white/20 text-white shadow-[0_0_15px_rgba(255,255,255,0.1)]' },
+        { name: 'Fazendo', emoji: '▶️', color: 'text-[#FFCC00]', dot: 'bg-[#FFCC00]', active: 'bg-[#FFCC00]/20 border-[#FFCC00]/50 text-[#FFCC00] shadow-[0_0_15px_rgba(255,204,0,0.2)]' },
+        { name: 'Feito', emoji: '✅', color: 'text-[#17baa4]', dot: 'bg-[#17baa4]', active: 'bg-[#17baa4]/20 border-[#17baa4]/50 text-[#17baa4] shadow-[0_0_15px_rgba(23,186,164,0.2)]' },
+        { name: 'Perdido', emoji: '❌', color: 'text-red-500', dot: 'bg-red-500', active: 'bg-red-500/20 border-red-500/50 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]' }
     ];
 
     const emojis = [
@@ -148,6 +149,24 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
         }
     };
 
+    const filteredNotes = useMemo(() => {
+        let result = notes.filter(note => {
+            const matchesSearch = note.content.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesPriority = filterPriority === 'all' || note.priority === filterPriority;
+            const matchesStatus = filterStatus === 'all' || note.status === filterStatus;
+            return matchesSearch && matchesPriority && matchesStatus;
+        });
+
+        // Sorting
+        result.sort((a, b) => {
+            const dateA = a.reminderDate ? new Date(a.reminderDate).getTime() : new Date(a.createdAt).getTime();
+            const dateB = b.reminderDate ? new Date(b.reminderDate).getTime() : new Date(b.createdAt).getTime();
+            return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
+        });
+
+        return result;
+    }, [notes, searchTerm, filterPriority, filterStatus, sortBy]);
+
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
             {/* Header - Exact Screenshot Match */}
@@ -244,7 +263,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                             setStatusEmoji(s.emoji);
                                             setIsCustomStatusActive(false);
                                         }}
-                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-bold transition-all border shrink-0 ${(!isCustomStatusActive && selectedStatus === s.name) ? 'bg-[#FFCC00]/20 border-[#FFCC00]/50 text-[#FFCC00] shadow-[0_0_15px_rgba(255,204,0,0.2)]' : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10'}`}
+                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-bold transition-all border shrink-0 ${(!isCustomStatusActive && selectedStatus === s.name) ? s.active : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10'}`}
                                     >
                                         <span>{s.emoji}</span>
                                         <span>{s.name}</span>
@@ -252,7 +271,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 ))}
 
                                 {/* Custom Status Input */}
-                                <div className={`flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl border transition-all shrink-0 ${isCustomStatusActive ? 'border-[#17baa4] shadow-[0_0_10px_rgba(23,186,164,0.3)]' : 'border-white/5'}`}>
+                                <div className={`flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl border transition-all shrink-0 ${isCustomStatusActive ? 'bg-white/10 border-white/20 shadow-[0_0_10px_rgba(255,255,255,0.1)]' : 'border-white/5'}`}>
                                     <span className="text-[10px]">📌</span>
                                     <input
                                         type="text"
@@ -383,72 +402,142 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     </div>
                 )}
 
-                {/* Search Bar at bottom of creator card */}
-                <div className="p-6 border-t border-white/5 bg-white/[0.02]">
-                    <div className="relative">
-                        <Search size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500" />
-                        <input
-                            type="text"
-                            placeholder="Pesquisar anotações..."
-                            className="w-full bg-black/20 border border-white/5 rounded-2xl pl-12 pr-6 py-4 text-sm text-white focus:outline-none focus:border-[#17baa4]/40 transition-all placeholder:text-gray-600"
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                </div>
+                {/* Spacer to remove search bar from here as it moved to Suas Notas section */}
+                <div className="h-4" />
             </Card>
 
             {/* Notes List with filter */}
             <div className="flex flex-col gap-8">
-                <div className="flex items-center justify-between px-2">
-                    <h3 className="text-[10px] font-black text-gray-600 uppercase tracking-[0.4em]">Suas Notas</h3>
-                    <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/5">
-                        <button onClick={() => setFilterStatus('pending')} className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'pending' ? 'bg-white/10 text-[#17baa4]' : 'text-gray-600 hover:text-white'}`}>Pendentes</button>
-                        <button onClick={() => setFilterStatus('completed')} className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'completed' ? 'bg-white/10 text-[#17baa4]' : 'text-gray-600 hover:text-white'}`}>Concluídas</button>
+                <div className="flex flex-col gap-6">
+                    <div className="flex items-center justify-center relative py-4">
+                        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5" /></div>
+                        <span className="relative px-6 bg-[#090c19] text-[10px] font-black text-gray-500 uppercase tracking-[0.4em]">Suas Notas</span>
                     </div>
-                </div>
 
-                <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "flex flex-col gap-3"}>
-                    {notes
-                        .filter(note => {
-                            const matchesSearch = note.content.toLowerCase().includes(searchTerm.toLowerCase());
-                            const matchesPriority = filterPriority === 'all' || note.priority === filterPriority;
-                            const matchesStatus = filterStatus === 'pending' ? !note.completed : note.completed;
-                            return matchesSearch && matchesPriority && matchesStatus;
-                        })
-                        .map(note => (
-                            <Card key={note.id} className={`bg-[#121625]/60 border-white/5 transition-all duration-300 relative group overflow-hidden p-6`}>
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className={`px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border border-white/5 ${getPriorityColor(note.priority)}`}>
-                                            {note.priority === 'high' ? 'Urgente' : note.priority === 'medium' ? 'Importante' : 'Normal'}
-                                        </div>
-                                        {note.status && (
-                                            <div className="px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border border-white/10 bg-white/5 text-gray-400 flex items-center gap-2">
-                                                <span>{note.statusEmoji || '📌'}</span>
-                                                <span>{note.status}</span>
-                                            </div>
-                                        )}
-                                        {note.reminderEnabled && note.reminderDate && (
-                                            <div className="px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border border-[#17baa4]/20 bg-[#17baa4]/5 text-[#17baa4] flex items-center gap-2">
-                                                <Clock size={12} />
-                                                <span>{new Date(note.reminderDate) > new Date() ? 'Agendado' : 'Notificado'}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                                        <button onClick={() => handleDeleteNote(note.id)} className="p-1.5 text-gray-500 hover:text-red-500 bg-white/5 rounded-lg"><Trash size={14} /></button>
-                                    </div>
+                    {/* Search Bar - Top of Section */}
+                    <div className="relative">
+                        <Search size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500" />
+                        <input
+                            type="text"
+                            placeholder="Buscar por nome..."
+                            className="w-full bg-black/40 border border-white/5 rounded-2xl pl-12 pr-6 py-4 text-sm text-white focus:outline-none focus:border-[#17baa4]/40 transition-all placeholder:text-gray-600 shadow-inner"
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    {/* Filter Bar with Sort and View Toggle */}
+                    <div className="flex flex-col gap-5 px-1">
+                        <div className="flex flex-wrap items-center justify-between gap-4">
+                            <div className="flex flex-wrap items-center gap-3">
+                                <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest min-w-[70px]">Prioridade:</span>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <button onClick={() => setFilterPriority('all')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${filterPriority === 'all' ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400' : 'bg-white/5 border border-white/5 text-gray-500 hover:text-white'}`}>Todas</button>
+                                    <button onClick={() => setFilterPriority('high')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${filterPriority === 'high' ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400' : 'bg-white/5 border border-white/5 text-gray-500 hover:text-white'}`}>
+                                        <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]" /> 🔥 Urgente
+                                    </button>
+                                    <button onClick={() => setFilterPriority('medium')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${filterPriority === 'medium' ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400' : 'bg-white/5 border border-white/5 text-gray-500 hover:text-white'}`}>
+                                        <div className="w-2 h-2 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.4)]" /> ⚡ Importante
+                                    </button>
+                                    <button onClick={() => setFilterPriority('low')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${filterPriority === 'low' ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400' : 'bg-white/5 border border-white/5 text-gray-500 hover:text-white'}`}>
+                                        <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]" /> 📄 Normal
+                                    </button>
                                 </div>
-                                <p className={`text-white text-[13px] md:text-sm leading-relaxed mb-4 ${note.completed ? 'opacity-30 italic line-through' : 'font-medium'}`}>
-                                    {note.content} {note.emoji}
-                                </p>
-                                <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">
-                                    {new Date(note.createdAt).toLocaleDateString('pt-BR')} {new Date(note.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setSortBy(sortBy === 'newest' ? 'oldest' : 'newest')}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 border ${sortBy === 'newest' ? 'bg-[#17baa4]/20 border-[#17baa4]/30 text-[#17baa4]' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`}
+                                >
+                                    <ArrowDownWideNarrow size={14} className={sortBy === 'oldest' ? 'rotate-180' : ''} />
+                                    {sortBy === 'newest' ? 'Mais Recentes' : 'Mais Antigas'}
+                                </button>
+                                <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/5">
+                                    <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[#17baa4]/20 text-[#17baa4] shadow-sm' : 'text-gray-500 hover:text-white'}`}><ListIcon size={14} /></button>
+                                    <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-[#17baa4]/20 text-[#17baa4] shadow-sm' : 'text-gray-500 hover:text-white'}`}><LayoutGrid size={14} /></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3">
+                            <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest min-w-[70px]">Status:</span>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <button onClick={() => setFilterStatus('all')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'all' ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400' : 'bg-white/5 border border-white/5 text-gray-500 hover:text-white'}`}>Todos</button>
+                                {defaultStatuses.map(s => (
+                                    <button
+                                        key={s.name}
+                                        onClick={() => setFilterStatus(s.name)}
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${filterStatus === s.name ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400' : 'bg-white/5 border-white/5 text-gray-500 hover:text-white'}`}
+                                    >
+                                        <div className={`w-2 h-2 rounded-full ${s.dot}`} /> {s.emoji} {s.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="px-2 pt-2 -mt-10 mb-8 w-full order-first">
+                        <span className="text-[10px] font-black text-gray-700 uppercase tracking-widest">
+                            {filteredNotes.length} {filteredNotes.length === 1 ? 'NOTA' : 'NOTAS'}
+                        </span>
+                    </div>
+                    <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "flex flex-col gap-3"}>
+                        {filteredNotes.map(note => (
+                            <Card key={note.id} className={`bg-[#121625]/80 border-white/5 transition-all duration-300 relative group overflow-hidden p-6 hover:border-[#17baa4]/30 flex gap-4 items-start`}>
+                                <div className="pt-1.5 shrink-0">
+                                    <button
+                                        onClick={() => handleToggleComplete(note)}
+                                        className={`w-4 h-4 rounded-md border transition-all flex items-center justify-center ${note.completed ? 'bg-[#17baa4] border-[#17baa4] text-white' : 'bg-white/5 border-white/10 hover:border-[#17baa4]/40'}`}
+                                    >
+                                        {note.completed && <Check size={10} strokeWidth={4} />}
+                                    </button>
+                                </div>
+
+                                <div className="flex-1">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-2">
+                                            {/* Priority Badge */}
+                                            <div className={`px-3 py-1.5 rounded-xl text-[9.5px] font-black uppercase tracking-widest border flex items-center gap-2 ${note.priority === 'high' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
+                                                note.priority === 'medium' ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500' :
+                                                    'bg-blue-500/10 border-blue-500/20 text-blue-500'
+                                                }`}>
+                                                <span className="flex items-center gap-1.5">
+                                                    {note.priority === 'high' ? '🔥 URGENTE' : note.priority === 'medium' ? '⚡ IMPORTANTE' : '📄 NORMAL'}
+                                                    <ChevronDown size={10} />
+                                                </span>
+                                            </div>
+
+                                            {/* Status Badge */}
+                                            {note.status && (
+                                                <div className={`px-3 py-1.5 rounded-xl text-[9.5px] font-black uppercase tracking-widest border flex items-center gap-2 ${note.status === 'Feito' ? 'bg-[#17baa4]/10 border-[#17baa4]/20 text-[#17baa4]' :
+                                                    note.status === 'Fazendo' ? 'bg-[#FFCC00]/10 border-[#FFCC00]/20 text-[#FFCC00]' :
+                                                        note.status === 'Perdido' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
+                                                            'bg-white/10 border-white/20 text-gray-400'
+                                                    }`}>
+                                                    <span className="flex items-center gap-1.5">
+                                                        {note.statusEmoji} {note.status.toUpperCase()}
+                                                        <ChevronDown size={10} />
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <button className="text-gray-600 hover:text-white transition-all"><PenLine size={14} /></button>
+                                            <button className="text-gray-600 hover:text-white transition-all"><Folder size={14} /></button>
+                                            <button onClick={() => handleDeleteNote(note.id)} className="text-gray-600 hover:text-red-500 transition-all"><Trash2 size={14} /></button>
+                                        </div>
+                                    </div>
+                                    <p className={`text-white text-[13px] md:text-sm leading-relaxed mb-4 ${note.completed ? 'opacity-30 italic line-through' : 'font-medium'}`}>
+                                        {note.content} {note.emoji}
+                                    </p>
+                                    <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">
+                                        {new Date(note.createdAt).toLocaleDateString('pt-BR')} {new Date(note.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                    </div>
                                 </div>
                             </Card>
-                        ))
-                    }
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -460,14 +549,13 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 <div className="p-2 bg-red-500/10 rounded-xl"><BellOff size={24} className="text-red-500" /></div>
                                 <h3 className="text-lg font-bold text-white">Notificações Bloqueadas</h3>
                             </div>
-                            <button onClick={() => setShowBlockedGuide(false)} className="text-gray-500 hover:text-white"><X size={20} /></button>
+                            <button onClick={() => setShowBlockedGuide(false)} className="text-gray-500 hover:text-white transition-all"><X size={20} /></button>
                         </div>
                         <Button onClick={() => setShowBlockedGuide(false)} className="w-full bg-[#17baa4] hover:brightness-110 text-[#090c19] font-black h-12 rounded-xl">Entendi</Button>
                     </Card>
                 </div>
             )}
 
-            {/* Notifications Modal - Portalized for visibility */}
             {showNotificationsModal && createPortal(
                 <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 backdrop-blur-sm bg-black/60">
                     <Card className="max-w-md w-full bg-[#1a1f35] border-white/10 shadow-2xl p-6 space-y-4 relative">
