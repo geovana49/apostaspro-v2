@@ -737,58 +737,62 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     ) : (
                         /* List View */
                         <div className="flex flex-col gap-3">
-                            {filteredNotes.map(note => (
-                                <Card key={note.id} className="bg-[#1a2236]/80 border-white/5 transition-all duration-300 relative group overflow-hidden p-5 hover:border-[#3B82F6]/30 flex flex-col gap-4">
-                                    <div className="flex items-center justify-between gap-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="shrink-0 flex items-center">
-                                                <button
-                                                    title={note.completed ? 'Desmarcar como concluída' : 'Marcar como concluída'}
-                                                    onClick={() => handleToggleComplete(note)}
-                                                    className={`w-4 h-4 rounded-md border transition-all flex items-center justify-center ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
-                                                >
-                                                    {note.completed && <Check size={10} strokeWidth={4} />}
-                                                </button>
+                            {filteredNotes.map(note => {
+                                const col = [
+                                    { key: 'high', color: '#ff4444' },
+                                    { key: 'medium', color: '#F59E0B' },
+                                    { key: 'low', color: '#3B82F6' },
+                                ].find(c => c.key === note.priority) || { color: '#3B82F6' };
+
+                                return (
+                                    <div key={note.id} className="bg-[#1a2236]/80 border border-white/5 rounded-xl p-4 hover:border-white/10 transition-all group flex flex-col gap-3">
+                                        <div className="flex gap-4">
+                                            {/* Left: Colored bar + Emoji centered */}
+                                            <div className="flex shrink-0 items-center">
+                                                <div className="w-1 rounded-full self-stretch" style={{ backgroundColor: col.color }} />
+                                                <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-3xl ml-3">
+                                                    {note.emoji}
+                                                </div>
                                             </div>
 
-                                            <div className="flex items-center gap-2">
-                                                {/* Priority Badge */}
-                                                <div title={`Prioridade: ${note.priority === 'high' ? 'Urgente' : note.priority === 'medium' ? 'Importante' : 'Normal'}`} className="px-3 py-1.5 rounded-xl text-[11px] font-medium border flex items-center gap-1.5 border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/5">
-                                                    <span className="flex items-center gap-1">
-                                                        {note.priority === 'high' ? '🔥 Urgente' : note.priority === 'medium' ? '⚡ Importante' : '📄 Normal'}
-                                                        <ChevronDown size={10} />
-                                                    </span>
+                                            {/* Right: Content area */}
+                                            <div className="flex-1 min-w-0 flex flex-col gap-2">
+                                                <div className="flex items-center justify-between">
+                                                    {note.status ? (
+                                                        <span className="px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider" style={{ backgroundColor: `${col.color}20`, color: col.color, border: `1px solid ${col.color}40` }}>
+                                                            {note.status}
+                                                        </span>
+                                                    ) : <div />}
+
+                                                    <div className="flex items-center gap-4 text-gray-600 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                        <button title="Editar nota" className="hover:text-white transition-all"><PenLine size={14} /></button>
+                                                        <button title="Mover para pasta" className="hover:text-white transition-all"><Folder size={14} /></button>
+                                                        <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={14} /></button>
+                                                    </div>
                                                 </div>
 
-                                                {/* Status Badge */}
-                                                {note.status && (
-                                                    <div title={`Status: ${note.status}`} className="px-3 py-1.5 rounded-xl text-[11px] font-medium border flex items-center gap-1.5 border-white/10 text-gray-400 bg-white/5">
-                                                        <span className="flex items-center gap-1">
-                                                            {note.statusEmoji} {note.status}
-                                                            <ChevronDown size={10} />
-                                                        </span>
+                                                <div className="flex items-start gap-3">
+                                                    <button
+                                                        title={note.completed ? 'Desmarcar como concluída' : 'Marcar como concluída'}
+                                                        onClick={() => handleToggleComplete(note)}
+                                                        className={`w-5 h-5 mt-0.5 rounded-md border transition-all flex items-center justify-center shrink-0 ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
+                                                    >
+                                                        {note.completed && <Check size={12} strokeWidth={4} />}
+                                                    </button>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className={`text-[14px] leading-relaxed ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-medium'}`}>
+                                                            {note.content}
+                                                        </p>
+                                                        <div className="text-[11px] text-gray-500 font-medium mt-1">
+                                                            Criado em {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })} às {new Date(note.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                        </div>
                                                     </div>
-                                                )}
+                                                </div>
                                             </div>
                                         </div>
-
-                                        <div className="flex items-center gap-4 text-gray-500">
-                                            <button title="Editar nota" className="hover:text-white transition-all"><PenLine size={16} /></button>
-                                            <button title="Mover para pasta" className="hover:text-white transition-all"><Folder size={16} /></button>
-                                            <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={16} /></button>
-                                        </div>
                                     </div>
-
-                                    <div className="pl-7 space-y-2">
-                                        <p className={`text-white text-sm leading-relaxed ${note.completed ? 'opacity-30 italic line-through' : 'font-medium'}`}>
-                                            {note.content} {note.emoji}
-                                        </p>
-                                        <div className="text-[11px] font-medium text-gray-500 flex items-center gap-2">
-                                            {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}, {new Date(note.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                                        </div>
-                                    </div>
-                                </Card>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>
