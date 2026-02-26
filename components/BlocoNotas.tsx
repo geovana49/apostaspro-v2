@@ -685,29 +685,24 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                 <div className="text-center text-gray-600 text-[11px] py-6 font-medium">Nenhuma nota</div>
                                             ) : (
                                                 colNotes.map(note => (
-                                                    <div key={note.id} className="bg-[#1a2236]/80 border border-white/5 rounded-xl p-3 hover:border-white/10 transition-all group">
+                                                    <div key={note.id} className="bg-[#1a2236]/80 border border-white/5 rounded-xl p-4 hover:border-white/10 transition-all group">
                                                         <div className="flex gap-3">
-                                                            {/* Left: Emoji container with colored bar */}
-                                                            <div className="flex shrink-0">
+                                                            {/* Left: Colored bar + Emoji centered */}
+                                                            <div className="flex shrink-0 items-center">
                                                                 <div className="w-1 rounded-full self-stretch" style={{ backgroundColor: col.color }} />
-                                                                <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-xl ml-2">
+                                                                <div className="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center text-2xl ml-2">
                                                                     {note.emoji}
                                                                 </div>
                                                             </div>
-                                                            {/* Right: Content area */}
-                                                            <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                                                                <div className="flex items-center justify-between">
-                                                                    {note.status && (
-                                                                        <div className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider" style={{ backgroundColor: `${col.color}20`, color: col.color, border: `1px solid ${col.color}40` }}>
+                                                            {/* Right: Content */}
+                                                            <div className="flex-1 min-w-0 flex flex-col gap-2">
+                                                                {note.status && (
+                                                                    <div className="flex">
+                                                                        <span className="px-2.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider" style={{ backgroundColor: `${col.color}20`, color: col.color, border: `1px solid ${col.color}40` }}>
                                                                             {note.status}
-                                                                        </div>
-                                                                    )}
-                                                                    <div className="flex items-center gap-1.5 text-gray-600">
-                                                                        <button title="Editar nota" className="hover:text-white transition-all"><PenLine size={13} /></button>
-                                                                        <button title="Mover para pasta" className="hover:text-white transition-all"><Folder size={13} /></button>
-                                                                        <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={13} /></button>
+                                                                        </span>
                                                                     </div>
-                                                                </div>
+                                                                )}
                                                                 <div className="flex items-center gap-2">
                                                                     <button
                                                                         title={note.completed ? 'Desmarcar como concluída' : 'Marcar como concluída'}
@@ -724,6 +719,12 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                     {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                                                 </span>
                                                             </div>
+                                                        </div>
+                                                        {/* Action buttons at bottom */}
+                                                        <div className="flex items-center justify-end gap-2 mt-3 pt-2 border-t border-white/5 text-gray-600">
+                                                            <button title="Editar nota" className="hover:text-white transition-all p-1"><PenLine size={13} /></button>
+                                                            <button title="Mover para pasta" className="hover:text-white transition-all p-1"><Folder size={13} /></button>
+                                                            <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all p-1"><Trash2 size={13} /></button>
                                                         </div>
                                                     </div>
                                                 ))
