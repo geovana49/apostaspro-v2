@@ -98,6 +98,13 @@ apostaspro-v2/
 - Controle de cashback
 - Histórico completo com datas
 
+### 📝 Bloco de Notas
+- **Visual Unificado** - Mesma experiência premium em Lista (≡) e Kanban (⊞)
+- **Barra de Prioridade** - Indicadores visuais coloridos (Urgente, Importante, Normal)
+- **Design Moderno** - Emojis centralizados e layout limpo com glassmorphism
+- **Gestão Ágil** - Checkbox de conclusão e ações rápidas integradas
+- **Lembretes** - Sistema de alertas para notas importantes
+
 ### 🔐 Autenticação
 - Login seguro
 - Cadastro de novos usuários
