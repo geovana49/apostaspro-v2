@@ -39,6 +39,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [showNotificationsModal, setShowNotificationsModal] = useState(false);
     const [sortBy, setSortBy] = useState<'date' | 'newest' | 'oldest' | 'alpha'>('date');
     const [showSortDropdown, setShowSortDropdown] = useState(false);
+    const [noteIdToDelete, setNoteIdToDelete] = useState<string | null>(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const schedulerRef = useRef<HTMLButtonElement>(null);
     const sortRef = useRef<HTMLDivElement>(null);
     const [savedCustomStatuses, setSavedCustomStatuses] = useState<{ id: string, name: string, emoji: string }[]>([]);
@@ -184,9 +186,15 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
     const handleDeleteNote = async (noteId: string) => {
         if (!currentUser) return;
-        if (confirm('Deseja excluir esta anotação?')) {
-            await FirestoreService.deleteNote(currentUser.uid, noteId);
-        }
+        setNoteIdToDelete(noteId);
+        setShowDeleteConfirm(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!currentUser || !noteIdToDelete) return;
+        await FirestoreService.deleteNote(currentUser.uid, noteIdToDelete);
+        setShowDeleteConfirm(false);
+        setNoteIdToDelete(null);
     };
 
     const handleToggleComplete = async (note: NotepadNote) => {
@@ -784,8 +792,27 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                     <div className="relative w-full h-full rounded-full" style={{ backgroundColor: col.color }} />
                                                 </div>
 
-                                                <div className="flex items-center justify-center text-4xl mt-1">
-                                                    {note.emoji}
+                                                <div className="flex flex-col items-center gap-3 mt-1 min-w-[60px]">
+                                                    <div className="flex items-center justify-center text-4xl">
+                                                        {note.emoji}
+                                                    </div>
+                                                    {note.status && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                // Simple logic to cycle status or just toggle
+                                                                const currentIndex = defaultStatuses.findIndex(s => s.name === note.status);
+                                                                const nextStatus = defaultStatuses[(currentIndex + 1) % defaultStatuses.length];
+                                                                const updatedNote = { ...note, status: nextStatus.name, statusEmoji: nextStatus.emoji };
+                                                                FirestoreService.saveNote(currentUser!.uid, updatedNote);
+                                                            }}
+                                                            title="Clique para alterar o status"
+                                                            className="px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-[0.05em] bg-white/5 border border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.2)] hover:bg-white/10 transition-all active:scale-95 whitespace-nowrap"
+                                                            style={{ color: col.color }}
+                                                        >
+                                                            {note.status}
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -803,13 +830,6 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                         <p className={`text-[15px] leading-relaxed ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-semibold'}`}>
                                                             {note.content}
                                                         </p>
-                                                        {note.status && (
-                                                            <div className="flex">
-                                                                <div className="px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.05em] bg-white/5 border border-white/10" style={{ color: col.color }}>
-                                                                    {note.status}
-                                                                </div>
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 </div>
 
@@ -847,6 +867,41 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 <button onClick={() => setShowBlockedGuide(false)} className="text-gray-500 hover:text-white transition-all"><X size={20} /></button>
                             </div>
                             <Button onClick={() => setShowBlockedGuide(false)} className="w-full bg-[#17baa4] hover:brightness-110 text-[#090c19] font-black h-12 rounded-xl">Entendi</Button>
+                        </Card>
+                    </div>
+                )
+            }
+
+            {
+                showDeleteConfirm && (
+                    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 backdrop-blur-md bg-black/70 animate-in fade-in duration-300">
+                        <Card className="max-w-sm w-full bg-[#1a1f35]/95 border-white/10 shadow-2xl p-8 space-y-6 rounded-[32px] border-t border-l border-white/10 relative overflow-hidden group">
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#ff4444]/5 to-transparent pointer-events-none" />
+
+                            <div className="flex flex-col items-center text-center gap-4 relative z-10">
+                                <div className="p-5 bg-red-500/10 rounded-full border border-red-500/20 group-hover:scale-110 transition-transform duration-500">
+                                    <Trash2 size={40} className="text-red-500" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-white mb-2">Excluir Anotação?</h3>
+                                    <p className="text-gray-400 text-sm leading-relaxed px-2">Esta ação não pode ser desfeita. Deseja realmente remover este registro?</p>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 pt-2 relative z-10">
+                                <button
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    className="flex-1 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest bg-white/5 border border-white/10 text-gray-400 hover:bg-white/10 hover:text-white transition-all active:scale-95"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    className="flex-1 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest bg-red-500 text-white shadow-[0_8px_20px_rgba(239,68,68,0.3)] hover:brightness-110 hover:shadow-[0_12px_24px_rgba(239,68,68,0.4)] transition-all active:scale-95"
+                                >
+                                    Sim, Excluir
+                                </button>
+                            </div>
                         </Card>
                     </div>
                 )
