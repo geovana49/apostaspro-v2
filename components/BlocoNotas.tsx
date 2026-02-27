@@ -47,10 +47,10 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [savedCustomEmojis, setSavedCustomEmojis] = useState<{ id: string, emoji: string }[]>([]);
 
     const defaultStatuses = [
-        { name: 'Não Feito', emoji: '⌛', color: 'text-white', dot: 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.4)]', active: 'bg-white/10 border-white/20 text-white shadow-[0_0_15px_rgba(255,255,255,0.1)]' },
-        { name: 'Fazendo', emoji: '▶️', color: 'text-[#FFE600]', dot: 'bg-[#FFE600] shadow-[0_0_8px_rgba(255,230,0,0.5)]', active: 'bg-[#FFE600]/20 border-[#FFE600]/50 text-[#FFE600] shadow-[0_0_15px_rgba(255,230,0,0.2)]' },
-        { name: 'Feito', emoji: '✅', color: 'text-[#00FFD1]', dot: 'bg-[#00FFD1] shadow-[0_0_8px_rgba(0,255,209,0.5)]', active: 'bg-[#00FFD1]/20 border-[#00FFD1]/50 text-[#00FFD1] shadow-[0_0_15px_rgba(0,255,209,0.2)]' },
-        { name: 'Perdido', emoji: '❌', color: 'text-[#FF3D3D]', dot: 'bg-[#FF3D3D] shadow-[0_0_8px_rgba(255,61,61,0.5)]', active: 'bg-[#FF3D3D]/20 border-[#FF3D3D]/50 text-[#FF3D3D] shadow-[0_0_15px_rgba(255,61,61,0.2)]' }
+        { name: 'Não Feito', emoji: '⌛', color: 'text-white', hex: '#FFFFFF', dot: 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.4)]', active: 'bg-white/10 border-white/20 text-white shadow-[0_0_15px_rgba(255,255,255,0.1)]' },
+        { name: 'Fazendo', emoji: '▶️', color: 'text-[#FFE600]', hex: '#FFE600', dot: 'bg-[#FFE600] shadow-[0_0_8px_rgba(255,230,0,0.5)]', active: 'bg-[#FFE600]/20 border-[#FFE600]/50 text-[#FFE600] shadow-[0_0_15px_rgba(255,230,0,0.2)]' },
+        { name: 'Feito', emoji: '✅', color: 'text-[#00FFD1]', hex: '#00FFD1', dot: 'bg-[#00FFD1] shadow-[0_0_8px_rgba(0,255,209,0.5)]', active: 'bg-[#00FFD1]/20 border-[#00FFD1]/50 text-[#00FFD1] shadow-[0_0_15px_rgba(0,255,209,0.2)]' },
+        { name: 'Perdido', emoji: '❌', color: 'text-[#FF3D3D]', hex: '#FF3D3D', dot: 'bg-[#FF3D3D] shadow-[0_0_8px_rgba(255,61,61,0.5)]', active: 'bg-[#FF3D3D]/20 border-[#FF3D3D]/50 text-[#FF3D3D] shadow-[0_0_15px_rgba(255,61,61,0.2)]' }
     ];
 
     const emojis = [
@@ -736,9 +736,14 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                             <div className="flex-1 min-w-0 flex flex-col gap-2">
                                                                 {note.status && (
                                                                     <div className="flex">
-                                                                        <span className="px-2.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider" style={{ backgroundColor: `${col.color}20`, color: col.color, border: `1px solid ${col.color}40` }}>
-                                                                            {note.status}
-                                                                        </span>
+                                                                        {(() => {
+                                                                            const statusObj = defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0];
+                                                                            return (
+                                                                                <span className="px-2.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider" style={{ backgroundColor: `${statusObj.hex}20`, color: statusObj.hex, border: `1px solid ${statusObj.hex}40` }}>
+                                                                                    {note.status}
+                                                                                </span>
+                                                                            );
+                                                                        })()}
                                                                     </div>
                                                                 )}
                                                                 <div className="flex items-center gap-2">
@@ -808,7 +813,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                             }}
                                                             title="Clique para alterar o status"
                                                             className="px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-[0.05em] bg-white/5 border border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.2)] hover:bg-white/10 transition-all active:scale-95 whitespace-nowrap"
-                                                            style={{ color: col.color }}
+                                                            style={{ color: defaultStatuses.find(s => s.name === note.status)?.hex || '#FFFFFF' }}
                                                         >
                                                             {note.status}
                                                         </button>
