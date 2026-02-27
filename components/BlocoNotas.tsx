@@ -745,7 +745,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 ].find(c => c.key === note.priority) || { color: '#3B82F6' };
 
                                 return (
-                                    <div key={note.id} className="bg-[#1a2236]/80 border border-white/5 rounded-xl p-4 hover:border-white/10 transition-all group flex flex-col gap-3">
+                                    <div key={note.id} className="border-b border-white/[0.03] py-4 transition-all group flex flex-col gap-2 last:border-0 hover:bg-white/[0.01]">
                                         <div className="flex gap-4">
                                             {/* Left: Colored bar + Emoji centered */}
                                             <div className="flex shrink-0 items-center">
@@ -756,8 +756,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                             </div>
 
                                             {/* Right: Content area */}
-                                            <div className="flex-1 min-w-0 flex flex-col gap-2">
-                                                <div className="flex items-center justify-between min-h-[20px]">
+                                            <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                                                <div className="flex items-center justify-between min-h-[16px]">
                                                     {note.status && (
                                                         <span className="px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider" style={{ backgroundColor: `${col.color}20`, color: col.color, border: `1px solid ${col.color}40` }}>
                                                             {note.status}
@@ -784,7 +784,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                 </div>
 
                                                 {/* Action buttons at bottom */}
-                                                <div className="flex items-center justify-end gap-3 mt-1 pt-2 border-t border-white/5 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="flex items-center justify-end gap-3 pt-1 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button title="Editar nota" className="hover:text-white transition-all"><PenLine size={14} /></button>
                                                     <button title="Mover para pasta" className="hover:text-white transition-all"><Folder size={14} /></button>
                                                     <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={14} /></button>
