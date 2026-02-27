@@ -739,26 +739,6 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                         <div className="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center text-2xl">
                                                                             {note.emoji}
                                                                         </div>
-                                                                        {note.status && (
-                                                                            <button
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    const currentIndex = defaultStatuses.findIndex(s => s.name === note.status);
-                                                                                    const nextStatus = defaultStatuses[(currentIndex + 1) % defaultStatuses.length];
-                                                                                    const updatedNote = { ...note, status: nextStatus.name, statusEmoji: nextStatus.emoji };
-                                                                                    FirestoreService.saveNote(currentUser!.uid, updatedNote);
-                                                                                }}
-                                                                                title="Clique para alterar o status"
-                                                                                className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-white/5 border transition-all active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)] hover:bg-white/10"
-                                                                                style={{
-                                                                                    backgroundColor: `${(defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex}20`,
-                                                                                    color: (defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex,
-                                                                                    borderColor: `${(defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex}40`
-                                                                                }}
-                                                                            >
-                                                                                {note.status}
-                                                                            </button>
-                                                                        )}
                                                                     </div>
                                                                 </div>
                                                                 {/* Right: Content area */}
@@ -780,11 +760,35 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                     </span>
                                                                 </div>
                                                             </div>
-                                                            {/* Action buttons at bottom */}
-                                                            <div className="flex items-center justify-end gap-2 mt-1 pt-2 border-t border-white/5 text-gray-600 transition-opacity">
-                                                                <button title="Editar nota" className="hover:text-white transition-all"><PenLine size={13} /></button>
-                                                                <button title="Mover para pasta" className="hover:text-white transition-all"><Folder size={13} /></button>
-                                                                <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={13} /></button>
+                                                            {/* Footer: Status (left) + Action buttons at bottom (right) */}
+                                                            <div className="flex items-center justify-between gap-2 mt-1 pt-2 border-t border-white/5 transition-opacity">
+                                                                <div className="flex items-center gap-2">
+                                                                    {note.status && (
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                const currentIndex = defaultStatuses.findIndex(s => s.name === note.status);
+                                                                                const nextStatus = defaultStatuses[(currentIndex + 1) % defaultStatuses.length];
+                                                                                const updatedNote = { ...note, status: nextStatus.name, statusEmoji: nextStatus.emoji };
+                                                                                FirestoreService.saveNote(currentUser!.uid, updatedNote);
+                                                                            }}
+                                                                            title="Clique para alterar o status"
+                                                                            className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-white/5 border transition-all active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)] hover:bg-white/10"
+                                                                            style={{
+                                                                                backgroundColor: `${(defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex}20`,
+                                                                                color: (defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex,
+                                                                                borderColor: `${(defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex}40`
+                                                                            }}
+                                                                        >
+                                                                            {note.status}
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex items-center gap-2 text-gray-600">
+                                                                    <button title="Editar nota" className="hover:text-white transition-all"><PenLine size={13} /></button>
+                                                                    <button title="Mover para pasta" className="hover:text-white transition-all"><Folder size={13} /></button>
+                                                                    <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={13} /></button>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     );
@@ -819,23 +823,6 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                     <div className="flex items-center justify-center text-4xl">
                                                         {note.emoji}
                                                     </div>
-                                                    {note.status && (
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                // Simple logic to cycle status or just toggle
-                                                                const currentIndex = defaultStatuses.findIndex(s => s.name === note.status);
-                                                                const nextStatus = defaultStatuses[(currentIndex + 1) % defaultStatuses.length];
-                                                                const updatedNote = { ...note, status: nextStatus.name, statusEmoji: nextStatus.emoji };
-                                                                FirestoreService.saveNote(currentUser!.uid, updatedNote);
-                                                            }}
-                                                            title="Clique para alterar o status"
-                                                            className="px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-[0.05em] bg-white/5 border border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.2)] hover:bg-white/10 transition-all active:scale-95 whitespace-nowrap"
-                                                            style={{ color: defaultStatuses.find(s => s.name === note.status)?.hex || '#FFFFFF' }}
-                                                        >
-                                                            {note.status}
-                                                        </button>
-                                                    )}
                                                 </div>
                                             </div>
 
@@ -856,11 +843,33 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                     </div>
                                                 </div>
 
-                                                {/* Footer: Date + Action buttons at bottom-right */}
+                                                {/* Footer: Status (left) + Date/Actions (right) */}
                                                 <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] font-medium text-gray-500">
-                                                    <div className="flex items-center gap-2">
-                                                        <Clock size={12} className="opacity-50" />
-                                                        <span>{new Date(note.createdAt).toLocaleDateString('pt-BR')}</span>
+                                                    <div className="flex items-center gap-3">
+                                                        {note.status && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    const currentIndex = defaultStatuses.findIndex(s => s.name === note.status);
+                                                                    const nextStatus = defaultStatuses[(currentIndex + 1) % defaultStatuses.length];
+                                                                    const updatedNote = { ...note, status: nextStatus.name, statusEmoji: nextStatus.emoji };
+                                                                    FirestoreService.saveNote(currentUser!.uid, updatedNote);
+                                                                }}
+                                                                title="Clique para alterar o status"
+                                                                className="px-2.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-white/5 border transition-all active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)] hover:bg-white/10"
+                                                                style={{
+                                                                    backgroundColor: `${(defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex}20`,
+                                                                    color: (defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex,
+                                                                    borderColor: `${(defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex}40`
+                                                                }}
+                                                            >
+                                                                {note.status}
+                                                            </button>
+                                                        )}
+                                                        <div className="flex items-center gap-2">
+                                                            <Clock size={12} className="opacity-50" />
+                                                            <span>{new Date(note.createdAt).toLocaleDateString('pt-BR')}</span>
+                                                        </div>
                                                     </div>
 
                                                     <div className="flex items-center gap-3 transition-opacity">
