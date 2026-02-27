@@ -162,11 +162,17 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
         setPriority(note.priority);
         setSelectedStatus(note.status || '');
         setStatusEmoji(note.statusEmoji || '⌛');
+
         if (note.reminderDate) {
             const date = new Date(note.reminderDate);
             setTempDate(date.toISOString().split('T')[0]);
             setTempTime(date.toTimeString().slice(0, 5));
+        } else {
+            // Se não tem lembrete, limpamos para não criar um "acidentalmente"
+            setTempDate('');
+            setTempTime('');
         }
+
         setIsCollapsed(false);
         setTimeout(() => {
             if (formRef.current) {
@@ -191,26 +197,33 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const handleAddNote = async () => {
         if (!currentUser) return;
         if (!content.trim()) return;
+
         try {
+            // Sincroniza o status se for "Feito"
+            const finalStatus = isCustomStatusActive && customStatus ? customStatus : selectedStatus;
+            const isCompleted = finalStatus === 'Feito';
+
             const noteData: NotepadNote = {
                 id: editingNote ? editingNote.id : `note_${Date.now()}`,
                 content: content.trim(),
                 emoji: isCustomEmojiActive && customEmoji ? customEmoji : selectedEmoji,
                 priority,
-                status: isCustomStatusActive && customStatus ? customStatus : selectedStatus,
+                status: finalStatus,
                 statusEmoji: isCustomStatusActive ? '📌' : statusEmoji,
                 reminderDate: (tempDate && tempTime) ? `${tempDate}T${tempTime}` : null,
                 reminderEnabled: !!(tempDate && tempTime),
                 createdAt: editingNote ? editingNote.createdAt : new Date().toISOString(),
-                completed: selectedStatus === 'Feito',
+                completed: isCompleted,
                 notified: editingNote ? editingNote.notified : false
             };
+
             await FirestoreService.saveNote(currentUser.uid, noteData);
 
             // Clear state
             handleCancelEdit();
-        } catch (error) {
+        } catch (error: any) {
             console.error("[Notepad] Erro ao salvar nota:", error);
+            alert(`Erro ao salvar nota: ${error.message || 'Verifique sua conexão.'}`);
         }
     };
 
@@ -229,7 +242,14 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
     const handleToggleComplete = async (note: NotepadNote) => {
         if (!currentUser) return;
-        const updatedNote = { ...note, completed: !note.completed };
+        const willBeCompleted = !note.completed;
+        const updatedNote: NotepadNote = {
+            ...note,
+            completed: willBeCompleted,
+            // Sincroniza o status visual
+            status: willBeCompleted ? 'Feito' : 'Não Feito',
+            statusEmoji: willBeCompleted ? '✅' : '⌛'
+        };
         await FirestoreService.saveNote(currentUser.uid, updatedNote);
     };
 
@@ -302,7 +322,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
                     <div className="flex items-center gap-3">
                         <Pencil size={16} className="text-[#17baa4]" />
-                        <span className="text-[14px] font-semibold text-white tracking-wide">Criar Nova Anotação</span>
+                        <span className="text-[14px] font-semibold text-white tracking-wide">
+                            {editingNote ? 'Editar Anotação' : 'Criar Nova Anotação'}
+                        </span>
                     </div>
                     <button onClick={() => setIsCollapsed(!isCollapsed)} title={isCollapsed ? 'Expandir formulário de criação' : 'Recolher formulário de criação'} className="p-2 text-gray-500 hover:text-white transition-all">
                         {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
@@ -809,7 +831,12 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                                     e.stopPropagation();
                                                                                     const currentIndex = defaultStatuses.findIndex(s => s.name === note.status);
                                                                                     const nextStatus = defaultStatuses[(currentIndex + 1) % defaultStatuses.length];
-                                                                                    const updatedNote = { ...note, status: nextStatus.name, statusEmoji: nextStatus.emoji };
+                                                                                    const updatedNote: NotepadNote = {
+                                                                                        ...note,
+                                                                                        status: nextStatus.name,
+                                                                                        statusEmoji: nextStatus.emoji,
+                                                                                        completed: nextStatus.name === 'Feito'
+                                                                                    };
                                                                                     FirestoreService.saveNote(currentUser!.uid, updatedNote);
                                                                                 }}
                                                                                 title="Clique para alterar o status"
@@ -895,7 +922,12 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                             e.stopPropagation();
                                                                             const currentIndex = defaultStatuses.findIndex(s => s.name === note.status);
                                                                             const nextStatus = defaultStatuses[(currentIndex + 1) % defaultStatuses.length];
-                                                                            const updatedNote = { ...note, status: nextStatus.name, statusEmoji: nextStatus.emoji };
+                                                                            const updatedNote: NotepadNote = {
+                                                                                ...note,
+                                                                                status: nextStatus.name,
+                                                                                statusEmoji: nextStatus.emoji,
+                                                                                completed: nextStatus.name === 'Feito'
+                                                                            };
                                                                             FirestoreService.saveNote(currentUser!.uid, updatedNote);
                                                                         }}
                                                                         title="Clique para alterar o status"

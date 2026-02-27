@@ -432,10 +432,18 @@ export const FirestoreService = {
     },
 
     saveNote: async (userId: string, note: NotepadNote) => {
-        await setDoc(doc(db, "users", userId, "notes", note.id), note, { merge: true });
+        await withTimeout(
+            setDoc(doc(db, "users", userId, "notes", note.id), note, { merge: true }),
+            30000,
+            "Salvamento de Nota (setDoc)"
+        );
     },
 
     deleteNote: async (userId: string, noteId: string) => {
-        await deleteDoc(doc(db, "users", userId, "notes", noteId));
+        await withTimeout(
+            deleteDoc(doc(db, "users", userId, "notes", noteId)),
+            30000,
+            "Exclusão de Nota (deleteDoc)"
+        );
     }
 };
