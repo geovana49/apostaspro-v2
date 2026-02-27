@@ -754,22 +754,14 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                     <div className="relative w-full h-full rounded-full" style={{ backgroundColor: col.color }} />
                                                 </div>
 
-                                                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-4xl shadow-xl backdrop-blur-sm">
+                                                <div className="flex items-center justify-center text-4xl mt-1">
                                                     {note.emoji}
                                                 </div>
                                             </div>
 
                                             {/* Center: Content Area */}
                                             <div className="flex-1 min-w-0 flex flex-col gap-3">
-                                                <div className="flex items-center justify-between">
-                                                    {note.status && (
-                                                        <div className="px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.1em] bg-white/5 border border-white/10" style={{ color: col.color }}>
-                                                            {note.status}
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                <div className="flex items-start gap-3">
+                                                <div className="flex items-start gap-4">
                                                     <button
                                                         title={note.completed ? 'Desmarcar' : 'Marcar'}
                                                         onClick={() => handleToggleComplete(note)}
@@ -777,9 +769,18 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                     >
                                                         {note.completed && <Check size={12} strokeWidth={4} />}
                                                     </button>
-                                                    <p className={`text-[15px] leading-relaxed ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-semibold'}`}>
-                                                        {note.content}
-                                                    </p>
+                                                    <div className="flex-1 min-w-0 flex flex-col gap-2">
+                                                        <p className={`text-[15px] leading-relaxed ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-semibold'}`}>
+                                                            {note.content}
+                                                        </p>
+                                                        {note.status && (
+                                                            <div className="flex">
+                                                                <div className="px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.05em] bg-white/5 border border-white/10" style={{ color: col.color }}>
+                                                                    {note.status}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
 
                                                 {/* Footer: Date + Action buttons at bottom-right */}
@@ -804,75 +805,79 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                 </div>
             </div>
 
-            {showBlockedGuide && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-sm bg-black/60">
-                    <Card className="max-w-md w-full bg-[#1a1f35] border-white/10 shadow-2xl p-6 space-y-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-red-500/10 rounded-xl"><BellOff size={24} className="text-red-500" /></div>
-                                <h3 className="text-lg font-bold text-white">Notificações Bloqueadas</h3>
-                            </div>
-                            <button onClick={() => setShowBlockedGuide(false)} className="text-gray-500 hover:text-white transition-all"><X size={20} /></button>
-                        </div>
-                        <Button onClick={() => setShowBlockedGuide(false)} className="w-full bg-[#17baa4] hover:brightness-110 text-[#090c19] font-black h-12 rounded-xl">Entendi</Button>
-                    </Card>
-                </div>
-            )}
-
-            {showNotificationsModal && createPortal(
-                <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 backdrop-blur-sm bg-black/60">
-                    <Card className="max-w-md w-full bg-[#1a1f35] border-white/10 shadow-2xl p-6 space-y-4 relative">
-                        <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-[#17baa4]/10 rounded-xl"><Bell size={24} className="text-[#17baa4]" /></div>
-                                <h3 className="text-lg font-bold text-white">Próximos Lembretes</h3>
-                            </div>
-                            <button onClick={() => setShowNotificationsModal(false)} className="text-gray-500 hover:text-white transition-all"><X size={20} /></button>
-                        </div>
-
-                        <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
-                            {notes.filter(n => n.reminderEnabled).length > 0 ? (
-                                notes
-                                    .filter(n => n.reminderEnabled)
-                                    .sort((a, b) => new Date(a.reminderDate!).getTime() - new Date(b.reminderDate!).getTime())
-                                    .map(note => (
-                                        <div key={note.id} className="p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-[#17baa4]/30 transition-all group">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <span className="text-xl">{note.emoji}</span>
-                                                <p className="text-sm font-medium text-white line-clamp-2 leading-relaxed flex-1">{note.content}</p>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-2 text-[10px] font-bold text-[#17baa4] uppercase tracking-widest bg-[#17baa4]/10 px-2 py-1 rounded-lg">
-                                                    <Clock size={12} />
-                                                    {new Date(note.reminderDate!).toLocaleDateString('pt-BR')} {new Date(note.reminderDate!).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                                                </div>
-                                                <button
-                                                    onClick={async () => {
-                                                        if (currentUser) {
-                                                            await FirestoreService.saveNote(currentUser.uid, { ...note, reminderEnabled: false });
-                                                        }
-                                                    }}
-                                                    className="text-[9px] font-black text-gray-500 hover:text-red-500 uppercase tracking-widest transition-all"
-                                                >
-                                                    Remover Alerta
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))
-                            ) : (
-                                <div className="py-12 flex flex-col items-center justify-center text-center opacity-40">
-                                    <BellOff size={40} className="mb-4 text-gray-400" />
-                                    <p className="text-sm font-medium text-gray-400">Nenhum lembrete futuro agendado.</p>
+            {
+                showBlockedGuide && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-sm bg-black/60">
+                        <Card className="max-w-md w-full bg-[#1a1f35] border-white/10 shadow-2xl p-6 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-red-500/10 rounded-xl"><BellOff size={24} className="text-red-500" /></div>
+                                    <h3 className="text-lg font-bold text-white">Notificações Bloqueadas</h3>
                                 </div>
-                            )}
-                        </div>
+                                <button onClick={() => setShowBlockedGuide(false)} className="text-gray-500 hover:text-white transition-all"><X size={20} /></button>
+                            </div>
+                            <Button onClick={() => setShowBlockedGuide(false)} className="w-full bg-[#17baa4] hover:brightness-110 text-[#090c19] font-black h-12 rounded-xl">Entendi</Button>
+                        </Card>
+                    </div>
+                )
+            }
 
-                        <Button onClick={() => setShowNotificationsModal(false)} className="w-full bg-[#17baa4] hover:brightness-110 text-[#090c19] font-black h-12 rounded-xl mt-2 shadow-[0_4px_15px_rgba(23,186,164,0.3)]">Fechar</Button>
-                    </Card>
-                </div>,
-                document.body
-            )}
-        </div>
+            {
+                showNotificationsModal && createPortal(
+                    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 backdrop-blur-sm bg-black/60">
+                        <Card className="max-w-md w-full bg-[#1a1f35] border-white/10 shadow-2xl p-6 space-y-4 relative">
+                            <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-[#17baa4]/10 rounded-xl"><Bell size={24} className="text-[#17baa4]" /></div>
+                                    <h3 className="text-lg font-bold text-white">Próximos Lembretes</h3>
+                                </div>
+                                <button onClick={() => setShowNotificationsModal(false)} className="text-gray-500 hover:text-white transition-all"><X size={20} /></button>
+                            </div>
+
+                            <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                                {notes.filter(n => n.reminderEnabled).length > 0 ? (
+                                    notes
+                                        .filter(n => n.reminderEnabled)
+                                        .sort((a, b) => new Date(a.reminderDate!).getTime() - new Date(b.reminderDate!).getTime())
+                                        .map(note => (
+                                            <div key={note.id} className="p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-[#17baa4]/30 transition-all group">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <span className="text-xl">{note.emoji}</span>
+                                                    <p className="text-sm font-medium text-white line-clamp-2 leading-relaxed flex-1">{note.content}</p>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2 text-[10px] font-bold text-[#17baa4] uppercase tracking-widest bg-[#17baa4]/10 px-2 py-1 rounded-lg">
+                                                        <Clock size={12} />
+                                                        {new Date(note.reminderDate!).toLocaleDateString('pt-BR')} {new Date(note.reminderDate!).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (currentUser) {
+                                                                await FirestoreService.saveNote(currentUser.uid, { ...note, reminderEnabled: false });
+                                                            }
+                                                        }}
+                                                        className="text-[9px] font-black text-gray-500 hover:text-red-500 uppercase tracking-widest transition-all"
+                                                    >
+                                                        Remover Alerta
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))
+                                ) : (
+                                    <div className="py-12 flex flex-col items-center justify-center text-center opacity-40">
+                                        <BellOff size={40} className="mb-4 text-gray-400" />
+                                        <p className="text-sm font-medium text-gray-400">Nenhum lembrete futuro agendado.</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <Button onClick={() => setShowNotificationsModal(false)} className="w-full bg-[#17baa4] hover:brightness-110 text-[#090c19] font-black h-12 rounded-xl mt-2 shadow-[0_4px_15px_rgba(23,186,164,0.3)]">Fechar</Button>
+                        </Card>
+                    </div>,
+                    document.body
+                )
+            }
+        </div >
     );
 };
 
