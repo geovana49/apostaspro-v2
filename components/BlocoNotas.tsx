@@ -310,8 +310,12 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 <div key={ce.id} className="relative group/emoji shrink-0">
                                     <button
                                         onClick={() => {
-                                            setSelectedEmoji(ce.emoji);
-                                            setIsCustomEmojiActive(false);
+                                            if (selectedEmoji === ce.emoji && !isCustomEmojiActive) {
+                                                setSelectedEmoji('📌');
+                                            } else {
+                                                setSelectedEmoji(ce.emoji);
+                                                setIsCustomEmojiActive(false);
+                                            }
                                         }}
                                         className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border shrink-0 ${(!isCustomEmojiActive && selectedEmoji === ce.emoji) ? 'bg-[#3B82F6]/20 border-[#3B82F6] scale-105 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
                                     >
@@ -332,8 +336,12 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 <button
                                     key={e}
                                     onClick={() => {
-                                        setSelectedEmoji(e);
-                                        setIsCustomEmojiActive(false);
+                                        if (selectedEmoji === e && !isCustomEmojiActive) {
+                                            setSelectedEmoji('📌');
+                                        } else {
+                                            setSelectedEmoji(e);
+                                            setIsCustomEmojiActive(false);
+                                        }
                                     }}
                                     className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border shrink-0 ${(!isCustomEmojiActive && selectedEmoji === e) ? 'bg-[#3B82F6]/20 border-[#3B82F6] scale-105 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
                                 >
@@ -353,9 +361,14 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                         key={s.name}
                                         title={`Definir status como "${s.name}"`}
                                         onClick={() => {
-                                            setSelectedStatus(s.name);
-                                            setStatusEmoji(s.emoji);
-                                            setIsCustomStatusActive(false);
+                                            if (selectedStatus === s.name && !isCustomStatusActive) {
+                                                setSelectedStatus('');
+                                                setStatusEmoji('⌛');
+                                            } else {
+                                                setSelectedStatus(s.name);
+                                                setStatusEmoji(s.emoji);
+                                                setIsCustomStatusActive(false);
+                                            }
                                         }}
                                         className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${(!isCustomStatusActive && selectedStatus === s.name) ? s.active : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10'}`}
                                     >
@@ -391,9 +404,14 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                     <div key={cs.id} className="relative group/status shrink-0">
                                         <button
                                             onClick={() => {
-                                                setSelectedStatus(cs.name);
-                                                setStatusEmoji(cs.emoji);
-                                                setIsCustomStatusActive(false);
+                                                if (selectedStatus === cs.name && !isCustomStatusActive) {
+                                                    setSelectedStatus('');
+                                                    setStatusEmoji('⌛');
+                                                } else {
+                                                    setSelectedStatus(cs.name);
+                                                    setStatusEmoji(cs.emoji);
+                                                    setIsCustomStatusActive(false);
+                                                }
                                             }}
                                             className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${(!isCustomStatusActive && selectedStatus === cs.name) ? 'bg-[#17baa4]/20 border-[#17baa4]/50 text-[#17baa4]' : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10'}`}
                                         >
@@ -417,13 +435,25 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             <div className="flex flex-col gap-2 shrink-0">
                                 <span className="text-[10px] font-medium text-white/40 tracking-wide ml-1">Prioridade</span>
                                 <div className="flex gap-2">
-                                    <button title="Prioridade urgente — Queima de FreeBet" onClick={() => setPriority('high')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium border transition-all ${priority === 'high' ? 'bg-red-500/10 border-red-500/40 text-red-500' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
+                                    <button
+                                        title="Prioridade urgente"
+                                        onClick={() => setPriority(prev => prev === 'high' ? 'low' : 'high')}
+                                        className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium border transition-all ${priority === 'high' ? 'bg-red-500/10 border-red-500/40 text-red-500 shadow-[0_0_10px_rgba(255,68,68,0.2)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}
+                                    >
                                         <TriangleAlert size={14} /> Urgente
                                     </button>
-                                    <button title="Prioridade importante — Possível Duplo" onClick={() => setPriority('medium')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium border transition-all ${priority === 'medium' ? 'bg-[#FFE600]/10 border-[#FFE600]/40 text-[#FFE600]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
+                                    <button
+                                        title="Prioridade importante"
+                                        onClick={() => setPriority(prev => prev === 'medium' ? 'low' : 'medium')}
+                                        className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium border transition-all ${priority === 'medium' ? 'bg-[#FFE600]/10 border-[#FFE600]/40 text-[#FFE600] shadow-[0_0_10px_rgba(255,230,0,0.2)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}
+                                    >
                                         <Star size={14} /> Importante
                                     </button>
-                                    <button title="Prioridade normal — Sem duplo / Vale Giros" onClick={() => setPriority('low')} className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium border transition-all ${priority === 'low' ? 'bg-[#3B82F6]/10 border-[#3B82F6]/40 text-[#3B82F6]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}>
+                                    <button
+                                        title="Prioridade normal"
+                                        onClick={() => setPriority('low')}
+                                        className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium border transition-all ${priority === 'low' ? 'bg-[#3B82F6]/10 border-[#3B82F6]/40 text-[#3B82F6] shadow-[0_0_10px_rgba(59,130,246,0.2)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}
+                                    >
                                         <FileText size={14} /> Normal
                                     </button>
                                 </div>
