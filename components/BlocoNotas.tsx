@@ -722,55 +722,73 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                             {colNotes.length === 0 ? (
                                                 <div className="text-center text-gray-600 text-[11px] py-6 font-medium">Nenhuma nota</div>
                                             ) : (
-                                                colNotes.map(note => (
-                                                    <div key={note.id} className="bg-[#1a2236]/80 border border-white/5 rounded-xl p-4 hover:border-white/10 transition-all group flex flex-col gap-3">
-                                                        <div className="flex gap-3">
-                                                            {/* Left: Colored bar + Emoji centered */}
-                                                            <div className="flex shrink-0 items-center">
-                                                                <div className="w-1 rounded-full self-stretch" style={{ backgroundColor: col.color }} />
-                                                                <div className="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center text-2xl ml-2">
-                                                                    {note.emoji}
-                                                                </div>
-                                                            </div>
-                                                            {/* Right: Content area */}
-                                                            <div className="flex-1 min-w-0 flex flex-col gap-2">
-                                                                {note.status && (
-                                                                    <div className="flex">
-                                                                        {(() => {
-                                                                            const statusObj = defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0];
-                                                                            return (
-                                                                                <span className="px-2.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider" style={{ backgroundColor: `${statusObj.hex}20`, color: statusObj.hex, border: `1px solid ${statusObj.hex}40` }}>
-                                                                                    {note.status}
-                                                                                </span>
-                                                                            );
-                                                                        })()}
+                                                colNotes.map(note => {
+                                                    const col = [
+                                                        { key: 'high', color: '#ff4444' },
+                                                        { key: 'medium', color: '#F59E0B' },
+                                                        { key: 'low', color: '#3B82F6' },
+                                                    ].find(c => c.key === note.priority) || { color: '#3B82F6' };
+
+                                                    return (
+                                                        <div key={note.id} className="bg-[#1a2236]/80 border border-white/5 rounded-xl p-4 hover:border-white/10 transition-all group flex flex-col gap-3">
+                                                            <div className="flex gap-3">
+                                                                {/* Left: Colored bar + Emoji centered */}
+                                                                <div className="flex shrink-0 items-start gap-2">
+                                                                    <div className="w-1 rounded-full self-stretch" style={{ backgroundColor: col.color }} />
+                                                                    <div className="flex flex-col items-center gap-2 ml-1 min-w-[50px]">
+                                                                        <div className="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center text-2xl">
+                                                                            {note.emoji}
+                                                                        </div>
+                                                                        {note.status && (
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    const currentIndex = defaultStatuses.findIndex(s => s.name === note.status);
+                                                                                    const nextStatus = defaultStatuses[(currentIndex + 1) % defaultStatuses.length];
+                                                                                    const updatedNote = { ...note, status: nextStatus.name, statusEmoji: nextStatus.emoji };
+                                                                                    FirestoreService.saveNote(currentUser!.uid, updatedNote);
+                                                                                }}
+                                                                                title="Clique para alterar o status"
+                                                                                className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-white/5 border transition-all active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)] hover:bg-white/10"
+                                                                                style={{
+                                                                                    backgroundColor: `${(defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex}20`,
+                                                                                    color: (defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex,
+                                                                                    borderColor: `${(defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex}40`
+                                                                                }}
+                                                                            >
+                                                                                {note.status}
+                                                                            </button>
+                                                                        )}
                                                                     </div>
-                                                                )}
-                                                                <div className="flex items-center gap-2">
-                                                                    <button
-                                                                        title={note.completed ? 'Desmarcar como concluída' : 'Marcar como concluída'}
-                                                                        onClick={() => handleToggleComplete(note)}
-                                                                        className={`w-4 h-4 rounded-md border transition-all flex items-center justify-center shrink-0 ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
-                                                                    >
-                                                                        {note.completed && <Check size={10} strokeWidth={4} />}
-                                                                    </button>
-                                                                    <p className={`text-[12px] leading-relaxed truncate ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-medium'}`}>
-                                                                        {note.content}
-                                                                    </p>
                                                                 </div>
-                                                                <span className="text-[10px] text-gray-600 font-medium">
-                                                                    {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                                                                </span>
+                                                                {/* Right: Content area */}
+                                                                <div className="flex-1 min-w-0 flex flex-col gap-2">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <button
+                                                                            title={note.completed ? 'Desmarcar como concluída' : 'Marcar como concluída'}
+                                                                            onClick={() => handleToggleComplete(note)}
+                                                                            className={`w-4 h-4 rounded-md border transition-all flex items-center justify-center shrink-0 ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
+                                                                        >
+                                                                            {note.completed && <Check size={10} strokeWidth={4} />}
+                                                                        </button>
+                                                                        <p className={`text-[12px] leading-relaxed truncate ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-medium'}`}>
+                                                                            {note.content}
+                                                                        </p>
+                                                                    </div>
+                                                                    <span className="text-[10px] text-gray-600 font-medium">
+                                                                        {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            {/* Action buttons at bottom */}
+                                                            <div className="flex items-center justify-end gap-2 mt-1 pt-2 border-t border-white/5 text-gray-600 transition-opacity">
+                                                                <button title="Editar nota" className="hover:text-white transition-all"><PenLine size={13} /></button>
+                                                                <button title="Mover para pasta" className="hover:text-white transition-all"><Folder size={13} /></button>
+                                                                <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={13} /></button>
                                                             </div>
                                                         </div>
-                                                        {/* Action buttons at bottom */}
-                                                        <div className="flex items-center justify-end gap-2 mt-1 pt-2 border-t border-white/5 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <button title="Editar nota" className="hover:text-white transition-all"><PenLine size={13} /></button>
-                                                            <button title="Mover para pasta" className="hover:text-white transition-all"><Folder size={13} /></button>
-                                                            <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={13} /></button>
-                                                        </div>
-                                                    </div>
-                                                ))
+                                                    );
+                                                })
                                             )}
                                         </div>
                                     </div>
@@ -845,8 +863,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                         <span>{new Date(note.createdAt).toLocaleDateString('pt-BR')}</span>
                                                     </div>
 
-                                                    <div className="flex items-center gap-3 opacity-40 group-hover:opacity-100 transition-opacity">
+                                                    <div className="flex items-center gap-3 transition-opacity">
                                                         <button title="Editar nota" className="hover:text-white transition-all"><PenLine size={16} /></button>
+                                                        <button title="Mover para pasta" className="hover:text-white transition-all"><Folder size={16} /></button>
                                                         <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={16} /></button>
                                                     </div>
                                                 </div>
@@ -858,7 +877,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         </div>
                     )}
                 </div>
-            </div>
+            </div >
 
             {
                 showBlockedGuide && (
