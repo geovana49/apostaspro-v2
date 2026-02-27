@@ -169,8 +169,10 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
         }
         setIsCollapsed(false);
         setTimeout(() => {
-            formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
+            if (formRef.current) {
+                formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 150);
     };
 
     const handleCancelEdit = () => {
@@ -897,7 +899,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                 FirestoreService.saveNote(currentUser!.uid, updatedNote);
                                                             }}
                                                             title="Clique para alterar o status"
-                                                            className="px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider bg-white/5 border transition-all active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)] hover:bg-white/10 whitespace-nowrap shrink-0"
+                                                            className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white/5 border transition-all active:scale-95 shadow-[0_2px_12px_rgba(0,0,0,0.3)] hover:bg-white/10 whitespace-nowrap shrink-0 border-white/10"
                                                             style={{
                                                                 backgroundColor: `${(defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex}20`,
                                                                 color: (defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex,

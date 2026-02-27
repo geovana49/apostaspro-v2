@@ -457,8 +457,9 @@ export const MoneyDisplay: React.FC<{ value: number; privacyMode?: boolean; pref
 };
 
 // --- Card 3D ---
-export const Card: React.FC<{ children: React.ReactNode; className?: string; onClick?: () => void }> = ({ children, className = '', onClick }) => (
+export const Card = React.forwardRef<HTMLDivElement, { children: React.ReactNode; className?: string; onClick?: () => void }>(({ children, className = '', onClick }, ref) => (
   <div
+    ref={ref}
     onClick={onClick}
     className={`
       relative group 
@@ -480,7 +481,8 @@ export const Card: React.FC<{ children: React.ReactNode; className?: string; onC
       {children}
     </div>
   </div>
-);
+));
+Card.displayName = 'Card';
 
 // --- Button ---
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
