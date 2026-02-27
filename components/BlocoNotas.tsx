@@ -43,6 +43,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const schedulerRef = useRef<HTMLButtonElement>(null);
     const sortRef = useRef<HTMLDivElement>(null);
+    const formRef = useRef<HTMLDivElement>(null);
     const [savedCustomStatuses, setSavedCustomStatuses] = useState<{ id: string, name: string, emoji: string }[]>([]);
     const [savedCustomEmojis, setSavedCustomEmojis] = useState<{ id: string, emoji: string }[]>([]);
     const [editingNote, setEditingNote] = useState<NotepadNote | null>(null);
@@ -167,7 +168,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
             setTempTime(date.toTimeString().slice(0, 5));
         }
         setIsCollapsed(false);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => {
+            formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
     };
 
     const handleCancelEdit = () => {
@@ -293,7 +296,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
             </div>
 
             {/* Nova Anotação Card */}
-            <Card className="bg-[#121625]/80 backdrop-blur-xl border-white/5 relative overflow-hidden rounded-[32px]">
+            <Card ref={formRef} className="bg-[#121625]/80 backdrop-blur-xl border-white/5 relative overflow-hidden rounded-[32px]">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
                     <div className="flex items-center gap-3">
                         <Pencil size={16} className="text-[#17baa4]" />
@@ -894,7 +897,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                 FirestoreService.saveNote(currentUser!.uid, updatedNote);
                                                             }}
                                                             title="Clique para alterar o status"
-                                                            className="px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider bg-white/5 border transition-all active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)] hover:bg-white/10 whitespace-nowrap"
+                                                            className="px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider bg-white/5 border transition-all active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)] hover:bg-white/10 whitespace-nowrap shrink-0"
                                                             style={{
                                                                 backgroundColor: `${(defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex}20`,
                                                                 color: (defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex,
