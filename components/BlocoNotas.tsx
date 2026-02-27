@@ -799,7 +799,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                             {note.content}
                                                                         </p>
                                                                     </div>
-                                                                    <div className="flex items-center gap-2">
+                                                                    <div className="flex items-center justify-between gap-2">
                                                                         <span className="text-[10px] text-gray-600 font-medium">
                                                                             {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                                                         </span>
@@ -826,10 +826,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                            {/* Footer: Status (left) + Action buttons at bottom (right) */}
-                                                            <div className="flex items-center justify-between gap-2 mt-1 pt-2 border-t border-white/5 transition-opacity">
-                                                                <div className="flex items-center gap-2">
-                                                                </div>
+                                                            {/* Footer: Action buttons at bottom (right) */}
+                                                            <div className="flex items-center justify-end gap-2 mt-1 pt-2 border-t border-white/5 transition-opacity">
                                                                 <div className="flex items-center gap-2 text-gray-600">
                                                                     <button onClick={() => handleEditNote(note)} title="Editar nota" className="hover:text-white transition-all"><PenLine size={13} /></button>
                                                                     <button title="Mover para pasta" className="hover:text-white transition-all"><Folder size={13} /></button>
@@ -887,7 +885,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                             <p className={`text-[15px] leading-relaxed ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-semibold'}`}>
                                                                 {note.content}
                                                             </p>
-                                                            <div className="flex items-center gap-3">
+                                                            <div className="flex items-center justify-between gap-3">
                                                                 <span className="text-[11px] text-gray-500 font-medium">
                                                                     {new Date(note.createdAt).toLocaleDateString('pt-BR')}
                                                                 </span>
