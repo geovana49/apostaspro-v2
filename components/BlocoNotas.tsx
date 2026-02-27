@@ -757,18 +757,12 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                                             {/* Right: Content area */}
                                             <div className="flex-1 min-w-0 flex flex-col gap-2">
-                                                <div className="flex items-center justify-between">
-                                                    {note.status ? (
+                                                <div className="flex items-center justify-between min-h-[20px]">
+                                                    {note.status && (
                                                         <span className="px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider" style={{ backgroundColor: `${col.color}20`, color: col.color, border: `1px solid ${col.color}40` }}>
                                                             {note.status}
                                                         </span>
-                                                    ) : <div />}
-
-                                                    <div className="flex items-center gap-4 text-gray-600 opacity-60 group-hover:opacity-100 transition-opacity">
-                                                        <button title="Editar nota" className="hover:text-white transition-all"><PenLine size={14} /></button>
-                                                        <button title="Mover para pasta" className="hover:text-white transition-all"><Folder size={14} /></button>
-                                                        <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={14} /></button>
-                                                    </div>
+                                                    )}
                                                 </div>
 
                                                 <div className="flex items-start gap-3">
@@ -787,6 +781,13 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                             Criado em {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })} às {new Date(note.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                                         </div>
                                                     </div>
+                                                </div>
+
+                                                {/* Action buttons at bottom */}
+                                                <div className="flex items-center justify-end gap-3 mt-1 pt-2 border-t border-white/5 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button title="Editar nota" className="hover:text-white transition-all"><PenLine size={14} /></button>
+                                                    <button title="Mover para pasta" className="hover:text-white transition-all"><Folder size={14} /></button>
+                                                    <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={14} /></button>
                                                 </div>
                                             </div>
                                         </div>
