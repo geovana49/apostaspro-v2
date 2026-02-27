@@ -767,12 +767,6 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                             {note.status}
                                                         </div>
                                                     )}
-
-                                                    {/* Top Right Actions */}
-                                                    <div className="flex items-center gap-3 text-gray-500 opacity-40 group-hover:opacity-100 transition-opacity">
-                                                        <button title="Editar nota" className="hover:text-white transition-all"><PenLine size={16} /></button>
-                                                        <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={16} /></button>
-                                                    </div>
                                                 </div>
 
                                                 <div className="flex items-start gap-3">
@@ -788,10 +782,17 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                     </p>
                                                 </div>
 
-                                                {/* Footer: Divider + Date with Clock */}
-                                                <div className="mt-2 pt-3 border-t border-white/5 flex items-center gap-2 text-[11px] font-medium text-gray-500">
-                                                    <Clock size={12} className="opacity-50" />
-                                                    <span>{new Date(note.createdAt).toLocaleDateString('pt-BR')}</span>
+                                                {/* Footer: Date + Action buttons at bottom-right */}
+                                                <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] font-medium text-gray-500">
+                                                    <div className="flex items-center gap-2">
+                                                        <Clock size={12} className="opacity-50" />
+                                                        <span>{new Date(note.createdAt).toLocaleDateString('pt-BR')}</span>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-3 opacity-40 group-hover:opacity-100 transition-opacity">
+                                                        <button title="Editar nota" className="hover:text-white transition-all"><PenLine size={16} /></button>
+                                                        <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={16} /></button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
