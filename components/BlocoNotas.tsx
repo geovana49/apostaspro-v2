@@ -745,49 +745,53 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 ].find(c => c.key === note.priority) || { color: '#3B82F6' };
 
                                 return (
-                                    <div key={note.id} className="border-b border-white/[0.03] py-4 transition-all group flex flex-col gap-2 last:border-0 hover:bg-white/[0.01]">
+                                    <div key={note.id} className="bg-[#1a1f35]/90 border border-white/5 rounded-2xl p-5 hover:border-[#3B82F6]/30 transition-all group relative overflow-hidden mb-3">
                                         <div className="flex gap-4">
-                                            {/* Left: Colored bar + Emoji centered */}
-                                            <div className="flex shrink-0 items-center">
-                                                <div className="w-1 rounded-full self-stretch" style={{ backgroundColor: col.color }} />
-                                                <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-3xl ml-3">
+                                            {/* Left: Glowing Neon Bar + Glass Emoji */}
+                                            <div className="flex shrink-0 items-start gap-4">
+                                                <div className="relative w-1 self-stretch rounded-full overflow-hidden">
+                                                    <div className="absolute inset-0 opacity-40 blur-[2px]" style={{ backgroundColor: col.color }} />
+                                                    <div className="relative w-full h-full rounded-full" style={{ backgroundColor: col.color }} />
+                                                </div>
+
+                                                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-4xl shadow-xl backdrop-blur-sm">
                                                     {note.emoji}
                                                 </div>
                                             </div>
 
-                                            {/* Right: Content area */}
-                                            <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                                                <div className="flex items-center justify-between min-h-[16px]">
+                                            {/* Center: Content Area */}
+                                            <div className="flex-1 min-w-0 flex flex-col gap-3">
+                                                <div className="flex items-center justify-between">
                                                     {note.status && (
-                                                        <span className="px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider" style={{ backgroundColor: `${col.color}20`, color: col.color, border: `1px solid ${col.color}40` }}>
+                                                        <div className="px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.1em] bg-white/5 border border-white/10" style={{ color: col.color }}>
                                                             {note.status}
-                                                        </span>
+                                                        </div>
                                                     )}
+
+                                                    {/* Top Right Actions */}
+                                                    <div className="flex items-center gap-3 text-gray-500 opacity-40 group-hover:opacity-100 transition-opacity">
+                                                        <button title="Editar nota" className="hover:text-white transition-all"><PenLine size={16} /></button>
+                                                        <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={16} /></button>
+                                                    </div>
                                                 </div>
 
                                                 <div className="flex items-start gap-3">
                                                     <button
-                                                        title={note.completed ? 'Desmarcar como concluída' : 'Marcar como concluída'}
+                                                        title={note.completed ? 'Desmarcar' : 'Marcar'}
                                                         onClick={() => handleToggleComplete(note)}
-                                                        className={`w-5 h-5 mt-0.5 rounded-md border transition-all flex items-center justify-center shrink-0 ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
+                                                        className={`w-5 h-5 mt-1 rounded-lg border transition-all flex items-center justify-center shrink-0 ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
                                                     >
                                                         {note.completed && <Check size={12} strokeWidth={4} />}
                                                     </button>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className={`text-[14px] leading-relaxed ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-medium'}`}>
-                                                            {note.content}
-                                                        </p>
-                                                        <div className="text-[11px] text-gray-500 font-medium mt-1">
-                                                            Criado em {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })} às {new Date(note.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                                                        </div>
-                                                    </div>
+                                                    <p className={`text-[15px] leading-relaxed ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-semibold'}`}>
+                                                        {note.content}
+                                                    </p>
                                                 </div>
 
-                                                {/* Action buttons at bottom */}
-                                                <div className="flex items-center justify-end gap-3 pt-1 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button title="Editar nota" className="hover:text-white transition-all"><PenLine size={14} /></button>
-                                                    <button title="Mover para pasta" className="hover:text-white transition-all"><Folder size={14} /></button>
-                                                    <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={14} /></button>
+                                                {/* Footer: Divider + Date with Clock */}
+                                                <div className="mt-2 pt-3 border-t border-white/5 flex items-center gap-2 text-[11px] font-medium text-gray-500">
+                                                    <Clock size={12} className="opacity-50" />
+                                                    <span>{new Date(note.createdAt).toLocaleDateString('pt-BR')}</span>
                                                 </div>
                                             </div>
                                         </div>
