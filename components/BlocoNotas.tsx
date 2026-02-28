@@ -324,7 +324,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
         });
 
         return result;
-    }, [notes, searchTerm, filterPriority, filterStatus, sortBy]);
+    }, [notes, searchTerm, filterPriority, filterStatus, sortBy, showArchived]);
 
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
