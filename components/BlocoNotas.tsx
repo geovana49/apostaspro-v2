@@ -137,6 +137,14 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    // Auto-hide archive view if no notes are archived
+    useEffect(() => {
+        const archivedCount = notes.filter(n => n.archived).length;
+        if (archivedCount === 0 && showArchived) {
+            setShowArchived(false);
+        }
+    }, [notes, showArchived]);
+
     // Subscribe to saved custom statuses and emojis
     useEffect(() => {
         if (!currentUser?.uid) return;
@@ -719,14 +727,16 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             </div>
 
                             <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => setShowArchived(!showArchived)}
-                                    title={showArchived ? "Ocultar arquivados" : "Mostrar arquivados"}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all active:scale-95 border ${showArchived ? 'bg-white/10 text-white border-white/20' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}
-                                >
-                                    <Archive size={14} />
-                                    Arquivados ({notes.filter(n => n.archived).length})
-                                </button>
+                                {notes.filter(n => n.archived).length > 0 && (
+                                    <button
+                                        onClick={() => setShowArchived(!showArchived)}
+                                        title={showArchived ? "Ocultar arquivados" : "Mostrar arquivados"}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all active:scale-95 border ${showArchived ? 'bg-white/10 text-white border-white/20' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}
+                                    >
+                                        <Archive size={14} />
+                                        Arquivados ({notes.filter(n => n.archived).length})
+                                    </button>
+                                )}
                                 <div className="relative" ref={sortRef}>
                                     <button
                                         onClick={() => setShowSortDropdown(!showSortDropdown)}
