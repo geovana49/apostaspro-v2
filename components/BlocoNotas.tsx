@@ -813,23 +813,23 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                     </div>
                                                                 </div>
                                                                 {/* Right: Content area */}
-                                                                <div className="flex-1 min-w-0 flex flex-col gap-2">
-                                                                    <div className="flex items-center gap-2">
+                                                                <div className="flex-1 min-w-0 flex flex-col gap-3">
+                                                                    <div className="flex items-start gap-2">
                                                                         <button
                                                                             title={note.completed ? 'Desmarcar como concluída' : 'Marcar como concluída'}
                                                                             onClick={() => handleToggleComplete(note)}
-                                                                            className={`w-4 h-4 rounded-md border transition-all flex items-center justify-center shrink-0 ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
+                                                                            className={`w-4 h-4 mt-0.5 rounded-md border transition-all flex items-center justify-center shrink-0 ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
                                                                         >
                                                                             {note.completed && <Check size={10} strokeWidth={4} />}
                                                                         </button>
-                                                                        <p className={`text-[12px] leading-relaxed truncate ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-medium'}`}>
+                                                                        <p className={`text-[12px] leading-relaxed break-words whitespace-normal ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-medium'}`}>
                                                                             {note.content}
                                                                         </p>
                                                                     </div>
-                                                                    <div className="flex items-center justify-between gap-2">
-                                                                        <div className="flex items-center gap-2">
+                                                                    <div className="flex flex-wrap items-center justify-between gap-2 mt-auto">
+                                                                        <div className="flex flex-wrap items-center gap-2">
                                                                             {note.reminderEnabled && note.reminderDate && (
-                                                                                <span className="text-[#17baa4] text-[10px] font-bold flex items-center gap-1">
+                                                                                <span className="text-[#17baa4] text-[10px] font-bold flex items-center gap-1 bg-[#17baa4]/10 px-1.5 py-0.5 rounded">
                                                                                     <span>⏰</span>
                                                                                     {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                                                                 </span>
@@ -854,7 +854,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                                     FirestoreService.saveNote(currentUser!.uid, updatedNote);
                                                                                 }}
                                                                                 title="Clique para alterar o status"
-                                                                                className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-white/5 border transition-all active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)] hover:bg-white/10"
+                                                                                className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-white/5 border transition-all active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)] hover:bg-white/10 shrink-0"
                                                                                 style={{
                                                                                     backgroundColor: `${(defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex}20`,
                                                                                     color: (defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex,
