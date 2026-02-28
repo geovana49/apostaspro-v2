@@ -981,14 +981,14 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                     <div className="relative w-full h-full rounded-full" style={{ backgroundColor: col.color }} />
                                                 </div>
 
-                                                <div className="flex flex-col items-center justify-center min-w-[60px] self-center">
-                                                    <div className="flex items-center justify-center text-4xl mt-0">
-                                                        {note.emoji}
+                                                <div className="flex items-center gap-2 mt-4">
+                                                    <div className="flex items-center justify-center min-w-[60px]">
+                                                        <div className="text-4xl text-center">
+                                                            {note.emoji}
+                                                        </div>
                                                     </div>
-                                                </div>
 
-                                                {/* Checkbox moved next to emoji, vertically centered */}
-                                                <div className="flex flex-col justify-center ml-2 self-center">
+                                                    {/* Checkbox moved next to emoji, vertically centered */}
                                                     <button
                                                         title={note.completed ? 'Desmarcar' : 'Marcar'}
                                                         onClick={() => handleToggleComplete(note)}
