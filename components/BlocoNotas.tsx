@@ -297,6 +297,12 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
             if (showArchived !== isNoteArchived) return false;
 
             const matchesSearch = note.content.toLowerCase().includes(searchTerm.toLowerCase());
+
+            if (showArchived) {
+                // If viewing archived notes, ignore priority and status filters
+                return matchesSearch;
+            }
+
             const matchesPriority = filterPriority === 'all' || note.priority === filterPriority;
             const matchesStatus = filterStatus === 'all' || note.status === filterStatus;
             return matchesSearch && matchesPriority && matchesStatus;
