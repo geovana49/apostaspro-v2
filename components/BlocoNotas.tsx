@@ -828,7 +828,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                     </div>
                                                                     <div className="flex flex-wrap items-center justify-between gap-2 mt-auto">
                                                                         <div className="flex flex-wrap items-center gap-2">
-                                                                            <span className="text-[10px] text-white/70 font-medium whitespace-nowrap">
+                                                                            <span className="text-[#38BDF8] text-[10px] font-medium whitespace-nowrap">
                                                                                 {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                                                             </span>
                                                                             {note.reminderEnabled && note.reminderDate && (
@@ -928,7 +928,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                             </p>
                                                             <div className="flex flex-wrap items-center justify-between gap-3 mt-1">
                                                                 <div className="flex flex-wrap items-center gap-3">
-                                                                    <span className="text-[11px] text-white/70 font-medium whitespace-nowrap">
+                                                                    <span className="text-[#38BDF8] text-[11px] font-medium whitespace-nowrap">
                                                                         {new Date(note.createdAt).toLocaleDateString('pt-BR')}
                                                                     </span>
                                                                     {note.reminderEnabled && note.reminderDate && (
