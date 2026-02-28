@@ -986,6 +986,17 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                         {note.emoji}
                                                     </div>
                                                 </div>
+
+                                                {/* Checkbox moved next to emoji, vertically centered */}
+                                                <div className="flex flex-col justify-center ml-2 self-center">
+                                                    <button
+                                                        title={note.completed ? 'Desmarcar' : 'Marcar'}
+                                                        onClick={() => handleToggleComplete(note)}
+                                                        className={`w-5 h-5 rounded-lg border transition-all flex items-center justify-center shrink-0 ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
+                                                    >
+                                                        {note.completed && <Check size={12} strokeWidth={4} />}
+                                                    </button>
+                                                </div>
                                             </div>
 
                                             {/* Center: Content Area */}
@@ -1028,13 +1039,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                                                 <div className="flex items-start justify-between gap-4">
                                                     <div className="flex items-start gap-4 flex-1">
-                                                        <button
-                                                            title={note.completed ? 'Desmarcar' : 'Marcar'}
-                                                            onClick={() => handleToggleComplete(note)}
-                                                            className={`w-5 h-5 mt-1 rounded-lg border transition-all flex items-center justify-center shrink-0 ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
-                                                        >
-                                                            {note.completed && <Check size={12} strokeWidth={4} />}
-                                                        </button>
+                                                        {/* Checkbox was moved from here */}
                                                         <div className="flex-1 min-w-0 flex flex-col gap-2">
                                                             <p className={`text-[15px] leading-relaxed break-words whitespace-normal ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-semibold'}`}>
                                                                 {note.content}
