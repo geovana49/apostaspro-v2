@@ -858,11 +858,11 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                     </div>
                                                                     <div className="flex flex-wrap items-center justify-between gap-2 mt-auto">
                                                                         <div className="flex flex-wrap items-center gap-2">
-                                                                            <span className="text-white/60 text-[10px] font-medium whitespace-nowrap">
+                                                                            <span className="text-slate-400 text-[10px] font-medium whitespace-nowrap">
                                                                                 {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                                                             </span>
                                                                             {note.reminderEnabled && note.reminderDate && (
-                                                                                <span className="text-white/80 text-[10px] font-bold flex items-center gap-1 bg-white/10 px-1.5 py-0.5 rounded">
+                                                                                <span className="text-slate-300 text-[10px] font-bold flex items-center gap-1 bg-slate-800/50 px-1.5 py-0.5 rounded">
                                                                                     <span>⏰</span>
                                                                                     {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                                                                 </span>
@@ -958,11 +958,11 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                             </p>
                                                             <div className="flex flex-wrap items-center justify-between gap-3 mt-1">
                                                                 <div className="flex flex-wrap items-center gap-3">
-                                                                    <span className="text-white/60 text-[11px] font-medium whitespace-nowrap">
+                                                                    <span className="text-slate-400 text-[11px] font-medium whitespace-nowrap">
                                                                         {new Date(note.createdAt).toLocaleDateString('pt-BR')}
                                                                     </span>
                                                                     {note.reminderEnabled && note.reminderDate && (
-                                                                        <span className="text-white/80 text-[11px] font-bold flex items-center gap-1 bg-white/10 px-1.5 py-0.5 rounded">
+                                                                        <span className="text-slate-300 text-[11px] font-bold flex items-center gap-1 bg-slate-800/50 px-1.5 py-0.5 rounded">
                                                                             <span className="text-[13px]">⏰</span>
                                                                             {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                                                         </span>
