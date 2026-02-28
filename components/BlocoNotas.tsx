@@ -832,7 +832,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                                 {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                                                             </span>
                                                                             {note.reminderEnabled && note.reminderDate && (
-                                                                                <span className="text-[#A855F7] text-[10px] font-bold flex items-center gap-1 bg-[#A855F7]/10 px-1.5 py-0.5 rounded">
+                                                                                <span className="text-[#38BDF8] text-[10px] font-bold flex items-center gap-1 bg-[#38BDF8]/10 px-1.5 py-0.5 rounded">
                                                                                     <span>⏰</span>
                                                                                     {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                                                                 </span>
@@ -932,7 +932,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                         {new Date(note.createdAt).toLocaleDateString('pt-BR')}
                                                                     </span>
                                                                     {note.reminderEnabled && note.reminderDate && (
-                                                                        <span className="text-[#A855F7] text-[11px] font-bold flex items-center gap-1 bg-[#A855F7]/10 px-1.5 py-0.5 rounded">
+                                                                        <span className="text-[#38BDF8] text-[11px] font-bold flex items-center gap-1 bg-[#38BDF8]/10 px-1.5 py-0.5 rounded">
                                                                             <span className="text-[13px]">⏰</span>
                                                                             {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                                                         </span>
