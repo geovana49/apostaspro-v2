@@ -923,16 +923,16 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                             {note.completed && <Check size={12} strokeWidth={4} />}
                                                         </button>
                                                         <div className="flex-1 min-w-0 flex flex-col gap-2">
-                                                            <p className={`text-[15px] leading-relaxed ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-semibold'}`}>
+                                                            <p className={`text-[15px] leading-relaxed break-words whitespace-normal ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-semibold'}`}>
                                                                 {note.content}
                                                             </p>
-                                                            <div className="flex items-center justify-between gap-3">
-                                                                <div className="flex items-center gap-2">
+                                                            <div className="flex flex-wrap items-center justify-between gap-3 mt-1">
+                                                                <div className="flex flex-wrap items-center gap-3">
                                                                     <span className="text-[11px] text-gray-500 font-medium whitespace-nowrap">
                                                                         {new Date(note.createdAt).toLocaleDateString('pt-BR')}
                                                                     </span>
                                                                     {note.reminderEnabled && note.reminderDate && (
-                                                                        <span className="text-[#17baa4] text-[11px] font-bold flex items-center gap-1">
+                                                                        <span className="text-[#17baa4] text-[11px] font-bold flex items-center gap-1 bg-[#17baa4]/10 px-1.5 py-0.5 rounded">
                                                                             <span className="text-[13px]">⏰</span>
                                                                             {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                                                         </span>
