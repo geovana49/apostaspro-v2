@@ -862,7 +862,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                                 {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                                                             </span>
                                                                             {note.reminderEnabled && note.reminderDate && (
-                                                                                <span className="text-gray-400 text-[10px] font-bold flex items-center gap-1.5 bg-white/5 border border-emerald-500/40 px-2 py-1 rounded-lg">
+                                                                                <span className={`text-gray-400 text-[10px] font-bold flex items-center gap-1.5 bg-white/5 border px-2 py-1 rounded-lg transition-all ${note.completed ? 'border-emerald-500/40' : 'border-orange-500/40 shadow-[0_0_8px_rgba(249,115,22,0.15)] animate-pulse'}`}>
                                                                                     <span>⏰</span>
                                                                                     {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                                                                 </span>
@@ -962,7 +962,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                         {new Date(note.createdAt).toLocaleDateString('pt-BR')}
                                                                     </span>
                                                                     {note.reminderEnabled && note.reminderDate && (
-                                                                        <span className="text-gray-400 text-[11px] font-bold flex items-center gap-1.5 bg-white/5 border border-emerald-500/40 px-2 py-1 rounded-lg">
+                                                                        <span className={`text-gray-400 text-[11px] font-bold flex items-center gap-1.5 bg-white/5 border px-2 py-1 rounded-lg transition-all ${note.completed ? 'border-emerald-500/40' : 'border-orange-500/40 shadow-[0_0_8px_rgba(249,115,22,0.15)] animate-pulse'}`}>
                                                                             <span className="text-[13px]">⏰</span>
                                                                             {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                                                         </span>
