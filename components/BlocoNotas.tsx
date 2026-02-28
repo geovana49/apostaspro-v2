@@ -93,7 +93,11 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     });
 
                     if (currentUser) {
-                        await FirestoreService.saveNote(currentUser.uid, { ...note, notified: true });
+                        await FirestoreService.saveNote(currentUser.uid, {
+                            ...note,
+                            notified: true,
+                            completed: note.completed ?? false
+                        });
                     }
                 } catch (error) {
                     console.error("Erro ao disparar notificação:", error);
@@ -214,7 +218,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                 reminderEnabled: !!(tempDate && tempTime),
                 createdAt: editingNote ? editingNote.createdAt : new Date().toISOString(),
                 completed: isCompleted,
-                notified: editingNote ? editingNote.notified : false
+                notified: editingNote?.notified ?? false
             };
 
             await FirestoreService.saveNote(currentUser.uid, noteData);
@@ -246,6 +250,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
         const updatedNote: NotepadNote = {
             ...note,
             completed: willBeCompleted,
+            notified: note.notified ?? false,
             // Sincroniza o status visual
             status: willBeCompleted ? 'Feito' : 'Não Feito',
             statusEmoji: willBeCompleted ? '✅' : '⌛'
@@ -822,9 +827,17 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                         </p>
                                                                     </div>
                                                                     <div className="flex items-center justify-between gap-2">
-                                                                        <span className="text-[10px] text-gray-600 font-medium">
-                                                                            {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                                                                        </span>
+                                                                        <div className="flex items-center gap-2">
+                                                                            {note.reminderEnabled && note.reminderDate && (
+                                                                                <span className="text-[#17baa4] text-[10px] font-bold flex items-center gap-1">
+                                                                                    <span>⏰</span>
+                                                                                    {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                                                </span>
+                                                                            )}
+                                                                            <span className="text-[10px] text-gray-600 font-medium whitespace-nowrap">
+                                                                                {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                                                            </span>
+                                                                        </div>
                                                                         {note.status && (
                                                                             <button
                                                                                 onClick={(e) => {
@@ -835,7 +848,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                                         ...note,
                                                                                         status: nextStatus.name,
                                                                                         statusEmoji: nextStatus.emoji,
-                                                                                        completed: nextStatus.name === 'Feito'
+                                                                                        completed: nextStatus.name === 'Feito',
+                                                                                        notified: note.notified ?? false
                                                                                     };
                                                                                     FirestoreService.saveNote(currentUser!.uid, updatedNote);
                                                                                 }}
@@ -913,9 +927,17 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                 {note.content}
                                                             </p>
                                                             <div className="flex items-center justify-between gap-3">
-                                                                <span className="text-[11px] text-gray-500 font-medium">
-                                                                    {new Date(note.createdAt).toLocaleDateString('pt-BR')}
-                                                                </span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-[11px] text-gray-500 font-medium whitespace-nowrap">
+                                                                        {new Date(note.createdAt).toLocaleDateString('pt-BR')}
+                                                                    </span>
+                                                                    {note.reminderEnabled && note.reminderDate && (
+                                                                        <span className="text-[#17baa4] text-[11px] font-bold flex items-center gap-1">
+                                                                            <span className="text-[13px]">⏰</span>
+                                                                            {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                                 {note.status && (
                                                                     <button
                                                                         onClick={(e) => {
@@ -926,7 +948,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                                 ...note,
                                                                                 status: nextStatus.name,
                                                                                 statusEmoji: nextStatus.emoji,
-                                                                                completed: nextStatus.name === 'Feito'
+                                                                                completed: nextStatus.name === 'Feito',
+                                                                                notified: note.notified ?? false
                                                                             };
                                                                             FirestoreService.saveNote(currentUser!.uid, updatedNote);
                                                                         }}
@@ -949,19 +972,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                 </div>
 
                                                 {/* Footer: Date/Actions */}
-                                                <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] font-medium text-gray-500">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="flex items-center gap-2">
-                                                            <Clock size={12} className="opacity-50" />
-                                                            <span>
-                                                                {note.reminderEnabled && note.reminderDate && (
-                                                                    <span className="text-[#17baa4] font-bold">
-                                                                        ⏰ {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                                                                    </span>
-                                                                )}
-                                                            </span>
-                                                        </div>
-                                                    </div>
+                                                <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-end text-[11px] font-medium text-gray-500">
 
                                                     <div className="flex items-center gap-3 transition-opacity">
                                                         <button onClick={() => handleEditNote(note)} title="Editar nota" className="hover:text-white transition-all"><PenLine size={16} /></button>

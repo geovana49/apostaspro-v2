@@ -432,8 +432,13 @@ export const FirestoreService = {
     },
 
     saveNote: async (userId: string, note: NotepadNote) => {
+        // Firebase não suporta valores `undefined`. Garantimos enviando apenas os definidos
+        const cleanNote = Object.fromEntries(
+            Object.entries(note).filter(([_, v]) => v !== undefined)
+        ) as NotepadNote;
+
         await withTimeout(
-            setDoc(doc(db, "users", userId, "notes", note.id), note, { merge: true }),
+            setDoc(doc(db, "users", userId, "notes", note.id), cleanNote, { merge: true }),
             30000,
             "Salvamento de Nota (setDoc)"
         );
