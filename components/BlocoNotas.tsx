@@ -34,9 +34,19 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [selectedStatus, setSelectedStatus] = useState('Não Feito');
     const [statusEmoji, setStatusEmoji] = useState('⌛');
     const [isCustomStatusActive, setIsCustomStatusActive] = useState(false);
+    const [customStatusColor, setCustomStatusColor] = useState('#17baa4');
     const [customStatus, setCustomStatus] = useState('');
     const [showScheduler, setShowScheduler] = useState(false);
     const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+    const [stats, setStats] = useState({ saved: 0, available: 0, pendingRebate: 0 });
+
+    const getStatusColor = (statusName: string) => {
+        const ds = defaultStatuses.find(s => s.name === statusName);
+        if (ds) return ds.hex;
+        const cs = savedCustomStatuses.find(s => s.name === statusName);
+        if (cs && cs.color) return cs.color;
+        return '#17baa4';
+    };
     const [sortBy, setSortBy] = useState<'date' | 'newest' | 'oldest' | 'alpha'>('date');
     const [showSortDropdown, setShowSortDropdown] = useState(false);
     const [noteIdToDelete, setNoteIdToDelete] = useState<string | null>(null);
@@ -49,7 +59,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [editingNote, setEditingNote] = useState<NotepadNote | null>(null);
 
     const defaultStatuses = [
-        { name: 'Não Feito', emoji: '⌛', color: 'text-[#A855F7]', hex: '#A855F7', dot: 'bg-[#A855F7] shadow-[0_0_8px_rgba(168,85,247,0.4)]', active: 'bg-[#A855F7]/10 border-[#A855F7]/40 text-[#A855F7] shadow-[0_0_15px_rgba(168,85,247,0.1)]' },
+        { name: 'Não Feito', emoji: '⌛', color: 'text-[#38BDF8]', hex: '#38BDF8', dot: 'bg-[#38BDF8] shadow-[0_0_8px_rgba(56,189,248,0.4)]', active: 'bg-[#38BDF8]/10 border-[#38BDF8]/40 text-[#38BDF8] shadow-[0_0_15px_rgba(56,189,248,0.1)]' },
         { name: 'Fazendo', emoji: '▶️', color: 'text-[#FFE600]', hex: '#FFE600', dot: 'bg-[#FFE600] shadow-[0_0_8px_rgba(255,230,0,0.5)]', active: 'bg-[#FFE600]/20 border-[#FFE600]/50 text-[#FFE600] shadow-[0_0_15px_rgba(255,230,0,0.2)]' },
         { name: 'Feito', emoji: '✅', color: 'text-[#00FFD1]', hex: '#00FFD1', dot: 'bg-[#00FFD1] shadow-[0_0_8px_rgba(0,255,209,0.5)]', active: 'bg-[#00FFD1]/20 border-[#00FFD1]/50 text-[#00FFD1] shadow-[0_0_15px_rgba(0,255,209,0.2)]' },
         { name: 'Perdido', emoji: '❌', color: 'text-[#FF3D3D]', hex: '#FF3D3D', dot: 'bg-[#FF3D3D] shadow-[0_0_8px_rgba(255,61,61,0.5)]', active: 'bg-[#FF3D3D]/20 border-[#FF3D3D]/50 text-[#FF3D3D] shadow-[0_0_15px_rgba(255,61,61,0.2)]' }
@@ -123,7 +133,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     // Subscribe to saved custom statuses and emojis
     useEffect(() => {
         if (!currentUser?.uid) return;
-        const unsubStatuses = FirestoreService.subscribeToCollection<{ id: string, name: string, emoji: string }>(
+        const unsubStatuses = FirestoreService.subscribeToCollection<{ id: string, name: string, emoji: string, color?: string }>(
             currentUser.uid, 'notepad_statuses', (items) => setSavedCustomStatuses(items)
         );
         const unsubEmojis = FirestoreService.subscribeToCollection<{ id: string, emoji: string }>(
@@ -134,7 +144,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
     const handleSaveCustomStatus = async () => {
         if (!currentUser?.uid || !customStatus.trim()) return;
-        const item = { id: `cs_${Date.now()}`, name: customStatus.trim(), emoji: '📌' };
+        const item = { id: `cs_${Date.now()}`, name: customStatus.trim(), emoji: '📌', color: customStatusColor };
         await FirestoreService.saveItem(currentUser.uid, 'notepad_statuses', item);
         setCustomStatus('');
         setIsCustomStatusActive(false);
@@ -457,41 +467,58 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                         onFocus={() => setIsCustomStatusActive(true)}
                                         onKeyDown={(e) => { if (e.key === 'Enter') handleSaveCustomStatus(); }}
                                     />
+                                    {isCustomStatusActive && (
+                                        <div className="flex items-center gap-1.5 px-2 border-l border-white/10 ml-1">
+                                            {['#17baa4', '#3B82F6', '#A855F7', '#F43F5E', '#F59E0B'].map(color => (
+                                                <button
+                                                    key={color}
+                                                    onClick={() => setCustomStatusColor(color)}
+                                                    className={`w-3.5 h-3.5 rounded-full transition-all ${customStatusColor === color ? 'scale-110 ring-2 ring-white/50' : 'opacity-50 hover:opacity-100'}`}
+                                                    style={{ backgroundColor: color }}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
                                     {customStatus.trim() && (
-                                        <button onClick={handleSaveCustomStatus} className="text-[#17baa4] hover:text-white transition-all" title="Salvar status">
+                                        <button onClick={handleSaveCustomStatus} className="text-[#17baa4] hover:text-white transition-all ml-1" title="Salvar status">
                                             <Check size={14} strokeWidth={3} />
                                         </button>
                                     )}
                                 </div>
 
                                 {/* Saved Custom Statuses */}
-                                {savedCustomStatuses.map(cs => (
-                                    <div key={cs.id} className="relative group/status shrink-0">
-                                        <button
-                                            onClick={() => {
-                                                if (selectedStatus === cs.name && !isCustomStatusActive) {
-                                                    setSelectedStatus('');
-                                                    setStatusEmoji('⌛');
-                                                } else {
-                                                    setSelectedStatus(cs.name);
-                                                    setStatusEmoji(cs.emoji);
-                                                    setIsCustomStatusActive(false);
-                                                }
-                                            }}
-                                            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${(!isCustomStatusActive && selectedStatus === cs.name) ? 'bg-[#17baa4]/20 border-[#17baa4]/50 text-[#17baa4]' : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10'}`}
-                                        >
-                                            <span>{cs.emoji}</span>
-                                            <span>{cs.name}</span>
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteCustomStatus(cs.id)}
-                                            title="Remover este status personalizado"
-                                            className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover/status:opacity-100 transition-opacity"
-                                        >
-                                            <X size={8} className="text-white" />
-                                        </button>
-                                    </div>
-                                ))}
+                                {savedCustomStatuses.map(cs => {
+                                    const color = cs.color || '#17baa4';
+                                    const isActive = (!isCustomStatusActive && selectedStatus === cs.name);
+                                    return (
+                                        <div key={cs.id} className="relative group/status shrink-0">
+                                            <button
+                                                onClick={() => {
+                                                    if (selectedStatus === cs.name && !isCustomStatusActive) {
+                                                        setSelectedStatus('');
+                                                        setStatusEmoji('⌛');
+                                                    } else {
+                                                        setSelectedStatus(cs.name);
+                                                        setStatusEmoji(cs.emoji);
+                                                        setIsCustomStatusActive(false);
+                                                    }
+                                                }}
+                                                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${isActive ? '' : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10'}`}
+                                                style={isActive ? { backgroundColor: `${color}33`, borderColor: `${color}80`, color: color } : {}}
+                                            >
+                                                <span>{cs.emoji}</span>
+                                                <span>{cs.name}</span>
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteCustomStatus(cs.id)}
+                                                title="Remover este status personalizado"
+                                                className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover/status:opacity-100 transition-opacity"
+                                            >
+                                                <X size={8} className="text-white" />
+                                            </button>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -731,7 +758,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 <button title="Mostrar todos os status" onClick={() => setFilterStatus('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterStatus === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}>Todos</button>
                                 {defaultStatuses.map(s => {
                                     const colorMap: Record<string, string> = {
-                                        'Não Feito': 'border-[#A855F7]/40 text-[#A855F7] bg-[#A855F7]/10',
+                                        'Não Feito': 'border-[#38BDF8]/40 text-[#38BDF8] bg-[#38BDF8]/10',
                                         'Fazendo': 'border-[#FFE600]/50 text-[#FFE600] bg-[#FFE600]/10',
                                         'Feito': 'border-[#00FFD1]/50 text-[#00FFD1] bg-[#00FFD1]/10',
                                         'Perdido': 'border-[#FF3D3D]/50 text-[#FF3D3D] bg-[#FF3D3D]/10'
@@ -747,16 +774,20 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                         </button>
                                     );
                                 })}
-                                {savedCustomStatuses.map(cs => (
-                                    <button
-                                        key={cs.id}
-                                        title={`Filtrar por status personalizado "${cs.name}"`}
-                                        onClick={() => setFilterStatus(cs.name)}
-                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterStatus === cs.name ? 'border-[#17baa4]/50 text-[#17baa4] bg-[#17baa4]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}
-                                    >
-                                        <div className="w-2 h-2 rounded-full bg-[#17baa4]" /> {cs.emoji} {cs.name}
-                                    </button>
-                                ))}
+                                {savedCustomStatuses.map(cs => {
+                                    const color = cs.color || '#17baa4';
+                                    return (
+                                        <button
+                                            key={cs.id}
+                                            title={`Filtrar por status personalizado "${cs.name}"`}
+                                            onClick={() => setFilterStatus(cs.name)}
+                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterStatus === cs.name ? '' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}
+                                            style={filterStatus === cs.name ? { backgroundColor: `${color}1A`, borderColor: `${color}80`, color: color } : {}}
+                                        >
+                                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} /> {cs.emoji} {cs.name}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
@@ -828,11 +859,11 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                     </div>
                                                                     <div className="flex flex-wrap items-center justify-between gap-2 mt-auto">
                                                                         <div className="flex flex-wrap items-center gap-2">
-                                                                            <span className="text-[#38BDF8] text-[10px] font-medium whitespace-nowrap">
+                                                                            <span className="text-[#D8B4FE] text-[10px] font-medium whitespace-nowrap">
                                                                                 {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                                                             </span>
                                                                             {note.reminderEnabled && note.reminderDate && (
-                                                                                <span className="text-[#38BDF8] text-[10px] font-bold flex items-center gap-1 bg-[#38BDF8]/10 px-1.5 py-0.5 rounded">
+                                                                                <span className="text-[#A855F7] text-[10px] font-bold flex items-center gap-1 bg-[#A855F7]/10 px-1.5 py-0.5 rounded">
                                                                                     <span>⏰</span>
                                                                                     {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                                                                 </span>
@@ -856,9 +887,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                                 title="Clique para alterar o status"
                                                                                 className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-white/5 border transition-all active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)] hover:bg-white/10 shrink-0"
                                                                                 style={{
-                                                                                    backgroundColor: `${(defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex}20`,
-                                                                                    color: (defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex,
-                                                                                    borderColor: `${(defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex}40`
+                                                                                    backgroundColor: `${getStatusColor(note.status)}20`,
+                                                                                    color: getStatusColor(note.status),
+                                                                                    borderColor: `${getStatusColor(note.status)}40`
                                                                                 }}
                                                                             >
                                                                                 {note.status}
@@ -928,11 +959,11 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                             </p>
                                                             <div className="flex flex-wrap items-center justify-between gap-3 mt-1">
                                                                 <div className="flex flex-wrap items-center gap-3">
-                                                                    <span className="text-[#38BDF8] text-[11px] font-medium whitespace-nowrap">
+                                                                    <span className="text-[#D8B4FE] text-[11px] font-medium whitespace-nowrap">
                                                                         {new Date(note.createdAt).toLocaleDateString('pt-BR')}
                                                                     </span>
                                                                     {note.reminderEnabled && note.reminderDate && (
-                                                                        <span className="text-[#38BDF8] text-[11px] font-bold flex items-center gap-1 bg-[#38BDF8]/10 px-1.5 py-0.5 rounded">
+                                                                        <span className="text-[#A855F7] text-[11px] font-bold flex items-center gap-1 bg-[#A855F7]/10 px-1.5 py-0.5 rounded">
                                                                             <span className="text-[13px]">⏰</span>
                                                                             {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                                                         </span>
@@ -956,9 +987,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                         title="Clique para alterar o status"
                                                                         className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white/5 border transition-all active:scale-95 shadow-[0_2px_12px_rgba(0,0,0,0.3)] hover:bg-white/10 whitespace-nowrap shrink-0 border-white/10"
                                                                         style={{
-                                                                            backgroundColor: `${(defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex}20`,
-                                                                            color: (defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex,
-                                                                            borderColor: `${(defaultStatuses.find(s => s.name === note.status) || defaultStatuses[0]).hex}40`
+                                                                            backgroundColor: `${getStatusColor(note.status)}20`,
+                                                                            color: getStatusColor(note.status),
+                                                                            borderColor: `${getStatusColor(note.status)}40`
                                                                         }}
                                                                     >
                                                                         {note.status}
