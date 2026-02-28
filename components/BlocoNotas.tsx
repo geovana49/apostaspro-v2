@@ -973,7 +973,42 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                                 return (
                                     <div key={note.id} className="bg-[#1a1f35]/90 border border-white/5 rounded-2xl p-5 hover:border-[#3B82F6]/30 transition-all group relative overflow-hidden mb-3">
-                                        <div className="flex gap-4">
+                                        {/* Absolute Pin Badges Top Right */}
+                                        <div className="absolute top-5 right-5 flex items-center gap-2 z-10">
+                                            {note.archived && (
+                                                <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white/5 border transition-all shadow-[0_2px_12px_rgba(0,0,0,0.3)] whitespace-nowrap border-white/10 text-gray-400">
+                                                    ARQUIVADO
+                                                </span>
+                                            )}
+                                            {note.status && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const currentIndex = defaultStatuses.findIndex(s => s.name === note.status);
+                                                        const nextStatus = defaultStatuses[(currentIndex + 1) % defaultStatuses.length];
+                                                        const updatedNote: NotepadNote = {
+                                                            ...note,
+                                                            status: nextStatus.name,
+                                                            statusEmoji: nextStatus.emoji,
+                                                            completed: nextStatus.name === 'Feito',
+                                                            notified: note.notified ?? false
+                                                        };
+                                                        FirestoreService.saveNote(currentUser!.uid, updatedNote);
+                                                    }}
+                                                    title="Clique para alterar o status"
+                                                    className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white/5 border transition-all active:scale-95 shadow-[0_2px_12px_rgba(0,0,0,0.3)] hover:bg-white/10 whitespace-nowrap border-white/10"
+                                                    style={{
+                                                        backgroundColor: `${getStatusColor(note.status)}20`,
+                                                        color: getStatusColor(note.status),
+                                                        borderColor: `${getStatusColor(note.status)}40`
+                                                    }}
+                                                >
+                                                    {note.status}
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="flex gap-4 relative z-0">
                                             {/* Left: Glowing Neon Bar + Glass Emoji */}
                                             <div className="flex shrink-0 items-start gap-4">
                                                 <div className="relative w-1 self-stretch rounded-full overflow-hidden">
@@ -1000,46 +1035,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                             {note.completed && <Check size={12} strokeWidth={4} />}
                                                         </button>
                                                         <div className="flex-1 min-w-0 flex flex-col gap-2">
-                                                            <div className="flex items-start justify-between gap-4">
-                                                                <p className={`text-[15px] leading-relaxed break-words whitespace-normal ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-semibold'}`}>
-                                                                    {note.content}
-                                                                </p>
-
-                                                                {/* Badges moved to the top right */}
-                                                                <div className="flex items-center gap-2 shrink-0">
-                                                                    {note.archived && (
-                                                                        <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white/5 border transition-all shadow-[0_2px_12px_rgba(0,0,0,0.3)] whitespace-nowrap border-white/10 text-gray-400">
-                                                                            ARQUIVADO
-                                                                        </span>
-                                                                    )}
-                                                                    {note.status && (
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                const currentIndex = defaultStatuses.findIndex(s => s.name === note.status);
-                                                                                const nextStatus = defaultStatuses[(currentIndex + 1) % defaultStatuses.length];
-                                                                                const updatedNote: NotepadNote = {
-                                                                                    ...note,
-                                                                                    status: nextStatus.name,
-                                                                                    statusEmoji: nextStatus.emoji,
-                                                                                    completed: nextStatus.name === 'Feito',
-                                                                                    notified: note.notified ?? false
-                                                                                };
-                                                                                FirestoreService.saveNote(currentUser!.uid, updatedNote);
-                                                                            }}
-                                                                            title="Clique para alterar o status"
-                                                                            className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white/5 border transition-all active:scale-95 shadow-[0_2px_12px_rgba(0,0,0,0.3)] hover:bg-white/10 whitespace-nowrap border-white/10"
-                                                                            style={{
-                                                                                backgroundColor: `${getStatusColor(note.status)}20`,
-                                                                                color: getStatusColor(note.status),
-                                                                                borderColor: `${getStatusColor(note.status)}40`
-                                                                            }}
-                                                                        >
-                                                                            {note.status}
-                                                                        </button>
-                                                                    )}
-                                                                </div>
-                                                            </div>
+                                                            <p className={`text-[15px] leading-relaxed break-words whitespace-normal pr-24 ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-semibold'}`}>
+                                                                {note.content}
+                                                            </p>
 
                                                             <div className="flex flex-wrap items-center justify-between gap-3 mt-1">
                                                                 <div className="flex flex-wrap items-center gap-3">
