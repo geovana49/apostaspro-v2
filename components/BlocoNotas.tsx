@@ -981,8 +981,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                     <div className="relative w-full h-full rounded-full" style={{ backgroundColor: col.color }} />
                                                 </div>
 
-                                                <div className="flex flex-col items-center gap-3 mt-1 min-w-[60px]">
-                                                    <div className="flex items-center justify-center text-4xl">
+                                                <div className="flex flex-col items-center justify-center min-w-[60px] self-center">
+                                                    <div className="flex items-center justify-center text-4xl mt-0">
                                                         {note.emoji}
                                                     </div>
                                                 </div>
