@@ -49,7 +49,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [editingNote, setEditingNote] = useState<NotepadNote | null>(null);
 
     const defaultStatuses = [
-        { name: 'Não Feito', emoji: '⌛', color: 'text-gray-400', hex: '#9ca3af', dot: 'bg-gray-400 shadow-[0_0_8px_rgba(156,163,175,0.4)]', active: 'bg-gray-400/10 border-gray-400/40 text-gray-400 shadow-[0_0_15px_rgba(156,163,175,0.1)]' },
+        { name: 'Não Feito', emoji: '⌛', color: 'text-[#38BDF8]', hex: '#38BDF8', dot: 'bg-[#38BDF8] shadow-[0_0_8px_rgba(56,189,248,0.4)]', active: 'bg-[#38BDF8]/10 border-[#38BDF8]/40 text-[#38BDF8] shadow-[0_0_15px_rgba(56,189,248,0.1)]' },
         { name: 'Fazendo', emoji: '▶️', color: 'text-[#FFE600]', hex: '#FFE600', dot: 'bg-[#FFE600] shadow-[0_0_8px_rgba(255,230,0,0.5)]', active: 'bg-[#FFE600]/20 border-[#FFE600]/50 text-[#FFE600] shadow-[0_0_15px_rgba(255,230,0,0.2)]' },
         { name: 'Feito', emoji: '✅', color: 'text-[#00FFD1]', hex: '#00FFD1', dot: 'bg-[#00FFD1] shadow-[0_0_8px_rgba(0,255,209,0.5)]', active: 'bg-[#00FFD1]/20 border-[#00FFD1]/50 text-[#00FFD1] shadow-[0_0_15px_rgba(0,255,209,0.2)]' },
         { name: 'Perdido', emoji: '❌', color: 'text-[#FF3D3D]', hex: '#FF3D3D', dot: 'bg-[#FF3D3D] shadow-[0_0_8px_rgba(255,61,61,0.5)]', active: 'bg-[#FF3D3D]/20 border-[#FF3D3D]/50 text-[#FF3D3D] shadow-[0_0_15px_rgba(255,61,61,0.2)]' }
@@ -731,7 +731,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 <button title="Mostrar todos os status" onClick={() => setFilterStatus('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterStatus === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}>Todos</button>
                                 {defaultStatuses.map(s => {
                                     const colorMap: Record<string, string> = {
-                                        'Não Feito': 'border-gray-500/40 text-gray-400 bg-gray-500/10',
+                                        'Não Feito': 'border-[#38BDF8]/40 text-[#38BDF8] bg-[#38BDF8]/10',
                                         'Fazendo': 'border-[#FFE600]/50 text-[#FFE600] bg-[#FFE600]/10',
                                         'Feito': 'border-[#00FFD1]/50 text-[#00FFD1] bg-[#00FFD1]/10',
                                         'Perdido': 'border-[#FF3D3D]/50 text-[#FF3D3D] bg-[#FF3D3D]/10'
