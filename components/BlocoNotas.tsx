@@ -828,15 +828,15 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                     </div>
                                                                     <div className="flex flex-wrap items-center justify-between gap-2 mt-auto">
                                                                         <div className="flex flex-wrap items-center gap-2">
+                                                                            <span className="text-[10px] text-white/70 font-medium whitespace-nowrap">
+                                                                                {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                                                            </span>
                                                                             {note.reminderEnabled && note.reminderDate && (
                                                                                 <span className="text-[#17baa4] text-[10px] font-bold flex items-center gap-1 bg-[#17baa4]/10 px-1.5 py-0.5 rounded">
                                                                                     <span>⏰</span>
                                                                                     {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                                                                 </span>
                                                                             )}
-                                                                            <span className="text-[10px] text-gray-600 font-medium whitespace-nowrap">
-                                                                                {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                                                                            </span>
                                                                         </div>
                                                                         {note.status && (
                                                                             <button
@@ -928,15 +928,15 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                             </p>
                                                             <div className="flex flex-wrap items-center justify-between gap-3 mt-1">
                                                                 <div className="flex flex-wrap items-center gap-3">
+                                                                    <span className="text-[11px] text-white/70 font-medium whitespace-nowrap">
+                                                                        {new Date(note.createdAt).toLocaleDateString('pt-BR')}
+                                                                    </span>
                                                                     {note.reminderEnabled && note.reminderDate && (
                                                                         <span className="text-[#17baa4] text-[11px] font-bold flex items-center gap-1 bg-[#17baa4]/10 px-1.5 py-0.5 rounded">
                                                                             <span className="text-[13px]">⏰</span>
                                                                             {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                                                         </span>
                                                                     )}
-                                                                    <span className="text-[11px] text-gray-500 font-medium whitespace-nowrap">
-                                                                        {new Date(note.createdAt).toLocaleDateString('pt-BR')}
-                                                                    </span>
                                                                 </div>
                                                                 {note.status && (
                                                                     <button
