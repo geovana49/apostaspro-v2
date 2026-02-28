@@ -1035,7 +1035,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                             {note.completed && <Check size={12} strokeWidth={4} />}
                                                         </button>
                                                         <div className="flex-1 min-w-0 flex flex-col gap-2">
-                                                            <p className={`text-[15px] leading-relaxed break-words whitespace-normal pr-24 ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-semibold'}`}>
+                                                            <p className={`text-[15px] leading-relaxed break-words whitespace-normal pr-48 ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-semibold'}`}>
                                                                 {note.content}
                                                             </p>
 
