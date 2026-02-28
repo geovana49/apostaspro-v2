@@ -149,4 +149,5 @@ export interface NotepadNote {
   createdAt: string;
   completed?: boolean;
   notified?: boolean;
+  archived?: boolean;
 }

@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom';
 import {
     StickyNote, Trash2, Plus, Bell, BellOff, ChevronUp, ChevronDown,
     TriangleAlert, Star, Check, Calendar, Clock, X, Search, PenLine,
-    Folder, Flame, Zap, FileText, LayoutGrid, List as ListIcon, Trash, ArrowDownUp, Pencil, CheckCircle2
+    Folder, Flame, Zap, FileText, LayoutGrid, List as ListIcon, Trash, ArrowDownUp, Pencil, CheckCircle2,
+    Archive, ArchiveRestore
 } from 'lucide-react';
 import { User, NotepadNote } from '../types';
 import { FirestoreService } from '../services/firestoreService';
@@ -57,6 +58,12 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [savedCustomStatuses, setSavedCustomStatuses] = useState<{ id: string, name: string, emoji: string }[]>([]);
     const [savedCustomEmojis, setSavedCustomEmojis] = useState<{ id: string, emoji: string }[]>([]);
     const [editingNote, setEditingNote] = useState<NotepadNote | null>(null);
+    const [showArchived, setShowArchived] = useState(false);
+
+    const handleToggleArchive = (note: NotepadNote) => {
+        const updatedNote = { ...note, archived: !note.archived };
+        FirestoreService.saveNote(currentUser!.uid, updatedNote);
+    };
 
     const defaultStatuses = [
         { name: 'Não Feito', emoji: '⌛', color: 'text-[#38BDF8]', hex: '#38BDF8', dot: 'bg-[#38BDF8] shadow-[0_0_8px_rgba(56,189,248,0.4)]', active: 'bg-[#38BDF8]/10 border-[#38BDF8]/40 text-[#38BDF8] shadow-[0_0_15px_rgba(56,189,248,0.1)]' },
@@ -278,6 +285,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
     const filteredNotes = useMemo(() => {
         let result = notes.filter(note => {
+            const isNoteArchived = !!note.archived;
+            if (showArchived !== isNoteArchived) return false;
+
             const matchesSearch = note.content.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesPriority = filterPriority === 'all' || note.priority === filterPriority;
             const matchesStatus = filterStatus === 'all' || note.status === filterStatus;
@@ -709,6 +719,14 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             </div>
 
                             <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setShowArchived(!showArchived)}
+                                    title={showArchived ? "Ocultar arquivados" : "Mostrar arquivados"}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all active:scale-95 border ${showArchived ? 'bg-white/10 text-white border-white/20' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}
+                                >
+                                    <Archive size={14} />
+                                    Arquivados ({notes.filter(n => n.archived).length})
+                                </button>
                                 <div className="relative" ref={sortRef}>
                                     <button
                                         onClick={() => setShowSortDropdown(!showSortDropdown)}
@@ -791,10 +809,16 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         </div>
                     </div>
 
-                    <div className="px-2 pt-2 -mt-10 mb-8 w-full order-first">
+                    <div className="px-2 pt-2 mb-4 w-full">
                         <span className="text-[10px] font-black text-gray-700 uppercase tracking-widest">
-                            {filteredNotes.length} {filteredNotes.length === 1 ? 'NOTA' : 'NOTAS'}
+                            {filteredNotes.length} {showArchived ? (filteredNotes.length === 1 ? 'ARQUIVADO' : 'ARQUIVADOS') : (filteredNotes.length === 1 ? 'NOTA' : 'NOTAS')}
                         </span>
+                        {showArchived && (
+                            <div className="flex items-center justify-center relative py-4 mt-2">
+                                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5" /></div>
+                                <span className="relative px-6 bg-[#090c19] text-[10px] font-black text-gray-500 uppercase tracking-widest">ARQUIVADAS</span>
+                            </div>
+                        )}
                     </div>
                     {viewMode === 'grid' ? (
                         /* Kanban Board View - Grouped by Priority */
@@ -868,6 +892,11 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                                 </span>
                                                                             )}
                                                                         </div>
+                                                                        {note.archived && (
+                                                                            <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-white/10 border border-white/20 text-gray-400 shrink-0">
+                                                                                ARQUIVADO
+                                                                            </span>
+                                                                        )}
                                                                         {note.status && (
                                                                             <button
                                                                                 onClick={(e) => {
@@ -901,7 +930,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                             <div className="flex items-center justify-end gap-2 mt-1 pt-2 border-t border-white/5 transition-opacity">
                                                                 <div className="flex items-center gap-2 text-gray-600">
                                                                     <button onClick={() => handleEditNote(note)} title="Editar nota" className="hover:text-white transition-all"><PenLine size={13} /></button>
-                                                                    <button title="Mover para pasta" className="hover:text-white transition-all"><Folder size={13} /></button>
+                                                                    <button onClick={() => handleToggleArchive(note)} title={note.archived ? "Desarquivar nota" : "Arquivar nota"} className="hover:text-white transition-all">
+                                                                        {note.archived ? <ArchiveRestore size={13} /> : <Archive size={13} />}
+                                                                    </button>
                                                                     <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={13} /></button>
                                                                 </div>
                                                             </div>
@@ -968,6 +999,11 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                         </span>
                                                                     )}
                                                                 </div>
+                                                                {note.archived && (
+                                                                    <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white/5 border transition-all shadow-[0_2px_12px_rgba(0,0,0,0.3)] whitespace-nowrap shrink-0 border-white/10 text-gray-400">
+                                                                        ARQUIVADO
+                                                                    </span>
+                                                                )}
                                                                 {note.status && (
                                                                     <button
                                                                         onClick={(e) => {
@@ -1006,7 +1042,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                                                     <div className="flex items-center gap-3 transition-opacity">
                                                         <button onClick={() => handleEditNote(note)} title="Editar nota" className="hover:text-white transition-all"><PenLine size={16} /></button>
-                                                        <button title="Mover para pasta" className="hover:text-white transition-all"><Folder size={16} /></button>
+                                                        <button onClick={() => handleToggleArchive(note)} title={note.archived ? "Desarquivar nota" : "Arquivar nota"} className="hover:text-white transition-all">
+                                                            {note.archived ? <ArchiveRestore size={16} /> : <Archive size={16} />}
+                                                        </button>
                                                         <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={16} /></button>
                                                     </div>
                                                 </div>
