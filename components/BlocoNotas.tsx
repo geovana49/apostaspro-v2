@@ -469,14 +469,13 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                     />
                                     {isCustomStatusActive && (
                                         <div className="flex items-center gap-1.5 px-2 border-l border-white/10 ml-1">
-                                            {['#17baa4', '#3B82F6', '#A855F7', '#F43F5E', '#F59E0B'].map(color => (
-                                                <button
-                                                    key={color}
-                                                    onClick={() => setCustomStatusColor(color)}
-                                                    className={`w-3.5 h-3.5 rounded-full transition-all ${customStatusColor === color ? 'scale-110 ring-2 ring-white/50' : 'opacity-50 hover:opacity-100'}`}
-                                                    style={{ backgroundColor: color }}
-                                                />
-                                            ))}
+                                            <input
+                                                type="color"
+                                                title="Escolha a cor do status"
+                                                className="w-5 h-5 cursor-pointer bg-transparent border-none p-0"
+                                                value={customStatusColor}
+                                                onChange={(e) => setCustomStatusColor(e.target.value)}
+                                            />
                                         </div>
                                     )}
                                     {customStatus.trim() && (
@@ -859,11 +858,11 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                     </div>
                                                                     <div className="flex flex-wrap items-center justify-between gap-2 mt-auto">
                                                                         <div className="flex flex-wrap items-center gap-2">
-                                                                            <span className="text-[#D8B4FE] text-[10px] font-medium whitespace-nowrap">
+                                                                            <span className="text-white/60 text-[10px] font-medium whitespace-nowrap">
                                                                                 {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                                                             </span>
                                                                             {note.reminderEnabled && note.reminderDate && (
-                                                                                <span className="text-[#A855F7] text-[10px] font-bold flex items-center gap-1 bg-[#A855F7]/10 px-1.5 py-0.5 rounded">
+                                                                                <span className="text-white/80 text-[10px] font-bold flex items-center gap-1 bg-white/10 px-1.5 py-0.5 rounded">
                                                                                     <span>⏰</span>
                                                                                     {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                                                                 </span>
@@ -959,11 +958,11 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                             </p>
                                                             <div className="flex flex-wrap items-center justify-between gap-3 mt-1">
                                                                 <div className="flex flex-wrap items-center gap-3">
-                                                                    <span className="text-[#D8B4FE] text-[11px] font-medium whitespace-nowrap">
+                                                                    <span className="text-white/60 text-[11px] font-medium whitespace-nowrap">
                                                                         {new Date(note.createdAt).toLocaleDateString('pt-BR')}
                                                                     </span>
                                                                     {note.reminderEnabled && note.reminderDate && (
-                                                                        <span className="text-[#A855F7] text-[11px] font-bold flex items-center gap-1 bg-[#A855F7]/10 px-1.5 py-0.5 rounded">
+                                                                        <span className="text-white/80 text-[11px] font-bold flex items-center gap-1 bg-white/10 px-1.5 py-0.5 rounded">
                                                                             <span className="text-[13px]">⏰</span>
                                                                             {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                                                         </span>
