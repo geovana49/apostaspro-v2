@@ -1047,7 +1047,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                 )}
                                                                 {/* Left: Colored bar */}
                                                                 <div className="flex shrink-0 items-start self-stretch flex-col">
-                                                                    <div className="relative w-1 flex-1 mt-8 mb-4 rounded-full">
+                                                                    <div className="relative w-1 flex-1 mt-4 mb-4 rounded-full">
                                                                         {/* Central Bar: Soft start at top, gentle fade all the way down */}
                                                                         <div className="absolute inset-0 rounded-full opacity-90" style={{ background: `linear-gradient(to bottom, ${col.color}ee 0%, ${col.color}40 100%)` }} />
                                                                         {/* Glow: Very subtle and smooth, starting from the top */}
@@ -1179,7 +1179,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                             )}
                                             {/* Left: Glowing Neon Bar */}
                                             <div className="flex shrink-0 items-start self-stretch flex-col">
-                                                <div className="relative w-1 flex-1 mt-10 mb-6 rounded-full">
+                                                <div className="relative w-1 flex-1 mt-6 mb-6 rounded-full">
                                                     {/* Central Bar: Soft start at top, gentle fade all the way down */}
                                                     <div className="absolute inset-0 rounded-full opacity-90" style={{ background: `linear-gradient(to bottom, ${col.color}ee 0%, ${col.color}40 100%)` }} />
                                                     {/* Glow: Very subtle and smooth, starting from the top */}
