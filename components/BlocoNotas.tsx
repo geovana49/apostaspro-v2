@@ -924,7 +924,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                                                                     {/* Text Content Row with Emoji Alignment */}
                                                                     <div className="flex items-center gap-3">
-                                                                        {/* Emoji & Checkbox centered with text content block */}
+                                                                        {/* Emoji & Checkbox centered with ONLY the text content block */}
                                                                         <div className="flex items-center gap-2 shrink-0">
                                                                             <div className="flex flex-col items-center gap-2 min-w-[50px]">
                                                                                 <div className="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center text-2xl">
@@ -948,7 +948,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                         </div>
                                                                     </div>
 
-                                                                    <div className="flex flex-wrap items-center justify-between gap-2 mt-auto pt-1">
+                                                                    <div className="flex flex-wrap items-center justify-between gap-2 mt-auto pt-1 ml-[86px]">
                                                                         <div className="flex flex-wrap items-center gap-2">
                                                                             <span className="text-gray-500 text-[10px] font-medium whitespace-nowrap">
                                                                                 {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
@@ -1045,46 +1045,40 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                 )}
 
                                                 {/* Text Content + Emoji Alignment Row */}
-                                                <div className="flex items-center justify-between gap-4">
-                                                    <div className="flex items-center gap-4 flex-1">
-                                                        {/* Emoji & Checkbox centered with text content */}
-                                                        <div className="flex items-center gap-2 shrink-0">
-                                                            <div className="flex items-center justify-center min-w-[60px]">
-                                                                <div className="text-4xl text-center">
-                                                                    {note.emoji}
-                                                                </div>
-                                                            </div>
-                                                            <button
-                                                                title={note.completed ? 'Desmarcar' : 'Marcar'}
-                                                                onClick={() => handleToggleComplete(note)}
-                                                                className={`w-5 h-5 rounded-lg border transition-all flex items-center justify-center shrink-0 ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
-                                                            >
-                                                                {note.completed && <Check size={12} strokeWidth={4} />}
-                                                            </button>
-                                                        </div>
-
-                                                        <div className="flex-1 min-w-0 flex flex-col gap-2">
-                                                            <p className={`text-[15px] leading-relaxed break-words whitespace-normal ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-semibold'}`}>
-                                                                {note.content}
-                                                            </p>
-
-                                                            <div className="flex flex-wrap items-center justify-between gap-3 mt-1">
-                                                                <div className="flex flex-wrap items-center gap-3">
-                                                                    <span className="text-gray-500 text-[11px] font-medium whitespace-nowrap">
-                                                                        {new Date(note.createdAt).toLocaleDateString('pt-BR')}
-                                                                    </span>
-                                                                    {note.reminderEnabled && note.reminderDate && (
-                                                                        <span className={`text-gray-400 text-[11px] font-bold flex items-center gap-1.5 bg-white/5 border px-2 py-1 rounded-lg transition-all ${note.completed ? 'border-emerald-500/40' : 'border-orange-500/40 shadow-[0_0_8px_rgba(249,115,22,0.15)] animate-pulse'}`}>
-                                                                            <span className="text-[13px]">⏰</span>
-                                                                            {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
+                                                <div className="flex items-center gap-4 w-full">
+                                                    {/* Emoji & Checkbox centered with ONLY the text content block */}
+                                                    <div className="flex items-center gap-2 shrink-0">
+                                                        <div className="flex items-center justify-center min-w-[60px]">
+                                                            <div className="text-4xl text-center">
+                                                                {note.emoji}
                                                             </div>
                                                         </div>
+                                                        <button
+                                                            title={note.completed ? 'Desmarcar' : 'Marcar'}
+                                                            onClick={() => handleToggleComplete(note)}
+                                                            className={`w-5 h-5 rounded-lg border transition-all flex items-center justify-center shrink-0 ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
+                                                        >
+                                                            {note.completed && <Check size={12} strokeWidth={4} />}
+                                                        </button>
                                                     </div>
 
-                                                    {/* Status Badge removed from here */}
+                                                    <p className={`flex-1 min-w-0 text-[15px] leading-relaxed break-words whitespace-normal ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-semibold'}`}>
+                                                        {note.content}
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex flex-wrap items-center justify-between gap-3 mt-1 ml-[104px]">
+                                                    <div className="flex flex-wrap items-center gap-3">
+                                                        <span className="text-gray-500 text-[11px] font-medium whitespace-nowrap">
+                                                            {new Date(note.createdAt).toLocaleDateString('pt-BR')}
+                                                        </span>
+                                                        {note.reminderEnabled && note.reminderDate && (
+                                                            <span className={`text-gray-400 text-[11px] font-bold flex items-center gap-1.5 bg-white/5 border px-2 py-1 rounded-lg transition-all ${note.completed ? 'border-emerald-500/40' : 'border-orange-500/40 shadow-[0_0_8px_rgba(249,115,22,0.15)] animate-pulse'}`}>
+                                                                <span className="text-[13px]">⏰</span>
+                                                                {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
 
                                                 {/* Footer: Date/Actions */}
