@@ -1019,9 +1019,10 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                             </div>
 
                                             {/* Center: Content Area */}
-                                            <div className="flex-1 min-w-0 flex flex-col gap-3">
+                                            <div className="flex-1 min-w-0 flex flex-col gap-2">
+                                                {/* Badges Row (Top Right) */}
                                                 {(note.archived || note.status) && (
-                                                    <div className="flex justify-end gap-2 w-full">
+                                                    <div className="flex justify-end gap-2 w-full mb-1">
                                                         {note.archived && (
                                                             <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white/5 border transition-all shadow-[0_2px_12px_rgba(0,0,0,0.3)] whitespace-nowrap border-white/10 text-gray-400">
                                                                 ARQUIVADO
@@ -1056,9 +1057,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                     </div>
                                                 )}
 
+                                                {/* Text Content */}
                                                 <div className="flex items-start justify-between gap-4">
                                                     <div className="flex items-start gap-4 flex-1">
-                                                        {/* Checkbox was moved from here */}
                                                         <div className="flex-1 min-w-0 flex flex-col gap-2">
                                                             <p className={`text-[15px] leading-relaxed break-words whitespace-normal ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-semibold'}`}>
                                                                 {note.content}
