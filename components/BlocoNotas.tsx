@@ -991,12 +991,31 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 return (
                                     <div key={note.id} className="bg-[#1a1f35]/90 border border-white/5 rounded-2xl p-5 hover:border-[#3B82F6]/30 transition-all group relative overflow-hidden mb-3">
                                         <div className="flex gap-4 relative z-0">
-                                            {/* Left: Glowing Neon Bar */}
-                                            <div className="relative w-1 self-stretch rounded-full shrink-0">
-                                                {/* Central Bar: Soft start at top, gentle fade all the way down */}
-                                                <div className="absolute inset-0 rounded-full opacity-90" style={{ background: `linear-gradient(to bottom, ${col.color}ee 0%, ${col.color}40 100%)` }} />
-                                                {/* Glow: Very subtle and smooth, starting from the top */}
-                                                <div className="absolute inset-x-[-2px] inset-y-0 opacity-60 blur-[4px]" style={{ background: `linear-gradient(to bottom, ${col.color} 0%, transparent 80%)` }} />
+                                            {/* Left: Glowing Neon Bar + Glass Emoji */}
+                                            <div className="flex shrink-0 items-start gap-4">
+                                                <div className="relative w-1 self-stretch rounded-full">
+                                                    {/* Central Bar: Soft start at top, gentle fade all the way down */}
+                                                    <div className="absolute inset-0 rounded-full opacity-90" style={{ background: `linear-gradient(to bottom, ${col.color}ee 0%, ${col.color}40 100%)` }} />
+                                                    {/* Glow: Very subtle and smooth, starting from the top */}
+                                                    <div className="absolute inset-x-[-2px] inset-y-0 opacity-60 blur-[4px]" style={{ background: `linear-gradient(to bottom, ${col.color} 0%, transparent 80%)` }} />
+                                                </div>
+
+                                                <div className="flex items-center gap-2 mt-4">
+                                                    <div className="flex items-center justify-center min-w-[60px]">
+                                                        <div className="text-4xl text-center">
+                                                            {note.emoji}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Checkbox moved next to emoji, vertically centered */}
+                                                    <button
+                                                        title={note.completed ? 'Desmarcar' : 'Marcar'}
+                                                        onClick={() => handleToggleComplete(note)}
+                                                        className={`w-5 h-5 rounded-lg border transition-all flex items-center justify-center shrink-0 ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
+                                                    >
+                                                        {note.completed && <Check size={12} strokeWidth={4} />}
+                                                    </button>
+                                                </div>
                                             </div>
 
                                             {/* Center: Content Area */}
@@ -1038,57 +1057,43 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                     </div>
                                                 )}
 
-                                                {/* Content Row: Emoji, Checkbox, and Text */}
-                                                <div className="flex items-start gap-4 w-full">
-                                                    {/* Emoji & Checkbox side by side */}
-                                                    <div className="flex items-center gap-2 shrink-0">
-                                                        <div className="flex items-center justify-center min-w-[60px]">
-                                                            <div className="text-4xl text-center">
-                                                                {note.emoji}
-                                                            </div>
-                                                        </div>
-                                                        <button
-                                                            title={note.completed ? 'Desmarcar' : 'Marcar'}
-                                                            onClick={() => handleToggleComplete(note)}
-                                                            className={`w-5 h-5 rounded-lg border transition-all flex items-center justify-center shrink-0 ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
-                                                        >
-                                                            {note.completed && <Check size={12} strokeWidth={4} />}
-                                                        </button>
-                                                    </div>
+                                                {/* Text Content */}
+                                                <div className="flex items-start justify-between gap-4">
+                                                    <div className="flex items-start gap-4 flex-1">
+                                                        <div className="flex-1 min-w-0 flex flex-col gap-2">
+                                                            <p className={`text-[15px] leading-relaxed break-words whitespace-normal ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-semibold'}`}>
+                                                                {note.content}
+                                                            </p>
 
-                                                    {/* Main Text Content */}
-                                                    <div className="flex-1 min-w-0 flex flex-col gap-2">
-                                                        <p className={`text-[15px] leading-relaxed break-words whitespace-normal mt-2 ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-semibold'}`}>
-                                                            {note.content}
-                                                        </p>
-
-                                                        <div className="flex flex-wrap items-center justify-between gap-3 mt-1">
-                                                            <div className="flex flex-wrap items-center gap-3">
-                                                                <span className="text-gray-500 text-[11px] font-medium whitespace-nowrap">
-                                                                    {new Date(note.createdAt).toLocaleDateString('pt-BR')}
-                                                                </span>
-                                                                {note.reminderEnabled && note.reminderDate && (
-                                                                    <span className={`text-gray-400 text-[11px] font-bold flex items-center gap-1.5 bg-white/5 border px-2 py-1 rounded-lg transition-all ${note.completed ? 'border-emerald-500/40' : 'border-orange-500/40 shadow-[0_0_8px_rgba(249,115,22,0.15)] animate-pulse'}`}>
-                                                                        <span className="text-[13px]">⏰</span>
-                                                                        {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                            <div className="flex flex-wrap items-center justify-between gap-3 mt-1">
+                                                                <div className="flex flex-wrap items-center gap-3">
+                                                                    <span className="text-gray-500 text-[11px] font-medium whitespace-nowrap">
+                                                                        {new Date(note.createdAt).toLocaleDateString('pt-BR')}
                                                                     </span>
-                                                                )}
+                                                                    {note.reminderEnabled && note.reminderDate && (
+                                                                        <span className={`text-gray-400 text-[11px] font-bold flex items-center gap-1.5 bg-white/5 border px-2 py-1 rounded-lg transition-all ${note.completed ? 'border-emerald-500/40' : 'border-orange-500/40 shadow-[0_0_8px_rgba(249,115,22,0.15)] animate-pulse'}`}>
+                                                                            <span className="text-[13px]">⏰</span>
+                                                                            {new Date(note.reminderDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
+
+                                                    {/* Status Badge removed from here */}
                                                 </div>
 
-                                                {/* Status Badge removed from here */}
-                                            </div>
+                                                {/* Footer: Date/Actions */}
+                                                <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-end text-[11px] font-medium text-gray-500">
 
-                                            {/* Footer: Date/Actions */}
-                                            <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-end text-[11px] font-medium text-gray-500">
-                                                <div className="flex items-center gap-3 transition-opacity">
-                                                    <button onClick={() => handleEditNote(note)} title="Editar nota" className="hover:text-white transition-all"><PenLine size={16} /></button>
-                                                    <button onClick={() => handleToggleArchive(note)} title={note.archived ? "Desarquivar nota" : "Arquivar nota"} className="hover:text-white transition-all">
-                                                        {note.archived ? <ArchiveRestore size={16} /> : <Archive size={16} />}
-                                                    </button>
-                                                    <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={16} /></button>
+                                                    <div className="flex items-center gap-3 transition-opacity">
+                                                        <button onClick={() => handleEditNote(note)} title="Editar nota" className="hover:text-white transition-all"><PenLine size={16} /></button>
+                                                        <button onClick={() => handleToggleArchive(note)} title={note.archived ? "Desarquivar nota" : "Arquivar nota"} className="hover:text-white transition-all">
+                                                            {note.archived ? <ArchiveRestore size={16} /> : <Archive size={16} />}
+                                                        </button>
+                                                        <button title="Excluir nota" onClick={() => handleDeleteNote(note.id)} className="hover:text-red-500 transition-all"><Trash2 size={16} /></button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
