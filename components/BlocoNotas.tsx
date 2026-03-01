@@ -874,29 +874,77 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                         <div key={note.id} className="bg-[#1a2236]/80 border border-white/5 rounded-xl p-4 hover:border-white/10 transition-all group flex flex-col gap-3">
                                                             <div className="flex gap-3">
                                                                 {/* Left: Colored bar + Emoji centered */}
-                                                                <div className="flex shrink-0 items-start gap-2">
-                                                                    <div className="w-1 rounded-full self-stretch" style={{ backgroundColor: col.color }} />
-                                                                    <div className="flex flex-col items-center gap-2 ml-1 min-w-[50px]">
-                                                                        <div className="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center text-2xl">
-                                                                            {note.emoji}
-                                                                        </div>
+                                                                <div className="flex shrink-0 items-start gap-3">
+                                                                    <div className="relative w-1 self-stretch rounded-full">
+                                                                        {/* Central Bar: Soft start at top, gentle fade all the way down */}
+                                                                        <div className="absolute inset-0 rounded-full opacity-90" style={{ background: `linear-gradient(to bottom, ${col.color}ee 0%, ${col.color}40 100%)` }} />
+                                                                        {/* Glow: Very subtle and smooth, starting from the top */}
+                                                                        <div className="absolute inset-x-[-2px] inset-y-0 opacity-60 blur-[4px]" style={{ background: `linear-gradient(to bottom, ${col.color} 0%, transparent 80%)` }} />
                                                                     </div>
-                                                                </div>
-                                                                {/* Right: Content area */}
-                                                                <div className="flex-1 min-w-0 flex flex-col gap-3">
-                                                                    <div className="flex items-start gap-2">
+
+                                                                    <div className="flex items-center gap-2 mt-4">
+                                                                        <div className="flex flex-col items-center gap-2 min-w-[50px]">
+                                                                            <div className="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center text-2xl">
+                                                                                {note.emoji}
+                                                                            </div>
+                                                                        </div>
+
                                                                         <button
                                                                             title={note.completed ? 'Desmarcar como concluída' : 'Marcar como concluída'}
                                                                             onClick={() => handleToggleComplete(note)}
-                                                                            className={`w-4 h-4 mt-0.5 rounded-md border transition-all flex items-center justify-center shrink-0 ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
+                                                                            className={`w-4 h-4 rounded-md border transition-all flex items-center justify-center shrink-0 ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
                                                                         >
                                                                             {note.completed && <Check size={10} strokeWidth={4} />}
                                                                         </button>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Right: Content area */}
+                                                                <div className="flex-1 min-w-0 flex flex-col gap-2">
+                                                                    {/* Badges Row (Above Text) */}
+                                                                    {(note.archived || note.status) && (
+                                                                        <div className="flex justify-end gap-1.5 w-full mb-1">
+                                                                            {note.archived && (
+                                                                                <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-white/10 border border-white/20 text-gray-400 shrink-0">
+                                                                                    ARQUIVADO
+                                                                                </span>
+                                                                            )}
+                                                                            {note.status && (
+                                                                                <button
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        const currentIndex = defaultStatuses.findIndex(s => s.name === note.status);
+                                                                                        const nextStatus = defaultStatuses[(currentIndex + 1) % defaultStatuses.length];
+                                                                                        const updatedNote: NotepadNote = {
+                                                                                            ...note,
+                                                                                            status: nextStatus.name,
+                                                                                            statusEmoji: nextStatus.emoji,
+                                                                                            completed: nextStatus.name === 'Feito',
+                                                                                            notified: note.notified ?? false
+                                                                                        };
+                                                                                        FirestoreService.saveNote(currentUser!.uid, updatedNote);
+                                                                                    }}
+                                                                                    title="Clique para alterar o status"
+                                                                                    className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-white/5 border transition-all active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)] hover:bg-white/10 shrink-0"
+                                                                                    style={{
+                                                                                        backgroundColor: `${getStatusColor(note.status)}20`,
+                                                                                        color: getStatusColor(note.status),
+                                                                                        borderColor: `${getStatusColor(note.status)}40`
+                                                                                    }}
+                                                                                >
+                                                                                    {note.status}
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+
+                                                                    <div className="flex items-start gap-2">
                                                                         <p className={`text-[12px] leading-relaxed break-words whitespace-normal ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-medium'}`}>
                                                                             {note.content}
                                                                         </p>
                                                                     </div>
-                                                                    <div className="flex flex-wrap items-center justify-between gap-2 mt-auto">
+
+                                                                    <div className="flex flex-wrap items-center justify-between gap-2 mt-auto pt-1">
                                                                         <div className="flex flex-wrap items-center gap-2">
                                                                             <span className="text-gray-500 text-[10px] font-medium whitespace-nowrap">
                                                                                 {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
@@ -908,37 +956,6 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                                 </span>
                                                                             )}
                                                                         </div>
-                                                                        {note.archived && (
-                                                                            <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-white/10 border border-white/20 text-gray-400 shrink-0">
-                                                                                ARQUIVADO
-                                                                            </span>
-                                                                        )}
-                                                                        {note.status && (
-                                                                            <button
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    const currentIndex = defaultStatuses.findIndex(s => s.name === note.status);
-                                                                                    const nextStatus = defaultStatuses[(currentIndex + 1) % defaultStatuses.length];
-                                                                                    const updatedNote: NotepadNote = {
-                                                                                        ...note,
-                                                                                        status: nextStatus.name,
-                                                                                        statusEmoji: nextStatus.emoji,
-                                                                                        completed: nextStatus.name === 'Feito',
-                                                                                        notified: note.notified ?? false
-                                                                                    };
-                                                                                    FirestoreService.saveNote(currentUser!.uid, updatedNote);
-                                                                                }}
-                                                                                title="Clique para alterar o status"
-                                                                                className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-white/5 border transition-all active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)] hover:bg-white/10 shrink-0"
-                                                                                style={{
-                                                                                    backgroundColor: `${getStatusColor(note.status)}20`,
-                                                                                    color: getStatusColor(note.status),
-                                                                                    borderColor: `${getStatusColor(note.status)}40`
-                                                                                }}
-                                                                            >
-                                                                                {note.status}
-                                                                            </button>
-                                                                        )}
                                                                     </div>
                                                                 </div>
                                                             </div>
