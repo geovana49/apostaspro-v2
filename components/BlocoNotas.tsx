@@ -59,6 +59,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
     const [savedCustomEmojis, setSavedCustomEmojis] = useState<{ id: string, emoji: string }[]>([]);
     const [editingNote, setEditingNote] = useState<NotepadNote | null>(null);
     const [showArchived, setShowArchived] = useState(false);
+    const [isSelectionMode, setIsSelectionMode] = useState(false);
+    const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>([]);
 
     const handleToggleArchive = (note: NotepadNote) => {
         const updatedNote = { ...note, archived: !note.archived };
@@ -210,6 +212,34 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
         }, 150);
     };
 
+    const handleToggleSelectionMode = () => {
+        setIsSelectionMode(!isSelectionMode);
+        if (isSelectionMode) {
+            setSelectedNoteIds([]);
+        }
+    };
+
+    const toggleNoteSelection = (noteId: string) => {
+        setSelectedNoteIds(prev =>
+            prev.includes(noteId)
+                ? prev.filter(id => id !== noteId)
+                : [...prev, noteId]
+        );
+    };
+
+    const handleSelectAll = (filteredNotesToSelect: NotepadNote[]) => {
+        if (selectedNoteIds.length === filteredNotesToSelect.length) {
+            setSelectedNoteIds([]);
+        } else {
+            setSelectedNoteIds(filteredNotesToSelect.map(n => n.id));
+        }
+    };
+
+    const handleCancelSelection = () => {
+        setIsSelectionMode(false);
+        setSelectedNoteIds([]);
+    };
+
     const handleCancelEdit = () => {
         setEditingNote(null);
         setContent('');
@@ -281,6 +311,63 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
             statusEmoji: willBeCompleted ? '✅' : '⌛'
         };
         await FirestoreService.saveNote(currentUser.uid, updatedNote);
+    };
+
+    const handleBulkToggleComplete = async () => {
+        if (!currentUser || selectedNoteIds.length === 0) return;
+        const selectedNotes = notes.filter(n => selectedNoteIds.includes(n.id));
+        const allCompleted = selectedNotes.every(n => n.completed);
+        const newCompleted = !allCompleted;
+
+        for (const noteId of selectedNoteIds) {
+            const note = notes.find(n => n.id === noteId);
+            if (note) {
+                const updatedNote: NotepadNote = {
+                    ...note,
+                    completed: newCompleted,
+                    status: newCompleted ? 'Feito' : 'Não Feito',
+                    statusEmoji: newCompleted ? '✅' : '⌛'
+                };
+                await FirestoreService.saveNote(currentUser.uid, updatedNote);
+            }
+        }
+        handleCancelSelection();
+    };
+
+    const handleBulkSetPriority = async (newPriority: 'low' | 'medium' | 'high') => {
+        if (!currentUser || selectedNoteIds.length === 0) return;
+        for (const noteId of selectedNoteIds) {
+            const note = notes.find(n => n.id === noteId);
+            if (note) {
+                await FirestoreService.saveNote(currentUser.uid, { ...note, priority: newPriority });
+            }
+        }
+        handleCancelSelection();
+    };
+
+    const handleBulkArchive = async () => {
+        if (!currentUser || selectedNoteIds.length === 0) return;
+        const selectedNotes = notes.filter(n => selectedNoteIds.includes(n.id));
+        const allArchived = selectedNotes.every(n => n.archived);
+        const newArchived = !allArchived;
+
+        for (const noteId of selectedNoteIds) {
+            const note = notes.find(n => n.id === noteId);
+            if (note) {
+                await FirestoreService.saveNote(currentUser.uid, { ...note, archived: newArchived });
+            }
+        }
+        handleCancelSelection();
+    };
+
+    const handleBulkDelete = async () => {
+        if (!currentUser || selectedNoteIds.length === 0) return;
+        if (confirm(`Deseja excluir as ${selectedNoteIds.length} notas selecionadas?`)) {
+            for (const noteId of selectedNoteIds) {
+                await FirestoreService.deleteNote(currentUser.uid, noteId);
+            }
+            handleCancelSelection();
+        }
     };
 
     const getPriorityColor = (p: string) => {
@@ -778,7 +865,16 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/5">
+                                <button
+                                    onClick={handleToggleSelectionMode}
+                                    title={isSelectionMode ? "Cancelar seleção" : "Selecionar notas"}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all active:scale-95 border ${isSelectionMode ? 'bg-[#3B82F6]/20 text-[#3B82F6] border-[#3B82F6]/30' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}
+                                >
+                                    <CheckCircle2 size={14} />
+                                    {isSelectionMode ? 'Cancelar' : 'Selecionar'}
+                                    <ChevronUp size={12} className={`transition-transform ${isSelectionMode ? '' : 'rotate-180'}`} />
+                                </button>
+                                <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
                                     <button title="Visualizar em lista" onClick={() => setViewMode('list')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[#17baa4]/20 text-[#17baa4] shadow-sm' : 'text-gray-500 hover:text-white'}`}><ListIcon size={14} /></button>
                                     <button title="Visualizar em grade" onClick={() => setViewMode('grid')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-[#17baa4]/20 text-[#17baa4] shadow-sm' : 'text-gray-500 hover:text-white'}`}><LayoutGrid size={14} /></button>
                                 </div>
@@ -836,6 +932,71 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             </div>
                         )}
                     </div>
+
+                    {/* Bulk Action Bar */}
+                    {isSelectionMode && (
+                        <div className="bg-[#1a1f35]/95 backdrop-blur-xl border border-[#3B82F6]/30 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 animate-in slide-in-from-top-2 duration-300 shadow-[0_8px_32px_rgba(59,130,246,0.15)] mb-6">
+                            <div className="flex items-center gap-4">
+                                <button
+                                    onClick={() => handleSelectAll(filteredNotes)}
+                                    className="flex items-center gap-2 text-[#3B82F6] hover:text-[#3B82F6]/80 transition-colors"
+                                >
+                                    <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${selectedNoteIds.length === filteredNotes.length && filteredNotes.length > 0 ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20'}`}>
+                                        {selectedNoteIds.length === filteredNotes.length && filteredNotes.length > 0 && <Check size={12} strokeWidth={4} />}
+                                    </div>
+                                    <span className="text-[13px] font-bold underline decoration-[#3B82F6]/30 underline-offset-4">{selectedNoteIds.length} selecionadas</span>
+                                </button>
+                                <button
+                                    onClick={() => handleSelectAll(filteredNotes)}
+                                    className="text-[11px] font-bold text-[#3B82F6] hover:underline transition-all"
+                                >
+                                    Selecionar todas ({filteredNotes.length})
+                                </button>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2">
+                                <button
+                                    onClick={handleBulkToggleComplete}
+                                    disabled={selectedNoteIds.length === 0}
+                                    title="Concluir/Desmarcar selecionadas"
+                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-2 ${selectedNoteIds.length === 0 ? 'bg-gray-500/5 text-gray-500 border-gray-500/20 cursor-not-allowed' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border-emerald-500/30'}`}
+                                >
+                                    <CheckCircle2 size={14} /> Concluir
+                                </button>
+
+                                <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 opacity-90">
+                                    <button onClick={() => handleBulkSetPriority('high')} disabled={selectedNoteIds.length === 0} title="Urgente" className="p-1.5 hover:bg-[#EF4444]/20 rounded-lg text-[#EF4444] transition-all disabled:opacity-30"><Flame size={14} /></button>
+                                    <button onClick={() => handleBulkSetPriority('medium')} disabled={selectedNoteIds.length === 0} title="Importante" className="p-1.5 hover:bg-[#F59E0B]/20 rounded-lg text-[#F59E0B] transition-all disabled:opacity-30"><Zap size={14} /></button>
+                                    <button onClick={() => handleBulkSetPriority('low')} disabled={selectedNoteIds.length === 0} title="Normal" className="p-1.5 hover:bg-[#3B82F6]/20 rounded-lg text-[#3B82F6] transition-all disabled:opacity-30"><FileText size={14} /></button>
+                                </div>
+
+                                <button
+                                    onClick={handleBulkArchive}
+                                    disabled={selectedNoteIds.length === 0}
+                                    title="Arquivar/Desarquivar selecionadas"
+                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-2 ${selectedNoteIds.length === 0 ? 'bg-gray-500/5 text-gray-500 border-gray-500/20 cursor-not-allowed' : 'bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border-yellow-500/30'}`}
+                                >
+                                    <Archive size={14} /> Arquivar
+                                </button>
+
+                                <button
+                                    onClick={handleBulkDelete}
+                                    disabled={selectedNoteIds.length === 0}
+                                    title="Excluir selecionadas"
+                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-2 ${selectedNoteIds.length === 0 ? 'bg-gray-500/5 text-gray-500 border-gray-500/20 cursor-not-allowed' : 'bg-red-500/10 hover:bg-red-500/20 text-red-500 border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.1)]'}`}
+                                >
+                                    <Trash2 size={14} /> Excluir
+                                </button>
+
+                                <button
+                                    onClick={handleCancelSelection}
+                                    className="text-gray-500 hover:text-white px-3 py-2 text-xs font-bold transition-all flex items-center gap-2 active:scale-95"
+                                >
+                                    <X size={14} /> Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    )}
                     {viewMode === 'grid' ? (
                         /* Kanban Board View - Grouped by Priority */
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -923,11 +1084,21 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                     )}
 
                                                                     {/* Text Content Row with Emoji Alignment */}
-                                                                    <div className="flex items-start gap-3">
+                                                                    <div className="flex items-start gap-3 relative">
+                                                                        {isSelectionMode && (
+                                                                            <div
+                                                                                onClick={() => toggleNoteSelection(note.id)}
+                                                                                className={`absolute -left-2 top-0 bottom-0 w-8 flex items-center justify-center cursor-pointer z-10`}
+                                                                            >
+                                                                                <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${selectedNoteIds.includes(note.id) ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20'}`}>
+                                                                                    {selectedNoteIds.includes(note.id) && <Check size={12} strokeWidth={4} />}
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
                                                                         {/* Emoji & Checkbox aligned with first line of text content block */}
                                                                         <div className="flex items-center gap-2 shrink-0">
-                                                                            <div className="flex flex-col items-center gap-2 min-w-[50px]">
-                                                                                <div className="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center text-2xl">
+                                                                            <div className="flex flex-col items-center gap-2 min-w-[44px]">
+                                                                                <div className="flex items-center justify-center text-2xl">
                                                                                     {note.emoji}
                                                                                 </div>
                                                                             </div>
@@ -1045,10 +1216,20 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                 )}
 
                                                 {/* Text Content + Emoji Alignment Row */}
-                                                <div className="flex items-start gap-4 w-full">
+                                                <div className="flex items-start gap-4 w-full relative">
+                                                    {isSelectionMode && (
+                                                        <div
+                                                            onClick={() => toggleNoteSelection(note.id)}
+                                                            className={`absolute -left-10 top-0 bottom-0 w-10 flex items-center justify-center cursor-pointer z-10`}
+                                                        >
+                                                            <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${selectedNoteIds.includes(note.id) ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/10 border-white/20'}`}>
+                                                                {selectedNoteIds.includes(note.id) && <Check size={12} strokeWidth={4} />}
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                     {/* Emoji & Checkbox aligned with first line of text content block */}
                                                     <div className="flex items-center gap-2 shrink-0 mt-1">
-                                                        <div className="flex items-center justify-center min-w-[60px]">
+                                                        <div className="flex items-center justify-center min-w-[40px]">
                                                             <div className="text-4xl text-center">
                                                                 {note.emoji}
                                                             </div>
