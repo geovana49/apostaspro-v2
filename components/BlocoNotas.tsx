@@ -976,8 +976,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                         <div className="flex gap-4 relative z-0">
                                             {/* Left: Glowing Neon Bar + Glass Emoji */}
                                             <div className="flex shrink-0 items-start gap-4">
-                                                <div className="relative w-1 self-stretch rounded-full" style={{ background: `linear-gradient(to bottom, transparent 0%, ${col.color} 100%)`, boxShadow: `0 10px 20px -2px ${col.color}a0` }}>
-                                                    <div className="absolute inset-x-[-4px] bottom-0 h-1/2 opacity-80 blur-[6px]" style={{ background: col.color }} />
+                                                <div className="relative w-1 self-stretch rounded-full">
+                                                    <div className="absolute inset-0 rounded-full" style={{ background: `linear-gradient(to bottom, transparent 0%, transparent 24px, ${col.color} 48px, ${col.color} 100%)` }} />
+                                                    <div className="absolute inset-x-[-4px] top-[40px] bottom-0 opacity-80 blur-[6px]" style={{ background: `linear-gradient(to bottom, transparent 0%, ${col.color} 16px, ${col.color} 100%)` }} />
                                                     <div className="relative w-full h-full rounded-full" />
                                                 </div>
 
