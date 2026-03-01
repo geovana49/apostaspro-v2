@@ -873,29 +873,13 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                     return (
                                                         <div key={note.id} className="bg-[#1a2236]/80 border border-white/5 rounded-xl p-4 hover:border-white/10 transition-all group flex flex-col gap-3">
                                                             <div className="flex gap-3">
-                                                                {/* Left: Colored bar + Emoji centered */}
+                                                                {/* Left: Colored bar */}
                                                                 <div className="flex shrink-0 items-start gap-3">
                                                                     <div className="relative w-1 self-stretch rounded-full">
                                                                         {/* Central Bar: Soft start at top, gentle fade all the way down */}
                                                                         <div className="absolute inset-0 rounded-full opacity-90" style={{ background: `linear-gradient(to bottom, ${col.color}ee 0%, ${col.color}40 100%)` }} />
                                                                         {/* Glow: Very subtle and smooth, starting from the top */}
                                                                         <div className="absolute inset-x-[-2px] inset-y-0 opacity-60 blur-[4px]" style={{ background: `linear-gradient(to bottom, ${col.color} 0%, transparent 80%)` }} />
-                                                                    </div>
-
-                                                                    <div className="flex items-center gap-2 mt-4">
-                                                                        <div className="flex flex-col items-center gap-2 min-w-[50px]">
-                                                                            <div className="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center text-2xl">
-                                                                                {note.emoji}
-                                                                            </div>
-                                                                        </div>
-
-                                                                        <button
-                                                                            title={note.completed ? 'Desmarcar como concluída' : 'Marcar como concluída'}
-                                                                            onClick={() => handleToggleComplete(note)}
-                                                                            className={`w-4 h-4 rounded-md border transition-all flex items-center justify-center shrink-0 ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
-                                                                        >
-                                                                            {note.completed && <Check size={10} strokeWidth={4} />}
-                                                                        </button>
                                                                     </div>
                                                                 </div>
 
@@ -938,10 +922,30 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                         </div>
                                                                     )}
 
-                                                                    <div className="flex items-start gap-2">
-                                                                        <p className={`text-[12px] leading-relaxed break-words whitespace-normal ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-medium'}`}>
-                                                                            {note.content}
-                                                                        </p>
+                                                                    {/* Text Content Row with Emoji Alignment */}
+                                                                    <div className="flex items-center gap-3">
+                                                                        {/* Emoji & Checkbox centered with text content block */}
+                                                                        <div className="flex items-center gap-2 shrink-0">
+                                                                            <div className="flex flex-col items-center gap-2 min-w-[50px]">
+                                                                                <div className="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center text-2xl">
+                                                                                    {note.emoji}
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <button
+                                                                                title={note.completed ? 'Desmarcar como concluída' : 'Marcar como concluída'}
+                                                                                onClick={() => handleToggleComplete(note)}
+                                                                                className={`w-4 h-4 rounded-md border transition-all flex items-center justify-center shrink-0 ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
+                                                                            >
+                                                                                {note.completed && <Check size={10} strokeWidth={4} />}
+                                                                            </button>
+                                                                        </div>
+
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <p className={`text-[12px] leading-relaxed break-words whitespace-normal ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-medium'}`}>
+                                                                                {note.content}
+                                                                            </p>
+                                                                        </div>
                                                                     </div>
 
                                                                     <div className="flex flex-wrap items-center justify-between gap-2 mt-auto pt-1">
@@ -991,30 +995,13 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 return (
                                     <div key={note.id} className="bg-[#1a1f35]/90 border border-white/5 rounded-2xl p-5 hover:border-[#3B82F6]/30 transition-all group relative overflow-hidden mb-3">
                                         <div className="flex gap-4 relative z-0">
-                                            {/* Left: Glowing Neon Bar + Glass Emoji */}
-                                            <div className="flex shrink-0 items-center gap-4">
+                                            {/* Left: Glowing Neon Bar */}
+                                            <div className="flex shrink-0 items-start gap-4">
                                                 <div className="relative w-1 self-stretch rounded-full">
                                                     {/* Central Bar: Soft start at top, gentle fade all the way down */}
                                                     <div className="absolute inset-0 rounded-full opacity-90" style={{ background: `linear-gradient(to bottom, ${col.color}ee 0%, ${col.color}40 100%)` }} />
                                                     {/* Glow: Very subtle and smooth, starting from the top */}
                                                     <div className="absolute inset-x-[-2px] inset-y-0 opacity-60 blur-[4px]" style={{ background: `linear-gradient(to bottom, ${col.color} 0%, transparent 80%)` }} />
-                                                </div>
-
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex items-center justify-center min-w-[60px]">
-                                                        <div className="text-4xl text-center">
-                                                            {note.emoji}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Checkbox moved next to emoji, vertically centered */}
-                                                    <button
-                                                        title={note.completed ? 'Desmarcar' : 'Marcar'}
-                                                        onClick={() => handleToggleComplete(note)}
-                                                        className={`w-5 h-5 rounded-lg border transition-all flex items-center justify-center shrink-0 ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
-                                                    >
-                                                        {note.completed && <Check size={12} strokeWidth={4} />}
-                                                    </button>
                                                 </div>
                                             </div>
 
@@ -1057,9 +1044,25 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                     </div>
                                                 )}
 
-                                                {/* Text Content */}
-                                                <div className="flex items-start justify-between gap-4">
-                                                    <div className="flex items-start gap-4 flex-1">
+                                                {/* Text Content + Emoji Alignment Row */}
+                                                <div className="flex items-center justify-between gap-4">
+                                                    <div className="flex items-center gap-4 flex-1">
+                                                        {/* Emoji & Checkbox centered with text content */}
+                                                        <div className="flex items-center gap-2 shrink-0">
+                                                            <div className="flex items-center justify-center min-w-[60px]">
+                                                                <div className="text-4xl text-center">
+                                                                    {note.emoji}
+                                                                </div>
+                                                            </div>
+                                                            <button
+                                                                title={note.completed ? 'Desmarcar' : 'Marcar'}
+                                                                onClick={() => handleToggleComplete(note)}
+                                                                className={`w-5 h-5 rounded-lg border transition-all flex items-center justify-center shrink-0 ${note.completed ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20 hover:border-[#3B82F6]'}`}
+                                                            >
+                                                                {note.completed && <Check size={12} strokeWidth={4} />}
+                                                            </button>
+                                                        </div>
+
                                                         <div className="flex-1 min-w-0 flex flex-col gap-2">
                                                             <p className={`text-[15px] leading-relaxed break-words whitespace-normal ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-semibold'}`}>
                                                                 {note.content}
