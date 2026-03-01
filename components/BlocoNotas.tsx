@@ -1035,6 +1035,16 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                     return (
                                                         <div key={note.id} className="bg-[#1a2236]/80 border border-white/5 rounded-xl p-4 hover:border-white/10 transition-all group flex flex-col gap-3">
                                                             <div className="flex gap-3">
+                                                                {isSelectionMode && (
+                                                                    <div
+                                                                        onClick={() => toggleNoteSelection(note.id)}
+                                                                        className="flex items-start justify-center cursor-pointer pt-1 shrink-0"
+                                                                    >
+                                                                        <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${selectedNoteIds.includes(note.id) ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20'}`}>
+                                                                            {selectedNoteIds.includes(note.id) && <Check size={12} strokeWidth={4} />}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
                                                                 {/* Left: Colored bar */}
                                                                 <div className="flex shrink-0 items-start gap-3">
                                                                     <div className="relative w-1 self-stretch rounded-full">
@@ -1086,16 +1096,6 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                                                                     {/* Text Content Row with Emoji Alignment */}
                                                                     <div className="flex items-start gap-3">
-                                                                        {isSelectionMode && (
-                                                                            <div
-                                                                                onClick={() => toggleNoteSelection(note.id)}
-                                                                                className="flex items-center justify-center cursor-pointer pt-1"
-                                                                            >
-                                                                                <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${selectedNoteIds.includes(note.id) ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20'}`}>
-                                                                                    {selectedNoteIds.includes(note.id) && <Check size={12} strokeWidth={4} />}
-                                                                                </div>
-                                                                            </div>
-                                                                        )}
                                                                         {/* Emoji & Checkbox aligned with first line of text content block */}
                                                                         <div className="flex items-center gap-2 shrink-0">
                                                                             <div className="flex flex-col items-center gap-2 min-w-[44px]">
@@ -1120,7 +1120,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                         </div>
                                                                     </div>
 
-                                                                    <div className={`flex flex-wrap items-center justify-between gap-2 mt-auto pt-1 ${isSelectionMode ? 'ml-[32px]' : 'ml-[86px]'}`}>
+                                                                    <div className={`flex flex-wrap items-center justify-between gap-2 mt-auto pt-1 ${isSelectionMode ? 'ml-[118px]' : 'ml-[86px]'}`}>
                                                                         <div className="flex flex-wrap items-center gap-2">
                                                                             <span className="text-gray-500 text-[10px] font-medium whitespace-nowrap">
                                                                                 {new Date(note.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
