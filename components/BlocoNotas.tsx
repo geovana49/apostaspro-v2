@@ -992,7 +992,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                     <div key={note.id} className="bg-[#1a1f35]/90 border border-white/5 rounded-2xl p-5 hover:border-[#3B82F6]/30 transition-all group relative overflow-hidden mb-3">
                                         <div className="flex gap-4 relative z-0">
                                             {/* Left: Glowing Neon Bar + Glass Emoji */}
-                                            <div className="flex shrink-0 items-start gap-4">
+                                            <div className="flex shrink-0 items-center gap-4">
                                                 <div className="relative w-1 self-stretch rounded-full">
                                                     {/* Central Bar: Soft start at top, gentle fade all the way down */}
                                                     <div className="absolute inset-0 rounded-full opacity-90" style={{ background: `linear-gradient(to bottom, ${col.color}ee 0%, ${col.color}40 100%)` }} />
@@ -1000,7 +1000,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                     <div className="absolute inset-x-[-2px] inset-y-0 opacity-60 blur-[4px]" style={{ background: `linear-gradient(to bottom, ${col.color} 0%, transparent 80%)` }} />
                                                 </div>
 
-                                                <div className="flex items-center gap-2 mt-4">
+                                                <div className="flex items-center gap-2">
                                                     <div className="flex items-center justify-center min-w-[60px]">
                                                         <div className="text-4xl text-center">
                                                             {note.emoji}
