@@ -923,9 +923,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                     )}
 
                                                                     {/* Text Content Row with Emoji Alignment */}
-                                                                    <div className="flex items-center gap-3">
-                                                                        {/* Emoji & Checkbox centered with ONLY the text content block */}
-                                                                        <div className="flex items-center gap-2 shrink-0">
+                                                                    <div className="flex items-start gap-3">
+                                                                        {/* Emoji & Checkbox aligned with first line of text content block */}
+                                                                        <div className="flex items-center gap-2 shrink-0 mt-1">
                                                                             <div className="flex flex-col items-center gap-2 min-w-[50px]">
                                                                                 <div className="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center text-2xl">
                                                                                     {note.emoji}
@@ -941,7 +941,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                             </button>
                                                                         </div>
 
-                                                                        <div className="flex-1 min-w-0">
+                                                                        <div className="flex-1 min-w-0 mt-2">
                                                                             <p className={`text-[12px] leading-relaxed break-words whitespace-normal ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-medium'}`}>
                                                                                 {note.content}
                                                                             </p>
@@ -1045,9 +1045,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                 )}
 
                                                 {/* Text Content + Emoji Alignment Row */}
-                                                <div className="flex items-center gap-4 w-full">
-                                                    {/* Emoji & Checkbox centered with ONLY the text content block */}
-                                                    <div className="flex items-center gap-2 shrink-0">
+                                                <div className="flex items-start gap-4 w-full">
+                                                    {/* Emoji & Checkbox aligned with first line of text content block */}
+                                                    <div className="flex items-center gap-2 shrink-0 mt-3">
                                                         <div className="flex items-center justify-center min-w-[60px]">
                                                             <div className="text-4xl text-center">
                                                                 {note.emoji}
@@ -1062,7 +1062,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                         </button>
                                                     </div>
 
-                                                    <p className={`flex-1 min-w-0 text-[15px] leading-relaxed break-words whitespace-normal ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-semibold'}`}>
+                                                    <p className={`flex-1 min-w-0 text-[15px] leading-relaxed break-words whitespace-normal mt-4 ${note.completed ? 'text-gray-500 italic line-through' : 'text-white font-semibold'}`}>
                                                         {note.content}
                                                     </p>
                                                 </div>
