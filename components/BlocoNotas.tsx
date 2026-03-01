@@ -1000,7 +1000,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                     <div className="absolute inset-x-[-2px] inset-y-0 opacity-60 blur-[4px]" style={{ background: `linear-gradient(to bottom, ${col.color} 0%, transparent 80%)` }} />
                                                 </div>
 
-                                                <div className="flex items-center gap-2 mt-8">
+                                                <div className="flex items-center gap-2 mt-1">
                                                     <div className="flex items-center justify-center min-w-[60px]">
                                                         <div className="text-4xl text-center">
                                                             {note.emoji}
