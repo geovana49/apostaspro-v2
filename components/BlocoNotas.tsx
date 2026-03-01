@@ -1040,14 +1040,14 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                         onClick={() => toggleNoteSelection(note.id)}
                                                                         className="flex items-start justify-center cursor-pointer pt-1 shrink-0"
                                                                     >
-                                                                        <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${selectedNoteIds.includes(note.id) ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/10 border-white/20'}`}>
+                                                                        <div className={`w-5 h-5 rounded-xl border flex items-center justify-center transition-all ${selectedNoteIds.includes(note.id) ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/10 border-white/20'}`}>
                                                                             {selectedNoteIds.includes(note.id) && <Check size={12} strokeWidth={4} />}
                                                                         </div>
                                                                     </div>
                                                                 )}
                                                                 {/* Left: Colored bar */}
-                                                                <div className="flex shrink-0 items-start">
-                                                                    <div className="relative w-1 h-12 mt-8 rounded-full">
+                                                                <div className="flex shrink-0 items-start self-stretch">
+                                                                    <div className="relative w-1 flex-1 mt-8 mb-4 rounded-full">
                                                                         {/* Central Bar: Soft start at top, gentle fade all the way down */}
                                                                         <div className="absolute inset-0 rounded-full opacity-90" style={{ background: `linear-gradient(to bottom, ${col.color}ee 0%, ${col.color}40 100%)` }} />
                                                                         {/* Glow: Very subtle and smooth, starting from the top */}
@@ -1172,14 +1172,14 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                     onClick={() => toggleNoteSelection(note.id)}
                                                     className="flex items-center justify-center cursor-pointer shrink-0"
                                                 >
-                                                    <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${selectedNoteIds.includes(note.id) ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/10 border-white/20'}`}>
+                                                    <div className={`w-5 h-5 rounded-xl border flex items-center justify-center transition-all ${selectedNoteIds.includes(note.id) ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/10 border-white/20'}`}>
                                                         {selectedNoteIds.includes(note.id) && <Check size={12} strokeWidth={4} />}
                                                     </div>
                                                 </div>
                                             )}
                                             {/* Left: Glowing Neon Bar */}
-                                            <div className="flex shrink-0 items-start">
-                                                <div className="relative w-1 h-16 mt-10 rounded-full">
+                                            <div className="flex shrink-0 items-start self-stretch">
+                                                <div className="relative w-1 flex-1 mt-10 mb-6 rounded-full">
                                                     {/* Central Bar: Soft start at top, gentle fade all the way down */}
                                                     <div className="absolute inset-0 rounded-full opacity-90" style={{ background: `linear-gradient(to bottom, ${col.color}ee 0%, ${col.color}40 100%)` }} />
                                                     {/* Glow: Very subtle and smooth, starting from the top */}
