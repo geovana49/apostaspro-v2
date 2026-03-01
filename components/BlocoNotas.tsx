@@ -977,8 +977,10 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                             {/* Left: Glowing Neon Bar + Glass Emoji */}
                                             <div className="flex shrink-0 items-start gap-4">
                                                 <div className="relative w-1 self-stretch rounded-full">
-                                                    <div className="absolute inset-0 rounded-full" style={{ background: `linear-gradient(to bottom, transparent 0%, transparent 24px, ${col.color} 40px, ${col.color}a0 100%)` }} />
-                                                    <div className="absolute inset-x-[-4px] top-[40px] bottom-0 opacity-100 blur-[8px]" style={{ background: `linear-gradient(to bottom, ${col.color} 0%, ${col.color} 40%, transparent 100%)` }} />
+                                                    {/* Central Bar: Invisibility at top to respect margin, then Bright -> Fading Downwards */}
+                                                    <div className="absolute inset-0 rounded-full" style={{ background: `linear-gradient(to bottom, transparent 0%, transparent 24px, ${col.color} 32px, ${col.color}40 100%)` }} />
+                                                    {/* Glow: Only starts at the emoji level and fades out completely downwards */}
+                                                    <div className="absolute inset-x-[-4px] top-[32px] bottom-[20%] opacity-100 blur-[6px]" style={{ background: `linear-gradient(to bottom, ${col.color} 0%, transparent 100%)` }} />
                                                 </div>
 
                                                 <div className="flex items-center gap-2 mt-8">
