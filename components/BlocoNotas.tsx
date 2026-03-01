@@ -456,7 +456,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         <button
                             onClick={handleToggleSelectionMode}
                             title={isSelectionMode ? "Cancelar seleção" : "Selecionar notas"}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all active:scale-95 border ${isSelectionMode ? 'bg-[#3B82F6]/20 text-[#3B82F6] border-[#3B82F6]/30' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all active:scale-95 border ${isSelectionMode ? 'bg-[#17baa4]/20 text-[#17baa4] border-[#17baa4]/30' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}
                         >
                             <CheckCircle2 size={14} />
                             {isSelectionMode ? 'Cancelar' : 'Selecionar'}
@@ -480,8 +480,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         {/* Emoji Picker - Horizontal Carousel */}
                         <div className="flex items-center gap-2 overflow-x-auto pb-4 custom-scrollbar-horizontal flex-nowrap scroll-smooth px-1 ml-1">
                             {/* Custom Emoji Input */}
-                            <div title="Digite um emoji personalizado e clique ✓ para salvar" className={`flex items-center gap-2 px-3 py-1 bg-white/5 rounded-xl border transition-all shrink-0 ${isCustomEmojiActive ? 'border-[#3B82F6] shadow-[0_0_10px_rgba(59,130,246,0.3)]' : 'border-white/10'}`}>
-                                <Plus size={14} className="text-[#3B82F6]" />
+                            <div title="Digite um emoji personalizado e clique ✓ para salvar" className={`flex items-center gap-2 px-3 py-1 bg-white/5 rounded-xl border transition-all shrink-0 ${isCustomEmojiActive ? 'border-[#17baa4] shadow-[0_0_10px_rgba(23,186,164,0.3)]' : 'border-white/10'}`}>
+                                <Plus size={14} className="text-[#17baa4]" />
                                 <input
                                     type="text"
                                     placeholder="Add Emoji"
@@ -495,7 +495,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                     onKeyDown={(e) => { if (e.key === 'Enter') handleSaveCustomEmoji(); }}
                                 />
                                 {customEmoji.trim() && (
-                                    <button onClick={handleSaveCustomEmoji} className="text-[#3B82F6] hover:text-white transition-all" title="Salvar emoji">
+                                    <button onClick={handleSaveCustomEmoji} className="text-[#17baa4] hover:text-white transition-all" title="Salvar emoji">
                                         <Check size={14} strokeWidth={3} />
                                     </button>
                                 )}
@@ -936,20 +936,20 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
                     {/* Bulk Action Bar */}
                     {isSelectionMode && (
-                        <div className="bg-[#1a1f35]/95 backdrop-blur-xl border border-[#3B82F6]/30 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 animate-in slide-in-from-top-2 duration-300 shadow-[0_8px_32px_rgba(59,130,246,0.15)] mb-6">
+                        <div className="bg-[#1a1f35]/95 backdrop-blur-xl border border-[#17baa4]/30 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 animate-in slide-in-from-top-2 duration-300 shadow-[0_8px_32px_rgba(23,186,164,0.15)] mb-6">
                             <div className="flex items-center gap-4">
                                 <button
                                     onClick={() => handleSelectAll(filteredNotes)}
-                                    className="flex items-center gap-2 text-[#3B82F6] hover:text-[#3B82F6]/80 transition-colors"
+                                    className="flex items-center gap-2 text-[#17baa4] hover:text-[#17baa4]/80 transition-colors"
                                 >
-                                    <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${selectedNoteIds.length === filteredNotes.length && filteredNotes.length > 0 ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/5 border-white/20'}`}>
+                                    <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${selectedNoteIds.length === filteredNotes.length && filteredNotes.length > 0 ? 'bg-[#17baa4] border-[#17baa4] text-white' : 'bg-white/5 border-white/20'}`}>
                                         {selectedNoteIds.length === filteredNotes.length && filteredNotes.length > 0 && <Check size={12} strokeWidth={4} />}
                                     </div>
-                                    <span className="text-[13px] font-bold underline decoration-[#3B82F6]/30 underline-offset-4">{selectedNoteIds.length} selecionadas</span>
+                                    <span className="text-[13px] font-bold underline decoration-[#17baa4]/30 underline-offset-4">{selectedNoteIds.length} selecionadas</span>
                                 </button>
                                 <button
                                     onClick={() => handleSelectAll(filteredNotes)}
-                                    className="text-[11px] font-bold text-[#3B82F6] hover:underline transition-all"
+                                    className="text-[11px] font-bold text-[#17baa4] hover:underline transition-all"
                                 >
                                     Selecionar todas ({filteredNotes.length})
                                 </button>
@@ -1040,13 +1040,13 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                         onClick={() => toggleNoteSelection(note.id)}
                                                                         className="flex items-start justify-center cursor-pointer pt-1 shrink-0"
                                                                     >
-                                                                        <div className={`w-5 h-5 rounded-xl border flex items-center justify-center transition-all ${selectedNoteIds.includes(note.id) ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/10 border-white/20'}`}>
+                                                                        <div className={`w-5 h-5 rounded-xl border flex items-center justify-center transition-all ${selectedNoteIds.includes(note.id) ? 'bg-[#17baa4] border-[#17baa4] text-white' : 'bg-white/10 border-white/20'}`}>
                                                                             {selectedNoteIds.includes(note.id) && <Check size={12} strokeWidth={4} />}
                                                                         </div>
                                                                     </div>
                                                                 )}
                                                                 {/* Left: Colored bar */}
-                                                                <div className="flex shrink-0 items-start self-stretch">
+                                                                <div className="flex shrink-0 items-start self-stretch flex-col">
                                                                     <div className="relative w-1 flex-1 mt-8 mb-4 rounded-full">
                                                                         {/* Central Bar: Soft start at top, gentle fade all the way down */}
                                                                         <div className="absolute inset-0 rounded-full opacity-90" style={{ background: `linear-gradient(to bottom, ${col.color}ee 0%, ${col.color}40 100%)` }} />
@@ -1172,13 +1172,13 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                     onClick={() => toggleNoteSelection(note.id)}
                                                     className="flex items-center justify-center cursor-pointer shrink-0"
                                                 >
-                                                    <div className={`w-5 h-5 rounded-xl border flex items-center justify-center transition-all ${selectedNoteIds.includes(note.id) ? 'bg-[#3B82F6] border-[#3B82F6] text-white' : 'bg-white/10 border-white/20'}`}>
+                                                    <div className={`w-5 h-5 rounded-xl border flex items-center justify-center transition-all ${selectedNoteIds.includes(note.id) ? 'bg-[#17baa4] border-[#17baa4] text-white' : 'bg-white/10 border-white/20'}`}>
                                                         {selectedNoteIds.includes(note.id) && <Check size={12} strokeWidth={4} />}
                                                     </div>
                                                 </div>
                                             )}
                                             {/* Left: Glowing Neon Bar */}
-                                            <div className="flex shrink-0 items-start self-stretch">
+                                            <div className="flex shrink-0 items-start self-stretch flex-col">
                                                 <div className="relative w-1 flex-1 mt-10 mb-6 rounded-full">
                                                     {/* Central Bar: Soft start at top, gentle fade all the way down */}
                                                     <div className="absolute inset-0 rounded-full opacity-90" style={{ background: `linear-gradient(to bottom, ${col.color}ee 0%, ${col.color}40 100%)` }} />
