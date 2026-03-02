@@ -442,7 +442,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     onClick={() => setSelectedBetId(bet.id)}
                                     className={`
                                         group relative overflow-hidden bg-[#151b2e]/40 border-white/5 hover:border-primary/30 transition-all duration-300 cursor-pointer active:scale-[0.99]
-                                        ${viewMode === 'grid' ? 'p-5 pl-12 flex flex-col' : 'p-4 pl-16 flex flex-row items-center justify-between min-h-[140px]'}
+                                        ${viewMode === 'grid' ? 'p-6 pl-24 flex flex-col' : 'p-4 pl-24 flex flex-row items-center justify-between min-h-[160px]'}
                                     `}
                                 >
                                     <div
@@ -451,7 +451,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     />
 
                                     {/* Event Info - specifically nudging logo down to match user's visual target */}
-                                    <div className={`flex items-center gap-5 ${viewMode === 'grid' ? 'mb-4' : 'flex-[1.2] min-w-[300px] mr-8'}`}>
+                                    <div className={`flex items-center gap-5 ${viewMode === 'grid' ? 'mb-10' : 'flex-[1.2] min-w-[300px] mr-8'}`}>
                                         <div className="w-12 h-12 flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shrink-0">
                                             {bookie?.logo ? (
                                                 <img src={bookie.logo} alt="" className="w-full h-full object-contain" />
@@ -472,7 +472,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     {/* Data Section - Unified for List, Grouped for Grid */}
                                     <div className={`
                                         flex items-center 
-                                        ${viewMode === 'list' ? 'flex-[3] justify-between ml-10 pl-10 border-l border-white/5' : 'flex-col gap-6 mt-12'}
+                                        ${viewMode === 'list' ? 'flex-[3] justify-between ml-10 pl-10 border-l border-white/5' : 'flex-col gap-6 mt-20'}
                                     `}>
                                         {/* Financials Row */}
                                         <div className={`flex items-center ${viewMode === 'list' ? 'gap-20 flex-1' : 'w-full bg-white/5 p-3 rounded-xl justify-between flex-wrap gap-y-2'}`}>
