@@ -442,7 +442,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     onClick={() => setSelectedBetId(bet.id)}
                                     className={`
                                         group relative overflow-hidden bg-[#151b2e]/40 border-white/5 hover:border-primary/30 transition-all duration-300 cursor-pointer active:scale-[0.99]
-                                        ${viewMode === 'grid' ? 'p-5 pl-12 flex flex-col' : 'p-4 pl-20 flex flex-row items-center justify-between min-h-[110px]'}
+                                        ${viewMode === 'grid' ? 'p-5 pl-12 flex flex-col' : 'p-4 pl-20 flex flex-row items-center justify-between min-h-[130px]'}
                                     `}
                                 >
                                     <div
@@ -461,7 +461,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                         </div>
                                         <div>
                                             <h4 className="font-bold text-white text-base group-hover:text-white transition-colors whitespace-normal leading-tight">{bet.event}</h4>
-                                            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter mt-0.5">
+                                            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter mt-1.5">
                                                 <span>{date.toLocaleDateString('pt-BR')}</span>
                                                 <span className="w-1.5 h-1.5 rounded-full bg-gray-700" />
                                                 <span className="truncate">{bookie?.name}</span>
@@ -476,11 +476,11 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     `}>
                                         {/* Financials Row */}
                                         <div className={`flex items-center ${viewMode === 'list' ? 'gap-20 flex-1' : 'w-full bg-white/5 p-3 rounded-xl justify-between flex-wrap gap-y-2'}`}>
-                                            <div className="space-y-0.5 min-w-[100px]">
+                                            <div className="space-y-1.5 min-w-[100px]">
                                                 <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Investimento</p>
                                                 <MoneyDisplay value={stats.totalStake} className={`${viewMode === 'list' ? 'text-base' : 'text-sm'} font-bold text-white`} />
                                             </div>
-                                            <div className={`${viewMode === 'list' ? 'space-y-0.5 min-w-[100px]' : 'space-y-0.5 text-right min-w-[100px]'}`}>
+                                            <div className={`${viewMode === 'list' ? 'space-y-1.5 min-w-[100px]' : 'space-y-1.5 text-right min-w-[100px]'}`}>
                                                 <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Lucro Líquido</p>
                                                 <MoneyDisplay
                                                     value={stats.profit}
