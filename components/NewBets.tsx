@@ -440,16 +440,14 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                 <Card
                                     key={bet.id}
                                     onClick={() => setSelectedBetId(bet.id)}
-                                    className="group relative overflow-hidden bg-[#151b2e]/40 border-white/5 hover:border-primary/30 transition-all duration-300 cursor-pointer active:scale-[0.99] p-0 flex flex-row min-h-[130px]"
+                                    className="group relative overflow-hidden bg-[#151b2e]/40 border-white/5 hover:border-primary/30 transition-all duration-300 cursor-pointer active:scale-[0.99] p-4 pl-10 md:p-6 md:pl-14 min-h-[130px]"
                                 >
-                                    {/* STATUS BAR - Fixed Flex Item */}
                                     <div
-                                        className="w-1 transition-all group-hover:w-1.5 shrink-0"
+                                        className="absolute left-0 top-0 bottom-0 w-1 transition-all group-hover:w-1.5"
                                         style={{ backgroundColor: barColor }}
                                     />
 
-                                    {/* CONTENT WRAPPER */}
-                                    <div className="flex flex-col w-full h-full justify-center py-4 pl-6 pr-4 md:py-6 md:pl-11 md:pr-6">
+                                    <div className="flex flex-col w-full h-full justify-center">
 
                                         {/* Top Row: Logo + Title */}
                                         <div className="flex items-center gap-5 w-full">
