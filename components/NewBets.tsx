@@ -357,10 +357,8 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                             const bookie = getBookmaker(bet.mainBookmakerId);
                             const date = new Date(bet.date);
 
-                            const promo = promotions.find(p => p.name === bet.promotionType);
-                            const barColor = (promo && promo.name !== 'Nenhuma')
-                                ? promo.color
-                                : (statuses.find(s => s.name === bet.status)?.color || '#555');
+                            // Sidebar color strictly follows status color
+                            const barColor = statuses.find(s => s.name === bet.status)?.color || '#555';
 
                             return (
                                 <Card
@@ -368,7 +366,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     onClick={() => setSelectedBetId(bet.id)}
                                     className={`
                                         group relative overflow-hidden bg-[#151b2e]/40 border-white/5 hover:border-primary/30 transition-all duration-300 cursor-pointer active:scale-[0.99]
-                                        ${viewMode === 'grid' ? 'p-5 flex flex-col' : 'p-4 flex flex-row items-center gap-8'}
+                                        ${viewMode === 'grid' ? 'p-5 flex flex-col' : 'p-4 flex flex-row items-center justify-between'}
                                     `}
                                 >
                                     <div
@@ -376,63 +374,63 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                         style={{ backgroundColor: barColor }}
                                     />
 
-                                    {/* Event Info */}
-                                    <div className={`flex items-center gap-4 ${viewMode === 'grid' ? 'mb-4' : 'flex-none w-[20%]'}`}>
+                                    {/* Event Info - Flexible width */}
+                                    <div className={`flex items-center gap-5 ${viewMode === 'grid' ? 'mb-4' : 'flex-1 min-w-[250px] mr-8'}`}>
                                         <div
-                                            className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shrink-0"
+                                            className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shrink-0"
                                             style={{ backgroundColor: `${bookie?.color || '#333'}20`, border: `1px solid ${bookie?.color || '#333'}40` }}
                                         >
                                             {bookie?.logo ? (
                                                 <img src={bookie.logo} alt="" className="w-full h-full object-contain p-2" />
                                             ) : (
-                                                <BookOpen size={20} style={{ color: bookie?.color }} />
+                                                <BookOpen size={24} style={{ color: bookie?.color }} />
                                             )}
                                         </div>
-                                        <div className="min-w-0 pr-2">
-                                            <h4 className="font-bold text-white group-hover:text-primary transition-colors truncate">{bet.event}</h4>
-                                            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter">
+                                        <div>
+                                            <h4 className="font-bold text-white text-base group-hover:text-primary transition-colors whitespace-normal leading-tight">{bet.event}</h4>
+                                            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter mt-1">
                                                 <span>{date.toLocaleDateString('pt-BR')}</span>
-                                                <span className="w-1 h-1 rounded-full bg-gray-700" />
+                                                <span className="w-1.5 h-1.5 rounded-full bg-gray-700" />
                                                 <span className="truncate">{bookie?.name}</span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Financials & Status Grouped */}
+                                    {/* Financials & Status - Distributed */}
                                     <div className={`
-                                        flex items-center gap-6
-                                        ${viewMode === 'grid' ? 'mb-4 bg-white/5 p-3 rounded-xl' : 'flex-1 border-x border-white/5 px-8'}
+                                        flex items-center gap-10
+                                        ${viewMode === 'grid' ? 'mb-4 bg-white/5 p-3 rounded-xl' : 'flex-[2] px-10 border-x border-white/5'}
                                     `}>
-                                        <div className="grid grid-cols-2 gap-x-8 gap-y-1 flex-1">
+                                        <div className="grid grid-cols-2 gap-x-12 gap-y-1 flex-1">
                                             <div className="space-y-0.5">
-                                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Investimento</p>
-                                                <MoneyDisplay value={stats.totalStake} className="text-sm font-bold text-white" />
+                                                <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Investimento</p>
+                                                <MoneyDisplay value={stats.totalStake} className="text-base font-bold text-white" />
                                             </div>
                                             <div className="space-y-0.5 text-right">
-                                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Lucro Líquido</p>
+                                                <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Lucro Líquido</p>
                                                 <MoneyDisplay
                                                     value={stats.profit}
-                                                    className={`text-sm font-bold ${stats.profit >= 0 ? 'text-primary' : 'text-danger'}`}
+                                                    className={`text-base font-bold ${stats.profit >= 0 ? 'text-primary' : 'text-danger'}`}
                                                 />
                                             </div>
                                         </div>
 
-                                        <div className="flex flex-col items-center gap-1.5 border-l border-white/5 pl-6 min-w-[100px]">
-                                            <div className={`flex flex-col items-center px-3 py-1 rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-primary' : 'text-danger'}`}>
-                                                <span className="text-[9px] font-bold uppercase opacity-60 tracking-widest leading-none mb-0.5">ROI %</span>
-                                                <span className="text-base font-black leading-none">{roi.toFixed(1)}%</span>
+                                        <div className="flex flex-col items-center gap-1.5 border-l border-white/5 pl-10 min-w-[120px]">
+                                            <div className={`flex flex-col items-center px-4 py-1.5 rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-primary' : 'text-danger'}`}>
+                                                <span className="text-[9px] font-black uppercase opacity-60 tracking-widest leading-none mb-1">ROI %</span>
+                                                <span className="text-lg font-black leading-none">{roi.toFixed(1)}%</span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Badge Column */}
-                                    <div className={`flex flex-col gap-2 ${viewMode === 'list' ? 'flex-none w-[180px] items-end pr-2' : 'mt-auto'}`}>
-                                        <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-white/5 border border-white/10 w-fit">
+                                    {/* Badge Column - Align Right */}
+                                    <div className={`flex flex-col gap-2.5 ${viewMode === 'list' ? 'flex-1 items-end pl-8' : 'mt-auto'}`}>
+                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/5 border border-white/10 w-fit">
                                             {renderStatusIcon(bet.status)}
-                                            <span className="text-[10px] font-black uppercase tracking-wider text-gray-300">{bet.status}</span>
+                                            <span className="text-[10px] font-black uppercase tracking-tight text-gray-200">{bet.status}</span>
                                         </div>
                                         {bet.promotionType && bet.promotionType !== 'Nenhuma' && (
-                                            <Badge variant="outline" className="text-[9px] border-primary/30 text-primary py-0 px-2 bg-primary/5 w-fit">
+                                            <Badge variant="outline" className="text-[10px] border-primary/30 text-primary py-0.5 px-3 bg-primary/5 w-fit font-bold">
                                                 {bet.promotionType}
                                             </Badge>
                                         )}
