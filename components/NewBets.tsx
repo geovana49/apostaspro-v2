@@ -447,7 +447,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                         style={{ backgroundColor: barColor }}
                                     />
 
-                                    <div className="flex flex-col w-full h-full justify-center pl-6 md:pl-10">
+                                    <div className="flex flex-col w-full h-full justify-center pl-3 md:pl-5">
 
                                         {/* Top Row: Logo + Title */}
                                         <div className="flex items-center gap-5 w-full">
