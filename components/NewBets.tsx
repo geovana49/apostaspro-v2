@@ -419,8 +419,13 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                             const bookie = getBookmaker(bet.mainBookmakerId);
                             const date = new Date(bet.date);
 
-                            // Sidebar color strictly follows status color
-                            const barColor = statuses.find(s => s.name === bet.status)?.color || '#555';
+                            // Sidebar and status color
+                            const statusObj = statuses.find(s => s.name === bet.status);
+                            const barColor = statusObj?.color || '#555';
+
+                            // Promotion color
+                            const promoObj = promotions.find(p => p.name === bet.promotionType);
+                            const promoColor = promoObj?.color || '#17baa4';
 
                             return (
                                 <Card
@@ -486,13 +491,24 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     </div>
 
                                     {/* Badge Column - Align Right */}
-                                    <div className={`flex flex-col gap-2.5 ${viewMode === 'list' ? 'flex-1 items-end pl-8' : 'mt-auto'}`}>
-                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/5 border border-white/10 w-fit">
+                                    <div className={`flex flex-col gap-2 ${viewMode === 'list' ? 'flex-1 items-end pl-8' : 'mt-auto'}`}>
+                                        <div
+                                            className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/5 border w-fit"
+                                            style={{ borderColor: `${barColor}30`, color: barColor }}
+                                        >
                                             {renderStatusIcon(bet.status)}
-                                            <span className="text-[10px] font-black uppercase tracking-tight text-gray-200">{bet.status}</span>
+                                            <span className="text-[10px] font-black uppercase tracking-tight">{bet.status}</span>
                                         </div>
                                         {bet.promotionType && bet.promotionType !== 'Nenhuma' && (
-                                            <Badge variant="outline" className="text-[10px] border-primary/30 text-primary py-0.5 px-3 bg-primary/5 w-fit font-bold">
+                                            <Badge
+                                                variant="outline"
+                                                className="text-[10px] py-0.5 px-3 w-fit font-black uppercase tracking-wider"
+                                                style={{
+                                                    borderColor: `${promoColor}40`,
+                                                    color: promoColor,
+                                                    backgroundColor: `${promoColor}10`
+                                                }}
+                                            >
                                                 {bet.promotionType}
                                             </Badge>
                                         )}
