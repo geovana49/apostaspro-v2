@@ -440,18 +440,15 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                 <Card
                                     key={bet.id}
                                     onClick={() => setSelectedBetId(bet.id)}
-                                    className={`
-                                        group relative overflow-hidden bg-[#151b2e]/40 border-white/5 hover:border-primary/30 transition-all duration-300 cursor-pointer active:scale-[0.99]
-                                        ${viewMode === 'grid' ? 'p-6 pl-14 flex flex-col' : 'p-4 pl-14 flex flex-row items-center justify-between min-h-[130px]'}
-                                    `}
+                                    className="group relative overflow-hidden bg-[#151b2e]/40 border-white/5 hover:border-primary/30 transition-all duration-300 cursor-pointer active:scale-[0.99] p-4 md:p-6 pl-14 min-h-[130px]"
                                 >
                                     <div
                                         className="absolute left-0 top-0 bottom-0 w-1 transition-all group-hover:w-1.5"
                                         style={{ backgroundColor: barColor }}
                                     />
 
-                                    {/* Event Info - specifically nudging logo down to match user's visual target */}
-                                    <div className={`flex items-center gap-5 ${viewMode === 'grid' ? 'mb-4' : 'flex-[1.2] min-w-[300px] mr-8'}`}>
+                                    <div className="flex items-center gap-5 w-full h-full">
+                                        {/* LOGO - Always on the left, globally vertically centered */}
                                         <div className="w-12 h-12 flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shrink-0">
                                             {bookie?.logo ? (
                                                 <img src={bookie.logo} alt="" className="w-full h-full object-contain" />
@@ -459,64 +456,70 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                                 <BookOpen size={24} style={{ color: bookie?.color }} />
                                             )}
                                         </div>
-                                        <div>
-                                            <h4 className="font-bold text-white text-base group-hover:text-white transition-colors whitespace-normal leading-tight">{bet.event}</h4>
-                                            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter mt-4">
-                                                <span>{date.toLocaleDateString('pt-BR')}</span>
-                                                <span className="w-1.5 h-1.5 rounded-full bg-gray-700" />
-                                                <span className="truncate">{bookie?.name}</span>
-                                            </div>
-                                        </div>
-                                    </div>
 
-                                    {/* Data Section - Unified for List, Grouped for Grid */}
-                                    <div className={`
-                                        flex items-center 
-                                        ${viewMode === 'list' ? 'flex-[3] justify-between ml-10 pl-10 border-l border-white/5' : 'flex-col gap-6 mt-8'}
-                                    `}>
-                                        {/* Financials Row */}
-                                        <div className={`flex items-center ${viewMode === 'list' ? 'gap-20 flex-1' : 'w-full bg-white/5 p-3 rounded-xl justify-between flex-wrap gap-y-2'}`}>
-                                            <div className="space-y-1.5 min-w-[100px]">
-                                                <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Investimento</p>
-                                                <MoneyDisplay value={stats.totalStake} className={`${viewMode === 'list' ? 'text-base' : 'text-sm'} font-bold text-white`} />
-                                            </div>
-                                            <div className={`${viewMode === 'list' ? 'space-y-1.5 min-w-[100px]' : 'space-y-1.5 text-right min-w-[100px]'}`}>
-                                                <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Lucro Líquido</p>
-                                                <MoneyDisplay
-                                                    value={stats.profit}
-                                                    className={`${viewMode === 'list' ? 'text-base' : 'text-sm'} font-bold ${stats.profit >= 0 ? 'text-[#10b981]' : 'text-danger'}`}
-                                                />
-                                            </div>
-                                        </div>
+                                        {/* REST OF CONTENT */}
+                                        <div className={`flex flex-1 ${viewMode === 'grid' ? 'flex-col' : 'flex-row items-center justify-between'}`}>
 
-                                        {/* Status & Badges Row */}
-                                        <div className={`flex items-center ${viewMode === 'list' ? 'gap-10' : 'w-full justify-between gap-2 flex-wrap'}`}>
-                                            {/* ROI Box */}
-                                            <div className={`flex items-center gap-2 ${viewMode === 'list' ? 'px-4 py-2' : 'px-2 py-1'} rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-[#22d3ee]' : 'text-danger'} shrink-0 shadow-lg shadow-black/20`}>
-                                                <span className="text-[9px] font-black uppercase opacity-60 tracking-widest">ROI</span>
-                                                <span className={`${viewMode === 'list' ? 'text-base' : 'text-sm'} font-black leading-none`}>{roi.toFixed(1)}%</span>
+                                            {/* Title & Date */}
+                                            <div className={`${viewMode === 'grid' ? '' : 'flex-[1.2] min-w-[300px] mr-8'}`}>
+                                                <h4 className="font-bold text-white text-base group-hover:text-white transition-colors whitespace-normal leading-tight">{bet.event}</h4>
+                                                <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter mt-2">
+                                                    <span>{date.toLocaleDateString('pt-BR')}</span>
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-gray-700" />
+                                                    <span className="truncate">{bookie?.name}</span>
+                                                </div>
                                             </div>
 
-                                            {/* Badge Group */}
-                                            <div className={`flex items-center ${viewMode === 'list' ? 'gap-4' : 'gap-2 flex-wrap justify-end'}`}>
-                                                {/* Status Badge */}
-                                                <div
-                                                    className={`flex items-center gap-2 ${viewMode === 'list' ? 'px-4 py-2' : 'px-2 py-1'} rounded-md bg-white/5 border w-fit shrink-0`}
-                                                    style={{ borderColor: `${barColor}40`, color: barColor }}
-                                                >
-                                                    {renderStatusIcon(bet.status, barColor)}
-                                                    <span className="text-[10px] font-black uppercase tracking-tight">{bet.status}</span>
+                                            {/* Gap for Grid mode to match user's red line request */}
+                                            {viewMode === 'grid' && <div className="h-4"></div>}
+
+                                            {/* Data Section */}
+                                            <div className={`flex ${viewMode === 'list' ? 'items-center flex-[3] justify-between ml-10 pl-10 border-l border-white/5' : 'flex-col gap-4'}`}>
+                                                {/* Financials Row */}
+                                                <div className={`flex items-center ${viewMode === 'list' ? 'gap-20 flex-1' : 'w-full bg-white/5 p-3 rounded-xl justify-between flex-wrap gap-y-2'}`}>
+                                                    <div className="space-y-1.5 min-w-[100px]">
+                                                        <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Investimento</p>
+                                                        <MoneyDisplay value={stats.totalStake} className={`${viewMode === 'list' ? 'text-base' : 'text-sm'} font-bold text-white`} />
+                                                    </div>
+                                                    <div className={`${viewMode === 'list' ? 'space-y-1.5 min-w-[100px]' : 'space-y-1.5 text-right min-w-[100px]'}`}>
+                                                        <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Lucro Líquido</p>
+                                                        <MoneyDisplay
+                                                            value={stats.profit}
+                                                            className={`${viewMode === 'list' ? 'text-base' : 'text-sm'} font-bold ${stats.profit >= 0 ? 'text-[#10b981]' : 'text-danger'}`}
+                                                        />
+                                                    </div>
                                                 </div>
 
-                                                {/* Promotion Badge */}
-                                                {bet.promotionType && bet.promotionType !== 'Nenhuma' && (
-                                                    <Badge
-                                                        color={promoColor}
-                                                        className={`text-[10px] ${viewMode === 'list' ? 'py-1.5 px-4' : 'py-1 px-2'} w-fit font-black uppercase tracking-wider bg-white/5 shrink-0`}
-                                                    >
-                                                        {bet.promotionType}
-                                                    </Badge>
-                                                )}
+                                                {/* Status & Badges Row */}
+                                                <div className={`flex items-center ${viewMode === 'list' ? 'gap-10' : 'w-full justify-between gap-2 flex-wrap'}`}>
+                                                    {/* ROI Box */}
+                                                    <div className={`flex items-center gap-2 ${viewMode === 'list' ? 'px-4 py-2' : 'px-2 py-1'} rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-[#22d3ee]' : 'text-danger'} shrink-0 shadow-lg shadow-black/20`}>
+                                                        <span className="text-[9px] font-black uppercase opacity-60 tracking-widest">ROI</span>
+                                                        <span className={`${viewMode === 'list' ? 'text-base' : 'text-sm'} font-black leading-none`}>{roi.toFixed(1)}%</span>
+                                                    </div>
+
+                                                    {/* Badge Group */}
+                                                    <div className={`flex items-center ${viewMode === 'list' ? 'gap-4' : 'gap-2 flex-wrap justify-end'}`}>
+                                                        {/* Status Badge */}
+                                                        <div
+                                                            className={`flex items-center gap-2 ${viewMode === 'list' ? 'px-4 py-2' : 'px-2 py-1'} rounded-md bg-white/5 border w-fit shrink-0`}
+                                                            style={{ borderColor: `${barColor}40`, color: barColor }}
+                                                        >
+                                                            {renderStatusIcon(bet.status, barColor)}
+                                                            <span className="text-[10px] font-black uppercase tracking-tight">{bet.status}</span>
+                                                        </div>
+
+                                                        {/* Promotion Badge */}
+                                                        {bet.promotionType && bet.promotionType !== 'Nenhuma' && (
+                                                            <Badge
+                                                                color={promoColor}
+                                                                className={`text-[10px] ${viewMode === 'list' ? 'py-1.5 px-4' : 'py-1 px-2'} w-fit font-black uppercase tracking-wider bg-white/5 shrink-0`}
+                                                            >
+                                                                {bet.promotionType}
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
