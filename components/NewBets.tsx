@@ -4,7 +4,7 @@ import {
     ChevronDown, LayoutGrid, List, SlidersHorizontal, ArrowUpRight,
     ArrowDownRight, Minus, Plus, SearchX, BookOpen, Clock, CheckCircle2,
     XCircle, AlertCircle, Ban, Wallet, Activity, Building, RefreshCw, Layers as Infinity,
-    Target, Trophy, StickyNote
+    Target, Trophy, StickyNote, Gift
 } from 'lucide-react';
 import { Bet, Bookmaker, StatusItem, AppSettings, User, PromotionItem } from '../types';
 import { Card, Button, Input, Dropdown, MoneyDisplay, Badge, Modal } from './ui/UIComponents';
@@ -24,7 +24,8 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedStatus, setSelectedStatus] = useState('all');
     const [selectedBookmaker, setSelectedBookmaker] = useState('all');
-    const [selectedPeriod, setSelectedPeriod] = useState('month'); // month, week, today, all, custom_date
+    const [selectedPromotion, setSelectedPromotion] = useState('all');
+    const [selectedPeriod, setSelectedPeriod] = useState('all'); // Default to 'all' as requested
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [profitFilter, setProfitFilter] = useState('all'); // all, profit, loss
     const [minStake, setMinStake] = useState('');
@@ -69,6 +70,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
             if (!matchesSearch) return false;
             if (selectedStatus !== 'all' && bet.status !== selectedStatus) return false;
             if (selectedBookmaker !== 'all' && bet.mainBookmakerId !== selectedBookmaker) return false;
+            if (selectedPromotion !== 'all' && bet.promotionType !== selectedPromotion) return false;
             if (profitFilter === 'profit' && stats.profit <= 0) return false;
             if (profitFilter === 'loss' && stats.profit >= 0) return false;
             if (minStake && stats.totalStake < parseFloat(minStake)) return false;
@@ -100,9 +102,19 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
             }
             return true;
         });
-    }, [bets, searchTerm, selectedStatus, selectedBookmaker, selectedPeriod, selectedDate, profitFilter, minStake, marketFilter, typeFilter, currentDate]);
+    }, [bets, searchTerm, selectedStatus, selectedBookmaker, selectedPromotion, selectedPeriod, selectedDate, profitFilter, minStake, marketFilter, typeFilter, currentDate]);
 
     const getBookmaker = (id: string) => bookmakers.find(b => b.id === id);
+
+    const filteredStats = useMemo(() => {
+        return filteredBets.reduce((acc, bet) => {
+            const stats = calculateBetStats(bet);
+            return {
+                totalProfit: acc.totalProfit + stats.profit,
+                totalStake: acc.totalStake + stats.totalStake
+            };
+        }, { totalProfit: 0, totalStake: 0 });
+    }, [filteredBets]);
 
     const renderStatusIcon = (status: string) => {
         switch (status) {
@@ -175,6 +187,24 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     label: s.name,
                                     value: s.name,
                                     icon: <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
+                                }))
+                            ]}
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Promoção</label>
+                        <Dropdown
+                            value={selectedPromotion}
+                            onChange={setSelectedPromotion}
+                            isSearchable={true}
+                            searchPlaceholder="Procurar promoção..."
+                            options={[
+                                { label: 'Todas as Promoções', value: 'all', icon: <Gift size={14} /> },
+                                ...promotions.map(p => ({
+                                    label: p.name,
+                                    value: p.name,
+                                    icon: <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
                                 }))
                             ]}
                         />
@@ -291,7 +321,8 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                 setSearchTerm('');
                                 setSelectedStatus('all');
                                 setSelectedBookmaker('all');
-                                setSelectedPeriod('month');
+                                setSelectedPromotion('all');
+                                setSelectedPeriod('all');
                                 setSelectedDate(new Date().toISOString().split('T')[0]);
                                 setProfitFilter('all');
                                 setMinStake('');
@@ -305,6 +336,37 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                     </div>
                 </div>
             </Card>
+
+            {/* Financial Preview Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-top-4 duration-500">
+                <div className="bg-[#0d1421] border border-white/5 rounded-2xl p-4 flex items-center justify-between group hover:border-primary/30 transition-all">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                            <Wallet size={20} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest leading-none mb-1">Total Investido (Filtro)</p>
+                            <MoneyDisplay value={filteredStats.totalStake} className="text-lg font-bold text-white" />
+                        </div>
+                    </div>
+                </div>
+                <div className={`bg-[#0d1421] border border-white/5 rounded-2xl p-4 flex items-center justify-between group hover:border-primary/30 transition-all ${filteredStats.totalProfit >= 0 ? 'hover:border-primary/30' : 'hover:border-danger/30'}`}>
+                    <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${filteredStats.totalProfit >= 0 ? 'bg-primary/10 text-primary' : 'bg-danger/10 text-danger'}`}>
+                            {filteredStats.totalProfit >= 0 ? <ArrowUpRight size={20} /> : <ArrowDownRight size={20} />}
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest leading-none mb-1">Resultado Total (Filtro)</p>
+                            <MoneyDisplay value={filteredStats.totalProfit} className={`text-xl font-black ${filteredStats.totalProfit >= 0 ? 'text-primary' : 'text-danger'}`} />
+                        </div>
+                    </div>
+                    {filteredStats.totalStake > 0 && (
+                        <div className={`px-3 py-1 rounded-lg bg-white/5 border border-white/5 text-sm font-black ${filteredStats.totalProfit >= 0 ? 'text-primary' : 'text-danger'}`}>
+                            {((filteredStats.totalProfit / filteredStats.totalStake) * 100).toFixed(1)}% ROI
+                        </div>
+                    )}
+                </div>
+            </div>
 
             {/* Date Navigation for Month View */}
             {selectedPeriod === 'month' && (
