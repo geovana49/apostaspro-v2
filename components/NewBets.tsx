@@ -538,7 +538,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                     <div className="space-y-6">
                         <div className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5">
                             <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 flex items-center justify-center shrink-0">
+                                <div className="w-12 h-12 flex items-center justify-center shrink-0">
                                     {getBookmaker(selectedBetForModal.mainBookmakerId)?.logo ? (
                                         <img
                                             src={getBookmaker(selectedBetForModal.mainBookmakerId)?.logo}
@@ -546,7 +546,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                             className="w-full h-full object-contain"
                                         />
                                     ) : (
-                                        <Trophy size={32} className="text-primary" />
+                                        <Trophy size={24} className="text-primary" />
                                     )}
                                 </div>
                                 <div>
@@ -555,12 +555,13 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                 </div>
                             </div>
                             <div className="text-right">
-                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${selectedBetForModal.status === 'Green' ? 'bg-primary/20 text-primary' :
-                                    selectedBetForModal.status === 'Red' ? 'bg-danger/20 text-danger' :
-                                        'bg-amber-500/20 text-amber-500'
-                                    }`}>
-                                    {selectedBetForModal.status}
-                                </span>
+                                <div
+                                    className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/5 border w-fit ml-auto"
+                                    style={{ borderColor: `${statuses.find(s => s.name === selectedBetForModal.status)?.color}40`, color: statuses.find(s => s.name === selectedBetForModal.status)?.color }}
+                                >
+                                    {renderStatusIcon(selectedBetForModal.status, statuses.find(s => s.name === selectedBetForModal.status)?.color)}
+                                    <span className="text-[10px] font-black uppercase tracking-tight">{selectedBetForModal.status}</span>
+                                </div>
                             </div>
                         </div>
 
@@ -581,8 +582,17 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                 </div>
                             </div>
                             <div className="bg-[#05070e] p-4 rounded-2xl border border-white/5">
-                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Promoção</p>
-                                <p className="text-primary font-bold uppercase text-xs">{selectedBetForModal.promotionType}</p>
+                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Promoção</p>
+                                {selectedBetForModal.promotionType && selectedBetForModal.promotionType !== 'Nenhuma' ? (
+                                    <Badge
+                                        color={promotions.find(p => p.name === selectedBetForModal.promotionType)?.color || '#17baa4'}
+                                        className="text-[10px] py-1 px-3 w-fit font-black uppercase tracking-wider bg-white/5"
+                                    >
+                                        {selectedBetForModal.promotionType}
+                                    </Badge>
+                                ) : (
+                                    <p className="text-gray-600 font-bold uppercase text-[10px]">Nenhuma</p>
+                                )}
                             </div>
                         </div>
 
