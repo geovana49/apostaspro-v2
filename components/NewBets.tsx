@@ -442,7 +442,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     onClick={() => setSelectedBetId(bet.id)}
                                     className={`
                                         group relative overflow-hidden bg-[#151b2e]/40 border-white/5 hover:border-primary/30 transition-all duration-300 cursor-pointer active:scale-[0.99]
-                                        ${viewMode === 'grid' ? 'p-5 pl-12 flex flex-col' : 'p-4 pl-28 flex flex-row items-center justify-between min-h-[130px]'}
+                                        ${viewMode === 'grid' ? 'p-5 pl-12 flex flex-col gap-6' : 'p-4 pl-28 flex flex-row items-center justify-between min-h-[140px]'}
                                     `}
                                 >
                                     <div
@@ -451,7 +451,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     />
 
                                     {/* Event Info - specifically nudging logo down to match user's visual target */}
-                                    <div className={`flex items-center gap-5 ${viewMode === 'grid' ? 'mb-4' : 'flex-[1.2] min-w-[300px] mr-8'}`}>
+                                    <div className={`flex items-center gap-5 ${viewMode === 'grid' ? 'mb-6' : 'flex-[1.2] min-w-[300px] mr-8'}`}>
                                         <div className="w-10 h-10 flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shrink-0 translate-y-2">
                                             {bookie?.logo ? (
                                                 <img src={bookie.logo} alt="" className="w-full h-full object-contain" />
@@ -461,7 +461,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                         </div>
                                         <div>
                                             <h4 className="font-bold text-white text-base group-hover:text-white transition-colors whitespace-normal leading-tight">{bet.event}</h4>
-                                            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter mt-1.5">
+                                            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter mt-3">
                                                 <span>{date.toLocaleDateString('pt-BR')}</span>
                                                 <span className="w-1.5 h-1.5 rounded-full bg-gray-700" />
                                                 <span className="truncate">{bookie?.name}</span>
@@ -472,7 +472,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     {/* Data Section - Unified for List, Grouped for Grid */}
                                     <div className={`
                                         flex items-center 
-                                        ${viewMode === 'list' ? 'flex-[3] justify-between ml-10 pl-10 border-l border-white/5' : 'flex-col gap-4 mt-auto'}
+                                        ${viewMode === 'list' ? 'flex-[3] justify-between ml-10 pl-10 border-l border-white/5' : 'flex-col gap-6 mt-auto'}
                                     `}>
                                         {/* Financials Row */}
                                         <div className={`flex items-center ${viewMode === 'list' ? 'gap-20 flex-1' : 'w-full bg-white/5 p-3 rounded-xl justify-between flex-wrap gap-y-2'}`}>
