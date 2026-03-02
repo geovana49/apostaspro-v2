@@ -538,15 +538,15 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                     <div className="space-y-6">
                         <div className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center shadow-lg border border-white/5">
+                                <div className="w-16 h-16 flex items-center justify-center shrink-0">
                                     {getBookmaker(selectedBetForModal.mainBookmakerId)?.logo ? (
                                         <img
                                             src={getBookmaker(selectedBetForModal.mainBookmakerId)?.logo}
                                             alt=""
-                                            className="w-full h-full object-contain p-2"
+                                            className="w-full h-full object-contain"
                                         />
                                     ) : (
-                                        <Trophy size={24} className="text-primary" />
+                                        <Trophy size={32} className="text-primary" />
                                     )}
                                 </div>
                                 <div>
@@ -592,8 +592,18 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                 {selectedBetForModal.coverages?.map((cov, idx) => (
                                     <div key={idx} className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5 group hover:bg-white/10 transition-all">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 bg-[#05070e] rounded-lg flex items-center justify-center text-xs font-bold text-gray-400">
-                                                {cov.market?.substring(0, 1)}
+                                            <div className="w-8 h-8 flex items-center justify-center shrink-0 overflow-hidden">
+                                                {getBookmaker(cov.bookmakerId)?.logo ? (
+                                                    <img
+                                                        src={getBookmaker(cov.bookmakerId).logo}
+                                                        alt=""
+                                                        className="w-full h-full object-contain"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-[#05070e] rounded-lg flex items-center justify-center text-xs font-bold text-gray-400">
+                                                        {cov.market?.substring(0, 1)}
+                                                    </div>
+                                                )}
                                             </div>
                                             <div>
                                                 <p className="text-sm font-bold text-white">{cov.market}</p>
