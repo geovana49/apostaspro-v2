@@ -463,7 +463,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                             )}
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-white text-base group-hover:text-primary transition-colors whitespace-normal leading-tight">{bet.event}</h4>
+                                            <h4 className="font-bold text-white text-base group-hover:text-[#22d3ee] transition-colors whitespace-normal leading-tight">{bet.event}</h4>
                                             <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter mt-1">
                                                 <span>{date.toLocaleDateString('pt-BR')}</span>
                                                 <span className="w-1.5 h-1.5 rounded-full bg-gray-700" />
@@ -487,7 +487,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                                 <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Lucro Líquido</p>
                                                 <MoneyDisplay
                                                     value={stats.profit}
-                                                    className={`${viewMode === 'list' ? 'text-base' : 'text-sm'} font-bold ${stats.profit >= 0 ? 'text-primary' : 'text-danger'}`}
+                                                    className={`${viewMode === 'list' ? 'text-base' : 'text-sm'} font-bold ${stats.profit >= 0 ? 'text-[#10b981]' : 'text-danger'}`}
                                                 />
                                             </div>
                                         </div>
@@ -495,7 +495,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                         {/* Status & Badges Row */}
                                         <div className={`flex items-center ${viewMode === 'list' ? 'gap-10' : 'w-full justify-between gap-2 flex-wrap'}`}>
                                             {/* ROI Box */}
-                                            <div className={`flex items-center gap-2 ${viewMode === 'list' ? 'px-4 py-2' : 'px-2 py-1'} rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-primary' : 'text-danger'} shrink-0`}>
+                                            <div className={`flex items-center gap-2 ${viewMode === 'list' ? 'px-4 py-2' : 'px-2 py-1'} rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-[#22d3ee]' : 'text-danger'} shrink-0 shadow-lg shadow-black/20`}>
                                                 <span className="text-[9px] font-black uppercase opacity-60 tracking-widest">ROI</span>
                                                 <span className={`${viewMode === 'list' ? 'text-base' : 'text-sm'} font-black leading-none`}>{roi.toFixed(1)}%</span>
                                             </div>
