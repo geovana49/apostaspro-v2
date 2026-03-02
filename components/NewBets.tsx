@@ -449,7 +449,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
 
                                     <div className="flex items-center gap-5 w-full h-full">
                                         {/* LOGO - Always on the left, globally vertically centered */}
-                                        <div className="w-12 h-12 flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shrink-0">
+                                        <div className="w-10 h-10 flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shrink-0 pr-2">
                                             {bookie?.logo ? (
                                                 <img src={bookie.logo} alt="" className="w-full h-full object-contain" />
                                             ) : (
@@ -470,11 +470,11 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                                 </div>
                                             </div>
 
-                                            {/* Gap for Grid mode to match user's red line request */}
-                                            {viewMode === 'grid' && <div className="h-4"></div>}
-
                                             {/* Data Section */}
-                                            <div className={`flex ${viewMode === 'list' ? 'items-center flex-[3] justify-between ml-10 pl-10 border-l border-white/5' : 'flex-col gap-4'}`}>
+                                            <div className={`
+                                                flex items-center
+                                                ${viewMode === 'list' ? 'flex-[3] justify-between ml-10 pl-10 border-l border-white/5' : 'flex-col gap-8 mt-8'}
+                                            `}>
                                                 {/* Financials Row */}
                                                 <div className={`flex items-center ${viewMode === 'list' ? 'gap-20 flex-1' : 'w-full bg-white/5 p-3 rounded-xl justify-between flex-wrap gap-y-2'}`}>
                                                     <div className="space-y-1.5 min-w-[100px]">
