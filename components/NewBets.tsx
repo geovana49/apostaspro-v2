@@ -440,7 +440,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                 <Card
                                     key={bet.id}
                                     onClick={() => setSelectedBetId(bet.id)}
-                                    className="group relative overflow-hidden bg-[#151b2e]/40 border-white/5 hover:border-primary/30 transition-all duration-300 cursor-pointer active:scale-[0.99] p-4 md:p-6 pl-20 min-h-[130px]"
+                                    className="group relative overflow-hidden bg-[#151b2e]/40 border-white/5 hover:border-primary/30 transition-all duration-300 cursor-pointer active:scale-[0.99] p-4 pl-16 md:p-6 md:pl-24 min-h-[130px]"
                                 >
                                     <div
                                         className="absolute left-0 top-0 bottom-0 w-1 transition-all group-hover:w-1.5"
