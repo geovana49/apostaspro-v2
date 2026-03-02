@@ -442,7 +442,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     onClick={() => setSelectedBetId(bet.id)}
                                     className={`
                                         group relative overflow-hidden bg-[#151b2e]/40 border-white/5 hover:border-primary/30 transition-all duration-300 cursor-pointer active:scale-[0.99]
-                                        ${viewMode === 'grid' ? 'p-5 pl-12 flex flex-col' : 'p-4 pl-16 flex flex-row items-center justify-between min-h-[110px]'}
+                                        ${viewMode === 'grid' ? 'p-5 pl-12 flex flex-col' : 'p-4 pl-20 flex flex-row items-center justify-between min-h-[110px]'}
                                     `}
                                 >
                                     <div
