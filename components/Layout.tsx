@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Menu, LayoutDashboard, Ticket, DollarSign, Bot, Settings, TrendingUp, User, LogOut, ChevronRight, X,
-  ArrowUp, ArrowDown, Cloud, CloudOff, RefreshCw, Calculator, Wallet, ClipboardList, BarChart3, Calendar
+  ArrowUp, ArrowDown, Cloud, CloudOff, RefreshCw, Calculator, Wallet, ClipboardList, BarChart3, Calendar, SlidersHorizontal
 } from 'lucide-react';
 import { Page, AppSettings, SettingsTab } from '../types';
 
@@ -138,6 +138,7 @@ const Layout: React.FC<LayoutProps> = ({
   const navItems = [
     { id: Page.OVERVIEW, label: 'Visão Geral', icon: <LayoutDashboard size={20} /> },
     { id: Page.BETS, label: 'Minhas Apostas', icon: <Ticket size={20} /> },
+    { id: Page.NEW_BETS, label: 'Filtros Avançados', icon: <SlidersHorizontal size={20} /> },
     { id: Page.GAINS, label: 'Ganhos Extras', icon: <DollarSign size={20} /> },
     { id: Page.CAIXA, label: 'Controle de Caixa', icon: <Wallet size={20} /> },
     { id: Page.NOTES, label: 'Bloco de Notas', icon: <ClipboardList size={20} />, badge: notesCount },
@@ -157,6 +158,7 @@ const Layout: React.FC<LayoutProps> = ({
       case Page.CAIXA: return 'Controle de Caixa';
       case Page.NOTES: return 'Bloco de Notas';
       case Page.MONTHLY_HISTORY: return 'Histórico Mensal';
+      case Page.NEW_BETS: return 'Filtros Avançados';
       default: return 'ApostasPro';
     }
   }

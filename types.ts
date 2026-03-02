@@ -107,6 +107,7 @@ export enum Page {
   CAIXA = 'caixa',
   NOTES = 'notes',
   MONTHLY_HISTORY = 'monthlyHistory',
+  NEW_BETS = 'newBets',
 }
 
 export interface CaixaAccount {
