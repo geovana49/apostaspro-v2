@@ -493,16 +493,19 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     </div>
 
                                     {/* Summary & Badge Column - Align Right */}
-                                    <div className={`flex flex-col gap-4 ${viewMode === 'list' ? 'flex-1 items-end pl-8' : 'mt-auto'}`}>
+                                    <div className={`
+                                        flex gap-6 
+                                        ${viewMode === 'list' ? 'flex-row items-center flex-1 justify-end pl-8' : 'flex-col items-end mt-auto'}
+                                    `}>
                                         {/* ROI Box */}
-                                        <div className={`flex flex-col items-center px-4 py-1.5 rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-primary' : 'text-danger'} w-fit`}>
+                                        <div className={`flex flex-col items-center px-4 py-1.5 rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-primary' : 'text-danger'} w-fit shrink-0`}>
                                             <span className="text-[9px] font-black uppercase opacity-60 tracking-widest leading-none mb-1">ROI %</span>
                                             <span className="text-lg font-black leading-none">{roi.toFixed(1)}%</span>
                                         </div>
 
                                         {/* Status Badge */}
                                         <div
-                                            className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/5 border w-fit"
+                                            className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/5 border w-fit shrink-0"
                                             style={{ borderColor: `${barColor}40`, color: barColor }}
                                         >
                                             {renderStatusIcon(bet.status, barColor)}
@@ -513,7 +516,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                         {bet.promotionType && bet.promotionType !== 'Nenhuma' && (
                                             <Badge
                                                 color={promoColor}
-                                                className="text-[10px] py-1 px-3 w-fit font-black uppercase tracking-wider bg-white/5"
+                                                className="text-[10px] py-1 px-3 w-fit font-black uppercase tracking-wider bg-white/5 shrink-0"
                                             >
                                                 {bet.promotionType}
                                             </Badge>
