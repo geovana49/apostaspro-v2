@@ -116,13 +116,22 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
         }, { totalProfit: 0, totalStake: 0 });
     }, [filteredBets]);
 
-    const renderStatusIcon = (status: string) => {
+    const renderStatusIcon = (status: string, color?: string) => {
+        const style = color ? { color } : {};
         switch (status) {
-            case 'Green': return <CheckCircle2 size={14} className="text-primary" />;
-            case 'Red': return <XCircle size={14} className="text-danger" />;
-            case 'Pendente': return <Clock size={14} className="text-amber-500" />;
-            case 'Anulada': return <Ban size={14} className="text-gray-500" />;
-            default: return <AlertCircle size={14} className="text-blue-500" />;
+            case 'Green':
+            case 'Concluído':
+            case 'Meio Green':
+                return <CheckCircle2 size={14} style={style} />;
+            case 'Red':
+            case 'Meio Red':
+                return <XCircle size={14} style={style} />;
+            case 'Pendente':
+                return <Clock size={14} style={style} />;
+            case 'Anulada':
+                return <Ban size={14} style={style} />;
+            default:
+                return <AlertCircle size={14} style={style} />;
         }
     };
 
@@ -494,20 +503,15 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     <div className={`flex flex-col gap-2 ${viewMode === 'list' ? 'flex-1 items-end pl-8' : 'mt-auto'}`}>
                                         <div
                                             className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/5 border w-fit"
-                                            style={{ borderColor: `${barColor}30`, color: barColor }}
+                                            style={{ borderColor: `${barColor}40`, color: barColor }}
                                         >
-                                            {renderStatusIcon(bet.status)}
+                                            {renderStatusIcon(bet.status, barColor)}
                                             <span className="text-[10px] font-black uppercase tracking-tight">{bet.status}</span>
                                         </div>
                                         {bet.promotionType && bet.promotionType !== 'Nenhuma' && (
                                             <Badge
-                                                variant="outline"
-                                                className="text-[10px] py-0.5 px-3 w-fit font-black uppercase tracking-wider"
-                                                style={{
-                                                    borderColor: `${promoColor}40`,
-                                                    color: promoColor,
-                                                    backgroundColor: `${promoColor}10`
-                                                }}
+                                                color={promoColor}
+                                                className="text-[10px] py-1 px-3 w-fit font-black uppercase tracking-wider bg-white/5"
                                             >
                                                 {bet.promotionType}
                                             </Badge>
