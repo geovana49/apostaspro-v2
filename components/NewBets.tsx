@@ -463,7 +463,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                             )}
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-white text-base group-hover:text-[#22d3ee] transition-colors whitespace-normal leading-tight">{bet.event}</h4>
+                                            <h4 className="font-bold text-white text-base group-hover:text-white transition-colors whitespace-normal leading-tight">{bet.event}</h4>
                                             <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter mt-1">
                                                 <span>{date.toLocaleDateString('pt-BR')}</span>
                                                 <span className="w-1.5 h-1.5 rounded-full bg-gray-700" />
