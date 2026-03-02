@@ -472,10 +472,10 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                         </div>
                                     </div>
 
-                                    {/* Financials & Status - Distributed */}
+                                    {/* Financials - Distributed */}
                                     <div className={`
                                         flex items-center gap-10
-                                        ${viewMode === 'grid' ? 'mb-4 bg-white/5 p-3 rounded-xl' : 'flex-[2] px-10 border-x border-white/5'}
+                                        ${viewMode === 'grid' ? 'mb-4 bg-white/5 p-3 rounded-xl' : 'flex-[1.5] px-10 border-x border-white/5'}
                                     `}>
                                         <div className="grid grid-cols-2 gap-x-12 gap-y-1 flex-1">
                                             <div className="space-y-0.5">
@@ -490,17 +490,17 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                                 />
                                             </div>
                                         </div>
-
-                                        <div className="flex flex-col items-center gap-1.5 border-l border-white/5 pl-10 min-w-[120px]">
-                                            <div className={`flex flex-col items-center px-4 py-1.5 rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-primary' : 'text-danger'}`}>
-                                                <span className="text-[9px] font-black uppercase opacity-60 tracking-widest leading-none mb-1">ROI %</span>
-                                                <span className="text-lg font-black leading-none">{roi.toFixed(1)}%</span>
-                                            </div>
-                                        </div>
                                     </div>
 
-                                    {/* Badge Column - Align Right */}
-                                    <div className={`flex flex-col gap-2 ${viewMode === 'list' ? 'flex-1 items-end pl-8' : 'mt-auto'}`}>
+                                    {/* Summary & Badge Column - Align Right */}
+                                    <div className={`flex flex-col gap-4 ${viewMode === 'list' ? 'flex-1 items-end pl-8' : 'mt-auto'}`}>
+                                        {/* ROI Box */}
+                                        <div className={`flex flex-col items-center px-4 py-1.5 rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-primary' : 'text-danger'} w-fit`}>
+                                            <span className="text-[9px] font-black uppercase opacity-60 tracking-widest leading-none mb-1">ROI %</span>
+                                            <span className="text-lg font-black leading-none">{roi.toFixed(1)}%</span>
+                                        </div>
+
+                                        {/* Status Badge */}
                                         <div
                                             className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/5 border w-fit"
                                             style={{ borderColor: `${barColor}40`, color: barColor }}
@@ -508,6 +508,8 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                             {renderStatusIcon(bet.status, barColor)}
                                             <span className="text-[10px] font-black uppercase tracking-tight">{bet.status}</span>
                                         </div>
+
+                                        {/* Promotion Badge */}
                                         {bet.promotionType && bet.promotionType !== 'Nenhuma' && (
                                             <Badge
                                                 color={promoColor}
