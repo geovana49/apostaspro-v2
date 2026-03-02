@@ -492,7 +492,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                             </div>
 
                                             {/* Status & Badges Row */}
-                                            <div className={`flex items-center ${viewMode === 'list' ? 'gap-10' : 'w-full justify-between gap-2 flex-wrap'}`}>
+                                            <div className={`flex items-center ${viewMode === 'list' ? 'gap-10' : 'w-full justify-between gap-1 flex-nowrap'}`}>
                                                 {/* ROI Box */}
                                                 <div className={`flex items-center gap-2 ${viewMode === 'list' ? 'px-4 py-2' : 'px-2 py-1'} rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-[#22d3ee]' : 'text-danger'} shrink-0 shadow-lg shadow-black/20`}>
                                                     <span className="text-[9px] font-black uppercase opacity-60 tracking-widest">ROI</span>
@@ -500,7 +500,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                                 </div>
 
                                                 {/* Badge Group */}
-                                                <div className={`flex items-center ${viewMode === 'list' ? 'gap-4' : 'gap-2 flex-wrap justify-end'}`}>
+                                                <div className={`${viewMode === 'list' ? 'flex items-center gap-4' : 'contents'}`}>
                                                     {/* Status Badge */}
                                                     <div
                                                         className={`flex items-center gap-2 ${viewMode === 'list' ? 'px-4 py-2' : 'px-2 py-1'} rounded-md bg-white/5 border w-fit shrink-0`}
