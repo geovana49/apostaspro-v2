@@ -440,7 +440,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                 <Card
                                     key={bet.id}
                                     onClick={() => setSelectedBetId(bet.id)}
-                                    className="group relative overflow-hidden bg-[#151b2e]/40 border-white/5 hover:border-primary/30 transition-all duration-300 cursor-pointer active:scale-[0.99] p-4 md:p-6 pl-14 min-h-[130px]"
+                                    className="group relative overflow-hidden bg-[#151b2e]/40 border-white/5 hover:border-primary/30 transition-all duration-300 cursor-pointer active:scale-[0.99] p-4 md:p-6 pl-24 min-h-[130px]"
                                 >
                                     <div
                                         className="absolute left-0 top-0 bottom-0 w-1 transition-all group-hover:w-1.5"
@@ -458,10 +458,10 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                         </div>
 
                                         {/* REST OF CONTENT */}
-                                        <div className={`flex flex-1 ${viewMode === 'grid' ? 'flex-col' : 'flex-row items-center justify-between'}`}>
+                                        <div className="flex flex-col flex-1">
 
                                             {/* Title & Date */}
-                                            <div className={`${viewMode === 'grid' ? '' : 'flex-[1.2] min-w-[300px] mr-8'}`}>
+                                            <div>
                                                 <h4 className="font-bold text-white text-base group-hover:text-white transition-colors whitespace-normal leading-tight">{bet.event}</h4>
                                                 <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter mt-2">
                                                     <span>{date.toLocaleDateString('pt-BR')}</span>
@@ -472,8 +472,8 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
 
                                             {/* Data Section */}
                                             <div className={`
-                                                flex items-center
-                                                ${viewMode === 'list' ? 'flex-[3] justify-between ml-10 pl-10 border-l border-white/5' : 'flex-col gap-8 mt-8'}
+                                                flex w-full mt-6
+                                                ${viewMode === 'list' ? 'items-center justify-between border-t border-white/5 pt-6' : 'flex-col gap-6'}
                                             `}>
                                                 {/* Financials Row */}
                                                 <div className={`flex items-center ${viewMode === 'list' ? 'gap-20 flex-1' : 'w-full bg-white/5 p-3 rounded-xl justify-between flex-wrap gap-y-2'}`}>
