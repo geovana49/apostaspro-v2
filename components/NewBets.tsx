@@ -24,7 +24,8 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedStatus, setSelectedStatus] = useState('all');
     const [selectedBookmaker, setSelectedBookmaker] = useState('all');
-    const [selectedPeriod, setSelectedPeriod] = useState('month'); // month, week, today, all
+    const [selectedPeriod, setSelectedPeriod] = useState('month'); // month, week, today, all, custom_date
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [profitFilter, setProfitFilter] = useState('all'); // all, profit, loss
     const [minStake, setMinStake] = useState('');
     const [marketFilter, setMarketFilter] = useState('all');
@@ -117,11 +118,16 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                 const now = new Date();
                 const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
                 if (betDate < oneWeekAgo) return false;
+            } else if (selectedPeriod === 'custom_date') {
+                const targetStr = new Date(selectedDate).toISOString().split('T')[0];
+                const betStr = betDate.toISOString().split('T')[0];
+                if (targetStr !== betStr) return false;
             }
+            // "all" (Todo o Período) doesn't filter by date
 
             return true;
         });
-    }, [bets, searchTerm, selectedStatus, selectedBookmaker, selectedPeriod, profitFilter, minStake, marketFilter, typeFilter, currentDate]);
+    }, [bets, searchTerm, selectedStatus, selectedBookmaker, selectedPeriod, selectedDate, profitFilter, minStake, marketFilter, typeFilter, currentDate]);
 
     const getBookmaker = (id: string) => bookmakers.find(b => b.id === id);
 
@@ -248,13 +254,28 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                             value={selectedPeriod}
                             onChange={setSelectedPeriod}
                             options={[
-                                { label: 'Este Mês', value: 'month', icon: <Calendar size={14} /> },
+                                { label: 'Todo o Período (Desde o Início)', value: 'all', icon: <Infinity size={14} /> },
+                                { label: 'Filtrar por Mês', value: 'month', icon: <Calendar size={14} /> },
+                                { label: 'Data Específica', value: 'custom_date', icon: <Clock size={14} /> },
                                 { label: 'Hoje', value: 'today', icon: <Clock size={14} /> },
-                                { label: 'Últimos 7 dias', value: 'week', icon: <Activity size={14} /> },
-                                { label: 'Histórico Total', value: 'all', icon: <Infinity size={14} /> }
+                                { label: 'Últimos 7 dias', value: 'week', icon: <Activity size={14} /> }
                             ]}
                         />
                     </div>
+
+                    {selectedPeriod === 'custom_date' && (
+                        <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                            <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1 flex items-center gap-1">
+                                <Calendar size={10} /> Selecionar Data
+                            </label>
+                            <Input
+                                type="date"
+                                value={selectedDate}
+                                onChange={e => setSelectedDate(e.target.value)}
+                                className="bg-[#05070e] border-primary/30 focus:border-primary/50 text-white"
+                            />
+                        </div>
+                    )}
 
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Mercado</label>
@@ -290,6 +311,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                 setSelectedStatus('all');
                                 setSelectedBookmaker('all');
                                 setSelectedPeriod('month');
+                                setSelectedDate(new Date().toISOString().split('T')[0]);
                                 setProfitFilter('all');
                                 setMinStake('');
                                 setMarketFilter('all');
