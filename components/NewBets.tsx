@@ -212,6 +212,8 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                         <Dropdown
                             value={selectedBookmaker}
                             onChange={setSelectedBookmaker}
+                            isSearchable={true}
+                            searchPlaceholder="Procurar casa..."
                             options={[
                                 { label: 'Todas as Casas', value: 'all', icon: <Building size={14} /> },
                                 ...bookmakers.map(b => ({
@@ -259,6 +261,8 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                         <Dropdown
                             value={marketFilter}
                             onChange={setMarketFilter}
+                            isSearchable={true}
+                            searchPlaceholder="Procurar mercado..."
                             options={[
                                 { label: 'Todos os Mercados', value: 'all', icon: <Target size={14} /> },
                                 ...allMarkets.map(m => ({ label: m, value: m }))
@@ -394,42 +398,44 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                         </div>
                                     </div>
 
-                                    {/* Financials - Well Separated */}
+                                    {/* Financials & Status Grouped */}
                                     <div className={`
-                                        grid grid-cols-2 gap-4 
+                                        flex items-center gap-6
                                         ${viewMode === 'grid' ? 'mb-4 bg-white/5 p-3 rounded-xl' : 'flex-1 border-x border-white/5 px-8'}
                                     `}>
-                                        <div className="space-y-0.5">
-                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Investimento</p>
-                                            <MoneyDisplay value={stats.totalStake} className="text-sm font-bold text-white" />
+                                        <div className="grid grid-cols-2 gap-x-8 gap-y-1 flex-1">
+                                            <div className="space-y-0.5">
+                                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Investimento</p>
+                                                <MoneyDisplay value={stats.totalStake} className="text-sm font-bold text-white" />
+                                            </div>
+                                            <div className="space-y-0.5 text-right">
+                                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Lucro Líquido</p>
+                                                <MoneyDisplay
+                                                    value={stats.profit}
+                                                    className={`text-sm font-bold ${stats.profit >= 0 ? 'text-primary' : 'text-danger'}`}
+                                                />
+                                            </div>
                                         </div>
-                                        <div className="space-y-0.5 text-right">
-                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Lucro Líquido</p>
-                                            <MoneyDisplay
-                                                value={stats.profit}
-                                                className={`text-sm font-bold ${stats.profit >= 0 ? 'text-primary' : 'text-danger'}`}
-                                            />
+
+                                        <div className="flex flex-col items-center gap-1.5 border-l border-white/5 pl-6 min-w-[100px]">
+                                            <div className={`flex flex-col items-center px-3 py-1 rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-primary' : 'text-danger'}`}>
+                                                <span className="text-[9px] font-bold uppercase opacity-60 tracking-widest leading-none mb-0.5">ROI %</span>
+                                                <span className="text-base font-black leading-none">{roi.toFixed(1)}%</span>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {/* Status & ROI */}
-                                    <div className={`flex items-center justify-between gap-6 ${viewMode === 'list' ? 'flex-none w-[220px]' : ''}`}>
-                                        <div className="flex flex-col gap-1.5">
-                                            <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-white/5 border border-white/10">
-                                                {renderStatusIcon(bet.status)}
-                                                <span className="text-[10px] font-black uppercase tracking-wider text-gray-300">{bet.status}</span>
-                                            </div>
-                                            {bet.promotionType && bet.promotionType !== 'Nenhuma' && (
-                                                <Badge variant="outline" className="text-[9px] border-primary/30 text-primary py-0 px-2 self-start bg-primary/5">
-                                                    {bet.promotionType}
-                                                </Badge>
-                                            )}
+                                    {/* Badge Column */}
+                                    <div className={`flex flex-col gap-2 ${viewMode === 'list' ? 'flex-none w-[180px] items-end pr-2' : 'mt-auto'}`}>
+                                        <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-white/5 border border-white/10 w-fit">
+                                            {renderStatusIcon(bet.status)}
+                                            <span className="text-[10px] font-black uppercase tracking-wider text-gray-300">{bet.status}</span>
                                         </div>
-
-                                        <div className={`flex flex-col items-end px-3 py-1 rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-primary' : 'text-danger'}`}>
-                                            <span className="text-[9px] font-bold uppercase opacity-60 tracking-widest">ROI %</span>
-                                            <span className="text-base font-black leading-none">{roi.toFixed(1)}%</span>
-                                        </div>
+                                        {bet.promotionType && bet.promotionType !== 'Nenhuma' && (
+                                            <Badge variant="outline" className="text-[9px] border-primary/30 text-primary py-0 px-2 bg-primary/5 w-fit">
+                                                {bet.promotionType}
+                                            </Badge>
+                                        )}
                                     </div>
                                 </Card>
                             );
