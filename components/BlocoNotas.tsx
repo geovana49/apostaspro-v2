@@ -1047,7 +1047,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                 )}
                                                                 {/* Left: Colored bar */}
                                                                 <div className="flex shrink-0 items-start self-stretch flex-col">
-                                                                    <div className="relative w-1 flex-1 mt-4 mb-12 rounded-full">
+                                                                    <div className="relative w-1 flex-1 mt-[-16px] mb-6 rounded-full">
                                                                         {/* Central Bar: Soft start at top, gentle fade all the way down */}
                                                                         <div className="absolute inset-0 rounded-full opacity-100" style={{ background: `linear-gradient(to bottom, ${col.color} 0%, ${col.color}ee 50%, ${col.color}40 100%)` }} />
                                                                         {/* Glow: Slightly more intense as requested */}
@@ -1179,7 +1179,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                             )}
                                             {/* Left: Glowing Neon Bar */}
                                             <div className="flex shrink-0 items-start self-stretch flex-col">
-                                                <div className="relative w-1 flex-1 mt-6 mb-16 rounded-full">
+                                                <div className="relative w-1 flex-1 mt-[-20px] mb-8 rounded-full">
                                                     {/* Central Bar: Soft start at top, gentle fade all the way down */}
                                                     <div className="absolute inset-0 rounded-full opacity-100" style={{ background: `linear-gradient(to bottom, ${col.color} 0%, ${col.color}ee 50%, ${col.color}40 100%)` }} />
                                                     {/* Glow: Slightly more intense as requested */}
