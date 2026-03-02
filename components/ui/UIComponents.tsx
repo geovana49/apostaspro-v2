@@ -278,6 +278,15 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
         transform: anchorEl ? 'none' : 'translate(-50%, -50%)' // Fallback centering
       }}
     >
+      {/* Close Button */}
+      <button
+        onClick={onClose}
+        className="absolute top-2 right-2 z-[10] w-6 h-6 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center text-white/70 hover:text-white transition-all backdrop-blur-sm border border-white/10"
+        title="Fechar"
+      >
+        <X size={14} />
+      </button>
+
       {/* Saturation Box */}
       <div
         ref={satBoxRef}
