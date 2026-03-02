@@ -120,8 +120,205 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
 
     return (
         <div className="space-y-6 animate-in fade-in duration-700 pb-20">
-            {/* Header, Filters Bar, Date Navigation (Same as before) */}
-            {/* ... (rest of the component structure remains same up to results) */}
+            {/* Header section with specific Pro styling */}
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-xl border border-primary/20 shadow-[0_0_15px_rgba(23,186,164,0.1)]">
+                        <SlidersHorizontal className="text-primary w-6 h-6" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-white tracking-tight">Filtros Avançados</h1>
+                        <p className="text-gray-500 text-xs font-medium uppercase tracking-widest mt-0.5">Análise detalhada de apostas</p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2 bg-[#0d1421] p-1 rounded-xl border border-white/5">
+                    <button
+                        onClick={() => setViewMode('list')}
+                        className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-primary text-[#090c19] shadow-lg shadow-primary/20' : 'text-gray-500 hover:text-white'}`}
+                    >
+                        <List size={18} />
+                    </button>
+                    <button
+                        onClick={() => setViewMode('grid')}
+                        className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-primary text-[#090c19] shadow-lg shadow-primary/20' : 'text-gray-500 hover:text-white'}`}
+                    >
+                        <LayoutGrid size={18} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Filters Bar */}
+            <Card className="p-5 bg-[#0d1421] border-white/5 shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 relative z-10">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Buscar Evento</label>
+                        <Input
+                            placeholder="Ex: Real Madrid, UEFA..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            icon={<Search size={16} />}
+                            className="bg-[#05070e] border-white/5 focus:border-primary/50"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Status da Aposta</label>
+                        <Dropdown
+                            value={selectedStatus}
+                            onChange={setSelectedStatus}
+                            options={[
+                                { label: 'Todos Status', value: 'all', icon: <Infinity size={14} /> },
+                                ...statuses.map(s => ({
+                                    label: s.name,
+                                    value: s.name,
+                                    icon: <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
+                                }))
+                            ]}
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Resultado Financeiro</label>
+                        <Dropdown
+                            value={profitFilter}
+                            onChange={setProfitFilter}
+                            options={[
+                                { label: 'Todos Resultados', value: 'all', icon: <Activity size={14} /> },
+                                { label: 'Apenas Lucro (Green)', value: 'profit', icon: <ArrowUpRight size={14} className="text-primary" /> },
+                                { label: 'Apenas Prejuízo (Red)', value: 'loss', icon: <ArrowDownRight size={14} className="text-danger" /> }
+                            ]}
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Investimento Mínimo</label>
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold">R$</span>
+                            <Input
+                                type="number"
+                                placeholder="0,00"
+                                value={minStake}
+                                onChange={e => setMinStake(e.target.value)}
+                                className="pl-9 bg-[#05070e] border-white/5 focus:border-primary/50"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Casa de Aposta</label>
+                        <Dropdown
+                            value={selectedBookmaker}
+                            onChange={setSelectedBookmaker}
+                            options={[
+                                { label: 'Todas as Casas', value: 'all', icon: <Building size={14} /> },
+                                ...bookmakers.map(b => ({
+                                    label: b.name,
+                                    value: b.id,
+                                    icon: <div className="w-4 h-4 rounded bg-white/10 flex items-center justify-center text-[8px] font-bold text-white overflow-hidden">
+                                        {b.logo ? <img src={b.logo} className="w-full h-full object-contain" /> : b.name.substring(0, 2)}
+                                    </div>
+                                }))
+                            ]}
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Período Temporal</label>
+                        <Dropdown
+                            value={selectedPeriod}
+                            onChange={setSelectedPeriod}
+                            options={[
+                                { label: 'Todo o Período (Desde o Início)', value: 'all', icon: <Infinity size={14} /> },
+                                { label: 'Filtrar por Mês', value: 'month', icon: <Calendar size={14} /> },
+                                { label: 'Data Específica', value: 'custom_date', icon: <Clock size={14} /> },
+                                { label: 'Hoje', value: 'today', icon: <Clock size={14} /> },
+                                { label: 'Últimos 7 dias', value: 'week', icon: <Activity size={14} /> }
+                            ]}
+                        />
+                    </div>
+
+                    {selectedPeriod === 'custom_date' && (
+                        <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                            <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1 flex items-center gap-1">
+                                <Calendar size={10} /> Selecionar Data
+                            </label>
+                            <Input
+                                type="date"
+                                value={selectedDate}
+                                onChange={e => setSelectedDate(e.target.value)}
+                                className="bg-[#05070e] border-primary/30 focus:border-primary/50 text-white"
+                            />
+                        </div>
+                    )}
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Mercado</label>
+                        <Dropdown
+                            value={marketFilter}
+                            onChange={setMarketFilter}
+                            options={[
+                                { label: 'Todos os Mercados', value: 'all', icon: <Target size={14} /> },
+                                ...allMarkets.map(m => ({ label: m, value: m }))
+                            ]}
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Tipo de Aposta</label>
+                        <Dropdown
+                            value={typeFilter}
+                            onChange={setTypeFilter}
+                            options={[
+                                { label: 'Todos os Tipos', value: 'all', icon: <Activity size={14} /> },
+                                { label: 'Apenas Back', value: 'back', icon: <ArrowUpRight size={14} className="text-primary" /> },
+                                { label: 'Apenas Lay', value: 'lay', icon: <ArrowDownRight size={14} className="text-danger" /> }
+                            ]}
+                        />
+                    </div>
+
+                    <div className="flex items-end lg:col-span-3 xl:col-span-4">
+                        <Button
+                            variant="outline"
+                            className="w-full h-11 border-white/5 hover:bg-white/5 text-gray-400 hover:text-white gap-2 text-xs font-black uppercase tracking-widest transition-all active:scale-[0.98]"
+                            onClick={() => {
+                                setSearchTerm('');
+                                setSelectedStatus('all');
+                                setSelectedBookmaker('all');
+                                setSelectedPeriod('month');
+                                setSelectedDate(new Date().toISOString().split('T')[0]);
+                                setProfitFilter('all');
+                                setMinStake('');
+                                setMarketFilter('all');
+                                setTypeFilter('all');
+                            }}
+                        >
+                            <RefreshCw size={14} />
+                            Limpar Todos os Filtros
+                        </Button>
+                    </div>
+                </div>
+            </Card>
+
+            {/* Date Navigation for Month View */}
+            {selectedPeriod === 'month' && (
+                <div className="flex items-center justify-between bg-[#151b2e] p-3 rounded-2xl border border-white/5 shadow-lg">
+                    <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-white/5 rounded-xl transition-all text-gray-400 hover:text-primary">
+                        <ChevronLeft size={24} />
+                    </button>
+                    <div className="flex items-center gap-3">
+                        <Calendar size={18} className="text-primary" />
+                        <span className="font-bold text-white uppercase tracking-wider">
+                            {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+                        </span>
+                    </div>
+                    <button onClick={() => changeMonth(1)} className="p-2 hover:bg-white/5 rounded-xl transition-all text-gray-400 hover:text-primary">
+                        <ChevronRight size={24} />
+                    </button>
+                </div>
+            )}
 
             {/* Results Section */}
             <div className="space-y-4">
