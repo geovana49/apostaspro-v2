@@ -440,7 +440,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                 <Card
                                     key={bet.id}
                                     onClick={() => setSelectedBetId(bet.id)}
-                                    className="group relative overflow-hidden bg-[#151b2e]/40 border-white/5 hover:border-primary/30 transition-all duration-300 cursor-pointer active:scale-[0.99] p-4 md:p-6 pl-14 min-h-[130px]"
+                                    className="group relative overflow-hidden bg-[#151b2e]/40 border-white/5 hover:border-primary/30 transition-all duration-300 cursor-pointer active:scale-[0.99] p-4 md:p-6 pl-20 min-h-[130px]"
                                 >
                                     <div
                                         className="absolute left-0 top-0 bottom-0 w-1 transition-all group-hover:w-1.5"
@@ -452,7 +452,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                         {/* Top Row: Logo + Title */}
                                         <div className="flex items-center gap-5 w-full">
                                             {/* LOGO */}
-                                            <div className="w-10 h-10 flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shrink-0 pr-2">
+                                            <div className="w-12 h-12 flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shrink-0 pr-2">
                                                 {bookie?.logo ? (
                                                     <img src={bookie.logo} alt="" className="w-full h-full object-contain" />
                                                 ) : (
