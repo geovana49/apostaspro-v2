@@ -369,12 +369,18 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                         }}>Limpar Filtros</Button>
                     </div>
                 ) : (
-                    <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" : "space-y-3"}>
+                    <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"}>
                         {filteredBets.map(bet => {
                             const stats = calculateBetStats(bet);
                             const roi = stats.totalStake > 0 ? (stats.profit / stats.totalStake) * 100 : 0;
                             const bookie = getBookmaker(bet.mainBookmakerId);
                             const date = new Date(bet.date);
+
+                            // Determine sidebar color based on promotion, falling back to status
+                            const promo = promotions.find(p => p.name === bet.promotionType);
+                            const barColor = (promo && promo.name !== 'Nenhuma')
+                                ? promo.color
+                                : (statuses.find(s => s.name === bet.status)?.color || '#555');
 
                             return (
                                 <Card
@@ -384,10 +390,10 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                         ${viewMode === 'grid' ? 'p-5 flex flex-col' : 'p-4 flex flex-row items-center gap-6'}
                                     `}
                                 >
-                                    {/* Left Border Accent based on status */}
+                                    {/* Left Border Accent based on promotion or status */}
                                     <div
                                         className="absolute left-0 top-0 bottom-0 w-1 transition-all group-hover:w-1.5"
-                                        style={{ backgroundColor: statuses.find(s => s.name === bet.status)?.color || '#555' }}
+                                        style={{ backgroundColor: barColor }}
                                     />
 
                                     {/* Content Grouping */}
