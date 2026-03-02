@@ -442,7 +442,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     onClick={() => setSelectedBetId(bet.id)}
                                     className={`
                                         group relative overflow-hidden bg-[#151b2e]/40 border-white/5 hover:border-primary/30 transition-all duration-300 cursor-pointer active:scale-[0.99]
-                                        ${viewMode === 'grid' ? 'p-5 pl-16 flex flex-col' : 'p-4 pl-20 flex flex-row items-center justify-between'}
+                                        ${viewMode === 'grid' ? 'p-5 pl-16 flex flex-col' : 'p-4 pl-20 flex flex-row items-center justify-between min-h-[90px]'}
                                     `}
                                 >
                                     <div
@@ -451,7 +451,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     />
 
                                     {/* Event Info - Flexible width */}
-                                    <div className={`flex items-center gap-5 ml-4 ${viewMode === 'grid' ? 'mb-4' : 'flex-1 min-w-[250px] mr-8'}`}>
+                                    <div className={`flex items-center gap-5 ml-4 ${viewMode === 'grid' ? 'mb-4' : 'flex-1 min-w-[250px] mr-8 my-auto'}`}>
                                         <div className="w-10 h-10 flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shrink-0">
                                             {bookie?.logo ? (
                                                 <img src={bookie.logo} alt="" className="w-full h-full object-contain" />
@@ -538,8 +538,16 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                     <div className="space-y-6">
                         <div className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-                                    <Trophy size={24} />
+                                <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center shadow-lg border border-white/5">
+                                    {getBookmaker(selectedBetForModal.mainBookmakerId)?.logo ? (
+                                        <img
+                                            src={getBookmaker(selectedBetForModal.mainBookmakerId)?.logo}
+                                            alt=""
+                                            className="w-full h-full object-contain p-2"
+                                        />
+                                    ) : (
+                                        <Trophy size={24} className="text-primary" />
+                                    )}
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-white leading-tight">{selectedBetForModal.event}</h3>
@@ -557,9 +565,20 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-[#05070e] p-4 rounded-2xl border border-white/5">
-                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Casa de Aposta</p>
-                                <p className="text-white font-bold">{getBookmaker(selectedBetForModal.mainBookmakerId)?.name || 'N/A'}</p>
+                            <div className="bg-[#05070e] p-4 rounded-2xl border border-white/5 flex items-center gap-3">
+                                <div className="w-10 h-10 flex-shrink-0">
+                                    {getBookmaker(selectedBetForModal.mainBookmakerId)?.logo && (
+                                        <img
+                                            src={getBookmaker(selectedBetForModal.mainBookmakerId)?.logo}
+                                            alt=""
+                                            className="w-full h-full object-contain"
+                                        />
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Casa de Aposta</p>
+                                    <p className="text-white font-bold truncate">{getBookmaker(selectedBetForModal.mainBookmakerId)?.name || 'N/A'}</p>
+                                </div>
                             </div>
                             <div className="bg-[#05070e] p-4 rounded-2xl border border-white/5">
                                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Promoção</p>
