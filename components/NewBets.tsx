@@ -478,33 +478,33 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                         ${viewMode === 'list' ? 'flex-[3] justify-between ml-10 pl-10 border-l border-white/5' : 'flex-col gap-4 mt-auto'}
                                     `}>
                                         {/* Financials Row */}
-                                        <div className={`flex items-center ${viewMode === 'list' ? 'gap-20 flex-1' : 'w-full bg-white/5 p-3 rounded-xl justify-between'}`}>
-                                            <div className="space-y-0.5 min-w-[120px]">
+                                        <div className={`flex items-center ${viewMode === 'list' ? 'gap-20 flex-1' : 'w-full bg-white/5 p-3 rounded-xl justify-between flex-wrap gap-y-2'}`}>
+                                            <div className="space-y-0.5 min-w-[100px]">
                                                 <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Investimento</p>
-                                                <MoneyDisplay value={stats.totalStake} className="text-base font-bold text-white" />
+                                                <MoneyDisplay value={stats.totalStake} className={`${viewMode === 'list' ? 'text-base' : 'text-sm'} font-bold text-white`} />
                                             </div>
-                                            <div className={`${viewMode === 'list' ? 'space-y-0.5 min-w-[120px]' : 'space-y-0.5 text-right'}`}>
+                                            <div className={`${viewMode === 'list' ? 'space-y-0.5 min-w-[100px]' : 'space-y-0.5 text-right min-w-[100px]'}`}>
                                                 <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Lucro Líquido</p>
                                                 <MoneyDisplay
                                                     value={stats.profit}
-                                                    className={`text-base font-bold ${stats.profit >= 0 ? 'text-primary' : 'text-danger'}`}
+                                                    className={`${viewMode === 'list' ? 'text-base' : 'text-sm'} font-bold ${stats.profit >= 0 ? 'text-primary' : 'text-danger'}`}
                                                 />
                                             </div>
                                         </div>
 
                                         {/* Status & Badges Row */}
-                                        <div className={`flex items-center ${viewMode === 'list' ? 'gap-10' : 'w-full justify-between gap-2'}`}>
+                                        <div className={`flex items-center ${viewMode === 'list' ? 'gap-10' : 'w-full justify-between gap-2 flex-wrap'}`}>
                                             {/* ROI Box */}
-                                            <div className={`flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-primary' : 'text-danger'} shrink-0`}>
+                                            <div className={`flex items-center gap-2 ${viewMode === 'list' ? 'px-4 py-2' : 'px-2 py-1'} rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-primary' : 'text-danger'} shrink-0`}>
                                                 <span className="text-[9px] font-black uppercase opacity-60 tracking-widest">ROI</span>
-                                                <span className="text-base font-black leading-none">{roi.toFixed(1)}%</span>
+                                                <span className={`${viewMode === 'list' ? 'text-base' : 'text-sm'} font-black leading-none`}>{roi.toFixed(1)}%</span>
                                             </div>
 
                                             {/* Badge Group */}
-                                            <div className="flex items-center gap-4">
+                                            <div className={`flex items-center ${viewMode === 'list' ? 'gap-4' : 'gap-2 flex-wrap justify-end'}`}>
                                                 {/* Status Badge */}
                                                 <div
-                                                    className="flex items-center gap-2 px-4 py-2 rounded-md bg-white/5 border w-fit shrink-0"
+                                                    className={`flex items-center gap-2 ${viewMode === 'list' ? 'px-4 py-2' : 'px-2 py-1'} rounded-md bg-white/5 border w-fit shrink-0`}
                                                     style={{ borderColor: `${barColor}40`, color: barColor }}
                                                 >
                                                     {renderStatusIcon(bet.status, barColor)}
@@ -515,7 +515,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                                 {bet.promotionType && bet.promotionType !== 'Nenhuma' && (
                                                     <Badge
                                                         color={promoColor}
-                                                        className="text-[10px] py-1.5 px-4 w-fit font-black uppercase tracking-wider bg-white/5 shrink-0"
+                                                        className={`text-[10px] ${viewMode === 'list' ? 'py-1.5 px-4' : 'py-1 px-2'} w-fit font-black uppercase tracking-wider bg-white/5 shrink-0`}
                                                     >
                                                         {bet.promotionType}
                                                     </Badge>
