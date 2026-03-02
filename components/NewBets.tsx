@@ -442,7 +442,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     onClick={() => setSelectedBetId(bet.id)}
                                     className={`
                                         group relative overflow-hidden bg-[#151b2e]/40 border-white/5 hover:border-primary/30 transition-all duration-300 cursor-pointer active:scale-[0.99]
-                                        ${viewMode === 'grid' ? 'p-5 pl-12 flex flex-col' : 'p-4 pl-12 flex flex-row items-center justify-between min-h-[90px]'}
+                                        ${viewMode === 'grid' ? 'p-5 pl-16 flex flex-col' : 'p-4 pl-16 flex flex-row items-center justify-between min-h-[100px]'}
                                     `}
                                 >
                                     <div
@@ -450,7 +450,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                         style={{ backgroundColor: barColor }}
                                     />
 
-                                    {/* Event Info - Flexible width */}
+                                    {/* Event Info - flexible height container for perfect vertical center */}
                                     <div className={`flex items-center gap-5 ${viewMode === 'grid' ? 'mb-4' : 'flex-[1.2] min-w-[300px] mr-8'}`}>
                                         <div className="w-10 h-10 flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shrink-0">
                                             {bookie?.logo ? (
@@ -461,7 +461,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                         </div>
                                         <div>
                                             <h4 className="font-bold text-white text-base group-hover:text-white transition-colors whitespace-normal leading-tight">{bet.event}</h4>
-                                            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter mt-1">
+                                            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter mt-0.5">
                                                 <span>{date.toLocaleDateString('pt-BR')}</span>
                                                 <span className="w-1.5 h-1.5 rounded-full bg-gray-700" />
                                                 <span className="truncate">{bookie?.name}</span>
