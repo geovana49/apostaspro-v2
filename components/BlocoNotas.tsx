@@ -1047,11 +1047,11 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                                 )}
                                                                 {/* Left: Colored bar */}
                                                                 <div className="flex shrink-0 items-start self-stretch flex-col">
-                                                                    <div className="relative w-1 flex-1 mt-[-16px] mb-12 rounded-full">
+                                                                    <div className="relative w-1 flex-1 mt-4 mb-12 rounded-full">
                                                                         {/* Central Bar: Soft start at top, gentle fade all the way down */}
-                                                                        <div className="absolute inset-0 rounded-full opacity-90" style={{ background: `linear-gradient(to bottom, ${col.color}ee 0%, ${col.color}40 100%)` }} />
-                                                                        {/* Glow: Very subtle and smooth, starting from the top */}
-                                                                        <div className="absolute inset-x-[-2px] inset-y-0 opacity-60 blur-[4px]" style={{ background: `linear-gradient(to bottom, ${col.color} 0%, transparent 80%)` }} />
+                                                                        <div className="absolute inset-0 rounded-full opacity-100" style={{ background: `linear-gradient(to bottom, ${col.color} 0%, ${col.color}ee 50%, ${col.color}40 100%)` }} />
+                                                                        {/* Glow: Slightly more intense as requested */}
+                                                                        <div className="absolute inset-x-[-3px] inset-y-0 opacity-80 blur-[6px]" style={{ background: `linear-gradient(to bottom, ${col.color} 0%, transparent 80%)` }} />
                                                                     </div>
                                                                 </div>
 
@@ -1179,11 +1179,11 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                             )}
                                             {/* Left: Glowing Neon Bar */}
                                             <div className="flex shrink-0 items-start self-stretch flex-col">
-                                                <div className="relative w-1 flex-1 mt-[-20px] mb-16 rounded-full">
+                                                <div className="relative w-1 flex-1 mt-6 mb-16 rounded-full">
                                                     {/* Central Bar: Soft start at top, gentle fade all the way down */}
-                                                    <div className="absolute inset-0 rounded-full opacity-90" style={{ background: `linear-gradient(to bottom, ${col.color}ee 0%, ${col.color}40 100%)` }} />
-                                                    {/* Glow: Very subtle and smooth, starting from the top */}
-                                                    <div className="absolute inset-x-[-2px] inset-y-0 opacity-60 blur-[4px]" style={{ background: `linear-gradient(to bottom, ${col.color} 0%, transparent 80%)` }} />
+                                                    <div className="absolute inset-0 rounded-full opacity-100" style={{ background: `linear-gradient(to bottom, ${col.color} 0%, ${col.color}ee 50%, ${col.color}40 100%)` }} />
+                                                    {/* Glow: Slightly more intense as requested */}
+                                                    <div className="absolute inset-x-[-3px] inset-y-0 opacity-80 blur-[6px]" style={{ background: `linear-gradient(to bottom, ${col.color} 0%, transparent 80%)` }} />
                                                 </div>
                                             </div>
 
