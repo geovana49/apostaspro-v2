@@ -453,7 +453,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     {/* Event Info - Flexible width */}
                                     <div className={`flex items-center gap-5 ${viewMode === 'grid' ? 'mb-4' : 'flex-1 min-w-[250px] mr-8'}`}>
                                         <div
-                                            className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shrink-0"
+                                            className="w-14 h-14 rounded-lg flex items-center justify-center shadow-lg transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shrink-0"
                                             style={{ backgroundColor: `${bookie?.color || '#333'}20`, border: `1px solid ${bookie?.color || '#333'}40` }}
                                         >
                                             {bookie?.logo ? (
