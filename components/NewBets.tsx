@@ -442,7 +442,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     onClick={() => setSelectedBetId(bet.id)}
                                     className={`
                                         group relative overflow-hidden bg-[#151b2e]/40 border-white/5 hover:border-primary/30 transition-all duration-300 cursor-pointer active:scale-[0.99]
-                                        ${viewMode === 'grid' ? 'p-5 pl-4 flex flex-col' : 'p-4 pl-4 flex flex-row items-center justify-between min-h-[90px]'}
+                                        ${viewMode === 'grid' ? 'p-5 pl-12 flex flex-col' : 'p-4 pl-12 flex flex-row items-center justify-between min-h-[90px]'}
                                     `}
                                 >
                                     <div
@@ -451,7 +451,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     />
 
                                     {/* Event Info - Flexible width */}
-                                    <div className={`flex items-center gap-5 ${viewMode === 'grid' ? 'mb-4' : 'flex-[1.2] min-w-[300px] mr-8 my-auto'}`}>
+                                    <div className={`flex items-center gap-5 ${viewMode === 'grid' ? 'mb-4' : 'flex-[1.2] min-w-[300px] mr-8'}`}>
                                         <div className="w-10 h-10 flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shrink-0">
                                             {bookie?.logo ? (
                                                 <img src={bookie.logo} alt="" className="w-full h-full object-contain" />
