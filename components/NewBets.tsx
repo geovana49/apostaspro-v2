@@ -142,7 +142,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
     return (
         <div className="space-y-6 animate-in fade-in duration-700 pb-20">
             {/* Header section with specific Pro styling */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-primary/10 rounded-xl border border-primary/20 shadow-[0_0_15px_rgba(23,186,164,0.1)]">
                         <SlidersHorizontal className="text-primary w-6 h-6" />
@@ -151,21 +151,6 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                         <h1 className="text-2xl font-bold text-white tracking-tight">Filtros Avançados</h1>
                         <p className="text-gray-500 text-xs font-medium uppercase tracking-widest mt-0.5">Análise detalhada de apostas</p>
                     </div>
-                </div>
-
-                <div className="flex items-center gap-2 bg-[#0d1421] p-1 rounded-xl border border-white/5">
-                    <button
-                        onClick={() => setViewMode('list')}
-                        className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-primary text-[#090c19] shadow-lg shadow-primary/20' : 'text-gray-500 hover:text-white'}`}
-                    >
-                        <List size={18} />
-                    </button>
-                    <button
-                        onClick={() => setViewMode('grid')}
-                        className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-primary text-[#090c19] shadow-lg shadow-primary/20' : 'text-gray-500 hover:text-white'}`}
-                    >
-                        <LayoutGrid size={18} />
-                    </button>
                 </div>
             </div>
 
@@ -365,7 +350,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                             {filteredStats.totalProfit >= 0 ? <ArrowUpRight size={20} /> : <ArrowDownRight size={20} />}
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest leading-none mb-1">Resultado Total (Filtro)</p>
+                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest leading-none mb-1">Lucro Total (Filtro)</p>
                             <MoneyDisplay value={filteredStats.totalProfit} className={`text-xl font-black ${filteredStats.totalProfit >= 0 ? 'text-primary' : 'text-danger'}`} />
                         </div>
                     </div>
@@ -401,6 +386,21 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                     <div className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
                         Resultados encontrados
                         <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-md text-xs font-mono">{filteredBets.length}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 sm:gap-2 bg-[#0d1421] p-1 rounded-xl border border-white/5 shadow-lg">
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={`p-1.5 sm:p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-primary text-[#090c19] shadow-md shadow-primary/20' : 'text-gray-500 hover:text-white'}`}
+                        >
+                            <List size={16} className="sm:w-[18px] sm:h-[18px]" />
+                        </button>
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={`p-1.5 sm:p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-primary text-[#090c19] shadow-md shadow-primary/20' : 'text-gray-500 hover:text-white'}`}
+                        >
+                            <LayoutGrid size={16} className="sm:w-[18px] sm:h-[18px]" />
+                        </button>
                     </div>
                 </div>
 
