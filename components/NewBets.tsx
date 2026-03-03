@@ -472,53 +472,121 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                         </div>
 
                                         {/* Data Section */}
-                                        <div className={`flex w-full mt-4 sm:mt-6 ${viewMode === 'list' ? 'flex-row items-center justify-between border-t border-white/5 pt-4 sm:pt-6 gap-3 sm:gap-0 overflow-x-auto scrollbar-hide flex-nowrap' : 'flex-col gap-6'}`}>
-                                            {/* Financials Row */}
-                                            <div className={`flex items-center shrink-0 ${viewMode === 'list' ? 'gap-4 sm:gap-20' : 'w-full bg-white/5 p-3 rounded-xl justify-between flex-wrap gap-y-2'}`}>
-                                                <div className="space-y-1 min-w-[70px] sm:min-w-[100px]">
-                                                    <p className="text-[8px] sm:text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Investimento</p>
-                                                    <MoneyDisplay value={stats.totalStake} className={`${viewMode === 'list' ? 'text-[11px] sm:text-[15px]' : 'text-sm'} font-bold text-white`} />
-                                                </div>
-                                                <div className={`${viewMode === 'list' ? 'space-y-1 min-w-[70px] sm:min-w-[100px]' : 'space-y-1.5 text-right min-w-[100px]'}`}>
-                                                    <p className="text-[8px] sm:text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Lucro Líquido</p>
-                                                    <MoneyDisplay
-                                                        value={stats.profit}
-                                                        className={`${viewMode === 'list' ? 'text-[11px] sm:text-[15px]' : 'text-sm'} font-bold ${stats.profit >= 0 ? 'text-[#10b981]' : 'text-danger'}`}
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {/* Status & Badges Row */}
-                                            <div className={`flex items-center shrink-0 ${viewMode === 'list' ? 'gap-2 sm:gap-10 pl-2 sm:pl-0' : 'w-full gap-2 sm:gap-1 flex-wrap sm:flex-nowrap pt-2 sm:pt-0'}`}>
-                                                {/* ROI Box */}
-                                                <div className={`flex items-center gap-1 sm:gap-2 ${viewMode === 'list' ? 'px-2 py-1 sm:px-4 sm:py-2' : 'px-3 py-1.5 sm:px-2 sm:py-1'} rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-[#22d3ee]' : 'text-danger'} shrink-0 shadow-lg shadow-black/20`}>
-                                                    <span className="text-[8px] sm:text-[9px] font-black uppercase opacity-60 tracking-widest hidden sm:inline">ROI</span>
-                                                    <span className={`${viewMode === 'list' ? 'text-[10px] sm:text-sm' : 'text-xs sm:text-sm'} font-black leading-none whitespace-nowrap`}>{roi.toFixed(1)}%</span>
+                                        {viewMode === 'grid' ? (
+                                            <div className="flex flex-col w-full mt-6 gap-6">
+                                                {/* Financials Row */}
+                                                <div className="w-full bg-white/5 p-3 rounded-xl flex items-center justify-between flex-wrap gap-y-2">
+                                                    <div className="space-y-1.5 min-w-[100px]">
+                                                        <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Investimento</p>
+                                                        <MoneyDisplay value={stats.totalStake} className="text-sm font-bold text-white" />
+                                                    </div>
+                                                    <div className="space-y-1.5 text-right min-w-[100px]">
+                                                        <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Lucro Líquido</p>
+                                                        <MoneyDisplay value={stats.profit} className={`text-sm font-bold ${stats.profit >= 0 ? 'text-[#10b981]' : 'text-danger'}`} />
+                                                    </div>
                                                 </div>
 
-                                                {/* Badge Group */}
-                                                <div className={`flex items-center gap-1.5 sm:gap-4 flex-nowrap sm:contents shrink-0`}>
-                                                    {/* Status Badge */}
-                                                    <div
-                                                        className={`flex items-center gap-1.5 sm:gap-2 ${viewMode === 'list' ? 'px-2 py-1 sm:px-4 sm:py-1.5' : 'px-2 py-1'} rounded-md bg-white/5 border w-fit shrink-0`}
-                                                        style={{ borderColor: `${barColor}40`, color: barColor }}
-                                                    >
-                                                        {renderStatusIcon(bet.status, barColor)}
-                                                        <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-tight whitespace-nowrap">{bet.status}</span>
+                                                {/* Status & Badges Row */}
+                                                <div className="flex items-center w-full gap-2 sm:gap-1 flex-wrap sm:flex-nowrap">
+                                                    {/* ROI Box */}
+                                                    <div className={`flex items-center gap-2 px-3 py-1.5 sm:px-2 sm:py-1 rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-[#22d3ee]' : 'text-danger'} shrink-0 shadow-lg shadow-black/20`}>
+                                                        <span className="text-[9px] font-black uppercase opacity-60 tracking-widest hidden sm:inline">ROI</span>
+                                                        <span className="text-xs sm:text-sm font-black leading-none">{roi.toFixed(1)}%</span>
                                                     </div>
 
-                                                    {/* Promotion Badge */}
-                                                    {bet.promotionType && bet.promotionType !== 'Nenhuma' && (
-                                                        <Badge
-                                                            color={promoColor}
-                                                            className={`text-[8px] sm:text-[10px] ${viewMode === 'list' ? 'py-1 px-2 sm:py-1.5 sm:px-3' : 'py-1 px-2'} w-fit font-black uppercase tracking-wider bg-white/5 whitespace-nowrap shrink-0`}
-                                                        >
-                                                            {bet.promotionType}
-                                                        </Badge>
-                                                    )}
+                                                    {/* Badge Group */}
+                                                    <div className="flex items-center gap-2 sm:gap-4 flex-wrap sm:flex-nowrap w-full sm:w-auto mt-2 sm:mt-0 sm:contents">
+                                                        <div className="flex items-center gap-1.5 sm:gap-2 px-2 py-1 rounded-md bg-white/5 border w-fit shrink-0" style={{ borderColor: `${barColor}40`, color: barColor }}>
+                                                            {renderStatusIcon(bet.status, barColor)}
+                                                            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-tight">{bet.status}</span>
+                                                        </div>
+
+                                                        {bet.promotionType && bet.promotionType !== 'Nenhuma' && (
+                                                            <Badge color={promoColor} className="text-[9px] sm:text-[10px] py-1 px-2 w-fit font-black uppercase tracking-wider bg-white/5">
+                                                                {bet.promotionType}
+                                                            </Badge>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        ) : (
+                                            <>
+                                                {/* =========================================
+                                                    DESKTOP LIST VIEW (> lg) 
+                                                ========================================= */}
+                                                <div className="hidden lg:flex w-full mt-6 items-center justify-between border-t border-white/5 pt-6 flex-nowrap shrink-0">
+                                                    <div className="flex items-center gap-20 flex-1">
+                                                        <div className="space-y-1.5 min-w-[100px]">
+                                                            <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Investimento</p>
+                                                            <MoneyDisplay value={stats.totalStake} className="text-[15px] font-bold text-white" />
+                                                        </div>
+                                                        <div className="space-y-1.5 min-w-[100px]">
+                                                            <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Lucro Líquido</p>
+                                                            <MoneyDisplay value={stats.profit} className={`text-[15px] font-bold ${stats.profit >= 0 ? 'text-[#10b981]' : 'text-danger'}`} />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-10">
+                                                        <div className={`flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-[#22d3ee]' : 'text-danger'} shrink-0 shadow-lg shadow-black/20`}>
+                                                            <span className="text-[9px] font-black uppercase opacity-60 tracking-widest">ROI</span>
+                                                            <span className="text-sm font-black leading-none whitespace-nowrap">{roi.toFixed(1)}%</span>
+                                                        </div>
+
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="flex items-center gap-2 px-4 py-1.5 rounded-md bg-white/5 border w-fit shrink-0" style={{ borderColor: `${barColor}40`, color: barColor }}>
+                                                                {renderStatusIcon(bet.status, barColor)}
+                                                                <span className="text-[10px] font-black uppercase tracking-tight whitespace-nowrap">{bet.status}</span>
+                                                            </div>
+
+                                                            {bet.promotionType && bet.promotionType !== 'Nenhuma' && (
+                                                                <Badge color={promoColor} className="text-[10px] py-1.5 px-3 w-fit font-black uppercase tracking-wider bg-white/5 whitespace-nowrap shrink-0">
+                                                                    {bet.promotionType}
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* =========================================
+                                                    MOBILE LIST VIEW (< lg)
+                                                ========================================= */}
+                                                <div className="lg:hidden w-full mt-4 border-t border-white/10 pt-4 pb-1">
+                                                    <div className="grid grid-cols-5 gap-1.5 sm:gap-2 items-start justify-items-center w-full shrink-0">
+                                                        {/* 1. Investimento */}
+                                                        <div className="col-span-1 flex flex-col items-start w-full">
+                                                            <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none">Investimento</span>
+                                                            <MoneyDisplay value={stats.totalStake} className="text-[11px] sm:text-[12px] text-white" />
+                                                        </div>
+
+                                                        {/* 2. Lucro */}
+                                                        <div className="col-span-1 flex flex-col items-start w-full">
+                                                            <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none">Lucro Líquido</span>
+                                                            <MoneyDisplay value={stats.profit} className={`text-[11px] sm:text-[12px] ${stats.profit >= 0 ? 'text-[#10b981]' : 'text-danger'}`} />
+                                                        </div>
+
+                                                        {/* 3. ROI */}
+                                                        <div className="col-span-1 flex flex-col items-center w-full">
+                                                            <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none">Roi</span>
+                                                            <span className="text-[11px] sm:text-[12px] text-[#22d3ee]">{roi.toFixed(1)}%</span>
+                                                        </div>
+
+                                                        {/* 4. Status */}
+                                                        <div className="col-span-1 flex flex-col items-center w-full">
+                                                            <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none">Status</span>
+                                                            <span className="text-[11px] sm:text-[12px] text-white capitalize">{bet.status.toLowerCase()}</span>
+                                                        </div>
+
+                                                        {/* 5. Missão */}
+                                                        <div className="col-span-1 flex flex-col items-center w-full">
+                                                            <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none">missao</span>
+                                                            <span className="text-[11px] sm:text-[12px] text-white truncate max-w-[50px] sm:max-w-none">
+                                                                {bet.promotionType && bet.promotionType !== 'Nenhuma' ? bet.promotionType : 'Normal'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </Card>
                             );
