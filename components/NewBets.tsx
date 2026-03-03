@@ -610,32 +610,37 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
             >
                 {selectedBetForModal && (
                     <div className="space-y-6">
-                        <div className="flex items-start sm:items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5 gap-4">
-                            <div className="flex items-center gap-4 flex-1 min-w-0">
-                                <div className="w-12 h-12 flex items-center justify-center shrink-0">
-                                    {getBookmaker(selectedBetForModal.mainBookmakerId)?.logo ? (
-                                        <img
-                                            src={getBookmaker(selectedBetForModal.mainBookmakerId)?.logo}
-                                            alt=""
-                                            className="w-full h-full object-contain"
-                                        />
-                                    ) : (
-                                        <Trophy size={24} className="text-primary" />
-                                    )}
+                        <div className="flex flex-col bg-white/5 p-4 sm:p-5 rounded-2xl border border-white/5 gap-3">
+                            <div className="flex items-center justify-between w-full">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 flex items-center justify-center shrink-0">
+                                        {getBookmaker(selectedBetForModal.mainBookmakerId)?.logo ? (
+                                            <img
+                                                src={getBookmaker(selectedBetForModal.mainBookmakerId)?.logo}
+                                                alt=""
+                                                className="w-full h-full object-contain"
+                                            />
+                                        ) : (
+                                            <Trophy size={24} className="text-primary" />
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col justify-center">
+                                        <p className="text-gray-500 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest mb-0.5">Data da Aposta</p>
+                                        <p className="text-white text-sm sm:text-[15px] font-bold">{new Date(selectedBetForModal.date).toLocaleDateString('pt-BR')}</p>
+                                    </div>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="text-lg font-bold text-white leading-tight break-words">{selectedBetForModal.event}</h3>
-                                    <p className="text-gray-500 text-xs font-medium uppercase tracking-widest mt-1">{new Date(selectedBetForModal.date).toLocaleDateString('pt-BR')}</p>
+                                <div className="text-right shrink-0">
+                                    <div
+                                        className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/5 border w-fit ml-auto"
+                                        style={{ borderColor: `${statuses.find(s => s.name === selectedBetForModal.status)?.color}40`, color: statuses.find(s => s.name === selectedBetForModal.status)?.color }}
+                                    >
+                                        {renderStatusIcon(selectedBetForModal.status, statuses.find(s => s.name === selectedBetForModal.status)?.color)}
+                                        <span className="text-[10px] font-black uppercase tracking-tight">{selectedBetForModal.status}</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="text-right shrink-0">
-                                <div
-                                    className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/5 border w-fit ml-auto"
-                                    style={{ borderColor: `${statuses.find(s => s.name === selectedBetForModal.status)?.color}40`, color: statuses.find(s => s.name === selectedBetForModal.status)?.color }}
-                                >
-                                    {renderStatusIcon(selectedBetForModal.status, statuses.find(s => s.name === selectedBetForModal.status)?.color)}
-                                    <span className="text-[10px] font-black uppercase tracking-tight">{selectedBetForModal.status}</span>
-                                </div>
+                            <div className="pl-16 w-full mt-1">
+                                <h3 className="text-[15px] sm:text-[16px] font-bold text-gray-200 leading-snug break-words">{selectedBetForModal.event}</h3>
                             </div>
                         </div>
 
