@@ -810,80 +810,28 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     </div>
 
                     {/* Filter Bar with Sort and View Toggle */}
-                    <div className="flex flex-col gap-5 px-1">
-                        <div className="flex flex-wrap items-center justify-between gap-4 pr-12 md:pr-0">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto overflow-hidden">
-                                <span className="text-[12px] font-medium text-gray-500 shrink-0">Prioridade:</span>
-                                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-nowrap w-full sm:w-auto pb-1">
-                                    <button title="Mostrar todas as prioridades" onClick={() => setFilterPriority('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterPriority === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`}>Todas</button>
-                                    <button title="Filtrar por prioridade urgente" onClick={() => setFilterPriority('high')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterPriority === 'high' ? 'border-[#EF4444] text-[#EF4444] bg-[#EF4444]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
-                                        <div className="w-2 h-2 rounded-full bg-[#EF4444]" /> 🔥 Urgente
-                                    </button>
-                                    <button title="Filtrar por prioridade importante" onClick={() => setFilterPriority('medium')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterPriority === 'medium' ? 'border-[#F59E0B] text-[#F59E0B] bg-[#F59E0B]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
-                                        <div className="w-2 h-2 rounded-full bg-[#F59E0B]" /> ⚡ Importante
-                                    </button>
-                                    <button title="Filtrar por prioridade normal" onClick={() => setFilterPriority('low')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterPriority === 'low' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
-                                        <div className="w-2 h-2 rounded-full bg-[#3B82F6]" /> 📄 Normal
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                {notes.filter(n => n.archived).length > 0 && (
-                                    <button
-                                        onClick={() => setShowArchived(!showArchived)}
-                                        title={showArchived ? "Ocultar arquivados" : "Mostrar arquivados"}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all active:scale-95 border ${showArchived ? 'bg-white/10 text-white border-white/20' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}
-                                    >
-                                        <Archive size={14} />
-                                        Arquivados ({notes.filter(n => n.archived).length})
-                                    </button>
-                                )}
-                                <div className="relative" ref={sortRef}>
-                                    <button
-                                        onClick={() => setShowSortDropdown(!showSortDropdown)}
-                                        title="Clique para escolher a ordenação"
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all active:scale-95 border bg-white/5 border-white/10 ${showSortDropdown ? 'text-[#3B82F6] border-[#3B82F6]/30' : 'text-white'}`}
-                                    >
-                                        <ArrowDownUp size={14} />
-                                        {sortBy === 'date' ? 'Data de entrega' : sortBy === 'newest' ? 'Mais recente' : sortBy === 'oldest' ? 'Mais antigo' : 'Alfabética'}
-                                    </button>
-                                    {showSortDropdown && (
-                                        <div className="absolute top-full right-0 mt-2 w-56 bg-[#0d1120]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] z-50 overflow-hidden animate-in slide-in-from-top-2 duration-200">
-                                            <div className="px-4 py-2.5 border-b border-white/5">
-                                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Ordenar Lista</span>
-                                            </div>
-                                            <div className="py-1">
-                                                {[
-                                                    { key: 'date' as const, label: 'Data de entrega', icon: <Calendar size={14} /> },
-                                                    { key: 'newest' as const, label: 'Mais recente primeiro', icon: <ChevronDown size={14} /> },
-                                                    { key: 'oldest' as const, label: 'Mais antigo primeiro', icon: <ChevronUp size={14} /> },
-                                                    { key: 'alpha' as const, label: 'Ordem alfabética', icon: <FileText size={14} /> },
-                                                ].map(opt => (
-                                                    <button
-                                                        key={opt.key}
-                                                        onClick={() => { setSortBy(opt.key); setShowSortDropdown(false); }}
-                                                        title={opt.label}
-                                                        className={`flex items-center gap-3 w-full px-4 py-2.5 text-left text-[12px] font-medium transition-all hover:bg-white/5 ${sortBy === opt.key ? 'text-[#17baa4]' : 'text-gray-400 hover:text-gray-200'}`}
-                                                    >
-                                                        {opt.icon}
-                                                        {opt.label}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
-                                    <button title="Visualizar em lista" onClick={() => setViewMode('list')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[#17baa4]/20 text-[#17baa4] shadow-sm' : 'text-gray-500 hover:text-white'}`}><ListIcon size={14} /></button>
-                                    <button title="Visualizar em grade" onClick={() => setViewMode('grid')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-[#17baa4]/20 text-[#17baa4] shadow-sm' : 'text-gray-500 hover:text-white'}`}><LayoutGrid size={14} /></button>
-                                </div>
+                    <div className="flex flex-col gap-4 sm:gap-5 px-1 pr-12 md:pr-0">
+                        {/* 1. Prioridade Row */}
+                        <div className="flex items-center gap-2 w-full overflow-hidden">
+                            <span className="text-[12px] font-medium text-gray-500 shrink-0 w-[65px]">Prioridade:</span>
+                            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-nowrap w-full pb-1">
+                                <button title="Mostrar todas as prioridades" onClick={() => setFilterPriority('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterPriority === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`}>Todas</button>
+                                <button title="Filtrar por prioridade urgente" onClick={() => setFilterPriority('high')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterPriority === 'high' ? 'border-[#EF4444] text-[#EF4444] bg-[#EF4444]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
+                                    <div className="w-2 h-2 rounded-full bg-[#EF4444]" /> 🔥 Urgente
+                                </button>
+                                <button title="Filtrar por prioridade importante" onClick={() => setFilterPriority('medium')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterPriority === 'medium' ? 'border-[#F59E0B] text-[#F59E0B] bg-[#F59E0B]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
+                                    <div className="w-2 h-2 rounded-full bg-[#F59E0B]" /> ⚡ Importante
+                                </button>
+                                <button title="Filtrar por prioridade normal" onClick={() => setFilterPriority('low')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterPriority === 'low' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
+                                    <div className="w-2 h-2 rounded-full bg-[#3B82F6]" /> 📄 Normal
+                                </button>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-1.5">
-                            <span className="text-[12px] font-medium text-gray-500 shrink-0">Status:</span>
-                            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-nowrap pb-1">
+                        {/* 2. Status Row */}
+                        <div className="flex items-center gap-2 w-full overflow-hidden">
+                            <span className="text-[12px] font-medium text-gray-500 shrink-0 w-[65px]">Status:</span>
+                            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-nowrap w-full pb-1">
                                 <button title="Mostrar todos os status" onClick={() => setFilterStatus('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterStatus === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}>Todos</button>
                                 {defaultStatuses.map(s => {
                                     const colorMap: Record<string, string> = {
@@ -917,6 +865,59 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                         </button>
                                     );
                                 })}
+                            </div>
+                        </div>
+
+                        {/* 3. Actions Row: Sort & View Toggle */}
+                        <div className="flex flex-wrap items-center gap-2 w-full pt-1 sm:pt-0">
+                            {notes.filter(n => n.archived).length > 0 && (
+                                <button
+                                    onClick={() => setShowArchived(!showArchived)}
+                                    title={showArchived ? "Ocultar arquivados" : "Mostrar arquivados"}
+                                    className={`flex items-center justify-center gap-2 px-4 py-2 w-full sm:w-auto rounded-xl text-xs font-medium transition-all active:scale-95 border ${showArchived ? 'bg-white/10 text-white border-white/20' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}
+                                >
+                                    <Archive size={14} />
+                                    Arquivados ({notes.filter(n => n.archived).length})
+                                </button>
+                            )}
+                            <div className="relative flex-1 min-w-[140px]" ref={sortRef}>
+                                <button
+                                    onClick={() => setShowSortDropdown(!showSortDropdown)}
+                                    title="Clique para escolher a ordenação"
+                                    className={`flex items-center justify-center gap-2 px-4 py-2 w-full rounded-xl text-xs font-medium transition-all active:scale-95 border bg-white/5 border-white/10 ${showSortDropdown ? 'text-[#3B82F6] border-[#3B82F6]/30' : 'text-white'}`}
+                                >
+                                    <ArrowDownUp size={14} />
+                                    <span className="truncate">{sortBy === 'date' ? 'Data de entrega' : sortBy === 'newest' ? 'Mais recente' : sortBy === 'oldest' ? 'Mais antigo' : 'Alfabética'}</span>
+                                </button>
+                                {showSortDropdown && (
+                                    <div className="absolute top-full left-0 sm:right-0 sm:left-auto mt-2 w-56 bg-[#0d1120]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] z-50 overflow-hidden animate-in slide-in-from-top-2 duration-200">
+                                        <div className="px-4 py-2.5 border-b border-white/5">
+                                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Ordenar Lista</span>
+                                        </div>
+                                        <div className="py-1">
+                                            {[
+                                                { key: 'date' as const, label: 'Data de entrega', icon: <Calendar size={14} /> },
+                                                { key: 'newest' as const, label: 'Mais recente primeiro', icon: <ChevronDown size={14} /> },
+                                                { key: 'oldest' as const, label: 'Mais antigo primeiro', icon: <ChevronUp size={14} /> },
+                                                { key: 'alpha' as const, label: 'Ordem alfabética', icon: <FileText size={14} /> },
+                                            ].map(opt => (
+                                                <button
+                                                    key={opt.key}
+                                                    onClick={() => { setSortBy(opt.key); setShowSortDropdown(false); }}
+                                                    title={opt.label}
+                                                    className={`flex items-center gap-3 w-full px-4 py-2.5 text-left text-[12px] font-medium transition-all hover:bg-white/5 ${sortBy === opt.key ? 'text-[#17baa4]' : 'text-gray-400 hover:text-gray-200'}`}
+                                                >
+                                                    {opt.icon}
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex items-center justify-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 shrink-0">
+                                <button title="Visualizar em lista" onClick={() => setViewMode('list')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[#17baa4]/20 text-[#17baa4] shadow-sm' : 'text-gray-500 hover:text-white'}`}><ListIcon size={14} /></button>
+                                <button title="Visualizar em grade" onClick={() => setViewMode('grid')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-[#17baa4]/20 text-[#17baa4] shadow-sm' : 'text-gray-500 hover:text-white'}`}><LayoutGrid size={14} /></button>
                             </div>
                         </div>
                     </div>
