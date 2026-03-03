@@ -445,14 +445,14 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
             {/* Nova Anotação Card */}
             <Card ref={formRef} className="bg-[#121625]/80 backdrop-blur-xl border-white/5 relative overflow-hidden rounded-[32px]">
-                <div className="flex flex-wrap sm:flex-nowrap items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-white/5 gap-3">
-                    <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-white/5 gap-3">
+                    <div className="flex items-center gap-2 shrink-0">
                         <Pencil size={16} className="text-[#17baa4]" />
                         <span className="text-[14px] font-semibold text-white tracking-wide">
                             {editingNote ? 'Editar Anotação' : <><span className="hidden sm:inline">Criar </span>Nova Anotação</>}
                         </span>
                     </div>
-                    <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end">
+                    <div className="flex items-center gap-2 sm:gap-4 justify-end">
                         <button
                             onClick={handleToggleSelectionMode}
                             title={isSelectionMode ? "Cancelar seleção" : "Selecionar notas"}
