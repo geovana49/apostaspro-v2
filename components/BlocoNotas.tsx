@@ -810,7 +810,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     </div>
 
                     {/* Filter Bar with Sort and View Toggle */}
-                    <div className="flex flex-col gap-4 sm:gap-5 px-1 pr-12 md:pr-0">
+                    <div className="flex flex-col gap-4 sm:gap-5 px-1">
                         {/* 1. Prioridade Row */}
                         <div className="flex items-center gap-2 w-full overflow-hidden">
                             <span className="text-[12px] font-medium text-gray-500 shrink-0 w-[65px]">Prioridade:</span>
