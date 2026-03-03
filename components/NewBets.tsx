@@ -555,36 +555,36 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                                         <div className="flex items-start justify-between gap-4 sm:gap-8 min-w-max w-full px-1">
                                                             {/* 1. Investimento */}
                                                             <div className="flex flex-col items-start shrink-0">
-                                                                <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none whitespace-nowrap">Investimento</span>
+                                                                <span className="text-[11px] text-gray-400 mb-1.5 font-medium leading-none whitespace-nowrap">Investimento</span>
                                                                 <div className="whitespace-nowrap">
-                                                                    <MoneyDisplay value={stats.totalStake} className="text-[12px] sm:text-[13px] text-white" />
+                                                                    <MoneyDisplay value={stats.totalStake} className="text-[13px] sm:text-[14px] text-white" />
                                                                 </div>
                                                             </div>
 
                                                             {/* 2. Lucro */}
                                                             <div className="flex flex-col items-start shrink-0">
-                                                                <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none whitespace-nowrap">Lucro Líquido</span>
+                                                                <span className="text-[11px] text-gray-400 mb-1.5 font-medium leading-none whitespace-nowrap">Lucro Líquido</span>
                                                                 <div className="whitespace-nowrap">
-                                                                    <MoneyDisplay value={stats.profit} className={`text-[12px] sm:text-[13px] ${stats.profit >= 0 ? 'text-[#10b981]' : 'text-danger'}`} />
+                                                                    <MoneyDisplay value={stats.profit} className={`text-[13px] sm:text-[14px] ${stats.profit >= 0 ? 'text-[#10b981]' : 'text-danger'}`} />
                                                                 </div>
                                                             </div>
 
                                                             {/* 3. ROI */}
                                                             <div className="flex flex-col items-center shrink-0">
-                                                                <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none whitespace-nowrap">Roi</span>
-                                                                <span className="text-[12px] sm:text-[13px] text-[#22d3ee] whitespace-nowrap font-bold">{roi.toFixed(1)}%</span>
+                                                                <span className="text-[11px] text-gray-400 mb-1.5 font-medium leading-none whitespace-nowrap">Roi</span>
+                                                                <span className="text-[13px] sm:text-[14px] text-[#22d3ee] whitespace-nowrap font-bold">{roi.toFixed(1)}%</span>
                                                             </div>
 
                                                             {/* 4. Status */}
                                                             <div className="flex flex-col items-center shrink-0">
-                                                                <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none whitespace-nowrap">Status</span>
-                                                                <span className="text-[12px] sm:text-[13px] capitalize whitespace-nowrap font-bold" style={{ color: barColor }}>{bet.status.toLowerCase()}</span>
+                                                                <span className="text-[11px] text-gray-400 mb-1.5 font-medium leading-none whitespace-nowrap">Status</span>
+                                                                <span className="text-[13px] sm:text-[14px] capitalize whitespace-nowrap font-bold" style={{ color: barColor }}>{bet.status.toLowerCase()}</span>
                                                             </div>
 
                                                             {/* 5. Missão */}
                                                             <div className="flex flex-col items-center shrink-0">
-                                                                <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none whitespace-nowrap">missao</span>
-                                                                <span className="text-[12px] sm:text-[13px] whitespace-nowrap font-bold max-w-[100px] truncate" style={{ color: bet.promotionType && bet.promotionType !== 'Nenhuma' ? promoColor : '#6b7280' }}>
+                                                                <span className="text-[11px] text-gray-400 mb-1.5 font-medium leading-none whitespace-nowrap">missao</span>
+                                                                <span className="text-[13px] sm:text-[14px] whitespace-nowrap font-bold max-w-[100px] truncate" style={{ color: bet.promotionType && bet.promotionType !== 'Nenhuma' ? promoColor : '#6b7280' }}>
                                                                     {bet.promotionType && bet.promotionType !== 'Nenhuma' ? bet.promotionType : 'Normal'}
                                                                 </span>
                                                             </div>
