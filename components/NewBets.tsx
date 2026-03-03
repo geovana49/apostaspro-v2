@@ -170,10 +170,10 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
             </div>
 
             {/* Filters Bar */}
-            <Card className="p-5 bg-[#0d1421] border-white/5 shadow-2xl relative overflow-hidden group">
+            <Card className="p-4 sm:p-5 bg-[#0d1421] border-white/5 shadow-2xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 relative z-10">
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Buscar Evento</label>
                         <Input

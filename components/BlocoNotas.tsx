@@ -445,32 +445,32 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
 
             {/* Nova Anotação Card */}
             <Card ref={formRef} className="bg-[#121625]/80 backdrop-blur-xl border-white/5 relative overflow-hidden rounded-[32px]">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+                <div className="flex flex-wrap sm:flex-nowrap items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-white/5 gap-3">
                     <div className="flex items-center gap-3">
                         <Pencil size={16} className="text-[#17baa4]" />
                         <span className="text-[14px] font-semibold text-white tracking-wide">
                             {editingNote ? 'Editar Anotação' : 'Criar Nova Anotação'}
                         </span>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end">
                         <button
                             onClick={handleToggleSelectionMode}
                             title={isSelectionMode ? "Cancelar seleção" : "Selecionar notas"}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all active:scale-95 border ${isSelectionMode ? 'bg-[#17baa4]/20 text-[#17baa4] border-[#17baa4]/30' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}
+                            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-medium transition-all active:scale-95 border ${isSelectionMode ? 'bg-[#17baa4]/20 text-[#17baa4] border-[#17baa4]/30' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}
                         >
                             <CheckCircle2 size={14} />
-                            {isSelectionMode ? 'Cancelar' : 'Selecionar'}
+                            <span className="hidden sm:inline">{isSelectionMode ? 'Cancelar' : 'Selecionar'}</span>
                         </button>
-                        <button onClick={() => setIsCollapsed(!isCollapsed)} title={isCollapsed ? 'Expandir formulário de criação' : 'Recolher formulário de criação'} className="p-2 text-gray-500 hover:text-white transition-all">
+                        <button onClick={() => setIsCollapsed(!isCollapsed)} title={isCollapsed ? 'Expandir' : 'Recolher'} className="p-2 text-gray-500 hover:text-white transition-all">
                             {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
                         </button>
                     </div>
                 </div>
 
                 {!isCollapsed && (
-                    <div className="p-8 space-y-6">
+                    <div className="p-4 sm:p-8 space-y-6">
                         <textarea
-                            className="w-full bg-black/20 border border-white/5 rounded-2xl px-6 py-5 text-white text-sm focus:ring-1 focus:ring-[#17baa4]/50 outline-none transition-all min-h-[120px] resize-none placeholder:text-gray-600"
+                            className="w-full bg-black/20 border border-white/5 rounded-2xl px-4 sm:px-6 py-4 sm:py-5 text-white text-sm focus:ring-1 focus:ring-[#17baa4]/50 outline-none transition-all min-h-[120px] resize-none placeholder:text-gray-600"
                             placeholder="Anotar procedimento... (ex: 🎰 Bet365 - Missão 50 giros)"
                             title="Escreva o conteúdo da sua anotação aqui"
                             value={content}
@@ -642,8 +642,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                             </div>
                         </div>
 
-                        {/* Bottom Row - Single Line Action Row */}
-                        <div className="flex items-end gap-4 w-full py-2 overflow-x-auto scrollbar-hide flex-nowrap pr-20">
+                        {/* Bottom Row - Actions */}
+                        <div className="flex flex-wrap items-end gap-4 w-full py-2">
                             <div className="flex flex-col gap-2 shrink-0">
                                 <span className="text-[10px] font-medium text-white/40 tracking-wide ml-1">Prioridade</span>
                                 <div className="flex gap-2">
