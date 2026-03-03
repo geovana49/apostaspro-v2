@@ -472,38 +472,35 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                         </div>
 
                                         {/* Data Section */}
-                                        <div className={`
-                                                flex w-full mt-6
-                                                ${viewMode === 'list' ? 'items-center justify-between border-t border-white/5 pt-6 gap-4 sm:gap-0 flex-wrap lg:flex-nowrap' : 'flex-col gap-6'}
-                                            `}>
+                                        <div className={`flex w-full mt-6 ${viewMode === 'list' ? 'flex-col lg:flex-row lg:items-center justify-between border-t border-white/5 pt-6 gap-6 lg:gap-0' : 'flex-col gap-6'}`}>
                                             {/* Financials Row */}
-                                            <div className={`flex items-center ${viewMode === 'list' ? 'gap-8 sm:gap-20 flex-1' : 'w-full bg-white/5 p-3 rounded-xl justify-between flex-wrap gap-y-2'}`}>
+                                            <div className={`flex items-center ${viewMode === 'list' ? 'justify-between lg:justify-start lg:gap-20 lg:flex-1' : 'w-full bg-white/5 p-3 rounded-xl justify-between flex-wrap gap-y-2'}`}>
                                                 <div className="space-y-1.5 min-w-[100px]">
                                                     <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Investimento</p>
-                                                    <MoneyDisplay value={stats.totalStake} className={`${viewMode === 'list' ? 'text-base' : 'text-sm'} font-bold text-white`} />
+                                                    <MoneyDisplay value={stats.totalStake} className={`${viewMode === 'list' ? 'text-base lg:text-[15px]' : 'text-sm'} font-bold text-white`} />
                                                 </div>
-                                                <div className={`${viewMode === 'list' ? 'space-y-1.5 min-w-[100px]' : 'space-y-1.5 text-right min-w-[100px]'}`}>
+                                                <div className={`${viewMode === 'list' ? 'space-y-1.5 min-w-[100px] text-right lg:text-left' : 'space-y-1.5 text-right min-w-[100px]'}`}>
                                                     <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Lucro Líquido</p>
                                                     <MoneyDisplay
                                                         value={stats.profit}
-                                                        className={`${viewMode === 'list' ? 'text-base' : 'text-sm'} font-bold ${stats.profit >= 0 ? 'text-[#10b981]' : 'text-danger'}`}
+                                                        className={`${viewMode === 'list' ? 'text-base lg:text-[15px]' : 'text-sm'} font-bold ${stats.profit >= 0 ? 'text-[#10b981]' : 'text-danger'}`}
                                                     />
                                                 </div>
                                             </div>
 
                                             {/* Status & Badges Row */}
-                                            <div className={`flex items-center ${viewMode === 'list' ? 'gap-10' : 'w-full gap-2 sm:gap-1 flex-wrap sm:flex-nowrap pt-2 sm:pt-0'}`}>
+                                            <div className={`flex ${viewMode === 'list' ? 'items-start lg:items-center justify-between lg:justify-end gap-4 lg:gap-10 w-full lg:w-auto' : 'items-center w-full gap-2 sm:gap-1 flex-wrap sm:flex-nowrap pt-2 sm:pt-0'}`}>
                                                 {/* ROI Box */}
-                                                <div className={`flex items-center gap-2 ${viewMode === 'list' ? 'px-4 py-2' : 'px-3 py-1.5 sm:px-2 sm:py-1'} rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-[#22d3ee]' : 'text-danger'} shrink-0 shadow-lg shadow-black/20`}>
+                                                <div className={`flex items-center gap-2 ${viewMode === 'list' ? 'px-4 py-2 mt-0.5 lg:mt-0' : 'px-3 py-1.5 sm:px-2 sm:py-1'} rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-[#22d3ee]' : 'text-danger'} shrink-0 shadow-lg shadow-black/20`}>
                                                     <span className="text-[9px] font-black uppercase opacity-60 tracking-widest hidden sm:inline">ROI</span>
-                                                    <span className={`${viewMode === 'list' ? 'text-base' : 'text-xs sm:text-sm'} font-black leading-none`}>{roi.toFixed(1)}%</span>
+                                                    <span className={`${viewMode === 'list' ? 'text-base lg:text-sm' : 'text-xs sm:text-sm'} font-black leading-none`}>{roi.toFixed(1)}%</span>
                                                 </div>
 
                                                 {/* Badge Group */}
-                                                <div className={`flex items-center gap-2 sm:gap-4 flex-wrap sm:flex-nowrap w-full sm:w-auto mt-2 sm:mt-0 ${viewMode === 'list' ? '' : 'sm:contents'}`}>
+                                                <div className={`flex ${viewMode === 'list' ? 'flex-col lg:flex-row items-end lg:items-center gap-2 lg:gap-4' : 'items-center gap-2 sm:gap-4 flex-wrap sm:flex-nowrap w-full sm:w-auto mt-2 sm:mt-0 sm:contents'}`}>
                                                     {/* Status Badge */}
                                                     <div
-                                                        className={`flex items-center gap-1.5 sm:gap-2 ${viewMode === 'list' ? 'px-4 py-2' : 'px-2 py-1'} rounded-md bg-white/5 border w-fit shrink-0`}
+                                                        className={`flex items-center gap-1.5 sm:gap-2 ${viewMode === 'list' ? 'px-4 py-2 lg:py-1.5' : 'px-2 py-1'} rounded-md bg-white/5 border w-fit shrink-0`}
                                                         style={{ borderColor: `${barColor}40`, color: barColor }}
                                                     >
                                                         {renderStatusIcon(bet.status, barColor)}
@@ -514,7 +511,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                                     {bet.promotionType && bet.promotionType !== 'Nenhuma' && (
                                                         <Badge
                                                             color={promoColor}
-                                                            className={`text-[9px] sm:text-[10px] ${viewMode === 'list' ? 'py-1.5 px-4' : 'py-1 px-2'} w-fit font-black uppercase tracking-wider bg-white/5`}
+                                                            className={`text-[9px] sm:text-[10px] ${viewMode === 'list' ? 'py-1.5 px-4 lg:px-3' : 'py-1 px-2'} w-fit font-black uppercase tracking-wider bg-white/5`}
                                                         >
                                                             {bet.promotionType}
                                                         </Badge>
