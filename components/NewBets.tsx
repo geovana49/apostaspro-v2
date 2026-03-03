@@ -676,29 +676,37 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                             <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Coberturas</p>
                             <div className="space-y-2">
                                 {selectedBetForModal.coverages?.map((cov, idx) => (
-                                    <div key={idx} className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5 group hover:bg-white/10 transition-all">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 flex items-center justify-center shrink-0 overflow-hidden">
-                                                {getBookmaker(cov.bookmakerId)?.logo ? (
-                                                    <img
-                                                        src={getBookmaker(cov.bookmakerId).logo}
-                                                        alt=""
-                                                        className="w-full h-full object-contain"
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full bg-[#05070e] rounded-lg flex items-center justify-center text-xs font-bold text-gray-400">
-                                                        {cov.market?.substring(0, 1)}
-                                                    </div>
-                                                )}
+                                    <div key={idx} className="flex flex-col bg-white/5 p-3 sm:p-4 rounded-xl border border-white/5 group hover:bg-white/10 transition-all gap-2 sm:gap-2.5">
+                                        <div className="flex items-center justify-between w-full">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 flex items-center justify-center shrink-0 overflow-hidden">
+                                                    {getBookmaker(cov.bookmakerId)?.logo ? (
+                                                        <img
+                                                            src={getBookmaker(cov.bookmakerId)?.logo}
+                                                            alt=""
+                                                            className="w-full h-full object-contain"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full bg-[#05070e] rounded-lg flex items-center justify-center text-xs font-bold text-gray-400">
+                                                            {cov.market?.substring(0, 1)}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-col justify-center gap-0.5">
+                                                    <span className={`text-[10px] sm:text-[11px] font-black uppercase tracking-widest ${cov.status === 'Green' ? 'text-[#10b981]' : cov.status === 'Red' ? 'text-danger' : 'text-primary'}`}>
+                                                        {cov.status}
+                                                    </span>
+                                                    <span className="text-[10px] sm:text-[11px] text-gray-400 font-bold tracking-wider leading-none">
+                                                        ODD {cov.odd.toFixed(2)}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-sm font-bold text-white">{cov.market}</p>
-                                                <p className="text-[10px] text-gray-500">Odd: {cov.odd.toFixed(2)}</p>
+                                            <div className="text-right shrink-0">
+                                                <MoneyDisplay value={cov.stake} className="text-[14px] sm:text-[15px] font-black text-white whitespace-nowrap" />
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <MoneyDisplay value={cov.stake} className="text-sm font-bold text-white" />
-                                            <p className={`text-[9px] font-bold uppercase ${cov.status === 'Green' ? 'text-primary' : 'text-danger'}`}>{cov.status}</p>
+                                        <div className="pl-11 pr-2 w-full">
+                                            <p className="text-[12px] sm:text-[13px] font-bold text-gray-300 leading-snug break-words">{cov.market}</p>
                                         </div>
                                     </div>
                                 ))}
