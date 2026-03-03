@@ -474,10 +474,10 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                         {/* Data Section */}
                                         <div className={`
                                                 flex w-full mt-6
-                                                ${viewMode === 'list' ? 'items-center justify-between border-t border-white/5 pt-6' : 'flex-col gap-6'}
+                                                ${viewMode === 'list' ? 'items-center justify-between border-t border-white/5 pt-6 gap-4 sm:gap-0 flex-wrap lg:flex-nowrap' : 'flex-col gap-6'}
                                             `}>
                                             {/* Financials Row */}
-                                            <div className={`flex items-center ${viewMode === 'list' ? 'gap-20 flex-1' : 'w-full bg-white/5 p-3 rounded-xl justify-between flex-wrap gap-y-2'}`}>
+                                            <div className={`flex items-center ${viewMode === 'list' ? 'gap-8 sm:gap-20 flex-1' : 'w-full bg-white/5 p-3 rounded-xl justify-between flex-wrap gap-y-2'}`}>
                                                 <div className="space-y-1.5 min-w-[100px]">
                                                     <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Investimento</p>
                                                     <MoneyDisplay value={stats.totalStake} className={`${viewMode === 'list' ? 'text-base' : 'text-sm'} font-bold text-white`} />

@@ -449,7 +449,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     <div className="flex items-center gap-3">
                         <Pencil size={16} className="text-[#17baa4]" />
                         <span className="text-[14px] font-semibold text-white tracking-wide">
-                            {editingNote ? 'Editar Anotação' : 'Criar Nova Anotação'}
+                            {editingNote ? 'Editar Anotação' : <><span className="hidden sm:inline">Criar </span>Nova Anotação</>}
                         </span>
                     </div>
                     <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end">
@@ -812,17 +812,17 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     {/* Filter Bar with Sort and View Toggle */}
                     <div className="flex flex-col gap-5 px-1">
                         <div className="flex flex-wrap items-center justify-between gap-4 pr-12 md:pr-0">
-                            <div className="flex flex-wrap items-center gap-1.5">
-                                <span className="text-[12px] font-medium text-gray-500">Prioridade:</span>
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <button title="Mostrar todas as prioridades" onClick={() => setFilterPriority('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`}>Todas</button>
-                                    <button title="Filtrar por prioridade urgente" onClick={() => setFilterPriority('high')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'high' ? 'border-[#EF4444] text-[#EF4444] bg-[#EF4444]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto overflow-hidden">
+                                <span className="text-[12px] font-medium text-gray-500 shrink-0">Prioridade:</span>
+                                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-nowrap w-full sm:w-auto pb-1">
+                                    <button title="Mostrar todas as prioridades" onClick={() => setFilterPriority('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterPriority === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`}>Todas</button>
+                                    <button title="Filtrar por prioridade urgente" onClick={() => setFilterPriority('high')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterPriority === 'high' ? 'border-[#EF4444] text-[#EF4444] bg-[#EF4444]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
                                         <div className="w-2 h-2 rounded-full bg-[#EF4444]" /> 🔥 Urgente
                                     </button>
-                                    <button title="Filtrar por prioridade importante" onClick={() => setFilterPriority('medium')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'medium' ? 'border-[#F59E0B] text-[#F59E0B] bg-[#F59E0B]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
+                                    <button title="Filtrar por prioridade importante" onClick={() => setFilterPriority('medium')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterPriority === 'medium' ? 'border-[#F59E0B] text-[#F59E0B] bg-[#F59E0B]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
                                         <div className="w-2 h-2 rounded-full bg-[#F59E0B]" /> ⚡ Importante
                                     </button>
-                                    <button title="Filtrar por prioridade normal" onClick={() => setFilterPriority('low')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border ${filterPriority === 'low' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
+                                    <button title="Filtrar por prioridade normal" onClick={() => setFilterPriority('low')} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterPriority === 'low' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}>
                                         <div className="w-2 h-2 rounded-full bg-[#3B82F6]" /> 📄 Normal
                                     </button>
                                 </div>
