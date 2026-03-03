@@ -705,8 +705,8 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                                 <MoneyDisplay value={cov.stake} className="text-[14px] sm:text-[15px] font-black text-white whitespace-nowrap" />
                                             </div>
                                         </div>
-                                        <div className="pl-11 pr-2 w-full">
-                                            <p className="text-[12px] sm:text-[13px] font-bold text-gray-300 leading-snug break-words">{cov.market}</p>
+                                        <div className="pl-11 sm:pl-12 pr-2 w-full mt-1 sm:mt-0">
+                                            <p className="text-[12px] sm:text-[14px] font-bold text-gray-200 leading-snug break-words">{cov.market}</p>
                                         </div>
                                     </div>
                                 ))}
