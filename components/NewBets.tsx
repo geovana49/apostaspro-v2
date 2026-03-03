@@ -550,38 +550,44 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                                 {/* =========================================
                                                     MOBILE LIST VIEW (< lg)
                                                 ========================================= */}
-                                                <div className="lg:hidden w-full mt-4 border-t border-white/10 pt-4 pb-1">
-                                                    <div className="grid grid-cols-5 gap-1.5 sm:gap-2 items-start justify-items-center w-full shrink-0">
-                                                        {/* 1. Investimento */}
-                                                        <div className="col-span-1 flex flex-col items-start w-full">
-                                                            <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none">Investimento</span>
-                                                            <MoneyDisplay value={stats.totalStake} className="text-[11px] sm:text-[12px] text-white" />
-                                                        </div>
+                                                <div className="lg:hidden w-full mt-4 border-t border-white/10 pt-4">
+                                                    <div className="w-full overflow-x-auto scrollbar-hide pb-2">
+                                                        <div className="flex items-start justify-between gap-4 sm:gap-8 min-w-max w-full px-1">
+                                                            {/* 1. Investimento */}
+                                                            <div className="flex flex-col items-start shrink-0">
+                                                                <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none whitespace-nowrap">Investimento</span>
+                                                                <div className="whitespace-nowrap">
+                                                                    <MoneyDisplay value={stats.totalStake} className="text-[12px] sm:text-[13px] text-white" />
+                                                                </div>
+                                                            </div>
 
-                                                        {/* 2. Lucro */}
-                                                        <div className="col-span-1 flex flex-col items-start w-full">
-                                                            <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none">Lucro Líquido</span>
-                                                            <MoneyDisplay value={stats.profit} className={`text-[11px] sm:text-[12px] ${stats.profit >= 0 ? 'text-[#10b981]' : 'text-danger'}`} />
-                                                        </div>
+                                                            {/* 2. Lucro */}
+                                                            <div className="flex flex-col items-start shrink-0">
+                                                                <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none whitespace-nowrap">Lucro Líquido</span>
+                                                                <div className="whitespace-nowrap">
+                                                                    <MoneyDisplay value={stats.profit} className={`text-[12px] sm:text-[13px] ${stats.profit >= 0 ? 'text-[#10b981]' : 'text-danger'}`} />
+                                                                </div>
+                                                            </div>
 
-                                                        {/* 3. ROI */}
-                                                        <div className="col-span-1 flex flex-col items-center w-full">
-                                                            <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none">Roi</span>
-                                                            <span className="text-[11px] sm:text-[12px] text-[#22d3ee]">{roi.toFixed(1)}%</span>
-                                                        </div>
+                                                            {/* 3. ROI */}
+                                                            <div className="flex flex-col items-center shrink-0">
+                                                                <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none whitespace-nowrap">Roi</span>
+                                                                <span className="text-[12px] sm:text-[13px] text-[#22d3ee] whitespace-nowrap font-bold">{roi.toFixed(1)}%</span>
+                                                            </div>
 
-                                                        {/* 4. Status */}
-                                                        <div className="col-span-1 flex flex-col items-center w-full">
-                                                            <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none">Status</span>
-                                                            <span className="text-[11px] sm:text-[12px] text-white capitalize">{bet.status.toLowerCase()}</span>
-                                                        </div>
+                                                            {/* 4. Status */}
+                                                            <div className="flex flex-col items-center shrink-0">
+                                                                <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none whitespace-nowrap">Status</span>
+                                                                <span className="text-[12px] sm:text-[13px] text-white capitalize whitespace-nowrap font-medium">{bet.status.toLowerCase()}</span>
+                                                            </div>
 
-                                                        {/* 5. Missão */}
-                                                        <div className="col-span-1 flex flex-col items-center w-full">
-                                                            <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none">missao</span>
-                                                            <span className="text-[11px] sm:text-[12px] text-white truncate max-w-[50px] sm:max-w-none">
-                                                                {bet.promotionType && bet.promotionType !== 'Nenhuma' ? bet.promotionType : 'Normal'}
-                                                            </span>
+                                                            {/* 5. Missão */}
+                                                            <div className="flex flex-col items-center shrink-0">
+                                                                <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none whitespace-nowrap">missao</span>
+                                                                <span className="text-[12px] sm:text-[13px] text-white whitespace-nowrap font-medium max-w-[100px] truncate">
+                                                                    {bet.promotionType && bet.promotionType !== 'Nenhuma' ? bet.promotionType : 'Normal'}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
