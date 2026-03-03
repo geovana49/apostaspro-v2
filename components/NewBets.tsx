@@ -487,7 +487,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                                 </div>
 
                                                 {/* Status & Badges Row */}
-                                                <div className="flex items-center w-full gap-2 sm:gap-1 flex-wrap sm:flex-nowrap">
+                                                <div className="flex items-center w-full gap-2 sm:gap-4 flex-nowrap overflow-x-auto scrollbar-hide pb-1">
                                                     {/* ROI Box */}
                                                     <div className={`flex items-center gap-2 px-3 py-1.5 sm:px-2 sm:py-1 rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-[#22d3ee]' : 'text-danger'} shrink-0 shadow-lg shadow-black/20`}>
                                                         <span className="text-[10px] font-black uppercase opacity-60 tracking-widest hidden sm:inline">ROI</span>
@@ -495,14 +495,14 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                                     </div>
 
                                                     {/* Badge Group */}
-                                                    <div className="flex items-center gap-2 sm:gap-4 flex-wrap sm:flex-nowrap w-full sm:w-auto mt-2 sm:mt-0 sm:contents">
-                                                        <div className="flex items-center gap-1.5 sm:gap-2 px-2 py-1.5 rounded-md bg-white/5 border w-fit shrink-0" style={{ borderColor: `${barColor}40`, color: barColor }}>
+                                                    <div className="flex items-center gap-2 sm:gap-4 flex-nowrap shrink-0">
+                                                        <div className="flex items-center gap-1.5 sm:gap-2 px-2 py-1.5 rounded-md bg-white/5 border shrink-0" style={{ borderColor: `${barColor}40`, color: barColor }}>
                                                             {renderStatusIcon(bet.status, barColor)}
                                                             <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-tight">{bet.status}</span>
                                                         </div>
 
                                                         {bet.promotionType && bet.promotionType !== 'Nenhuma' && (
-                                                            <Badge color={promoColor} className="text-[10px] sm:text-[11px] py-1.5 px-2.5 w-fit font-black uppercase tracking-wider bg-white/5">
+                                                            <Badge color={promoColor} className="text-[10px] sm:text-[11px] py-1.5 px-2.5 shrink-0 font-black uppercase tracking-wider bg-white/5">
                                                                 {bet.promotionType}
                                                             </Badge>
                                                         )}
