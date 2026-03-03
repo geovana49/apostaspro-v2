@@ -118,6 +118,14 @@
       color: white;
     }
 
+    /* Emula uma tela mais larga (zoom out) no celular para caber mais componentes */
+    @media (max-width: 768px) {
+      html {
+        zoom: 0.85;
+        /* Reduz escala em 15%, aumentando o espaço útil (largura virtual maior) */
+      }
+    }
+
     /* Custom Scrollbar */
     ::-webkit-scrollbar {
       width: 6px;

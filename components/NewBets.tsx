@@ -578,13 +578,13 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                                             {/* 4. Status */}
                                                             <div className="flex flex-col items-center shrink-0">
                                                                 <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none whitespace-nowrap">Status</span>
-                                                                <span className="text-[12px] sm:text-[13px] text-white capitalize whitespace-nowrap font-medium">{bet.status.toLowerCase()}</span>
+                                                                <span className="text-[12px] sm:text-[13px] capitalize whitespace-nowrap font-bold" style={{ color: barColor }}>{bet.status.toLowerCase()}</span>
                                                             </div>
 
                                                             {/* 5. Missão */}
                                                             <div className="flex flex-col items-center shrink-0">
                                                                 <span className="text-[10px] text-gray-400 mb-1.5 font-medium leading-none whitespace-nowrap">missao</span>
-                                                                <span className="text-[12px] sm:text-[13px] text-white whitespace-nowrap font-medium max-w-[100px] truncate">
+                                                                <span className="text-[12px] sm:text-[13px] whitespace-nowrap font-bold max-w-[100px] truncate" style={{ color: bet.promotionType && bet.promotionType !== 'Nenhuma' ? promoColor : '#6b7280' }}>
                                                                     {bet.promotionType && bet.promotionType !== 'Nenhuma' ? bet.promotionType : 'Normal'}
                                                                 </span>
                                                             </div>
