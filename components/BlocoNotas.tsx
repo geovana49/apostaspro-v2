@@ -810,9 +810,9 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     </div>
 
                     {/* Filter Bar with Sort and View Toggle */}
-                    <div className="flex flex-col gap-4 sm:gap-5 px-1">
+                    <div className="flex flex-col md:grid md:grid-cols-[1fr_auto] gap-4 md:gap-y-5 md:gap-x-4 px-1">
                         {/* 1. Prioridade Row */}
-                        <div className="flex items-center gap-2 w-full overflow-hidden">
+                        <div className="flex items-center gap-2 w-full overflow-hidden md:col-start-1 md:row-start-1 order-1">
                             <span className="text-[12px] font-medium text-gray-500 shrink-0 w-[65px]">Prioridade:</span>
                             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-nowrap w-full pb-1">
                                 <button title="Mostrar todas as prioridades" onClick={() => setFilterPriority('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterPriority === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`}>Todas</button>
@@ -829,7 +829,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         </div>
 
                         {/* 2. Status Row */}
-                        <div className="flex items-center gap-2 w-full overflow-hidden">
+                        <div className="flex items-center gap-2 w-full overflow-hidden md:col-start-1 md:row-start-2 order-2">
                             <span className="text-[12px] font-medium text-gray-500 shrink-0 w-[65px]">Status:</span>
                             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-nowrap w-full pb-1">
                                 <button title="Mostrar todos os status" onClick={() => setFilterStatus('all')} className={`px-4 py-1.5 rounded-full text-[11px] font-medium transition-all border shrink-0 ${filterStatus === 'all' ? 'border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}>Todos</button>
@@ -869,18 +869,18 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         </div>
 
                         {/* 3. Actions Row: Sort & View Toggle */}
-                        <div className="flex flex-wrap items-center gap-2 w-full pt-1 sm:pt-0">
+                        <div className="flex flex-wrap md:flex-nowrap items-center md:justify-end gap-2 w-full md:w-auto pt-1 md:pt-0 md:col-start-2 md:row-start-1 order-3">
                             {notes.filter(n => n.archived).length > 0 && (
                                 <button
                                     onClick={() => setShowArchived(!showArchived)}
                                     title={showArchived ? "Ocultar arquivados" : "Mostrar arquivados"}
-                                    className={`flex items-center justify-center gap-2 px-4 py-2 w-full sm:w-auto rounded-xl text-xs font-medium transition-all active:scale-95 border ${showArchived ? 'bg-white/10 text-white border-white/20' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}
+                                    className={`flex items-center justify-center gap-2 px-4 py-2 w-full md:w-auto rounded-xl text-xs font-medium transition-all active:scale-95 border ${showArchived ? 'bg-white/10 text-white border-white/20' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'}`}
                                 >
                                     <Archive size={14} />
-                                    Arquivados ({notes.filter(n => n.archived).length})
+                                    <span className="md:hidden lg:inline">Arquivados ({notes.filter(n => n.archived).length})</span>
                                 </button>
                             )}
-                            <div className="relative flex-1 min-w-[140px]" ref={sortRef}>
+                            <div className="relative flex-1 md:flex-none min-w-[140px] md:min-w-0" ref={sortRef}>
                                 <button
                                     onClick={() => setShowSortDropdown(!showSortDropdown)}
                                     title="Clique para escolher a ordenação"
@@ -890,7 +890,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                     <span className="truncate">{sortBy === 'date' ? 'Data de entrega' : sortBy === 'newest' ? 'Mais recente' : sortBy === 'oldest' ? 'Mais antigo' : 'Alfabética'}</span>
                                 </button>
                                 {showSortDropdown && (
-                                    <div className="absolute top-full left-0 sm:right-0 sm:left-auto mt-2 w-56 bg-[#0d1120]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] z-50 overflow-hidden animate-in slide-in-from-top-2 duration-200">
+                                    <div className="absolute top-full left-0 md:right-0 md:left-auto mt-2 w-56 bg-[#0d1120]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] z-50 overflow-hidden animate-in slide-in-from-top-2 duration-200">
                                         <div className="px-4 py-2.5 border-b border-white/5">
                                             <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Ordenar Lista</span>
                                         </div>
