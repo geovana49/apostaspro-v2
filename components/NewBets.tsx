@@ -514,9 +514,9 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                                     {bet.promotionType && bet.promotionType !== 'Nenhuma' && (
                                                         <Badge
                                                             color={promoColor}
-                                                            className={`text-[10px] ${viewMode === 'list' ? 'py-1.5 px-4' : 'py-1 px-2'} w-fit font-black uppercase tracking-wider bg-white/5 shrink-0`}
+                                                            className={`text-[10px] ${viewMode === 'list' ? 'py-1.5 px-4' : 'py-1 px-2'} w-fit font-black uppercase tracking-wider bg-white/5 shrink min-w-0 flex items-center`}
                                                         >
-                                                            {bet.promotionType}
+                                                            <span className="truncate block max-w-full">{bet.promotionType}</span>
                                                         </Badge>
                                                     )}
                                                 </div>
@@ -539,8 +539,8 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
             >
                 {selectedBetForModal && (
                     <div className="space-y-6">
-                        <div className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5">
-                            <div className="flex items-center gap-4">
+                        <div className="flex items-start sm:items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5 gap-4">
+                            <div className="flex items-center gap-4 flex-1 min-w-0">
                                 <div className="w-12 h-12 flex items-center justify-center shrink-0">
                                     {getBookmaker(selectedBetForModal.mainBookmakerId)?.logo ? (
                                         <img
@@ -552,12 +552,12 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                         <Trophy size={24} className="text-primary" />
                                     )}
                                 </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-white leading-tight">{selectedBetForModal.event}</h3>
-                                    <p className="text-gray-500 text-xs font-medium uppercase tracking-widest">{new Date(selectedBetForModal.date).toLocaleDateString('pt-BR')}</p>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="text-lg font-bold text-white leading-tight break-words">{selectedBetForModal.event}</h3>
+                                    <p className="text-gray-500 text-xs font-medium uppercase tracking-widest mt-1">{new Date(selectedBetForModal.date).toLocaleDateString('pt-BR')}</p>
                                 </div>
                             </div>
-                            <div className="text-right">
+                            <div className="text-right shrink-0">
                                 <div
                                     className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/5 border w-fit ml-auto"
                                     style={{ borderColor: `${statuses.find(s => s.name === selectedBetForModal.status)?.color}40`, color: statuses.find(s => s.name === selectedBetForModal.status)?.color }}
