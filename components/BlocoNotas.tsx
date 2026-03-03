@@ -643,42 +643,42 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         </div>
 
                         {/* Bottom Row - Actions */}
-                        <div className="flex flex-wrap items-end gap-4 w-full py-2">
+                        <div className="flex flex-col sm:flex-row sm:items-end gap-5 w-full py-2">
                             <div className="flex flex-col gap-2 shrink-0">
-                                <span className="text-[10px] font-medium text-white/40 tracking-wide ml-1">Prioridade</span>
-                                <div className="flex gap-2">
+                                <span className="text-[10px] sm:text-[10px] font-medium text-white/40 tracking-wide ml-1">Prioridade</span>
+                                <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 sm:pb-0 pr-2 sm:pr-0">
                                     <button
                                         title="Prioridade urgente"
                                         onClick={() => setPriority(prev => prev === 'high' ? 'low' : 'high')}
-                                        className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium border transition-all ${priority === 'high' ? 'bg-red-500/10 border-red-500/40 text-red-500 shadow-[0_0_10px_rgba(255,68,68,0.2)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}
+                                        className={`flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full text-[10px] sm:text-[11px] font-medium border transition-all shrink-0 ${priority === 'high' ? 'bg-red-500/10 border-red-500/40 text-red-500 shadow-[0_0_10px_rgba(255,68,68,0.2)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}
                                     >
                                         <TriangleAlert size={14} /> Urgente
                                     </button>
                                     <button
                                         title="Prioridade importante"
                                         onClick={() => setPriority(prev => prev === 'medium' ? 'low' : 'medium')}
-                                        className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium border transition-all ${priority === 'medium' ? 'bg-[#FFE600]/10 border-[#FFE600]/40 text-[#FFE600] shadow-[0_0_10px_rgba(255,230,0,0.2)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}
+                                        className={`flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full text-[10px] sm:text-[11px] font-medium border transition-all shrink-0 ${priority === 'medium' ? 'bg-[#FFE600]/10 border-[#FFE600]/40 text-[#FFE600] shadow-[0_0_10px_rgba(255,230,0,0.2)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}
                                     >
                                         <Star size={14} /> Importante
                                     </button>
                                     <button
                                         title="Prioridade normal"
                                         onClick={() => setPriority('low')}
-                                        className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-[11px] font-medium border transition-all ${priority === 'low' ? 'bg-[#3B82F6]/10 border-[#3B82F6]/40 text-[#3B82F6] shadow-[0_0_10px_rgba(59,130,246,0.2)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}
+                                        className={`flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full text-[10px] sm:text-[11px] font-medium border transition-all shrink-0 ${priority === 'low' ? 'bg-[#3B82F6]/10 border-[#3B82F6]/40 text-[#3B82F6] shadow-[0_0_10px_rgba(59,130,246,0.2)]' : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white'}`}
                                     >
                                         <FileText size={14} /> Normal
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="h-6 w-px bg-white/5 shrink-0 mx-1" />
+                            <div className="hidden sm:block h-6 w-px bg-white/5 shrink-0 mx-1" />
 
-                            <div className="flex flex-col gap-2 shrink-0 ml-1 relative">
+                            <div className="flex flex-col gap-2 shrink-0 sm:ml-1 relative w-full sm:w-auto">
                                 <span className="text-[10px] font-medium text-white/40 tracking-wide ml-1">Agendar</span>
                                 <button
                                     ref={schedulerRef}
                                     title="Agendar data e hora para lembrete desta nota"
-                                    className={`flex items-center justify-between gap-6 px-4 py-2.5 bg-black/30 border rounded-xl text-[11.5px] font-bold transition-all min-w-[180px] group ${showScheduler || (tempDate && tempTime) ? 'border-[#17baa4]/50 text-white' : 'border-white/5 text-gray-300 hover:border-[#17baa4]/40'}`}
+                                    className={`flex items-center justify-between gap-6 px-4 py-3 sm:py-2.5 bg-black/30 border rounded-xl text-[12px] sm:text-[11.5px] font-bold transition-all w-full sm:min-w-[180px] group ${showScheduler || (tempDate && tempTime) ? 'border-[#17baa4]/50 text-white' : 'border-white/5 text-gray-300 hover:border-[#17baa4]/40'}`}
                                 >
                                     <div className="flex-1 text-left" onClick={() => setShowScheduler(!showScheduler)}>
                                         {showScheduler ? 'Selecionando...' : (tempDate && tempTime ? `${new Date(tempDate).toLocaleDateString('pt-BR')} ${tempTime}` : 'Data e Hora')}
@@ -694,7 +694,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                             }
                                         }}
                                     >
-                                        <Bell size={15} className={`transition-all ${showScheduler || (tempDate && tempTime) ? 'text-[#17baa4] opacity-100' : 'opacity-40 group-hover:opacity-100'}`} title="Ver notificações agendadas" />
+                                        <Bell size={16} className={`transition-all ${showScheduler || (tempDate && tempTime) ? 'text-[#17baa4] opacity-100' : 'opacity-40 group-hover:opacity-100'}`} title="Ver notificações agendadas" />
                                         {notes.filter(n => n.reminderEnabled).length > 0 && (
                                             <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-[#1a1f35]" />
                                         )}
@@ -755,26 +755,25 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 )}
                             </div>
 
-                            {editingNote && (
+                            <div className="flex sm:contents flex-col gap-3 w-full mt-2 sm:mt-0">
+                                {editingNote && (
+                                    <button
+                                        onClick={handleCancelEdit}
+                                        className="bg-white/5 hover:bg-white/10 text-gray-400 w-full sm:w-auto px-6 py-3.5 sm:py-2.5 rounded-xl font-black text-[14px] sm:text-[13px] transition-all shrink-0 active:scale-95"
+                                    >
+                                        Cancelar
+                                    </button>
+                                )}
+
                                 <button
-                                    onClick={handleCancelEdit}
-                                    className="bg-white/5 hover:bg-white/10 text-gray-400 px-6 py-2.5 rounded-xl font-black text-[13px] transition-all shrink-0 active:scale-95"
+                                    title={editingNote ? "Salvar alterações na nota" : "Salvar esta anotação no bloco de notas"}
+                                    onClick={handleAddNote}
+                                    className="bg-[#17baa4] hover:bg-[#129482] text-[#090c19] w-full sm:w-auto px-7 py-3.5 sm:py-2.5 rounded-xl font-black text-[14px] sm:text-[13px] transition-all shadow-[0_0_20px_rgba(23,186,164,0.4)] flex items-center justify-center gap-2 shrink-0 active:scale-95 sm:translate-y-[-1px]"
                                 >
-                                    Cancelar
+                                    {editingNote ? <CheckCircle2 size={18} strokeWidth={2.5} /> : <Plus size={18} strokeWidth={2.5} />}
+                                    {editingNote ? 'Salvar Alterações' : 'Salvar anotação'}
                                 </button>
-                            )}
-
-                            <button
-                                title={editingNote ? "Salvar alterações na nota" : "Salvar esta anotação no bloco de notas"}
-                                onClick={handleAddNote}
-                                className="bg-[#17baa4] hover:bg-[#129482] text-[#090c19] px-7 py-2.5 rounded-xl font-black text-[13px] transition-all shadow-[0_0_20px_rgba(23,186,164,0.4)] flex items-center gap-2 shrink-0 active:scale-95 translate-y-[-1px]"
-                            >
-                                {editingNote ? <CheckCircle2 size={18} strokeWidth={2.5} /> : <Plus size={18} strokeWidth={2.5} />}
-                                {editingNote ? 'Salvar Alterações' : 'Salvar anotação'}
-                            </button>
-
-                            {/* Spacer to prevent clipping on the right */}
-                            <div className="min-w-[40px] h-4 shrink-0" />
+                            </div>
                         </div>
 
                         {/* Legend Row */}

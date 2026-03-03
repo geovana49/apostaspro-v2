@@ -492,31 +492,31 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                             </div>
 
                                             {/* Status & Badges Row */}
-                                            <div className={`flex items-center ${viewMode === 'list' ? 'gap-10' : 'w-full justify-between gap-1 flex-nowrap'}`}>
+                                            <div className={`flex items-center ${viewMode === 'list' ? 'gap-10' : 'w-full gap-2 sm:gap-1 flex-wrap sm:flex-nowrap pt-2 sm:pt-0'}`}>
                                                 {/* ROI Box */}
-                                                <div className={`flex items-center gap-2 ${viewMode === 'list' ? 'px-4 py-2' : 'px-2 py-1'} rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-[#22d3ee]' : 'text-danger'} shrink-0 shadow-lg shadow-black/20`}>
-                                                    <span className="text-[9px] font-black uppercase opacity-60 tracking-widest">ROI</span>
-                                                    <span className={`${viewMode === 'list' ? 'text-base' : 'text-sm'} font-black leading-none`}>{roi.toFixed(1)}%</span>
+                                                <div className={`flex items-center gap-2 ${viewMode === 'list' ? 'px-4 py-2' : 'px-3 py-1.5 sm:px-2 sm:py-1'} rounded-xl bg-white/5 border border-white/5 ${roi >= 0 ? 'text-[#22d3ee]' : 'text-danger'} shrink-0 shadow-lg shadow-black/20`}>
+                                                    <span className="text-[9px] font-black uppercase opacity-60 tracking-widest hidden sm:inline">ROI</span>
+                                                    <span className={`${viewMode === 'list' ? 'text-base' : 'text-xs sm:text-sm'} font-black leading-none`}>{roi.toFixed(1)}%</span>
                                                 </div>
 
                                                 {/* Badge Group */}
-                                                <div className={`${viewMode === 'list' ? 'flex items-center gap-4' : 'contents'}`}>
+                                                <div className={`flex items-center gap-2 sm:gap-4 flex-wrap sm:flex-nowrap w-full sm:w-auto mt-2 sm:mt-0 ${viewMode === 'list' ? '' : 'sm:contents'}`}>
                                                     {/* Status Badge */}
                                                     <div
-                                                        className={`flex items-center gap-2 ${viewMode === 'list' ? 'px-4 py-2' : 'px-2 py-1'} rounded-md bg-white/5 border w-fit shrink-0`}
+                                                        className={`flex items-center gap-1.5 sm:gap-2 ${viewMode === 'list' ? 'px-4 py-2' : 'px-2 py-1'} rounded-md bg-white/5 border w-fit shrink-0`}
                                                         style={{ borderColor: `${barColor}40`, color: barColor }}
                                                     >
                                                         {renderStatusIcon(bet.status, barColor)}
-                                                        <span className="text-[10px] font-black uppercase tracking-tight">{bet.status}</span>
+                                                        <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-tight">{bet.status}</span>
                                                     </div>
 
                                                     {/* Promotion Badge */}
                                                     {bet.promotionType && bet.promotionType !== 'Nenhuma' && (
                                                         <Badge
                                                             color={promoColor}
-                                                            className={`text-[10px] ${viewMode === 'list' ? 'py-1.5 px-4' : 'py-1 px-2'} w-fit font-black uppercase tracking-wider bg-white/5 shrink min-w-0 flex items-center`}
+                                                            className={`text-[9px] sm:text-[10px] ${viewMode === 'list' ? 'py-1.5 px-4' : 'py-1 px-2'} w-fit font-black uppercase tracking-wider bg-white/5`}
                                                         >
-                                                            <span className="truncate block max-w-full">{bet.promotionType}</span>
+                                                            {bet.promotionType}
                                                         </Badge>
                                                     )}
                                                 </div>
