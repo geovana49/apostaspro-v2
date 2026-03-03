@@ -655,18 +655,20 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     <p className="text-white font-bold truncate">{getBookmaker(selectedBetForModal.mainBookmakerId)?.name || 'N/A'}</p>
                                 </div>
                             </div>
-                            <div className="bg-[#05070e] p-4 rounded-2xl border border-white/5">
-                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Promoção</p>
-                                {selectedBetForModal.promotionType && selectedBetForModal.promotionType !== 'Nenhuma' ? (
-                                    <Badge
-                                        color={promotions.find(p => p.name === selectedBetForModal.promotionType)?.color || '#17baa4'}
-                                        className="text-[10px] py-1 px-3 w-fit font-black uppercase tracking-wider bg-white/5"
-                                    >
-                                        {selectedBetForModal.promotionType}
-                                    </Badge>
-                                ) : (
-                                    <p className="text-gray-600 font-bold uppercase text-[10px]">Nenhuma</p>
-                                )}
+                            <div className="bg-[#05070e] p-4 rounded-2xl border border-white/5 flex flex-col justify-center overflow-hidden">
+                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 shrink-0">Promoção</p>
+                                <div className="w-full overflow-x-auto scrollbar-hide pb-0.5">
+                                    {selectedBetForModal.promotionType && selectedBetForModal.promotionType !== 'Nenhuma' ? (
+                                        <Badge
+                                            color={promotions.find(p => p.name === selectedBetForModal.promotionType)?.color || '#17baa4'}
+                                            className="text-[10px] py-1 px-3 w-fit font-black uppercase tracking-wider bg-white/5 whitespace-nowrap"
+                                        >
+                                            {selectedBetForModal.promotionType}
+                                        </Badge>
+                                    ) : (
+                                        <p className="text-gray-600 font-bold uppercase text-[10px]">Nenhuma</p>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
