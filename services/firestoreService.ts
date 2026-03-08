@@ -294,8 +294,10 @@ export const FirestoreService = {
         }
 
         const settingsRef = doc(db, "users", userId, "settings", "preferences");
-        const settingsSnap = await getDocs(query(collection(db, "users", userId, "settings")));
-        if (!settingsSnap.empty) return;
+        const settingsDoc = await getDoc(settingsRef);
+
+        if (settingsDoc.exists() && settingsDoc.data().initialized) return;
+        if (userDocSnap.exists() && userDocSnap.data().migratedToV2) return;
 
         console.info("[Initialization] Criando dados iniciais para novo usuário...");
         const batch = writeBatch(db);
