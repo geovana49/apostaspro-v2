@@ -9,8 +9,22 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="apple-touch-icon" href="/pwa-192x192.png">
   <meta name="theme-color" content="#090c19">
+  <style>
+    /* Força matar o double-tap zoom em todo o App, permitindo cliques rápidos */
+    html,
+    body {
+      touch-action: manipulation;
+      -ms-touch-action: manipulation;
+    }
+  </style>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    // Camada extra de proteção JS contra Duplo Clique Zoom no iOS
+    document.addEventListener('dblclick', function (event) {
+      event.preventDefault();
+    }, { passive: false });
+  </script>
   <script>
     // --- GLOBAL DRAG & DROP PIPELINE WITH RETRY ---
     (function () {
