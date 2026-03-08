@@ -2081,7 +2081,16 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                                     selectedIdx === index ? 'border-primary ring-2 ring-primary ring-offset-2 ring-offset-[#0d1121] scale-[1.05] z-20' :
                                                         'border-white/10 hover:border-primary/50'}`}
                                         >
-                                            <img src={photo.url} alt="Preview" className="w-full h-full object-cover" />
+                                            {photo.url.startsWith('ph_') && formData.id ? (
+                                                <FireImage
+                                                    photoId={photo.url}
+                                                    parentId={formData.id}
+                                                    type="bets"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <img src={photo.url} alt="Preview" className="w-full h-full object-cover" />
+                                            )}
 
                                             {/* Viewer Button */}
                                             <button
