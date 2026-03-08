@@ -674,14 +674,8 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
         const hasContent = formData.event || formData.notes || formData.coverages.length > 0 || tempPhotos.length > 0;
 
         if (hasContent && !isUploading && !initialData) {
-            // New Bet Mode: Ask to save draft
-            if (window.confirm('Você tem alterações não salvas. Deseja salvar como rascunho para terminar depois?')) {
-                saveAsDraft();
-            } else {
-                // User rejected draft save. Clear generic draft.
-                localStorage.removeItem('apostaspro_draft_modal');
-                onClose();
-            }
+            // New Bet Mode: Auto-save draft silently
+            saveAsDraft();
         } else if (initialData) {
             // Edit Mode: Check if we should warn? 
             // Currently users expect "Cancel" to just discard edits.
