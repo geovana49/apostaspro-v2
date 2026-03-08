@@ -1018,8 +1018,16 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         const hasContent = formData.event || formData.notes || formData.coverages.length > 0 || tempPhotos.length > 0;
 
         if (hasContent && !isUploading) {
-            if (window.confirm('Você tem alterações não salvas. Deseja salvar como rascunho para terminar depois?')) {
-                saveAsDraft();
+            const message = isEditing
+                ? 'Deseja salvar as alterações feitas nesta aposta?'
+                : 'Você tem uma aposta não salva. Deseja salvar como rascunho para terminar depois?';
+
+            if (window.confirm(message)) {
+                if (isEditing) {
+                    handleSave();
+                } else {
+                    saveAsDraft();
+                }
             } else {
                 // User rejected saving: Clear EVERYTHING
                 localStorage.removeItem('apostaspro_draft_mybets');
