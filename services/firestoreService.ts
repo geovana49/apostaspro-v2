@@ -384,9 +384,16 @@ export const FirestoreService = {
     getPhotoData: async (userId: string, parentId: string, photoId: string, type: 'bets' | 'gains' = 'bets'): Promise<string | null> => {
         try {
             const photoRef = doc(db, "users", userId, type, parentId, "photos", photoId);
-            const snap = await getDoc(photoRef);
+            let snap = await getDoc(photoRef);
 
-            if (!snap.exists()) return null;
+            if (!snap.exists()) {
+                // Fallback para buscar na outra coleção devido a bug anterior de salvamento
+                const fallbackType = type === 'bets' ? 'gains' : 'bets';
+                const fallbackRef = doc(db, "users", userId, fallbackType, parentId, "photos", photoId);
+                snap = await getDoc(fallbackRef);
+
+                if (!snap.exists()) return null;
+            }
 
             const data = snap.data();
             if (!data.data) return null;

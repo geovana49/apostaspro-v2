@@ -520,7 +520,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                             if (photo.url.startsWith('data:')) {
                                 // Efficient binary upload (Blob)
                                 const blob = base64ToBlob(photo.url);
-                                const url = await FirestoreService.uploadImage(currentUser.uid, betId, blob);
+                                const url = await FirestoreService.uploadImage(currentUser.uid, betId, blob, saveAsGain ? 'gains' : 'bets');
                                 photoUrls.push(url);
                             } else {
                                 photoUrls.push(photo.url);
