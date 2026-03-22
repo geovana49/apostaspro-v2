@@ -32,6 +32,7 @@ export interface HouseState {
     showIncrease: boolean;
     isProfitFixed: boolean; // toggle if user wants a specific profit
     bookmakerId: string;   // selected bookmaker for this house
+    customReturn: string;  // user override for exported gross return
 }
 
 export interface CalculationHistory {
@@ -68,7 +69,8 @@ const DEFAULT_HOUSE = (i: number): HouseState => ({
     showCommission: false,
     showIncrease: false,
     isProfitFixed: false,
-    bookmakerId: ''
+    bookmakerId: '',
+    customReturn: ''
 });
 
 const ROUNDING_OPTIONS: { label: string; value: RoundingStep }[] = [
@@ -288,10 +290,11 @@ interface HouseCardProps {
     finalOdd: number;
     showProfits: boolean;
     bookmakers: Bookmaker[];
+    grossReturn: number;
     onChange: (h: HouseState) => void;
 }
 
-const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, responsibility, profitIfWin, finalOdd, showProfits, bookmakers, onChange }) => {
+const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, responsibility, profitIfWin, finalOdd, showProfits, bookmakers, grossReturn, onChange }) => {
     const isAnchor = house.isFixed;
     const update = (patch: Partial<HouseState>) => onChange({ ...house, ...patch });
 
@@ -402,6 +405,22 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                     >
                         {house.isLay ? 'LAY' : 'BACK'}
                     </button>
+                </div>
+            </div>
+
+            {/* RETORNO CUSTOMIZÁVEL */}
+            <div className="mb-4">
+                <label className="text-[10px] text-gray-500 uppercase font-black tracking-wider block mb-1">RETORNO BRUTO (Personalizar)</label>
+                <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-mono">R$</span>
+                    <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder={formatBRL(grossReturn).replace('R$', '').trim()}
+                        value={house.customReturn}
+                        onChange={e => update({ customReturn: e.target.value })}
+                        className={`w-full bg-[#0a0f1e]/80 border ${house.customReturn ? 'border-cyan-500/50 text-cyan-400 font-bold' : 'border-[#1e3a5f]/50 text-gray-300'} rounded-lg pl-9 pr-3 py-2 text-sm focus:border-cyan-500/80 focus:outline-none transition-colors font-mono`}
+                    />
                 </div>
             </div>
 
@@ -639,8 +658,9 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
 
             const comm = parseBR(h.commission);
             const inc = parseBR(h.increase);
-            const needsManualReturn = h.isLay || h.isFreebet || comm > 0 || inc > 0;
+            const needsManualReturn = h.isLay || h.isFreebet || comm > 0 || inc > 0 || parseBR(h.customReturn) > 0;
             const grossReturn = res.profitIfWin + arbResult.totalInvested;
+            const finalExportedReturn = parseBR(h.customReturn) > 0 ? parseBR(h.customReturn) : grossReturn;
 
             return {
                 id: Math.random().toString(36).substr(2, 9),
@@ -648,7 +668,7 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
                 market: h.annotation ? h.annotation : (h.isLay ? 'Lay' : 'Back'),
                 odd: res.finalOdd > 0 ? res.finalOdd : (parseBR(h.odd) || 0),
                 stake: exportedStake,
-                manualReturn: needsManualReturn ? grossReturn : undefined,
+                manualReturn: needsManualReturn ? finalExportedReturn : undefined,
                 status: pendingStatus
             };
         });
@@ -740,6 +760,7 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
                         responsibility={arbResult.results[i]?.responsibility ?? 0}
                         profitIfWin={arbResult.results[i]?.profitIfWin ?? 0}
                         finalOdd={arbResult.results[i]?.finalOdd ?? 0}
+                        grossReturn={(arbResult.results[i]?.profitIfWin ?? 0) + arbResult.totalInvested}
                         showProfits={showProfits}
                         bookmakers={bookmakers}
                         onChange={updated => updateHouse(i, updated)}
@@ -778,7 +799,8 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
                                     <th className="text-center py-4 px-6">ODD</th>
                                     <th className="text-center py-4 px-6">COMISSÃO</th>
                                     <th className="text-center py-4 px-6">STAKE</th>
-                                    <th className="text-center py-4 px-6">RESPONSABILIDADE</th>
+                                    <th className="text-center py-4 px-6">RESPONS.</th>
+                                    <th className="text-center py-4 px-6">RETORNO</th>
                                     {showProfits && <th className="text-right py-4 px-6">LUCRO</th>}
                                 </tr>
                             </thead>
@@ -802,6 +824,9 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
                                             </td>
                                             <td className="py-5 px-6 text-center font-black text-pink-400/80 text-sm font-mono uppercase tracking-tighter">
                                                 {res.responsibility > 0 ? formatBRL(res.responsibility) : '—'}
+                                            </td>
+                                            <td className="py-5 px-6 text-center font-black text-cyan-400/90 text-sm font-mono uppercase tracking-tighter">
+                                                {formatBRL(res.profitIfWin + arbResult.totalInvested)}
                                             </td>
                                             {showProfits && (
                                                 <td className={`py-5 px-6 text-right font-black ${res.profitIfWin >= 0 ? 'text-green-400' : 'text-red-600'} text-sm font-mono`}>
