@@ -633,14 +633,25 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
         const pendingStatus = statuses.find(s => s.name === 'Pendente')?.name || 'Pendente';
 
         // Map houses to coverages
-        const coverages: Coverage[] = activeHouses.map((h, i) => ({
-            id: Math.random().toString(36).substr(2, 9),
-            bookmakerId: h.bookmakerId,
-            market: h.isLay ? 'Lay' : 'Back',
-            odd: parseBR(h.odd) || 0,
-            stake: parseBR(h.stake) || 0,
-            status: pendingStatus
-        }));
+        const coverages: Coverage[] = activeHouses.map((h, i) => {
+            const res = arbResult.results[i];
+            const exportedStake = h.isFreebet ? 0 : (h.isLay ? res.responsibility : res.computedStake);
+
+            const comm = parseBR(h.commission);
+            const inc = parseBR(h.increase);
+            const needsManualReturn = h.isLay || h.isFreebet || comm > 0 || inc > 0;
+            const grossReturn = res.profitIfWin + arbResult.totalInvested;
+
+            return {
+                id: Math.random().toString(36).substr(2, 9),
+                bookmakerId: h.bookmakerId,
+                market: h.annotation ? h.annotation : (h.isLay ? 'Lay' : 'Back'),
+                odd: res.finalOdd > 0 ? res.finalOdd : (parseBR(h.odd) || 0),
+                stake: exportedStake,
+                manualReturn: needsManualReturn ? grossReturn : undefined,
+                status: pendingStatus
+            };
+        });
 
         const mainBet: Bet = {
             id: Date.now().toString(),
