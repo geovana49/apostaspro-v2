@@ -577,7 +577,7 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
 
                 let effectiveOdd = 0;
                 if (h.isFreebet) {
-                    effectiveOdd = internalFinalOdd * (1 - commDec);
+                    effectiveOdd = finalOdd; // Na visão do usuário, o Retorno Bruto digitado é Stake * Odd normal
                 } else if (h.isLay) {
                     effectiveOdd = internalFinalOdd - commDec;
                 } else {
@@ -688,16 +688,23 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
 
         const pendingStatus = statuses.find(s => s.name === 'Pendente')?.name || 'Pendente';
 
+        const hasFreebet = activeHouses.some(h => h.isFreebet);
+
         // Map houses to coverages
         const coverages: Coverage[] = activeHouses.map((h, i) => {
             const res = arbResult.results[i];
-            const exportedStake = h.isFreebet ? 0 : (h.isLay ? res.responsibility : res.computedStake);
+            const exportedStake = h.isLay ? res.responsibility : res.computedStake;
 
             const comm = parseBR(h.commission);
             const inc = parseBR(h.increase);
             const needsManualReturn = h.isLay || h.isFreebet || comm > 0 || inc > 0 || parseBR(h.customReturn) > 0;
-            const grossReturn = res.profitIfWin + arbResult.totalInvested;
-            const finalExportedReturn = parseBR(h.customReturn) > 0 ? parseBR(h.customReturn) : grossReturn;
+
+            // Re-calcula Gross Return Nominal exatamente como as casas de apostas mostram nos cupons
+            const defaultGrossReturn = h.isFreebet
+                ? (res.computedStake * res.finalOdd)
+                : (res.profitIfWin + arbResult.totalInvested);
+
+            const finalExportedReturn = parseBR(h.customReturn) > 0 ? parseBR(h.customReturn) : defaultGrossReturn;
 
             return {
                 id: Math.random().toString(36).substr(2, 9),
@@ -715,6 +722,7 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
             date: new Date().toISOString().split('T')[0],
             event: 'Arbitragem ARB PRO',
             mainBookmakerId: activeHouses[0]?.bookmakerId || '',
+            promotionType: hasFreebet ? 'Conversão Freebet' : undefined,
             status: pendingStatus,
             coverages: coverages,
             notes: `Calculado via ARB PRO\nROI: ${arbResult.roi.toFixed(2)}%\nInvestimento: ${formatBRL(arbResult.totalInvested)}`,
@@ -797,7 +805,11 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
                         responsibility={arbResult.results[i]?.responsibility ?? 0}
                         profitIfWin={arbResult.results[i]?.profitIfWin ?? 0}
                         finalOdd={arbResult.results[i]?.finalOdd ?? 0}
-                        grossReturn={(arbResult.results[i]?.profitIfWin ?? 0) + arbResult.totalInvested}
+                        grossReturn={
+                            house.isFreebet
+                                ? ((arbResult.results[i]?.computedStake ?? 0) * (arbResult.results[i]?.finalOdd ?? 0))
+                                : ((arbResult.results[i]?.profitIfWin ?? 0) + arbResult.totalInvested)
+                        }
                         showProfits={showProfits}
                         bookmakers={bookmakers}
                         onChange={updated => updateHouse(i, updated)}
@@ -863,7 +875,10 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
                                                 {res.responsibility > 0 ? formatBRL(res.responsibility) : '—'}
                                             </td>
                                             <td className="py-5 px-6 text-center font-black text-cyan-400/90 text-sm font-mono uppercase tracking-tighter">
-                                                {formatBRL(res.profitIfWin + arbResult.totalInvested)}
+                                                {formatBRL(house.isFreebet
+                                                    ? (res.computedStake * res.finalOdd)
+                                                    : (res.profitIfWin + arbResult.totalInvested)
+                                                )}
                                             </td>
                                             {showProfits && (
                                                 <td className={`py-5 px-6 text-right font-black ${res.profitIfWin >= 0 ? 'text-green-400' : 'text-red-600'} text-sm font-mono`}>
