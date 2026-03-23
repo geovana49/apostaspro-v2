@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import {
     calculateArb, parseBR, formatBRL, formatOdd,
-    HouseInput
+    HouseInput, getEffectiveOdd, applyIncrease
 } from '../utils/arbCalc';
 import { Bet, Bookmaker, StatusItem, PromotionItem, User, Coverage } from '../types';
 import BetFormModal from './BetFormModal';
@@ -33,6 +33,7 @@ export interface HouseState {
     isProfitFixed: boolean; // toggle if user wants a specific profit
     bookmakerId: string;   // selected bookmaker for this house
     customReturn: string;  // user override for exported gross return
+    fixByReturn: boolean;  // toggle to use customReturn as the base calculation (stake = return / odd)
 }
 
 export interface CalculationHistory {
@@ -70,7 +71,8 @@ const DEFAULT_HOUSE = (i: number): HouseState => ({
     showIncrease: false,
     isProfitFixed: false,
     bookmakerId: '',
-    customReturn: ''
+    customReturn: '',
+    fixByReturn: false
 });
 
 const ROUNDING_OPTIONS: { label: string; value: RoundingStep }[] = [
@@ -383,7 +385,7 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                 <div className="flex gap-2">
                     <div className="relative flex-1">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-mono">R$</span>
-                        {isAnchor ? (
+                        {isAnchor && !house.fixByReturn ? (
                             <input
                                 type="text"
                                 inputMode="decimal"
@@ -393,7 +395,7 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                                 className="w-full bg-[#0a0f1e] border border-emerald-500/40 rounded-lg pl-9 pr-3 py-2.5 text-white text-lg font-bold focus:outline-none focus:border-emerald-400/60 font-mono transition-colors"
                             />
                         ) : (
-                            <div className="w-full bg-[#0a0f1e]/60 border border-[#1e3a5f]/50 rounded-lg pl-9 pr-3 py-2.5 text-white/80 text-lg font-bold font-mono min-h-[46px] flex items-center">
+                            <div className={`w-full bg-[#0a0f1e]/60 border border-[#1e3a5f]/50 rounded-lg pl-9 pr-3 py-2.5 text-lg font-bold font-mono min-h-[46px] flex items-center ${house.fixByReturn ? 'text-cyan-400/90' : 'text-white/80'}`}>
                                 {computedStake > 0 ? formatBRL(computedStake).replace('R$', '').trim() : '0,00'}
                             </div>
                         )}
@@ -410,7 +412,15 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
 
             {/* RETORNO CUSTOMIZÁVEL */}
             <div className="mb-4">
-                <label className="text-[10px] text-gray-500 uppercase font-black tracking-wider block mb-1">RETORNO BRUTO (Personalizar)</label>
+                <div className="flex items-center justify-between mb-1">
+                    <label className="text-[10px] text-gray-500 uppercase font-black tracking-wider block">RETORNO BRUTO (Personalizar)</label>
+                    <label className="flex items-center gap-1.5 cursor-pointer group" onClick={() => update({ isFixed: true, fixByReturn: !house.fixByReturn })}>
+                        <span className={`text-[9px] font-black uppercase tracking-widest ${house.fixByReturn ? 'text-cyan-400' : 'text-gray-500 group-hover:text-gray-300'}`}>Fixar pelo Retorno</span>
+                        <div className={`w-3.5 h-3.5 rounded border transition-all flex items-center justify-center ${house.fixByReturn ? 'bg-cyan-500 border-cyan-500' : 'border-[#1e3a5f] bg-[#0a0f1e]'}`}>
+                            {house.fixByReturn && <Check className="w-2.5 h-2.5 text-white" />}
+                        </div>
+                    </label>
+                </div>
                 <div className="relative flex-1">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-mono">R$</span>
                     <input
@@ -419,7 +429,7 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
                         placeholder={formatBRL(grossReturn).replace('R$', '').trim()}
                         value={house.customReturn}
                         onChange={e => update({ customReturn: e.target.value })}
-                        className={`w-full bg-[#0a0f1e]/80 border ${house.customReturn ? 'border-cyan-500/50 text-cyan-400 font-bold' : 'border-[#1e3a5f]/50 text-gray-300'} rounded-lg pl-9 pr-3 py-2 text-sm focus:border-cyan-500/80 focus:outline-none transition-colors font-mono`}
+                        className={`w-full bg-[#0a0f1e]/80 border ${house.fixByReturn ? 'border-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.3)] text-cyan-400 font-bold focus:border-cyan-400' : (house.customReturn ? 'border-cyan-500/50 text-cyan-400 font-bold' : 'border-[#1e3a5f]/50 text-gray-300')} rounded-lg pl-9 pr-3 py-2 text-sm focus:border-cyan-500/80 focus:outline-none transition-colors font-mono`}
                     />
                 </div>
             </div>
@@ -507,9 +517,9 @@ const HouseCard: React.FC<HouseCardProps> = ({ index, house, computedStake, resp
             {/* FIX STAKE BUTTON */}
             <button
                 onClick={() => onChange({ ...house, isFixed: !house.isFixed })}
-                className={`w-full rounded-lg text-xs transition-all h-10 font-black uppercase tracking-widest flex items-center justify-center gap-2 border ${isAnchor ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' : 'bg-[#1e3a5f]/20 border-[#1e3a5f]/50 text-gray-500 hover:text-gray-300 hover:border-[#1e3a5f]'}`}
+                className={`w-full rounded-lg text-xs transition-all h-10 font-black uppercase tracking-widest flex items-center justify-center gap-2 border ${isAnchor ? (house.fixByReturn ? 'bg-cyan-500/10 border-cyan-500/50 text-cyan-400' : 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400') : 'bg-[#1e3a5f]/20 border-[#1e3a5f]/50 text-gray-500 hover:text-gray-300 hover:border-[#1e3a5f]'}`}
             >
-                {isAnchor ? 'STAKE FIXADO' : 'FIXAR STAKE'}
+                {isAnchor ? (house.fixByReturn ? 'RETORNO FIXADO' : 'STAKE FIXADO') : 'FIXAR STAKE'}
             </button>
         </div>
     );
@@ -553,17 +563,44 @@ const ArbProTab: React.FC<CalculatorsProps> = ({
 
     // Build Inputs
     const houseInputs: HouseInput[] = useMemo(() => {
-        return activeHouses.map((h) => ({
-            odd: parseBR(h.odd),
-            stake: parseBR(h.stake),
-            commission: parseBR(h.commission),
-            increase: parseBR(h.increase),
-            isFreebet: h.isFreebet,
-            isLay: h.isLay,
-            isFixed: h.isFixed,
-            distribution: h.distribution,
-            targetProfit: h.isProfitFixed ? parseBR(h.targetProfit) : null
-        }));
+        return activeHouses.map((h) => {
+            let stakeNum = parseBR(h.stake);
+
+            // Reversa automática do stake baseado no Retorno Bruto (se for âncora e a opção estiver ativa)
+            if (h.isFixed && h.fixByReturn && parseBR(h.customReturn) > 0) {
+                const rawOdd = parseBR(h.odd) || 0;
+                const rawInc = parseBR(h.increase) || 0;
+                const commDec = (parseBR(h.commission) || 0) / 100;
+
+                const finalOdd = Math.max(applyIncrease(rawOdd, rawInc), 0);
+                const internalFinalOdd = h.isFreebet ? Math.max(finalOdd - 1, 0) : finalOdd;
+
+                let effectiveOdd = 0;
+                if (h.isFreebet) {
+                    effectiveOdd = internalFinalOdd * (1 - commDec);
+                } else if (h.isLay) {
+                    effectiveOdd = internalFinalOdd - commDec;
+                } else {
+                    effectiveOdd = 1 + (internalFinalOdd - 1) * (1 - commDec);
+                }
+
+                if (effectiveOdd > 0) {
+                    stakeNum = parseBR(h.customReturn) / effectiveOdd;
+                }
+            }
+
+            return {
+                odd: parseBR(h.odd),
+                stake: stakeNum,
+                commission: parseBR(h.commission),
+                increase: parseBR(h.increase),
+                isFreebet: h.isFreebet,
+                isLay: h.isLay,
+                isFixed: h.isFixed,
+                distribution: h.distribution,
+                targetProfit: h.isProfitFixed ? parseBR(h.targetProfit) : null
+            };
+        });
     }, [activeHouses]);
 
     // Calculate
