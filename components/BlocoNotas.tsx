@@ -768,12 +768,22 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                 </select>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={() => setShowScheduler(false)}
-                                            className="w-full bg-[#17baa4] text-[#090c19] py-2 rounded-lg text-[10px] font-black uppercase tracking-widest mt-1"
-                                        >
-                                            Confirmar
-                                        </button>
+                                        <div className="flex items-center gap-2 mt-2 w-full">
+                                            <button
+                                                onClick={() => {
+                                                    setShowScheduler(false);
+                                                }}
+                                                className="flex-1 bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors"
+                                            >
+                                                Cancelar
+                                            </button>
+                                            <button
+                                                onClick={() => setShowScheduler(false)}
+                                                className="flex-1 bg-[#17baa4] text-[#090c19] py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors"
+                                            >
+                                                Confirmar
+                                            </button>
+                                        </div>
                                     </div>,
                                     document.body
                                 )}
