@@ -85,7 +85,6 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
             try {
                 const permission = await Notification.requestPermission();
                 setPermissionStatus(permission);
-                if (permission === 'denied') setShowBlockedGuide(true);
             } catch (error) {
                 console.error('Error requesting notification permission:', error);
             }
@@ -437,12 +436,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                         <span>Ativar Notificações</span>
                     </button>
                 ) : (
-                    <div
-                        title="Notificações ativadas com sucesso!"
-                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all bg-[#17baa4]/10 border border-[#17baa4]/30 text-[#17baa4] shadow-[0_0_15px_rgba(23,186,164,0.15)] h-11 pointer-events-none"
-                    >
+                    <div className="opacity-0 pointer-events-none">
                         <Bell size={16} />
-                        <span>Notificações Ativas</span>
                     </div>
                 )}
             </div>
