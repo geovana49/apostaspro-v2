@@ -1141,9 +1141,9 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
 
     ctx.restore();
 
-    canvas.toBlob((blob) => {
-      onSave(blob);
-    }, 'image/png', 0.95);
+    // 4. Return as Data URL (Base64) for maximum compatibility with state and storage
+    const base64 = canvas.toDataURL('image/png', 0.95);
+    onSave(base64);
     onClose();
   };
 
