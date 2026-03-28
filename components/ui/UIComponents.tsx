@@ -932,8 +932,23 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
   const [crop, setCrop] = useState({ x: 10, y: 10, width: 80, height: 80 }); // Percentages
   const [isDragging, setIsDragging] = useState<{ type: 'move' | 'nw' | 'ne' | 'sw' | 'se', startX: number, startY: number, startCrop: any } | null>(null);
 
+  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
+
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+
+  // Sync internal container size with displayed image size
+  const updateImageSize = useCallback(() => {
+    if (imgRef.current) {
+      const { width, height } = imgRef.current.getBoundingClientRect();
+      setImageSize({ width, height });
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('resize', updateImageSize);
+    return () => window.removeEventListener('resize', updateImageSize);
+  }, [updateImageSize]);
 
   // Reset on open
   useEffect(() => {
@@ -947,6 +962,8 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
       setSaturation(100);
       setAspect(initialAspect);
       setCrop({ x: 10, y: 10, width: 80, height: 80 });
+      // Reset image size state before new load
+      setImageSize({ width: 0, height: 0 });
     }
   }, [isOpen, imageSrc, initialAspect]);
 
@@ -1106,86 +1123,91 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
 
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           {/* Main Editing Area */}
-          <div className="flex-1 bg-black/40 flex items-center justify-center p-8 relative">
+          <div ref={containerRef} className="flex-1 bg-black/40 flex items-center justify-center p-8 relative overflow-hidden">
+            {/* The actual image + overlay container, sized exactly to the rendered pixels */}
             <div 
-              ref={containerRef}
-              className="relative shadow-2xl"
+              className="relative shadow-2xl transition-all duration-300 ease-out"
               style={{
+                width: imageSize.width || 'auto',
+                height: imageSize.height || 'auto',
                 maxWidth: '100%',
-                maxHeight: '100%',
-                aspectRatio: imgRef.current ? `${imgRef.current.naturalWidth}/${imgRef.current.naturalHeight}` : 'auto'
+                maxHeight: '100%'
               }}
             >
               <img
                 ref={imgRef}
                 src={imageSrc}
                 alt="Editor"
-                className="max-w-full max-h-[50vh] lg:max-h-[60vh] object-contain select-none"
+                onLoad={updateImageSize}
+                className="max-w-full max-h-[50vh] lg:max-h-[60vh] object-contain select-none shadow-2xl"
                 style={{
+                  display: 'block',
                   filter: `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`,
                   transform: `rotate(${rotation}deg) scale(${flipH ? -1 : 1}, ${flipV ? -1 : 1})`
                 }}
               />
 
-              {/* Crop Overlay */}
-              <div className="absolute inset-0 z-10 overflow-hidden pointer-events-none">
-                {/* Dark Mask */}
-                <svg className="w-full h-full pointer-events-none opacity-60">
-                  <defs>
-                    <mask id="crop-mask">
-                      <rect width="100%" height="100%" fill="white" />
-                      <rect 
-                        x={`${crop.x}%`} 
-                        y={`${crop.y}%`} 
-                        width={`${crop.width}%`} 
-                        height={`${crop.height}%`} 
-                        fill="black" 
-                        rx={initialAspect === 1 ? "100" : "0"}
+              {/* Crop Overlay - Sized exactly to the image's visual area */}
+              {imageSize.width > 0 && (
+                <div className="absolute inset-0 z-10 overflow-hidden pointer-events-none">
+                  {/* Dark Mask */}
+                  <svg className="w-full h-full pointer-events-none opacity-60">
+                    <defs>
+                      <mask id="crop-mask">
+                        <rect width="100%" height="100%" fill="white" />
+                        <rect 
+                          x={`${crop.x}%`} 
+                          y={`${crop.y}%`} 
+                          width={`${crop.width}%`} 
+                          height={`${crop.height}%`} 
+                          fill="black" 
+                          rx={initialAspect === 1 ? "100" : "0"}
+                        />
+                      </mask>
+                    </defs>
+                    <rect width="100%" height="100%" fill="#090c19" mask="url(#crop-mask)" />
+                  </svg>
+
+                  {/* The Crop Box */}
+                  <div 
+                    className="absolute pointer-events-auto cursor-move border-2 border-primary shadow-[0_0_0_1px_rgba(255,255,255,0.2)] group"
+                    style={{ 
+                      left: `${crop.x}%`, 
+                      top: `${crop.y}%`, 
+                      width: `${crop.width}%`, 
+                      height: `${crop.height}%`,
+                      borderRadius: initialAspect === 1 ? '50%' : '0' 
+                    }}
+                    onMouseDown={(e) => handleMouseDown('move', e)}
+                    onTouchStart={(e) => handleMouseDown('move', e)}
+                  >
+                    {/* Grid Lines */}
+                    <div className="absolute inset-0 flex group-hover:opacity-100 opacity-30 transition-opacity">
+                      <div className="flex-1 border-r border-white/20 h-full" />
+                      <div className="flex-1 border-r border-white/20 h-full" />
+                    </div>
+                    <div className="absolute inset-0 flex flex-col group-hover:opacity-100 opacity-30 transition-opacity">
+                      <div className="flex-1 border-b border-white/20 w-full" />
+                      <div className="flex-1 border-b border-white/20 w-full" />
+                    </div>
+
+                    {/* Resize Handles */}
+                    {['nw', 'ne', 'sw', 'se'].map((h) => (
+                      <div 
+                        key={h}
+                        className={`absolute w-4 h-4 bg-white border-2 border-primary shadow-lg z-30
+                          ${h === 'nw' ? '-top-2 -left-2 cursor-nw-resize' : ''}
+                          ${h === 'ne' ? '-top-2 -right-2 cursor-ne-resize' : ''}
+                          ${h === 'sw' ? '-bottom-2 -left-2 cursor-sw-resize' : ''}
+                          ${h === 'se' ? '-bottom-2 -right-2 cursor-se-resize' : ''}
+                        `}
+                        onMouseDown={(e) => { e.stopPropagation(); handleMouseDown(h as any, e); }}
+                        onTouchStart={(e) => { e.stopPropagation(); handleMouseDown(h as any, e); }}
                       />
-                    </mask>
-                  </defs>
-                  <rect width="100%" height="100%" fill="#090c19" mask="url(#crop-mask)" />
-                </svg>
-
-                {/* The Crop Box */}
-                <div 
-                  className="absolute pointer-events-auto cursor-move border-2 border-primary shadow-[0_0_0_1px_rgba(255,255,255,0.2)] group"
-                  style={{ 
-                    left: `${crop.x}%`, 
-                    top: `${crop.y}%`, 
-                    width: `${crop.width}%`, 
-                    height: `${crop.height}%`,
-                    borderRadius: initialAspect === 1 ? '50%' : '0' 
-                  }}
-                  onMouseDown={(e) => handleMouseDown('move', e)}
-                  onTouchStart={(e) => handleMouseDown('move', e)}
-                >
-                  {/* Grid Lines */}
-                  <div className="absolute inset-0 flex group-hover:opacity-100 opacity-30 transition-opacity">
-                    <div className="flex-1 border-r border-white/20 h-full" />
-                    <div className="flex-1 border-r border-white/20 h-full" />
+                    ))}
                   </div>
-                  <div className="absolute inset-0 flex flex-col group-hover:opacity-100 opacity-30 transition-opacity">
-                    <div className="flex-1 border-b border-white/20 w-full" />
-                    <div className="flex-1 border-b border-white/20 w-full" />
-                  </div>
-
-                  {/* Resize Handles */}
-                  {['nw', 'ne', 'sw', 'se'].map((h) => (
-                    <div 
-                      key={h}
-                      className={`absolute w-4 h-4 bg-white border-2 border-primary shadow-lg z-30
-                        ${h === 'nw' ? '-top-2 -left-2 cursor-nw-resize' : ''}
-                        ${h === 'ne' ? '-top-2 -right-2 cursor-ne-resize' : ''}
-                        ${h === 'sw' ? '-bottom-2 -left-2 cursor-sw-resize' : ''}
-                        ${h === 'se' ? '-bottom-2 -right-2 cursor-se-resize' : ''}
-                      `}
-                      onMouseDown={(e) => { e.stopPropagation(); handleMouseDown(h as any, e); }}
-                      onTouchStart={(e) => { e.stopPropagation(); handleMouseDown(h as any, e); }}
-                    />
-                  ))}
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
