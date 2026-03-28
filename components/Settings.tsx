@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { Bookmaker, AppSettings, StatusItem, PromotionItem, OriginItem, SettingsTab, User as UserType } from '../types';
 import { FirestoreService } from '../services/firestoreService';
-import { compressImage } from '../utils/imageCompression';
+import { compressImage, base64ToBlob } from '../utils/imageCompression';
 import { auth, storage } from '../firebase';
 import { updatePassword, updateProfile } from 'firebase/auth';
 import { ref, deleteObject, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -107,13 +107,6 @@ const Settings: React.FC<SettingsProps> = ({
         return current.slice(0, 12);
     };
 
-    const addToCustomAvatars = (newImg: string, targetIndex?: number | null) => {
-        setAppSettings(prev => {
-            const updated = getUpdatedCustomAvatars(prev.customAvatars || [], newImg, targetIndex);
-            return { ...prev, customAvatars: updated };
-        });
-    };
-
     useEffect(() => {
         setActiveTab(initialTab);
     }, [initialTab]);
@@ -159,12 +152,12 @@ const Settings: React.FC<SettingsProps> = ({
     }, [lastSavedId]);
 
     const handleCroppedImage = async (base64: string) => {
-        if (!currentUser) return;
+        if (!currentUser || !base64) return;
         try {
-            const res = await fetch(base64);
-            const blob = await res.blob();
+            // Convert Base64 dataURL to Blob synchronously (No network call)
+            const blob = base64ToBlob(base64);
             
-            // Prepare updates using the tracked index
+            // Upload to Firestore and refresh gallery
             await handleProfileImageUpload(blob, adjusterIndex);
             setAdjusterIndex(null);
         } catch (e) {
