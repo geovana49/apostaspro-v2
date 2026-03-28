@@ -1023,15 +1023,32 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
 
       // Maintain Aspect Ratio if locked
       if (aspect) {
-        if (isDragging.type === 'nw' || isDragging.type === 'ne' || isDragging.type === 'sw' || isDragging.type === 'se') {
-           // Simplify: adjust height to width
-           const targetHeight = (newCrop.width * rect.width) / aspect / rect.height;
-           newCrop.height = targetHeight;
-           if (newCrop.y + newCrop.height > 100) {
-             newCrop.height = 100 - newCrop.y;
-             newCrop.width = (newCrop.height * rect.height * aspect) / rect.width;
-           }
+        const currentAspect = (newCrop.width * rect.width) / (newCrop.height * rect.height);
+        
+        if (isDragging.type === 'n' || isDragging.type === 's') {
+          // If pulling top/bottom, adjust width to match aspect
+          const targetWidth = (newCrop.height * rect.height * aspect) / rect.width;
+          newCrop.x = newCrop.x - (targetWidth - newCrop.width) / 2;
+          newCrop.width = targetWidth;
+        } else if (isDragging.type === 'e' || isDragging.type === 'w') {
+          // If pulling sides, adjust height to match aspect
+          const targetHeight = (newCrop.width * rect.width) / aspect / rect.height;
+          newCrop.y = newCrop.y - (targetHeight - newCrop.height) / 2;
+          newCrop.height = targetHeight;
+        } else {
+          // Corners: standard corner locking
+          const targetHeight = (newCrop.width * rect.width) / aspect / rect.height;
+          if (isDragging.type.includes('n')) {
+            newCrop.y = newCrop.y + (newCrop.height - targetHeight);
+          }
+          newCrop.height = targetHeight;
         }
+
+        // Final boundary enforcement for aspect-ratio crops
+        if (newCrop.x < 0) newCrop.x = 0;
+        if (newCrop.y < 0) newCrop.y = 0;
+        if (newCrop.x + newCrop.width > 100) newCrop.width = 100 - newCrop.x;
+        if (newCrop.y + newCrop.height > 100) newCrop.height = 100 - newCrop.y;
       }
     }
 
