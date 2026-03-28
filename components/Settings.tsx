@@ -282,39 +282,36 @@ const Settings: React.FC<SettingsProps> = ({
                     maxSizeMB: 0.05
                 });
 
-                // 2. Resolve the new state (Functional style)
-                let finalSettings: any = null;
-                setAppSettings(prev => {
-                    const updatedCustomAvatars = getUpdatedCustomAvatars(prev.customAvatars || [], base64, originalSrc);
-                    finalSettings = { 
-                        ...prev, 
-                        profileImage: base64,
-                        customAvatars: updatedCustomAvatars
-                    };
-                    return finalSettings;
-                });
+                // 2. Resolve the new state (Synchronous Calculation)
+                // We use the current state as a base, ensuring 'customAvatars' is initialized
+                const currentAvatars = appSettings.customAvatars || [];
+                const updatedAvatars = getUpdatedCustomAvatars(currentAvatars, base64, originalSrc);
+                
+                const finalSettings = { 
+                    ...appSettings, 
+                    profileImage: base64,
+                    customAvatars: updatedAvatars
+                };
 
-                // 3. Save to Firestore (outside the state setter for reliability)
-                // Use a small timeout to ensure 'finalSettings' was populated by the setter
-                setTimeout(async () => {
-                    if (finalSettings && currentUser) {
-                        try {
-                            await FirestoreService.saveSettings(currentUser.uid, finalSettings);
-                            console.info("Identity saved successfully.");
-                            
-                            // 4. Sync Firebase Auth Profile for fallback
-                            const authUser = auth.currentUser;
-                            if (authUser) {
-                                await updateProfile(authUser, {
-                                    displayName: finalSettings.username,
-                                    photoURL: finalSettings.profileImage
-                                });
-                            }
-                        } catch (err) {
-                            console.error("Firestore sync error:", err);
-                        }
+                // 3. Update state (for immediate UI response)
+                setAppSettings(finalSettings);
+
+                // 4. Save to Firestore (immediately and reliably)
+                try {
+                    await FirestoreService.saveSettings(currentUser.uid, finalSettings);
+                    console.info("Identity persisted successfully.");
+                    
+                    // 5. Sync Firebase Auth Profile for fallback
+                    const authUser = auth.currentUser;
+                    if (authUser) {
+                        await updateProfile(authUser, {
+                            displayName: finalSettings.username,
+                            photoURL: finalSettings.profileImage
+                        });
                     }
-                }, 0);
+                } catch (err) {
+                    console.error("Firestore sync error:", err);
+                }
             } catch (err) {
                 console.error("Error updating identity upload:", err);
             } finally {
