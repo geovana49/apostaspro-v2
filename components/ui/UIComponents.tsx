@@ -1138,7 +1138,7 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
         <div className="flex-1 bg-black flex items-center justify-center p-12 relative overflow-hidden">
           <div 
             ref={containerRef}
-            className="relative shadow-2xl transition-all duration-300 ease-out"
+            className="relative shadow-2xl"
             style={{
               width: imageSize.width || 'auto',
               height: imageSize.height || 'auto',
@@ -1209,38 +1209,66 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
 
                   {/* HIGH-FIDELITY L-HANDLES (Corners) */}
                   {/* Top-Left */}
-                  <div className="absolute -top-[3px] -left-[3px] w-10 h-10 pointer-events-auto cursor-nw-resize group" onMouseDown={(e) => { e.stopPropagation(); handleMouseDown('nw', e); }}>
-                    <div className="absolute top-0 left-0 w-8 h-[6px] bg-white rounded-full shadow-lg" />
-                    <div className="absolute top-0 left-0 w-[6px] h-8 bg-white rounded-full shadow-lg" />
+                  <div className="absolute -top-[12px] -left-[12px] w-12 h-12 pointer-events-auto cursor-nw-resize flex items-center justify-center group" 
+                    onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); handleMouseDown('nw', e); }}
+                    onTouchStart={(e) => { e.stopPropagation(); handleMouseDown('nw', e); }}
+                  >
+                    <div className="absolute top-3 left-3 w-8 h-[6px] bg-white rounded-full shadow-lg" />
+                    <div className="absolute top-3 left-3 w-[6px] h-8 bg-white rounded-full shadow-lg" />
                   </div>
                   {/* Top-Right */}
-                  <div className="absolute -top-[3px] -right-[3px] w-10 h-10 pointer-events-auto cursor-ne-resize" onMouseDown={(e) => { e.stopPropagation(); handleMouseDown('ne', e); }}>
-                    <div className="absolute top-0 right-0 w-8 h-[6px] bg-white rounded-full shadow-lg" />
-                    <div className="absolute top-0 right-0 w-[6px] h-8 bg-white rounded-full shadow-lg" />
+                  <div className="absolute -top-[12px] -right-[12px] w-12 h-12 pointer-events-auto cursor-ne-resize flex items-center justify-center group" 
+                    onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); handleMouseDown('ne', e); }}
+                    onTouchStart={(e) => { e.stopPropagation(); handleMouseDown('ne', e); }}
+                  >
+                    <div className="absolute top-3 right-3 w-8 h-[6px] bg-white rounded-full shadow-lg" />
+                    <div className="absolute top-3 right-3 w-[6px] h-8 bg-white rounded-full shadow-lg" />
                   </div>
                   {/* Bottom-Left */}
-                  <div className="absolute -bottom-[3px] -left-[3px] w-10 h-10 pointer-events-auto cursor-sw-resize" onMouseDown={(e) => { e.stopPropagation(); handleMouseDown('sw', e); }}>
-                    <div className="absolute bottom-0 left-0 w-8 h-[6px] bg-white rounded-full shadow-lg" />
-                    <div className="absolute bottom-0 left-0 w-[6px] h-8 bg-white rounded-full shadow-lg" />
+                  <div className="absolute -bottom-[12px] -left-[12px] w-12 h-12 pointer-events-auto cursor-sw-resize flex items-center justify-center group" 
+                    onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); handleMouseDown('sw', e); }}
+                    onTouchStart={(e) => { e.stopPropagation(); handleMouseDown('sw', e); }}
+                  >
+                    <div className="absolute bottom-3 left-3 w-8 h-[6px] bg-white rounded-full shadow-lg" />
+                    <div className="absolute bottom-3 left-3 w-[6px] h-8 bg-white rounded-full shadow-lg" />
                   </div>
                   {/* Bottom-Right */}
-                  <div className="absolute -bottom-[3px] -right-[3px] w-10 h-10 pointer-events-auto cursor-se-resize" onMouseDown={(e) => { e.stopPropagation(); handleMouseDown('se', e); }}>
-                    <div className="absolute bottom-0 right-0 w-8 h-[6px] bg-white rounded-full shadow-lg" />
-                    <div className="absolute bottom-0 right-0 w-[6px] h-8 bg-white rounded-full shadow-lg" />
+                  <div className="absolute -bottom-[12px] -right-[12px] w-12 h-12 pointer-events-auto cursor-se-resize flex items-center justify-center group" 
+                    onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); handleMouseDown('se', e); }}
+                    onTouchStart={(e) => { e.stopPropagation(); handleMouseDown('se', e); }}
+                  >
+                    <div className="absolute bottom-3 right-3 w-8 h-[6px] bg-white rounded-full shadow-lg" />
+                    <div className="absolute bottom-3 right-3 w-[6px] h-8 bg-white rounded-full shadow-lg" />
                   </div>
 
                   {/* BAR HANDLES (Edges) */}
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-[3px] w-10 h-4 cursor-n-resize pointer-events-auto" onMouseDown={(e) => { e.stopPropagation(); handleMouseDown('n', e); }}>
-                    <div className="mx-auto w-8 h-[6px] bg-white rounded-full shadow-lg" />
+                  {/* North Bar */}
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 w-12 h-8 cursor-n-resize pointer-events-auto flex items-start justify-center" 
+                    onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); handleMouseDown('n', e); }}
+                    onTouchStart={(e) => { e.stopPropagation(); handleMouseDown('n', e); }}
+                  >
+                    <div className="w-8 h-[6px] bg-white rounded-full shadow-lg mt-3" />
                   </div>
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 -mb-[3px] w-10 h-4 cursor-s-resize pointer-events-auto" onMouseDown={(e) => { e.stopPropagation(); handleMouseDown('s', e); }}>
-                    <div className="mx-auto w-8 h-[6px] bg-white rounded-full shadow-lg" />
+                  {/* South Bar */}
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 -mb-4 w-12 h-8 cursor-s-resize pointer-events-auto flex items-end justify-center" 
+                    onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); handleMouseDown('s', e); }}
+                    onTouchStart={(e) => { e.stopPropagation(); handleMouseDown('s', e); }}
+                  >
+                    <div className="w-8 h-[6px] bg-white rounded-full shadow-lg mb-3" />
                   </div>
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 -ml-[3px] w-4 h-10 cursor-w-resize pointer-events-auto" onMouseDown={(e) => { e.stopPropagation(); handleMouseDown('w', e); }}>
-                    <div className="my-auto w-[6px] h-8 bg-white rounded-full shadow-lg" />
+                  {/* West Bar */}
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 w-8 h-12 cursor-w-resize pointer-events-auto flex items-center justify-start" 
+                    onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); handleMouseDown('w', e); }}
+                    onTouchStart={(e) => { e.stopPropagation(); handleMouseDown('w', e); }}
+                  >
+                    <div className="w-[6px] h-8 bg-white rounded-full shadow-lg ml-3" />
                   </div>
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 -mr-[3px] w-4 h-10 cursor-e-resize pointer-events-auto" onMouseDown={(e) => { e.stopPropagation(); handleMouseDown('e', e); }}>
-                    <div className="my-auto w-[6px] h-8 bg-white rounded-full shadow-lg" />
+                  {/* East Bar */}
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 w-8 h-12 cursor-e-resize pointer-events-auto flex items-center justify-end" 
+                    onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); handleMouseDown('e', e); }}
+                    onTouchStart={(e) => { e.stopPropagation(); handleMouseDown('e', e); }}
+                  >
+                    <div className="w-[6px] h-8 bg-white rounded-full shadow-lg mr-3" />
                   </div>
 
                   {/* Resolution Badge */}
