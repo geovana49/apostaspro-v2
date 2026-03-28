@@ -1285,7 +1285,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
             </div >
 
             {
-                showBlockedGuide && (
+                showBlockedGuide && createPortal(
                     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-sm bg-black/60">
                         <Card className="max-w-md w-full bg-[#1a1f35] border-white/10 shadow-2xl p-6 space-y-4">
                             <div className="flex items-center justify-between">
@@ -1295,9 +1295,24 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 </div>
                                 <button onClick={() => setShowBlockedGuide(false)} className="text-gray-500 hover:text-white transition-all"><X size={20} /></button>
                             </div>
-                            <Button onClick={() => setShowBlockedGuide(false)} className="w-full bg-[#17baa4] hover:brightness-110 text-[#090c19] font-black h-12 rounded-xl">Entendi</Button>
+
+                            <p className="text-gray-400 text-sm leading-relaxed">
+                                Parece que as notificações foram bloqueadas anteriormente no seu navegador. Para usar os lembretes, você precisa liberá-las manualmente.
+                            </p>
+
+                            <div className="bg-black/30 p-4 rounded-xl border border-white/5 space-y-2">
+                                <h4 className="text-white text-xs font-bold uppercase tracking-widest">Como Desbloquear:</h4>
+                                <ol className="text-gray-400 text-xs space-y-2 list-decimal list-inside marker:text-[#17baa4]">
+                                    <li>Toque no ícone de opções (⋮) ou cadeado 🔒 na barra de endereços do navegador.</li>
+                                    <li>Vá em <strong>"Permissões"</strong> ou <strong>"Configurações do Site"</strong>.</li>
+                                    <li>Encontre <strong>Notificações</strong> e marque como <strong>"Permitir"</strong>.</li>
+                                </ol>
+                            </div>
+
+                            <Button onClick={() => setShowBlockedGuide(false)} className="w-full bg-[#17baa4] hover:brightness-110 text-[#090c19] font-black h-12 rounded-xl shadow-[0_4px_15px_rgba(23,186,164,0.3)]">Entendi</Button>
                         </Card>
-                    </div>
+                    </div>,
+                    document.body
                 )
             }
 
