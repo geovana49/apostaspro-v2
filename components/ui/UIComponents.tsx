@@ -1203,11 +1203,11 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
                         width={`${crop.width}%`} 
                         height={`${crop.height}%`} 
                         fill="black" 
-                        rx={cropShape === 'circle' ? "500" : cropShape === 'rounded' ? "15%" : "0"} 
+                        rx={cropShape === 'circle' ? "500" : cropShape === 'rounded' ? "25%" : "0"} 
                       />
                     </mask>
                   </defs>
-<rect width="100%" height="100%" fill="#000000" mask="url(#crop-mask)" />
+                  <rect width="100%" height="100%" fill="#000000" mask="url(#crop-mask)" />
                 </svg>
 
                 {/* THE CROP BOX */}
@@ -1218,7 +1218,7 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
                     top: `${crop.y}%`, 
                     width: `${crop.width}%`, 
                     height: `${crop.height}%`,
-                    borderRadius: cropShape === 'circle' ? '50%' : cropShape === 'rounded' ? '15%' : '0' 
+                    borderRadius: cropShape === 'circle' ? '50%' : cropShape === 'rounded' ? '25%' : '0' 
                   }}
                   onPointerDown={(e) => handlePointerDown('move', e)}
                 >
@@ -1353,7 +1353,17 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
           <div className="flex items-center gap-12 pt-2">
             <div className="flex bg-white/5 rounded-xl p-1 gap-1">
               <button 
-                onClick={() => { setCropShape('circle'); setAspect(1); }}
+                onClick={() => { 
+                  setCropShape('circle'); 
+                  setAspect(1);
+                  // Force a centered square visually
+                  if (imgRef.current) {
+                    const rect = imgRef.current.getBoundingClientRect();
+                    const size = 50; // default 50% height
+                    const wPercent = (size * rect.height) / rect.width;
+                    setCrop({ x: (100 - wPercent) / 2, y: (100 - size) / 2, width: wPercent, height: size });
+                  }
+                }}
                 className={`flex items-center gap-2 px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${cropShape === 'circle' ? 'bg-[#00f2ea] text-[#090c19] shadow-lg shadow-[#00f2ea]/20' : 'text-gray-500 hover:text-white'}`}
                 title="Corte Circular"
               >
@@ -1361,7 +1371,16 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
                 Redondo
               </button>
               <button 
-                onClick={() => { setCropShape('rounded'); setAspect(1); }}
+                onClick={() => { 
+                  setCropShape('rounded'); 
+                  setAspect(1);
+                  if (imgRef.current) {
+                    const rect = imgRef.current.getBoundingClientRect();
+                    const size = 50; 
+                    const wPercent = (size * rect.height) / rect.width;
+                    setCrop({ x: (100 - wPercent) / 2, y: (100 - size) / 2, width: wPercent, height: size });
+                  }
+                }}
                 className={`flex items-center gap-2 px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${cropShape === 'rounded' ? 'bg-[#00f2ea] text-[#090c19] shadow-lg shadow-[#00f2ea]/20' : 'text-gray-500 hover:text-white'}`}
                 title="Corte Arredondado"
               >
@@ -1369,7 +1388,16 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
                 Arredondado
               </button>
               <button 
-                onClick={() => { setCropShape('square'); setAspect(1); }}
+                onClick={() => { 
+                  setCropShape('square'); 
+                  setAspect(1);
+                  if (imgRef.current) {
+                    const rect = imgRef.current.getBoundingClientRect();
+                    const size = 50; 
+                    const wPercent = (size * rect.height) / rect.width;
+                    setCrop({ x: (100 - wPercent) / 2, y: (100 - size) / 2, width: wPercent, height: size });
+                  }
+                }}
                 className={`flex items-center gap-2 px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${cropShape === 'square' ? 'bg-[#00f2ea] text-[#090c19] shadow-lg shadow-[#00f2ea]/20' : 'text-gray-500 hover:text-white'}`}
                 title="Corte Quadrado"
               >
