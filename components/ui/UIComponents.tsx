@@ -975,21 +975,19 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
     return { w, h };
   }, [crop, isOpen]);
 
-  const handleMouseDown = (type: 'move' | 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w', e: React.MouseEvent | React.TouchEvent) => {
-    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-    setIsDragging({ type, startX: clientX, startY: clientY, startCrop: { ...crop } });
+  const handlePointerDown = (type: 'move' | 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w', e: React.PointerEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    setIsDragging({ type, startX: e.clientX, startY: e.clientY, startCrop: { ...crop } });
   };
 
-  const handleMouseMove = useCallback((e: MouseEvent | TouchEvent) => {
+  const handlePointerMove = useCallback((e: PointerEvent) => {
     if (!isDragging || !containerRef.current) return;
     
     const rect = containerRef.current.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
-    
-    const dx = ((clientX - isDragging.startX) / rect.width) * 100;
-    const dy = ((clientY - isDragging.startY) / rect.height) * 100;
+    const dx = ((e.clientX - isDragging.startX) / rect.width) * 100;
+    const dy = ((e.clientY - isDragging.startY) / rect.height) * 100;
     
     let newCrop = { ...isDragging.startCrop };
 
@@ -997,53 +995,43 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
       newCrop.x = Math.max(0, Math.min(100 - newCrop.width, newCrop.x + dx));
       newCrop.y = Math.max(0, Math.min(100 - newCrop.height, newCrop.y + dy));
     } else {
-      // Resizing logic with boundary constraints
+      // Resizing logic
       if (isDragging.type.includes('w')) {
-        const maxDx = isDragging.startCrop.width - 5;
-        const boundedDx = Math.max(-isDragging.startCrop.x, Math.min(maxDx, dx));
+        const boundedDx = Math.max(-isDragging.startCrop.x, Math.min(isDragging.startCrop.width - 5, dx));
         newCrop.x = isDragging.startCrop.x + boundedDx;
         newCrop.width = isDragging.startCrop.width - boundedDx;
       }
       if (isDragging.type.includes('e')) {
-        const maxDx = 100 - isDragging.startCrop.x - isDragging.startCrop.width;
-        const boundedDx = Math.max(-(isDragging.startCrop.width - 5), Math.min(maxDx, dx));
+        const boundedDx = Math.max(-(isDragging.startCrop.width - 5), Math.min(100 - isDragging.startCrop.x - isDragging.startCrop.width, dx));
         newCrop.width = isDragging.startCrop.width + boundedDx;
       }
       if (isDragging.type.includes('n')) {
-        const maxDy = isDragging.startCrop.height - 5;
-        const boundedDy = Math.max(-isDragging.startCrop.y, Math.min(maxDy, dy));
+        const boundedDy = Math.max(-isDragging.startCrop.y, Math.min(isDragging.startCrop.height - 5, dy));
         newCrop.y = isDragging.startCrop.y + boundedDy;
         newCrop.height = isDragging.startCrop.height - boundedDy;
       }
       if (isDragging.type.includes('s')) {
-        const maxDy = 100 - isDragging.startCrop.y - isDragging.startCrop.height;
-        const boundedDy = Math.max(-(isDragging.startCrop.height - 5), Math.min(maxDy, dy));
+        const boundedDy = Math.max(-(isDragging.startCrop.height - 5), Math.min(100 - isDragging.startCrop.y - isDragging.startCrop.height, dy));
         newCrop.height = isDragging.startCrop.height + boundedDy;
       }
 
       // Maintain Aspect Ratio if locked
       if (aspect) {
-        const currentAspect = (newCrop.width * rect.width) / (newCrop.height * rect.height);
-        
         if (isDragging.type === 'n' || isDragging.type === 's') {
-          // If pulling top/bottom, adjust width to match aspect
           const targetWidth = (newCrop.height * rect.height * aspect) / rect.width;
-          newCrop.x = newCrop.x - (targetWidth - newCrop.width) / 2;
+          const deltaWidth = targetWidth - newCrop.width;
+          newCrop.x = Math.max(0, Math.min(100 - targetWidth, newCrop.x - deltaWidth / 2));
           newCrop.width = targetWidth;
         } else if (isDragging.type === 'e' || isDragging.type === 'w') {
-          // If pulling sides, adjust height to match aspect
           const targetHeight = (newCrop.width * rect.width) / aspect / rect.height;
-          newCrop.y = newCrop.y - (targetHeight - newCrop.height) / 2;
+          const deltaHeight = targetHeight - newCrop.height;
+          newCrop.y = Math.max(0, Math.min(100 - targetHeight, newCrop.y - deltaHeight / 2));
           newCrop.height = targetHeight;
         } else {
-          // Corners: standard corner locking
           const targetHeight = (newCrop.width * rect.width) / aspect / rect.height;
-          if (isDragging.type.includes('n')) {
-            newCrop.y = newCrop.y + (newCrop.height - targetHeight);
-          }
+          if (isDragging.type.includes('n')) newCrop.y = isDragging.startCrop.y + (isDragging.startCrop.height - targetHeight);
           newCrop.height = targetHeight;
         }
-
         // Final boundary enforcement for aspect-ratio crops
         if (newCrop.x < 0) newCrop.x = 0;
         if (newCrop.y < 0) newCrop.y = 0;
@@ -1051,25 +1039,48 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
         if (newCrop.y + newCrop.height > 100) newCrop.height = 100 - newCrop.y;
       }
     }
-
     setCrop(newCrop);
   }, [isDragging, aspect]);
 
+  const handlePointerUp = useCallback((e: PointerEvent) => {
+    setIsDragging(null);
+  }, []);
+
   useEffect(() => {
-    const up = () => setIsDragging(null);
     if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', up);
-      window.addEventListener('touchmove', handleMouseMove, { passive: false });
-      window.addEventListener('touchend', up);
+      window.addEventListener('pointermove', handlePointerMove);
+      window.addEventListener('pointerup', handlePointerUp);
     }
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', up);
-      window.removeEventListener('touchmove', handleMouseMove);
-      window.removeEventListener('touchend', up);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
     };
-  }, [isDragging, handleMouseMove]);
+  }, [isDragging, handlePointerMove, handlePointerUp]);
+
+  // Handle Manual Scale (from sliders)
+  const handleManualResize = (dim: 'w' | 'h', val: number) => {
+    setCrop(prev => {
+      const centerX = prev.x + prev.width / 2;
+      const centerY = prev.y + prev.height / 2;
+      let nw = prev.width;
+      let nh = prev.height;
+      
+      if (dim === 'w') {
+        nw = val;
+        if (aspect) nh = (nw * (containerRef.current?.clientWidth || 500)) / aspect / (containerRef.current?.clientHeight || 500);
+      } else {
+        nh = val;
+        if (aspect) nw = (nh * (containerRef.current?.clientHeight || 500) * aspect) / (containerRef.current?.clientWidth || 500);
+      }
+      
+      return {
+        x: Math.max(0, Math.min(100 - nw, centerX - nw / 2)),
+        y: Math.max(0, Math.min(100 - nh, centerY - nh / 2)),
+        width: nw,
+        height: nh
+      };
+    });
+  };
 
   const handleSave = () => {
     if (!imgRef.current || !containerRef.current) return;
@@ -1208,8 +1219,7 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
                     height: `${crop.height}%`,
                     borderRadius: aspect === 1 ? '50%' : '0' 
                   }}
-                  onMouseDown={(e) => handleMouseDown('move', e)}
-                  onTouchStart={(e) => handleMouseDown('move', e)}
+                  onPointerDown={(e) => handlePointerDown('move', e)}
                 >
                   {/* Grid Lines 3x3 */}
                   <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none">
@@ -1227,65 +1237,53 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
                   {/* HIGH-FIDELITY L-HANDLES (Corners) */}
                   {/* Top-Left */}
                   <div className="absolute -top-[12px] -left-[12px] w-12 h-12 pointer-events-auto cursor-nw-resize flex items-center justify-center group" 
-                    onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); handleMouseDown('nw', e); }}
-                    onTouchStart={(e) => { e.stopPropagation(); handleMouseDown('nw', e); }}
+                    onPointerDown={(e) => handlePointerDown('nw', e)}
                   >
-                    <div className="absolute top-3 left-3 w-8 h-[6px] bg-white rounded-full shadow-lg" />
-                    <div className="absolute top-3 left-3 w-[6px] h-8 bg-white rounded-full shadow-lg" />
+                    <div className="absolute top-3 left-3 w-8 h-[5px] bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] group-active:scale-125 transition-transform" />
+                    <div className="absolute top-3 left-3 w-[5px] h-8 bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] group-active:scale-125 transition-transform" />
                   </div>
                   {/* Top-Right */}
                   <div className="absolute -top-[12px] -right-[12px] w-12 h-12 pointer-events-auto cursor-ne-resize flex items-center justify-center group" 
-                    onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); handleMouseDown('ne', e); }}
-                    onTouchStart={(e) => { e.stopPropagation(); handleMouseDown('ne', e); }}
+                    onPointerDown={(e) => handlePointerDown('ne', e)}
                   >
-                    <div className="absolute top-3 right-3 w-8 h-[6px] bg-white rounded-full shadow-lg" />
-                    <div className="absolute top-3 right-3 w-[6px] h-8 bg-white rounded-full shadow-lg" />
+                    <div className="absolute top-3 right-3 w-8 h-[5px] bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] group-active:scale-125 transition-transform" />
+                    <div className="absolute top-3 right-3 w-[5px] h-8 bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] group-active:scale-125 transition-transform" />
                   </div>
                   {/* Bottom-Left */}
                   <div className="absolute -bottom-[12px] -left-[12px] w-12 h-12 pointer-events-auto cursor-sw-resize flex items-center justify-center group" 
-                    onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); handleMouseDown('sw', e); }}
-                    onTouchStart={(e) => { e.stopPropagation(); handleMouseDown('sw', e); }}
+                    onPointerDown={(e) => handlePointerDown('sw', e)}
                   >
-                    <div className="absolute bottom-3 left-3 w-8 h-[6px] bg-white rounded-full shadow-lg" />
-                    <div className="absolute bottom-3 left-3 w-[6px] h-8 bg-white rounded-full shadow-lg" />
+                    <div className="absolute bottom-3 left-3 w-8 h-[5px] bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] group-active:scale-125 transition-transform" />
+                    <div className="absolute bottom-3 left-3 w-[5px] h-8 bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] group-active:scale-125 transition-transform" />
                   </div>
                   {/* Bottom-Right */}
                   <div className="absolute -bottom-[12px] -right-[12px] w-12 h-12 pointer-events-auto cursor-se-resize flex items-center justify-center group" 
-                    onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); handleMouseDown('se', e); }}
-                    onTouchStart={(e) => { e.stopPropagation(); handleMouseDown('se', e); }}
+                    onPointerDown={(e) => handlePointerDown('se', e)}
                   >
-                    <div className="absolute bottom-3 right-3 w-8 h-[6px] bg-white rounded-full shadow-lg" />
-                    <div className="absolute bottom-3 right-3 w-[6px] h-8 bg-white rounded-full shadow-lg" />
+                    <div className="absolute bottom-3 right-3 w-8 h-[5px] bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] group-active:scale-125 transition-transform" />
+                    <div className="absolute bottom-3 right-3 w-[5px] h-8 bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] group-active:scale-125 transition-transform" />
                   </div>
 
                   {/* BAR HANDLES (Edges) */}
-                  {/* North Bar */}
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 w-12 h-8 cursor-n-resize pointer-events-auto flex items-start justify-center" 
-                    onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); handleMouseDown('n', e); }}
-                    onTouchStart={(e) => { e.stopPropagation(); handleMouseDown('n', e); }}
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 w-12 h-8 cursor-n-resize pointer-events-auto flex items-start justify-center group" 
+                    onPointerDown={(e) => handlePointerDown('n', e)}
                   >
-                    <div className="w-8 h-[6px] bg-white rounded-full shadow-lg mt-3" />
+                    <div className="w-8 h-[5px] bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] mt-3 group-active:scale-x-125 transition-transform" />
                   </div>
-                  {/* South Bar */}
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 -mb-4 w-12 h-8 cursor-s-resize pointer-events-auto flex items-end justify-center" 
-                    onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); handleMouseDown('s', e); }}
-                    onTouchStart={(e) => { e.stopPropagation(); handleMouseDown('s', e); }}
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 -mb-4 w-12 h-8 cursor-s-resize pointer-events-auto flex items-end justify-center group" 
+                    onPointerDown={(e) => handlePointerDown('s', e)}
                   >
-                    <div className="w-8 h-[6px] bg-white rounded-full shadow-lg mb-3" />
+                    <div className="w-8 h-[5px] bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] mb-3 group-active:scale-x-125 transition-transform" />
                   </div>
-                  {/* West Bar */}
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 w-8 h-12 cursor-w-resize pointer-events-auto flex items-center justify-start" 
-                    onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); handleMouseDown('w', e); }}
-                    onTouchStart={(e) => { e.stopPropagation(); handleMouseDown('w', e); }}
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 w-8 h-12 cursor-w-resize pointer-events-auto flex items-center justify-start group" 
+                    onPointerDown={(e) => handlePointerDown('w', e)}
                   >
-                    <div className="w-[6px] h-8 bg-white rounded-full shadow-lg ml-3" />
+                    <div className="w-[5px] h-8 bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] ml-3 group-active:scale-y-125 transition-transform" />
                   </div>
-                  {/* East Bar */}
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 w-8 h-12 cursor-e-resize pointer-events-auto flex items-center justify-end" 
-                    onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); handleMouseDown('e', e); }}
-                    onTouchStart={(e) => { e.stopPropagation(); handleMouseDown('e', e); }}
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 w-8 h-12 cursor-e-resize pointer-events-auto flex items-center justify-end group" 
+                    onPointerDown={(e) => handlePointerDown('e', e)}
                   >
-                    <div className="w-[6px] h-8 bg-white rounded-full shadow-lg mr-3" />
+                    <div className="w-[5px] h-8 bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] mr-3 group-active:scale-y-125 transition-transform" />
                   </div>
 
                   {/* Resolution Badge */}
@@ -1300,56 +1298,85 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
           </div>
         </div>
 
-        {/* BOTTOM CONTROLS - Pro Rotation Ruler */}
-        <div className="h-44 bg-[#1a1a1a] border-t border-white/5 flex flex-col items-center justify-center space-y-6">
+        {/* BOTTOM CONTROLS - Pro Double Controls */}
+        <div className="h-64 bg-[#1a1a1a] border-t border-white/5 flex flex-col items-center justify-center space-y-4 px-12">
           
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-xs font-bold text-white mb-2">{rotation}°</span>
-            {/* Custom Graduation Ruler */}
-            <div className="relative w-72 h-8 overflow-hidden flex items-center group cursor-ew-resize">
-              <input 
-                type="range" min="-45" max="45" value={rotation} 
-                onChange={e => setRotation(Number(e.target.value))}
-                className="absolute inset-0 z-20 opacity-0 cursor-ew-resize"
-              />
-              <div className="w-full flex justify-between items-end px-1 opacity-40 group-hover:opacity-100 transition-opacity">
-                {Array.from({ length: 31 }).map((_, i) => (
-                  <div 
-                    key={i} 
-                    className={`bg-white rounded-full ${i === 15 ? 'h-6 w-[2px] bg-primary' : (i % 5 === 0 ? 'h-4 w-[1px]' : 'h-2 w-[1px] opacity-50')}`} 
-                  />
-                ))}
+          <div className="w-full max-w-lg space-y-4">
+            {/* Rotation Ruler */}
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Rotação: {rotation}°</span>
+              <div className="relative w-full h-8 overflow-hidden flex items-center group cursor-ew-resize">
+                <input 
+                  type="range" min="-45" max="45" value={rotation} 
+                  onChange={e => setRotation(Number(e.target.value))}
+                  className="absolute inset-0 z-20 opacity-0 cursor-ew-resize"
+                />
+                <div className="w-full flex justify-between items-end px-1 opacity-40 group-hover:opacity-100 transition-opacity">
+                  {Array.from({ length: 31 }).map((_, i) => (
+                    <div 
+                      key={i} 
+                      className={`bg-white rounded-full ${i === 15 ? 'h-6 w-[2px] bg-[#00f2ea]' : (i % 5 === 0 ? 'h-4 w-[1px]' : 'h-2 w-[1px] opacity-50')}`} 
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Scale Sliders */}
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-1">
+                <div className="flex justify-between text-[10px] font-black text-gray-500 uppercase tracking-tighter">
+                  <span>Largura</span>
+                  <span>{Math.round(crop.width)}%</span>
+                </div>
+                <input 
+                  type="range" min="10" max="100" value={crop.width} 
+                  onChange={(e) => handleManualResize('w', Number(e.target.value))}
+                  className="w-full h-1 bg-white/5 rounded-full appearance-none accent-[#00f2ea]"
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-[10px] font-black text-gray-500 uppercase tracking-tighter">
+                  <span>Altura</span>
+                  <span>{Math.round(crop.height)}%</span>
+                </div>
+                <input 
+                  type="range" min="10" max="100" value={crop.height} 
+                  onChange={(e) => handleManualResize('h', Number(e.target.value))}
+                  className="w-full h-1 bg-white/5 rounded-full appearance-none accent-[#00f2ea]"
+                />
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-12 pt-2">
             <div className="flex bg-white/5 rounded-xl p-1">
               <button 
                 onClick={() => setAspect(undefined)}
-                className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${!aspect ? 'bg-white/10 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
+                className={`px-8 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${!aspect ? 'bg-[#00f2ea]/20 text-[#00f2ea] shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
               >
                 Livre
               </button>
               <button 
                 onClick={() => setAspect(1)}
-                className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${aspect === 1 ? 'bg-white/10 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
+                className={`px-8 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${aspect === 1 ? 'bg-[#00f2ea]/20 text-[#00f2ea] shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
               >
                 1:1
               </button>
             </div>
 
-            <div className="h-8 w-[1px] bg-white/10" />
-
             <div className="flex gap-4">
-              <button onClick={() => setFlipH(!flipH)} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-all" title="Inverter Horizontal">
-                <FlipHorizontal size={20} />
+              <button onClick={() => setFlipH(!flipH)} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-all">
+                <FlipHorizontal size={18} />
               </button>
-              <button onClick={() => setFlipV(!flipV)} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-all" title="Inverter Vertical">
-                <FlipVertical size={20} />
+              <button onClick={() => setFlipV(!flipV)} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-all">
+                <FlipVertical size={18} />
               </button>
-              <button onClick={() => setRotation(0)} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-all" title="Resetar Rotação">
-                <RefreshCw size={20} />
+              <button onClick={() => {
+                setRotation(0); setFlipH(false); setFlipV(false);
+                setCrop({ x: 10, y: 10, width: 80, height: 80 });
+              }} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-all">
+                <RefreshCw size={18} />
               </button>
             </div>
           </div>
