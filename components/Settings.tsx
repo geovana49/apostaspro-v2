@@ -56,10 +56,11 @@ const Settings: React.FC<SettingsProps> = ({
     const [securityMessage, setSecurityMessage] = useState<{ type: 'success' | 'error', text: string }>({ type: 'success', text: '' });
 
     // Image Adjuster State
-    const [adjusterOpen, setAdjusterOpen] = useState(false);
+    const [isAdjusterOpen, setAdjusterOpen] = useState(false);
     const [imageToAdjust, setImageToAdjust] = useState<string | null>(null);
-    const [adjusterAspect, setAdjusterAspect] = useState(1);
-    const [adjusterCallback, setAdjusterCallback] = useState<(croppedImage: string) => void>(() => { });
+    const [adjusterAspect, setAdjusterAspect] = useState<number | undefined>(1);
+    const [adjusterCallback, setAdjusterCallback] = useState<(img: string) => void>(() => {});
+    const [adjusterIndex, setAdjusterIndex] = useState<number | null>(null);
 
     // Item Management State
     const [newItemName, setNewItemName] = useState('');
@@ -93,21 +94,22 @@ const Settings: React.FC<SettingsProps> = ({
         }
     }, []);
 
-    const getUpdatedCustomAvatars = (currentList: string[], newImg: string, originalImg?: string | null): string[] => {
+    const getUpdatedCustomAvatars = (currentList: string[], newImg: string, targetIndex?: number | null): string[] => {
         const current = [...(currentList || [])];
-        const existingIndex = originalImg ? current.indexOf(originalImg) : -1;
         
-        if (existingIndex !== -1) {
-            current[existingIndex] = newImg;
+        // If we have a specific index (Refining/Adjusting), replace it
+        if (typeof targetIndex === 'number' && targetIndex >= 0 && targetIndex < current.length) {
+            current[targetIndex] = newImg;
         } else {
+            // New upload or not found index: add to start
             current.unshift(newImg);
         }
         return current.slice(0, 12);
     };
 
-    const addToCustomAvatars = (newImg: string, originalImg?: string | null) => {
+    const addToCustomAvatars = (newImg: string, targetIndex?: number | null) => {
         setAppSettings(prev => {
-            const updated = getUpdatedCustomAvatars(prev.customAvatars || [], newImg, originalImg);
+            const updated = getUpdatedCustomAvatars(prev.customAvatars || [], newImg, targetIndex);
             return { ...prev, customAvatars: updated };
         });
     };
@@ -162,18 +164,20 @@ const Settings: React.FC<SettingsProps> = ({
             const res = await fetch(base64);
             const blob = await res.blob();
             
-            // Prepare both updates in one go
-            await handleProfileImageUpload(blob, imageToAdjust);
+            // Prepare updates using the tracked index
+            await handleProfileImageUpload(blob, adjusterIndex);
+            setAdjusterIndex(null);
         } catch (e) {
             console.error("Error converting cropped image:", e);
         }
     };
 
-    const handleOpenAdjuster = (imageSrc: string, aspect: number, callback: (cropped: string) => void) => {
+    const handleOpenAdjuster = (imageSrc: string, aspect: number | undefined, callback: (cropped: string) => void, index?: number | null) => {
         setImageToAdjust(imageSrc);
         setAdjusterAspect(aspect);
         setAdjusterCallback(() => callback);
         setAdjusterOpen(true);
+        setAdjusterIndex(index || null);
     };
 
     const uploadFileToStorage = async (blob: Blob, folder: string): Promise<string> => {
@@ -269,7 +273,7 @@ const Settings: React.FC<SettingsProps> = ({
         }
     };
 
-    const handleProfileImageUpload = async (blob: Blob | null, originalSrc?: string | null) => {
+    const handleProfileImageUpload = async (blob: Blob | null, targetIndex?: number | null) => {
         if (blob && currentUser) {
             setIsUploading(true);
             try {
@@ -282,35 +286,24 @@ const Settings: React.FC<SettingsProps> = ({
                     maxSizeMB: 0.05
                 });
 
-                // 2. Resolve the new state (Synchronous Calculation)
-                // We use the current state as a base, ensuring 'customAvatars' is initialized
-                const currentAvatars = appSettings.customAvatars || [];
-                const updatedAvatars = getUpdatedCustomAvatars(currentAvatars, base64, originalSrc);
-                
-                const finalSettings = { 
-                    ...appSettings, 
-                    profileImage: base64,
-                    customAvatars: updatedAvatars
-                };
+                // 2. Resolve the new state (Functional style)
+                // Using prev ensures we NEVER lose data from concurrent updates
+                setAppSettings(prev => {
+                    const updatedCustomAvatars = getUpdatedCustomAvatars(prev.customAvatars || [], base64, targetIndex);
+                    const final = { 
+                        ...prev, 
+                        profileImage: base64,
+                        customAvatars: updatedCustomAvatars
+                    };
 
-                // 3. Update state (for immediate UI response)
-                setAppSettings(finalSettings);
+                    // Note: The existing useEffect auto-save will handle Firestore sync robustly
+                    return final;
+                });
 
-                // 4. Save to Firestore (immediately and reliably)
-                try {
-                    await FirestoreService.saveSettings(currentUser.uid, finalSettings);
-                    console.info("Identity persisted successfully.");
-                    
-                    // 5. Sync Firebase Auth Profile for fallback
-                    const authUser = auth.currentUser;
-                    if (authUser) {
-                        await updateProfile(authUser, {
-                            displayName: finalSettings.username,
-                            photoURL: finalSettings.profileImage
-                        });
-                    }
-                } catch (err) {
-                    console.error("Firestore sync error:", err);
+                // 3. Side-effect sync for Firebase Auth Profile
+                const authUser = auth.currentUser;
+                if (authUser) {
+                    updateProfile(authUser, { photoURL: base64 }).catch(e => console.error("Auth sync error:", e));
                 }
             } catch (err) {
                 console.error("Error updating identity upload:", err);
@@ -693,6 +686,13 @@ const Settings: React.FC<SettingsProps> = ({
                         <div className="flex flex-wrap gap-5">
                             {appSettings.customAvatars.map((img, idx) => (
                                 <div key={idx} className="relative group/recent">
+                                    <button
+                                        onClick={() => handleOpenAdjuster(img, 1, handleCroppedImage, idx)}
+                                        className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover/recent:opacity-100 transition-all duration-300 rounded-[1.5rem] backdrop-blur-[1px] z-20"
+                                    >
+                                        <Crop size={24} className="text-primary mb-1" />
+                                        <span className="text-[8px] font-bold text-white uppercase tracking-wider">Refinar</span>
+                                    </button>
                                     <button
                                         onClick={() => {
                                             setAppSettings(prev => {
@@ -1200,7 +1200,7 @@ const Settings: React.FC<SettingsProps> = ({
     return (
         <div className="space-y-6 pb-20" ref={topOfPageRef}>
             <ImageAdjuster
-                isOpen={adjusterOpen}
+                isOpen={isAdjusterOpen}
                 onClose={() => setAdjusterOpen(false)}
                 imageSrc={imageToAdjust}
                 onSave={adjusterCallback}
