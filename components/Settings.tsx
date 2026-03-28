@@ -10,7 +10,7 @@ import { Bookmaker, AppSettings, StatusItem, PromotionItem, OriginItem, Settings
 import { FirestoreService } from '../services/firestoreService';
 import { compressImage } from '../utils/imageCompression';
 import { auth, storage } from '../firebase';
-import { updatePassword } from 'firebase/auth';
+import { updatePassword, updateProfile } from 'firebase/auth';
 import { ref, deleteObject, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 interface SettingsProps {
@@ -129,10 +129,27 @@ const Settings: React.FC<SettingsProps> = ({
     // ou se o celular não disparar o 'onBlur' nativo ao recolher o teclado.
     useEffect(() => {
         if (!currentUser || !appSettings) return;
-        const autoSaveTimer = setTimeout(() => {
-            // Evita logs excessivos, mas garante o envio para o Firebase
-            FirestoreService.saveSettings(currentUser.uid, appSettings);
-        }, 1200);
+        const autoSaveTimer = setTimeout(async () => {
+            // Salva no Firestore
+            await FirestoreService.saveSettings(currentUser.uid, appSettings);
+
+            // Também sincroniza com o Perfil do Firebase Auth para fallback e login em novos dispositivos
+            const authUser = auth.currentUser;
+            if (authUser) {
+                try {
+                    // Só atualiza se houver mudança para evitar chamadas excessivas
+                    if (authUser.displayName !== appSettings.username || authUser.photoURL !== appSettings.profileImage) {
+                        await updateProfile(authUser, {
+                            displayName: appSettings.username,
+                            photoURL: appSettings.profileImage
+                        });
+                        console.debug("[Sync] Perfil Firebase Auth atualizado.");
+                    }
+                } catch (e) {
+                    console.error("[Sync] Erro ao sincronizar Perfil Auth:", e);
+                }
+            }
+        }, 1500); // 1.5s de debounce
         return () => clearTimeout(autoSaveTimer);
     }, [appSettings, currentUser]);
 

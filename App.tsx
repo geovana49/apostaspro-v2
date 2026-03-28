@@ -104,20 +104,6 @@ const App: React.FC = () => {
         setCurrentUser(user);
         setIsLoggedIn(true);
 
-        // Initialize Data asynchronously in the background
-        FirestoreService.initializeUserData(user.uid, {
-          bookmakers: INITIAL_BOOKMAKERS,
-          statuses: INITIAL_STATUSES,
-          promotions: INITIAL_PROMOTIONS,
-          origins: INITIAL_ORIGINS,
-          caixa_categories: DEFAULT_CAIXA_CATEGORIES,
-          settings: {
-            ...DEFAULT_SETTINGS,
-            username: user.username,
-            email: user.email
-          }
-        }).catch(err => console.error("Initialization error:", err));
-
         // Subscribe to Real-time Data
         let initialBetsLoaded = false;
         let initialGainsLoaded = false;
@@ -130,6 +116,29 @@ const App: React.FC = () => {
             setIsLoading(false);
           }
         };
+
+        // Initialize settings with Auth data as a fallback while Firestore loads
+        setSettings(prev => ({
+          ...prev,
+          username: firebaseUser.displayName || undefined,
+          profileImage: firebaseUser.photoURL || undefined,
+          email: firebaseUser.email || undefined
+        }));
+
+        // Initialize Data asynchronously in the background
+        FirestoreService.initializeUserData(user.uid, {
+          bookmakers: INITIAL_BOOKMAKERS,
+          statuses: INITIAL_STATUSES,
+          promotions: INITIAL_PROMOTIONS,
+          origins: INITIAL_ORIGINS,
+          caixa_categories: DEFAULT_CAIXA_CATEGORIES,
+          settings: {
+            ...DEFAULT_SETTINGS,
+            username: user.username,
+            profileImage: firebaseUser.photoURL || undefined,
+            email: user.email
+          }
+        }).catch(err => console.error("Initialization error:", err));
 
         // Subscription Timeout (Safety Net)
         const loadingTimeout = setTimeout(() => {
