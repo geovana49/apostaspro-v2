@@ -744,19 +744,29 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                 className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#17baa4]/50 cursor-pointer w-full"
                                             />
                                         </div>
-                                        <div className="flex flex-col gap-1.5 cursor-pointer group/label" onClick={(e) => {
-                                            const input = (e.currentTarget.querySelector('input') as HTMLInputElement);
-                                            input?.showPicker?.();
-                                        }}>
+                                        <div className="flex flex-col gap-1.5 cursor-pointer group/label">
                                             <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest group-hover/label:text-[#17baa4] transition-colors">Hora</label>
-                                            <input
-                                                type="time"
-                                                value={tempTime}
-                                                onChange={(e) => setTempTime(e.target.value)}
-                                                onClick={(e) => e.stopPropagation()}
-                                                onFocus={(e) => e.currentTarget.showPicker?.()}
-                                                className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#17baa4]/50 cursor-pointer w-full"
-                                            />
+                                            <div className="flex items-center gap-1.5 w-full" onClick={(e) => e.stopPropagation()}>
+                                                <select
+                                                    value={tempTime ? tempTime.split(':')[0] : '12'}
+                                                    onChange={(e) => setTempTime(`${e.target.value}:${tempTime ? tempTime.split(':')[1] : '00'}`)}
+                                                    className="bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-white focus:outline-none focus:border-[#17baa4]/50 cursor-pointer w-full text-center appearance-none"
+                                                >
+                                                    {Array.from({ length: 24 }).map((_, i) => (
+                                                        <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}</option>
+                                                    ))}
+                                                </select>
+                                                <span className="text-white/30 font-bold">:</span>
+                                                <select
+                                                    value={tempTime ? tempTime.split(':')[1] : '00'}
+                                                    onChange={(e) => setTempTime(`${tempTime ? tempTime.split(':')[0] : '12'}:${e.target.value}`)}
+                                                    className="bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-xs text-white focus:outline-none focus:border-[#17baa4]/50 cursor-pointer w-full text-center appearance-none"
+                                                >
+                                                    {Array.from({ length: 12 }).map((_, i) => (
+                                                        <option key={i * 5} value={(i * 5).toString().padStart(2, '0')}>{(i * 5).toString().padStart(2, '0')}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
                                         </div>
                                         <button
                                             onClick={() => setShowScheduler(false)}
