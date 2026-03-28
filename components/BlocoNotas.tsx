@@ -426,23 +426,34 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                     </div>
                 </div>
 
-                {permissionStatus !== 'granted' ? (
-                    <button
-                        onClick={handleRequestPermission}
-                        title="Clique para ativar notificações de lembrete"
-                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all bg-[#FFCC00]/10 border border-[#FFCC00]/30 text-[#FFCC00] hover:brightness-110 active:scale-95 shadow-[0_0_15px_rgba(255,204,0,0.2)] h-11 ${permissionStatus === 'default' ? 'animate-pulse' : ''}`}
-                    >
-                        <Bell size={16} />
-                        <span>Ativar Notificações</span>
-                    </button>
-                ) : (
+                {permissionStatus === 'granted' ? (
                     <div
                         title="Notificações ativadas com sucesso!"
                         className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all bg-[#17baa4]/10 border border-[#17baa4]/30 text-[#17baa4] shadow-[0_0_15px_rgba(23,186,164,0.15)] h-11 pointer-events-none"
                     >
                         <Bell size={16} />
-                        <span>Notificações Ativas</span>
+                        <span className="hidden sm:inline">Notificações Ativas</span>
+                        <span className="sm:hidden">Ativas</span>
                     </div>
+                ) : permissionStatus === 'denied' ? (
+                    <div
+                        title="As notificações foram bloqueadas. Você precisa redefini-las nas permissões do navegador."
+                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all bg-red-500/10 border border-red-500/30 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.15)] h-11 pointer-events-none"
+                    >
+                        <BellOff size={16} />
+                        <span className="hidden sm:inline">Notificações Bloqueadas</span>
+                        <span className="sm:hidden">Bloqueadas</span>
+                    </div>
+                ) : (
+                    <button
+                        onClick={handleRequestPermission}
+                        title="Clique para ativar notificações de lembrete"
+                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all bg-[#FFCC00]/10 border border-[#FFCC00]/30 text-[#FFCC00] hover:brightness-110 active:scale-95 shadow-[0_0_15px_rgba(255,204,0,0.2)] h-11 animate-pulse"
+                    >
+                        <Bell size={16} />
+                        <span className="hidden sm:inline">Ativar Notificações</span>
+                        <span className="sm:hidden">Ativar</span>
+                    </button>
                 )}
             </div>
 
