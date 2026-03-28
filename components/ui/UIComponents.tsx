@@ -989,26 +989,28 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
       newCrop.x = Math.max(0, Math.min(100 - newCrop.width, newCrop.x + dx));
       newCrop.y = Math.max(0, Math.min(100 - newCrop.height, newCrop.y + dy));
     } else {
-      // Resizing logic
+      // Resizing logic with boundary constraints
       if (isDragging.type.includes('w')) {
-        const potentialWidth = newCrop.width - dx;
-        if (potentialWidth > 5) {
-          newCrop.x = newCrop.x + dx;
-          newCrop.width = potentialWidth;
-        }
+        const maxDx = isDragging.startCrop.width - 5;
+        const boundedDx = Math.max(-isDragging.startCrop.x, Math.min(maxDx, dx));
+        newCrop.x = isDragging.startCrop.x + boundedDx;
+        newCrop.width = isDragging.startCrop.width - boundedDx;
       }
       if (isDragging.type.includes('e')) {
-        newCrop.width = Math.max(5, Math.min(100 - newCrop.x, newCrop.width + dx));
+        const maxDx = 100 - isDragging.startCrop.x - isDragging.startCrop.width;
+        const boundedDx = Math.max(-(isDragging.startCrop.width - 5), Math.min(maxDx, dx));
+        newCrop.width = isDragging.startCrop.width + boundedDx;
       }
       if (isDragging.type.includes('n')) {
-        const potentialHeight = newCrop.height - dy;
-        if (potentialHeight > 5) {
-          newCrop.y = newCrop.y + dy;
-          newCrop.height = potentialHeight;
-        }
+        const maxDy = isDragging.startCrop.height - 5;
+        const boundedDy = Math.max(-isDragging.startCrop.y, Math.min(maxDy, dy));
+        newCrop.y = isDragging.startCrop.y + boundedDy;
+        newCrop.height = isDragging.startCrop.height - boundedDy;
       }
       if (isDragging.type.includes('s')) {
-        newCrop.height = Math.max(5, Math.min(100 - newCrop.y, newCrop.height + dy));
+        const maxDy = 100 - isDragging.startCrop.y - isDragging.startCrop.height;
+        const boundedDy = Math.max(-(isDragging.startCrop.height - 5), Math.min(maxDy, dy));
+        newCrop.height = isDragging.startCrop.height + boundedDy;
       }
 
       // Maintain Aspect Ratio if locked
@@ -1123,9 +1125,10 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
 
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           {/* Main Editing Area */}
-          <div ref={containerRef} className="flex-1 bg-black/40 flex items-center justify-center p-8 relative overflow-hidden">
+          <div className="flex-1 bg-black/40 flex items-center justify-center p-8 relative overflow-hidden">
             {/* The actual image + overlay container, sized exactly to the rendered pixels */}
             <div 
+              ref={containerRef}
               className="relative shadow-2xl transition-all duration-300 ease-out"
               style={{
                 width: imageSize.width || 'auto',
