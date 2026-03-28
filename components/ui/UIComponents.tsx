@@ -1,7 +1,7 @@
 
-import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useLayoutEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronDown, Check, ZoomIn, ZoomOut, RotateCcw, RotateCw, Move, Crop, Pipette, ChevronUp, Gamepad2, Trophy, Star, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target, Search, ChevronLeft, ChevronRight, Download, Sun, Contrast, Maximize, Minimize, FlipHorizontal, FlipVertical, Sparkles, Scissors, Scaling } from 'lucide-react';
+import { X, ChevronDown, Check, ZoomIn, ZoomOut, RotateCcw, RotateCw, Move, Crop, Pipette, ChevronUp, Gamepad2, Trophy, Star, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target, Search, ChevronLeft, ChevronRight, Download, Sun, Contrast, Maximize, Minimize, FlipHorizontal, FlipVertical, Sparkles, Scissors, Scaling, RefreshCw } from 'lucide-react';
 
 // --- Color Helpers ---
 const hexToRgb = (hex: string) => {
@@ -930,7 +930,7 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
   // Cropping State
   const [aspect, setAspect] = useState<number | undefined>(initialAspect);
   const [crop, setCrop] = useState({ x: 10, y: 10, width: 80, height: 80 }); // Percentages
-  const [isDragging, setIsDragging] = useState<{ type: 'move' | 'nw' | 'ne' | 'sw' | 'se', startX: number, startY: number, startCrop: any } | null>(null);
+  const [isDragging, setIsDragging] = useState<{ type: 'move' | 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w', startX: number, startY: number, startCrop: any } | null>(null);
 
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
 
@@ -967,7 +967,15 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
     }
   }, [isOpen, imageSrc, initialAspect]);
 
-  const handleMouseDown = (type: 'move' | 'nw' | 'ne' | 'sw' | 'se', e: React.MouseEvent | React.TouchEvent) => {
+  // Resolution Calculation
+  const resolution = useMemo(() => {
+    if (!imgRef.current) return { w: 0, h: 0 };
+    const w = Math.round((crop.width / 100) * imgRef.current.naturalWidth);
+    const h = Math.round((crop.height / 100) * imgRef.current.naturalHeight);
+    return { w, h };
+  }, [crop, isOpen]);
+
+  const handleMouseDown = (type: 'move' | 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w', e: React.MouseEvent | React.TouchEvent) => {
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
     setIsDragging({ type, startX: clientX, startY: clientY, startCrop: { ...crop } });
@@ -1015,19 +1023,14 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
 
       // Maintain Aspect Ratio if locked
       if (aspect) {
-        const rectAspect = (rect.width / rect.height);
-        const currentCropPixelWidth = (newCrop.width / 100) * rect.width;
-        const currentCropPixelHeight = (newCrop.height / 100) * rect.height;
-        
-        // Force height based on width and aspect
-        const targetPixelHeight = currentCropPixelWidth / aspect;
-        newCrop.height = (targetPixelHeight / rect.height) * 100;
-
-        // Boundary check for height
-        if (newCrop.y + newCrop.height > 100) {
-          newCrop.height = 100 - newCrop.y;
-          const correctedPixelWidth = (newCrop.height / 100) * rect.height * aspect;
-          newCrop.width = (correctedPixelWidth / rect.width) * 100;
+        if (isDragging.type === 'nw' || isDragging.type === 'ne' || isDragging.type === 'sw' || isDragging.type === 'se') {
+           // Simplify: adjust height to width
+           const targetHeight = (newCrop.width * rect.width) / aspect / rect.height;
+           newCrop.height = targetHeight;
+           if (newCrop.y + newCrop.height > 100) {
+             newCrop.height = 100 - newCrop.y;
+             newCrop.width = (newCrop.height * rect.height * aspect) / rect.width;
+           }
         }
       }
     }
@@ -1060,7 +1063,7 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
     if (!ctx) return;
 
     // Output size resolution (high quality)
-    const outputWidth = 1024;
+    const outputWidth = Math.max(512, Math.min(2048, img.naturalWidth));
     const outputHeight = aspect ? outputWidth / aspect : (outputWidth * (crop.height / crop.width));
     canvas.width = outputWidth;
     canvas.height = outputHeight;
@@ -1076,8 +1079,7 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
     const sourceW = (crop.width / 100) * img.naturalWidth;
     const sourceH = (crop.height / 100) * img.naturalHeight;
 
-    // 3. Transformations (Mirror/Rotate) - Complex logic as we are drawing a sub-rect
-    // To simplify: we draw the Full image transformed on an intermediate canvas, then clip
+    // 3. Transformations
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = img.naturalWidth;
     tempCanvas.height = img.naturalHeight;
@@ -1104,222 +1106,205 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100005] flex items-center justify-center bg-[#090c19]/95 backdrop-blur-xl animate-in fade-in duration-300 overflow-hidden">
-      <div className="w-full h-full lg:max-w-6xl lg:h-[90vh] bg-[#151b2e] border border-white/5 lg:rounded-3xl shadow-2xl flex flex-col relative overflow-hidden">
-        
-        {/* Header */}
-        <div className="p-4 border-b border-white/5 flex items-center justify-between bg-[#1c2438]/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-xl text-primary">
-              <Scissors size={20} />
-            </div>
-            <div>
-              <h3 className="font-bold text-white tracking-tight">Editor de Imagem Pro</h3>
-              <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Estúdio de Identidade Visual</p>
-            </div>
+    <div className="fixed inset-0 z-[100005] flex flex-col bg-[#111111] animate-in fade-in duration-300 overflow-hidden select-none">
+      
+      {/* Top Professional Header */}
+      <div className="h-16 border-b border-white/5 flex items-center justify-between px-6 bg-[#1a1a1a]">
+        <div className="flex items-center gap-4">
+          <div className="p-2 bg-primary/20 rounded-lg text-primary">
+            <Scissors size={20} />
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full transition-all text-gray-500 hover:text-white">
-            <X size={24} />
+          <h3 className="font-bold text-white text-sm tracking-tight opacity-90 uppercase tracking-[0.1em]">Editor de Recorte</h3>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={onClose} 
+            className="px-6 py-2.5 text-sm font-bold text-gray-400 hover:text-white transition-colors"
+          >
+            Cancelar
+          </button>
+          <button 
+            onClick={handleSave}
+            className="px-8 py-2.5 bg-[#00f2ea] hover:bg-[#00d8d1] text-[#090c19] rounded-lg text-sm font-bold transition-all shadow-lg shadow-[#00f2ea]/10 active:scale-95"
+          >
+            Opções de salvamento
           </button>
         </div>
+      </div>
 
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-          {/* Main Editing Area */}
-          <div className="flex-1 bg-black/40 flex items-center justify-center p-8 relative overflow-hidden">
-            {/* The actual image + overlay container, sized exactly to the rendered pixels */}
-            <div 
-              ref={containerRef}
-              className="relative shadow-2xl"
+      <div className="flex-1 relative flex flex-col overflow-hidden">
+        {/* Workspace Canvas Area */}
+        <div className="flex-1 bg-black flex items-center justify-center p-12 relative overflow-hidden">
+          <div 
+            ref={containerRef}
+            className="relative shadow-2xl transition-all duration-300 ease-out"
+            style={{
+              width: imageSize.width || 'auto',
+              height: imageSize.height || 'auto',
+              maxWidth: '100%',
+              maxHeight: '100%',
+              transition: isDragging ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+          >
+            <img
+              ref={imgRef}
+              src={imageSrc}
+              alt="Editor"
+              onLoad={updateImageSize}
+              className="max-w-full max-h-[60vh] lg:max-h-[70vh] object-contain select-none"
               style={{
-                width: imageSize.width || 'auto',
-                height: imageSize.height || 'auto',
-                maxWidth: '100%',
-                maxHeight: '100%'
+                display: 'block',
+                filter: `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`,
+                transform: `rotate(${rotation}deg) scale(${flipH ? -1 : 1}, ${flipV ? -1 : 1})`
               }}
-            >
-              <img
-                ref={imgRef}
-                src={imageSrc}
-                alt="Editor"
-                onLoad={updateImageSize}
-                className="max-w-full max-h-[50vh] lg:max-h-[60vh] object-contain select-none shadow-2xl"
-                style={{
-                  display: 'block',
-                  filter: `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`,
-                  transform: `rotate(${rotation}deg) scale(${flipH ? -1 : 1}, ${flipV ? -1 : 1})`
-                }}
-              />
+            />
 
-              {/* Crop Overlay - Sized exactly to the image's visual area */}
-              {imageSize.width > 0 && (
-                <div className="absolute inset-0 z-10 overflow-hidden pointer-events-none">
-                  {/* Dark Mask */}
-                  <svg className="w-full h-full pointer-events-none opacity-60">
-                    <defs>
-                      <mask id="crop-mask">
-                        <rect width="100%" height="100%" fill="white" />
-                        <rect 
-                          x={`${crop.x}%`} 
-                          y={`${crop.y}%`} 
-                          width={`${crop.width}%`} 
-                          height={`${crop.height}%`} 
-                          fill="black" 
-                          rx={aspect === 1 ? "500" : "0"} 
-                        />
-                      </mask>
-                    </defs>
-                    <rect width="100%" height="100%" fill="#090c19" mask="url(#crop-mask)" />
-                  </svg>
-
-                  {/* The Crop Box */}
-                  <div 
-                    className="absolute pointer-events-auto cursor-move border-2 border-primary shadow-[0_0_0_1px_rgba(255,255,255,0.2)] group"
-                    style={{ 
-                      left: `${crop.x}%`, 
-                      top: `${crop.y}%`, 
-                      width: `${crop.width}%`, 
-                      height: `${crop.height}%`,
-                      borderRadius: aspect === 1 ? '50%' : '8px' 
-                    }}
-                    onMouseDown={(e) => handleMouseDown('move', e)}
-                    onTouchStart={(e) => handleMouseDown('move', e)}
-                  >
-                    {/* Grid Lines */}
-                    <div className="absolute inset-0 flex group-hover:opacity-100 opacity-30 transition-opacity">
-                      <div className="flex-1 border-r border-white/20 h-full" />
-                      <div className="flex-1 border-r border-white/20 h-full" />
-                    </div>
-                    <div className="absolute inset-0 flex flex-col group-hover:opacity-100 opacity-30 transition-opacity">
-                      <div className="flex-1 border-b border-white/20 w-full" />
-                      <div className="flex-1 border-b border-white/20 w-full" />
-                    </div>
-
-                    {/* Resize Handles */}
-                    {['nw', 'ne', 'sw', 'se'].map((h) => (
-                      <div 
-                        key={h}
-                        className={`absolute w-6 h-6 bg-white border-2 border-primary shadow-lg z-30 rounded-full pointer-events-auto
-                          ${h === 'nw' ? '-top-3 -left-3 cursor-nw-resize' : ''}
-                          ${h === 'ne' ? '-top-3 -right-3 cursor-ne-resize' : ''}
-                          ${h === 'sw' ? '-bottom-3 -left-3 cursor-sw-resize' : ''}
-                          ${h === 'se' ? '-bottom-3 -right-3 cursor-se-resize' : ''}
-                        `}
-                        onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); handleMouseDown(h as any, e); }}
-                        onTouchStart={(e) => { e.stopPropagation(); handleMouseDown(h as any, e); }}
+            {/* Professional Crop Overlay */}
+            {imageSize.width > 0 && (
+              <div className="absolute inset-0 z-10 overflow-hidden pointer-events-none">
+                {/* Dark Mask */}
+                <svg className="w-full h-full pointer-events-none opacity-60">
+                  <defs>
+                    <mask id="crop-mask">
+                      <rect width="100%" height="100%" fill="white" />
+                      <rect 
+                        x={`${crop.x}%`} 
+                        y={`${crop.y}%`} 
+                        width={`${crop.width}%`} 
+                        height={`${crop.height}%`} 
+                        fill="black" 
+                        rx={aspect === 1 ? "500" : "0"} 
                       />
-                    ))}
+                    </mask>
+                  </defs>
+                  <rect width="100%" height="100%" fill="#000000" mask="url(#crop-mask)" />
+                </svg>
+
+                {/* THE CROP BOX */}
+                <div 
+                  className="absolute pointer-events-auto cursor-move border-[1px] border-white/40 shadow-[0_0_0_2000px_rgba(0,0,0,0)]"
+                  style={{ 
+                    left: `${crop.x}%`, 
+                    top: `${crop.y}%`, 
+                    width: `${crop.width}%`, 
+                    height: `${crop.height}%`,
+                    borderRadius: aspect === 1 ? '50%' : '0' 
+                  }}
+                  onMouseDown={(e) => handleMouseDown('move', e)}
+                  onTouchStart={(e) => handleMouseDown('move', e)}
+                >
+                  {/* Grid Lines 3x3 */}
+                  <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none">
+                    <div className="border-r border-b border-white/20" />
+                    <div className="border-r border-b border-white/20" />
+                    <div className="border-b border-white/20" />
+                    <div className="border-r border-b border-white/20" />
+                    <div className="border-r border-b border-white/20" />
+                    <div className="border-b border-white/20" />
+                    <div className="border-r border-white/20" />
+                    <div className="border-r border-white/20" />
+                    <div />
+                  </div>
+
+                  {/* HIGH-FIDELITY L-HANDLES (Corners) */}
+                  {/* Top-Left */}
+                  <div className="absolute -top-[3px] -left-[3px] w-10 h-10 pointer-events-auto cursor-nw-resize group" onMouseDown={(e) => { e.stopPropagation(); handleMouseDown('nw', e); }}>
+                    <div className="absolute top-0 left-0 w-8 h-[6px] bg-white rounded-full shadow-lg" />
+                    <div className="absolute top-0 left-0 w-[6px] h-8 bg-white rounded-full shadow-lg" />
+                  </div>
+                  {/* Top-Right */}
+                  <div className="absolute -top-[3px] -right-[3px] w-10 h-10 pointer-events-auto cursor-ne-resize" onMouseDown={(e) => { e.stopPropagation(); handleMouseDown('ne', e); }}>
+                    <div className="absolute top-0 right-0 w-8 h-[6px] bg-white rounded-full shadow-lg" />
+                    <div className="absolute top-0 right-0 w-[6px] h-8 bg-white rounded-full shadow-lg" />
+                  </div>
+                  {/* Bottom-Left */}
+                  <div className="absolute -bottom-[3px] -left-[3px] w-10 h-10 pointer-events-auto cursor-sw-resize" onMouseDown={(e) => { e.stopPropagation(); handleMouseDown('sw', e); }}>
+                    <div className="absolute bottom-0 left-0 w-8 h-[6px] bg-white rounded-full shadow-lg" />
+                    <div className="absolute bottom-0 left-0 w-[6px] h-8 bg-white rounded-full shadow-lg" />
+                  </div>
+                  {/* Bottom-Right */}
+                  <div className="absolute -bottom-[3px] -right-[3px] w-10 h-10 pointer-events-auto cursor-se-resize" onMouseDown={(e) => { e.stopPropagation(); handleMouseDown('se', e); }}>
+                    <div className="absolute bottom-0 right-0 w-8 h-[6px] bg-white rounded-full shadow-lg" />
+                    <div className="absolute bottom-0 right-0 w-[6px] h-8 bg-white rounded-full shadow-lg" />
+                  </div>
+
+                  {/* BAR HANDLES (Edges) */}
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-[3px] w-10 h-4 cursor-n-resize pointer-events-auto" onMouseDown={(e) => { e.stopPropagation(); handleMouseDown('n', e); }}>
+                    <div className="mx-auto w-8 h-[6px] bg-white rounded-full shadow-lg" />
+                  </div>
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 -mb-[3px] w-10 h-4 cursor-s-resize pointer-events-auto" onMouseDown={(e) => { e.stopPropagation(); handleMouseDown('s', e); }}>
+                    <div className="mx-auto w-8 h-[6px] bg-white rounded-full shadow-lg" />
+                  </div>
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 -ml-[3px] w-4 h-10 cursor-w-resize pointer-events-auto" onMouseDown={(e) => { e.stopPropagation(); handleMouseDown('w', e); }}>
+                    <div className="my-auto w-[6px] h-8 bg-white rounded-full shadow-lg" />
+                  </div>
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 -mr-[3px] w-4 h-10 cursor-e-resize pointer-events-auto" onMouseDown={(e) => { e.stopPropagation(); handleMouseDown('e', e); }}>
+                    <div className="my-auto w-[6px] h-8 bg-white rounded-full shadow-lg" />
+                  </div>
+
+                  {/* Resolution Badge */}
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 pointer-events-none">
+                    <div className="px-4 py-1.5 bg-black/80 backdrop-blur-xl rounded-md border border-white/20 text-[11px] font-bold text-white tracking-widest whitespace-nowrap shadow-2xl">
+                      {resolution.w} x {resolution.h}
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
+        </div>
 
-          {/* Sidebar Controls */}
-          <div className="w-full lg:w-80 bg-[#1c2438] border-l border-white/5 flex flex-col p-6 space-y-8 overflow-y-auto custom-scrollbar">
-            
-            {/* Aspect Ratio Section */}
-            <div className="space-y-4">
-              <h5 className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                <Scaling size={12} /> Proporção do Corte
-              </h5>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { label: 'Livre', value: undefined },
-                  { label: 'Quadrado (1:1)', value: 1 },
-                  { label: 'Horizontal (4:3)', value: 4/3 },
-                  { label: 'Widescreen (16:9)', value: 16/9 }
-                ].map((opt) => (
-                  <button
-                    key={opt.label}
-                    onClick={() => setAspect(opt.value)}
-                    className={`py-2 px-3 rounded-xl text-[10px] font-bold uppercase transition-all border ${aspect === opt.value ? 'bg-primary/20 border-primary text-primary' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}
-                  >
-                    {opt.label}
-                  </button>
+        {/* BOTTOM CONTROLS - Pro Rotation Ruler */}
+        <div className="h-44 bg-[#1a1a1a] border-t border-white/5 flex flex-col items-center justify-center space-y-6">
+          
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-xs font-bold text-white mb-2">{rotation}°</span>
+            {/* Custom Graduation Ruler */}
+            <div className="relative w-72 h-8 overflow-hidden flex items-center group cursor-ew-resize">
+              <input 
+                type="range" min="-45" max="45" value={rotation} 
+                onChange={e => setRotation(Number(e.target.value))}
+                className="absolute inset-0 z-20 opacity-0 cursor-ew-resize"
+              />
+              <div className="w-full flex justify-between items-end px-1 opacity-40 group-hover:opacity-100 transition-opacity">
+                {Array.from({ length: 31 }).map((_, i) => (
+                  <div 
+                    key={i} 
+                    className={`bg-white rounded-full ${i === 15 ? 'h-6 w-[2px] bg-primary' : (i % 5 === 0 ? 'h-4 w-[1px]' : 'h-2 w-[1px] opacity-50')}`} 
+                  />
                 ))}
               </div>
             </div>
+          </div>
 
-            {/* Transformations */}
-            <div className="space-y-4">
-              <h5 className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                <RotateCw size={12} /> Transformações
-              </h5>
-              <div className="flex gap-2">
-                <button onClick={() => setRotation(r => (r + 90) % 360)} className="flex-1 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-all flex flex-col items-center gap-1 group">
-                  <RotateCw size={18} className="text-gray-400 group-hover:text-white" />
-                  <span className="text-[9px] font-bold uppercase text-gray-500">Girar 90°</span>
-                </button>
-                <button onClick={() => setFlipH(!flipH)} className="flex-1 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-all flex flex-col items-center gap-1 group">
-                  <FlipHorizontal size={18} className="text-gray-400 group-hover:text-white" />
-                  <span className="text-[9px] font-bold uppercase text-gray-500">Espelhar H</span>
-                </button>
-                <button onClick={() => setFlipV(!flipV)} className="flex-1 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-all flex flex-col items-center gap-1 group">
-                  <FlipVertical size={18} className="text-gray-400 group-hover:text-white" />
-                  <span className="text-[9px] font-bold uppercase text-gray-500">Espelhar V</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Filters */}
-            <div className="space-y-6">
-              <h5 className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                <Sparkles size={12} /> Ajustes de Retoque
-              </h5>
-              
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase">
-                    <span className="flex items-center gap-1.5"><Sun size={12} /> Brilho</span>
-                    <span>{brightness / 100}x</span>
-                  </div>
-                  <input 
-                    type="range" min="50" max="150" value={brightness} 
-                    onChange={e => setBrightness(Number(e.target.value))}
-                    className="w-full accent-primary h-1 bg-white/5 rounded-full appearance-none px-0"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase">
-                    <span className="flex items-center gap-1.5"><Contrast size={12} /> Contraste</span>
-                    <span>{contrast / 100}x</span>
-                  </div>
-                  <input 
-                    type="range" min="50" max="150" value={contrast} 
-                    onChange={e => setContrast(Number(e.target.value))}
-                    className="w-full accent-primary h-1 bg-white/5 rounded-full appearance-none"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase">
-                    <span className="flex items-center gap-1.5"><Pipette size={12} /> Saturação</span>
-                    <span>{saturation / 100}x</span>
-                  </div>
-                  <input 
-                    type="range" min="0" max="200" value={saturation} 
-                    onChange={e => setSaturation(Number(e.target.value))}
-                    className="w-full accent-primary h-1 bg-white/5 rounded-full appearance-none"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="pt-4 space-y-3">
-              <Button onClick={handleSave} className="w-full py-4 text-xs font-black uppercase tracking-widest shadow-xl shadow-primary/20">
-                <Check size={18} /> Aplicar Alterações
-              </Button>
+          <div className="flex items-center gap-8">
+            <div className="flex bg-white/5 rounded-xl p-1">
               <button 
-                onClick={() => {
-                  setBrightness(100); setContrast(100); setSaturation(100);
-                  setRotation(0); setFlipH(false); setFlipV(false);
-                  setCrop({ x: 10, y: 10, width: 80, height: 80 });
-                }}
-                className="w-full py-3 text-[10px] font-black uppercase text-gray-500 hover:text-white transition-colors tracking-tighter"
+                onClick={() => setAspect(undefined)}
+                className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${!aspect ? 'bg-white/10 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
               >
-                Resetar Filtros e Corte
+                Livre
+              </button>
+              <button 
+                onClick={() => setAspect(1)}
+                className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${aspect === 1 ? 'bg-white/10 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
+              >
+                1:1
+              </button>
+            </div>
+
+            <div className="h-8 w-[1px] bg-white/10" />
+
+            <div className="flex gap-4">
+              <button onClick={() => setFlipH(!flipH)} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-all" title="Inverter Horizontal">
+                <FlipHorizontal size={20} />
+              </button>
+              <button onClick={() => setFlipV(!flipV)} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-all" title="Inverter Vertical">
+                <FlipVertical size={20} />
+              </button>
+              <button onClick={() => setRotation(0)} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-all" title="Resetar Rotação">
+                <RefreshCw size={20} />
               </button>
             </div>
           </div>
