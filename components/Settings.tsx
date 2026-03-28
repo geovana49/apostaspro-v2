@@ -93,11 +93,11 @@ const Settings: React.FC<SettingsProps> = ({
         }
     }, []);
 
-    const addToRecentCrops = (img: string) => {
-        setRecentCrops(prev => {
-            const updated = [img, ...prev.filter(c => c !== img)].slice(0, 12);
-            localStorage.setItem('recentAvatars', JSON.stringify(updated));
-            return updated;
+    const addToCustomAvatars = (img: string) => {
+        setAppSettings(prev => {
+            const current = prev.customAvatars || [];
+            const updated = [img, ...current.filter(c => c !== img)].slice(0, 12);
+            return { ...prev, customAvatars: updated };
         });
     };
 
@@ -149,6 +149,7 @@ const Settings: React.FC<SettingsProps> = ({
         try {
             const res = await fetch(base64);
             const blob = await res.blob();
+            addToCustomAvatars(base64);
             handleProfileImageUpload(blob);
         } catch (e) {
             console.error("Error converting cropped image:", e);
@@ -272,7 +273,7 @@ const Settings: React.FC<SettingsProps> = ({
 
                 const newSettings = { ...appSettings, profileImage: base64 };
                 setAppSettings(newSettings);
-                addToRecentCrops(base64); // Adicionar à lista de sugestões recentes
+                addToCustomAvatars(base64); // Adicionar à lista de sugestões salvas na conta
                 
                 if (currentUser) {
                     await FirestoreService.saveSettings(currentUser.uid, newSettings);
@@ -622,16 +623,18 @@ const Settings: React.FC<SettingsProps> = ({
                     </div>
                 </div>
 
-                {recentCrops.length > 0 && (
-                    <div className="mt-12 pt-8 border-t border-white/5 animate-in fade-in duration-700">
-                        <div className="flex items-center justify-between mb-6">
+                {/* Custom Avatars Gallery - PERSISTENT */}
+                {appSettings.customAvatars && appSettings.customAvatars.length > 0 && (
+                    <div className="mt-10 pt-10 border-t border-white/5 space-y-6">
+                        <div className="flex flex-col">
                             <h6 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
-                                <Wand2 size={14} /> Histórico de Edição
+                                <Sparkles size={14} />
+                                Meus Avatares
                             </h6>
-                            <span className="text-[9px] text-gray-500 font-bold uppercase tracking-tight">Suas últimas criações</span>
+                            <span className="text-[9px] text-gray-500 font-bold uppercase tracking-tight">Suas criações personalizadas salvas na conta</span>
                         </div>
                         <div className="flex flex-wrap gap-5">
-                            {recentCrops.map((img, idx) => (
+                            {appSettings.customAvatars.map((img, idx) => (
                                 <div key={idx} className="relative group/recent">
                                     <button
                                         onClick={() => {
@@ -651,15 +654,17 @@ const Settings: React.FC<SettingsProps> = ({
                                         )}
                                     </button>
                                     <button 
-                                        onClick={() => {
-                                            const updated = recentCrops.filter((_, i) => i !== idx);
-                                            setRecentCrops(updated);
-                                            localStorage.setItem('recentAvatars', JSON.stringify(updated));
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const updated = (appSettings.customAvatars || []).filter((_, i) => i !== idx);
+                                            const newSettings = { ...appSettings, customAvatars: updated };
+                                            setAppSettings(newSettings);
+                                            if (currentUser) FirestoreService.saveSettings(currentUser.uid, newSettings);
                                         }}
-                                        className="absolute -top-2 -right-2 bg-[#151b2e] border border-white/10 text-gray-500 hover:text-red-500 p-1.5 rounded-full opacity-0 group-hover/recent:opacity-100 transition-all shadow-xl hover:scale-110 z-20"
-                                        title="Remover das sugestões"
+                                        className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover/recent:opacity-100 transition-all shadow-xl hover:scale-110 z-20 border-2 border-[#0d1121]"
+                                        title="Excluir avatar"
                                     >
-                                        <X size={12} strokeWidth={3} />
+                                        <Trash2 size={12} strokeWidth={3} />
                                     </button>
                                 </div>
                             ))}

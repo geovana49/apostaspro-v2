@@ -75,6 +75,7 @@ export interface AppSettings {
   email?: string;
   extraGainsFilterPosition: 'below_toolbar' | 'within_toolbar'; // New setting for filter position
   privacyMode: boolean; // New setting for hiding balances
+  customAvatars?: string[]; // Array of base64 cropped images
 }
 
 // Updated User interface for Firebase

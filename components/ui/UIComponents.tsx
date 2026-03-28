@@ -1156,7 +1156,7 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
             onClick={handleSave}
             className="px-8 py-2.5 bg-[#00f2ea] hover:bg-[#00d8d1] text-[#090c19] rounded-lg text-sm font-bold transition-all shadow-lg shadow-[#00f2ea]/10 active:scale-95"
           >
-            Opções de salvamento
+            Salvar
           </button>
         </div>
       </div>
