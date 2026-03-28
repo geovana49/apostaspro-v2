@@ -125,6 +125,17 @@ const Settings: React.FC<SettingsProps> = ({
         setActiveTab(initialTab);
     }, [initialTab]);
 
+    // Auto-Save robusto: Garante que as configurações sejam salvas na nuvem se o usuário esquecer 
+    // ou se o celular não disparar o 'onBlur' nativo ao recolher o teclado.
+    useEffect(() => {
+        if (!currentUser || !appSettings) return;
+        const autoSaveTimer = setTimeout(() => {
+            // Evita logs excessivos, mas garante o envio para o Firebase
+            FirestoreService.saveSettings(currentUser.uid, appSettings);
+        }, 1200);
+        return () => clearTimeout(autoSaveTimer);
+    }, [appSettings, currentUser]);
+
     useEffect(() => {
         if (lastSavedId) {
             setTimeout(() => {
@@ -938,8 +949,19 @@ const Settings: React.FC<SettingsProps> = ({
                                 );
                             })}
                             <input type="file" className="hidden" id="origin-icon-upload" accept="image/*" onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) handleOpenAdjuster(URL.createObjectURL(file), async (blob) => { if (blob) { setIsUploading(true); try { const url = await uploadImage(blob, 'origins'); setSelectedIcon(url); } finally { setIsUploading(false); } } }, 1);
+                                uploadImage(e, async (base64) => {
+                                    setIsUploading(true);
+                                    try {
+                                        const res = await fetch(base64);
+                                        const blob = await res.blob();
+                                        const url = await uploadFileToStorage(blob, 'origins');
+                                        setSelectedIcon(url);
+                                    } catch (err) {
+                                        console.error(err);
+                                    } finally {
+                                        setIsUploading(false);
+                                    }
+                                });
                             }} />
                             <label htmlFor="origin-icon-upload" title="Carregar Ícone" className="aspect-square rounded-lg flex items-center justify-center transition-all bg-[#0d1121] text-gray-500 hover:bg-white/5 cursor-pointer border-2 border-dashed border-white/10 hover:border-primary">
                                 {isUploading ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
