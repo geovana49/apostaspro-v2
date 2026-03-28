@@ -535,7 +535,7 @@ const Settings: React.FC<SettingsProps> = ({
                             {appSettings.profileImage && (
                                 <div className="flex flex-col gap-2 w-full">
                                     <button
-                                        onClick={() => handleOpenAdjuster(appSettings.profileImage!, 1, handleCroppedImage)}
+                                        onClick={() => handleOpenAdjuster(appSettings.profileImage!, undefined, handleCroppedImage)}
                                         className="w-full bg-white/5 hover:bg-white/10 text-white px-4 py-2.5 rounded-xl transition-all border border-white/10 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest"
                                     >
                                         <Maximize size={14} className="text-primary" />
@@ -564,7 +564,7 @@ const Settings: React.FC<SettingsProps> = ({
                             onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                    handleOpenAdjuster(URL.createObjectURL(file), 1, handleCroppedImage);
+                                    handleOpenAdjuster(URL.createObjectURL(file), undefined, handleCroppedImage);
                                 }
                             }}
                         />
@@ -680,7 +680,7 @@ const Settings: React.FC<SettingsProps> = ({
                             {PRESET_AVATARS.map((avatar, index) => (
                                 <button
                                     key={index}
-                                    onClick={() => handleOpenAdjuster(avatar, 1, handleCroppedImage)}
+                                    onClick={() => handleOpenAdjuster(avatar, undefined, handleCroppedImage)}
                                     className={`aspect-square rounded-2xl border-2 overflow-hidden transition-all duration-300 relative group/suggestion ${appSettings.profileImage === avatar
                                         ? 'border-primary ring-4 ring-primary/20 scale-105 shadow-xl z-20'
                                         : 'border-white/5 hover:border-primary/40 hover:scale-110 grayscale hover:grayscale-0'

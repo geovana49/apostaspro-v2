@@ -1164,7 +1164,7 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
                           width={`${crop.width}%`} 
                           height={`${crop.height}%`} 
                           fill="black" 
-                          rx={initialAspect === 1 ? "100" : "0"}
+                          rx={aspect === 1 ? "500" : "0"} 
                         />
                       </mask>
                     </defs>
@@ -1179,7 +1179,7 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
                       top: `${crop.y}%`, 
                       width: `${crop.width}%`, 
                       height: `${crop.height}%`,
-                      borderRadius: initialAspect === 1 ? '50%' : '0' 
+                      borderRadius: aspect === 1 ? '50%' : '8px' 
                     }}
                     onMouseDown={(e) => handleMouseDown('move', e)}
                     onTouchStart={(e) => handleMouseDown('move', e)}
