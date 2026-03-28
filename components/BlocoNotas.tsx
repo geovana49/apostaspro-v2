@@ -1399,7 +1399,7 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
             }
 
             {
-                showDeleteConfirm && (
+                showDeleteConfirm && createPortal(
                     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 backdrop-blur-md bg-black/70 animate-in fade-in duration-300">
                         <Card className="max-w-sm w-full bg-[#1a1f35]/95 border-white/10 shadow-2xl p-8 space-y-6 rounded-[32px] border-t border-l border-white/10 relative overflow-hidden group">
                             <div className="absolute inset-0 bg-gradient-to-br from-[#ff4444]/5 to-transparent pointer-events-none" />
@@ -1429,7 +1429,8 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                 </button>
                             </div>
                         </Card>
-                    </div>
+                    </div>,
+                    document.body
                 )
             }
 
