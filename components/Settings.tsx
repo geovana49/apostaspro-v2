@@ -93,11 +93,22 @@ const Settings: React.FC<SettingsProps> = ({
         }
     }, []);
 
-    const addToCustomAvatars = (img: string) => {
+    const addToCustomAvatars = (newImg: string, originalImg?: string | null) => {
         setAppSettings(prev => {
-            const current = prev.customAvatars || [];
-            const updated = [img, ...current.filter(c => c !== img)].slice(0, 12);
-            return { ...prev, customAvatars: updated };
+            const current = [...(prev.customAvatars || [])];
+            
+            // Check if we are updating an existing custom avatar
+            const existingIndex = originalImg ? current.indexOf(originalImg) : -1;
+            
+            if (existingIndex !== -1) {
+                // UPDATE: Replace at original index
+                current[existingIndex] = newImg;
+            } else {
+                // NEW: Prepend and trim to limit
+                current.unshift(newImg);
+            }
+            
+            return { ...prev, customAvatars: current.slice(0, 12) };
         });
     };
 
@@ -149,7 +160,8 @@ const Settings: React.FC<SettingsProps> = ({
         try {
             const res = await fetch(base64);
             const blob = await res.blob();
-            addToCustomAvatars(base64);
+            // Pass the original image being adjusted to check for updates
+            addToCustomAvatars(base64, imageToAdjust);
             handleProfileImageUpload(blob);
         } catch (e) {
             console.error("Error converting cropped image:", e);
