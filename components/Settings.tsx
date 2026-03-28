@@ -479,7 +479,7 @@ const Settings: React.FC<SettingsProps> = ({
                 <h5 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-6">PERFIL DO USUÁRIO</h5>
                 <div className="flex flex-col sm:flex-row items-start gap-6">
                     <div className="relative group shrink-0">
-                        <div className="w-24 h-24 rounded-2xl border-2 border-white/10 overflow-hidden bg-[#151b2e] flex items-center justify-center shadow-lg">
+                        <div className="w-24 h-24 rounded-2xl border-2 border-white/10 overflow-hidden bg-[#151b2e] flex items-center justify-center shadow-lg relative group">
                             {appSettings.profileImage ? (
                                 <img src={appSettings.profileImage} alt="Avatar" className="w-full h-full object-cover" />
                             ) : (
@@ -488,16 +488,31 @@ const Settings: React.FC<SettingsProps> = ({
                             {appSettings.profileImage && (
                                 <button
                                     onClick={() => handleOpenAdjuster(appSettings.profileImage!, 1, handleCroppedImage)}
-                                    className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-[2px]"
                                 >
-                                    <Crop size={20} className="text-white drop-shadow-md" />
+                                    <Crop size={24} className="text-primary mb-1 drop-shadow-md" />
+                                    <span className="text-[10px] font-bold text-white uppercase tracking-tighter">Ajustar</span>
                                 </button>
                             )}
                         </div>
 
-                        <label htmlFor="avatar-upload" className="absolute bottom-0 right-0 bg-primary text-[#090c19] p-2 rounded-full cursor-pointer hover:scale-110 transition-transform shadow-lg border-2 border-[#0d1121] z-10">
-                            {isUploading ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
-                        </label>
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="avatar-upload" className="bg-primary text-[#090c19] px-3 py-1.5 rounded-lg cursor-pointer hover:scale-105 transition-all shadow-lg border-2 border-[#0d1121] flex items-center gap-2 text-xs font-bold">
+                                {isUploading ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
+                                Trocar Foto
+                            </label>
+                            
+                            {appSettings.profileImage && (
+                                <button
+                                    onClick={() => handleOpenAdjuster(appSettings.profileImage!, 1, handleCroppedImage)}
+                                    className="bg-white/5 hover:bg-white/10 text-white/70 hover:text-white px-3 py-1.5 rounded-lg transition-all border border-white/5 flex items-center gap-2 text-xs font-bold"
+                                >
+                                    <Maximize size={14} className="text-primary" />
+                                    Centralizar
+                                </button>
+                            )}
+                        </div>
+                        
                         <input
                             id="avatar-upload"
                             type="file"
@@ -579,13 +594,27 @@ const Settings: React.FC<SettingsProps> = ({
                                 <button
                                     key={index}
                                     onClick={() => setAppSettings({ ...appSettings, profileImage: avatar })}
-                                    className={`aspect-square rounded-2xl border-2 overflow-hidden transition-all hover:shadow-lg ${appSettings.profileImage === avatar
+                                    className={`aspect-square rounded-2xl border-2 overflow-hidden transition-all hover:shadow-lg relative group/suggestion ${appSettings.profileImage === avatar
                                         ? 'border-primary ring-4 ring-primary/20 scale-110 shadow-xl z-10'
                                         : 'border-white/10 hover:border-primary/50 hover:scale-105'
                                         }`}
                                     title={`Avatar ${index + 1}`}
                                 >
                                     <img src={avatar} alt={`Avatar ${index + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                                    {appSettings.profileImage === avatar && (
+                                        <div 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleOpenAdjuster(avatar, 1, handleCroppedImage);
+                                            }}
+                                            className="absolute inset-0 bg-primary/20 flex items-center justify-center opacity-0 group-hover/suggestion:opacity-100 transition-opacity backdrop-blur-[1px] cursor-pointer"
+                                            title="Ajustar Enquadramento"
+                                        >
+                                            <div className="bg-primary text-[#090c19] p-1.5 rounded-full shadow-lg">
+                                                <Maximize size={16} />
+                                            </div>
+                                        </div>
+                                    )}
                                 </button>
                             ))}
                         </div>
