@@ -1182,12 +1182,8 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
         <div className="flex-1 bg-black flex items-center justify-center p-12 relative overflow-hidden">
           <div 
             ref={containerRef}
-            className="relative shadow-2xl"
+            className="relative shadow-2xl inline-block"
             style={{
-              width: imageSize.width || 'auto',
-              height: imageSize.height || 'auto',
-              maxWidth: '100%',
-              maxHeight: '100%',
               transition: isDragging ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
             }}
           >

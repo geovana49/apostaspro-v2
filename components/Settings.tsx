@@ -575,9 +575,11 @@ const Settings: React.FC<SettingsProps> = ({
                                     </button>
                                     <button
                                         onClick={() => {
-                                            const newSettings = { ...appSettings, profileImage: '' };
-                                            setAppSettings(newSettings);
-                                            if (currentUser) FirestoreService.saveSettings(currentUser.uid, newSettings);
+                                            setAppSettings(prev => {
+                                                const final = { ...prev, profileImage: '' };
+                                                if (currentUser) FirestoreService.saveSettings(currentUser.uid, final);
+                                                return final;
+                                            });
                                         }}
                                         className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-xl transition-all border border-red-500/10 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest"
                                     >
@@ -607,8 +609,18 @@ const Settings: React.FC<SettingsProps> = ({
                             <Input
                                 label="Nome de Exibição"
                                 value={appSettings.username || ''}
-                                onChange={(e) => setAppSettings({ ...appSettings, username: e.target.value })}
-                                onBlur={() => { if (currentUser) FirestoreService.saveSettings(currentUser.uid, appSettings); }}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setAppSettings(prev => ({ ...prev, username: val }));
+                                }}
+                                onBlur={() => { 
+                                    if (currentUser) {
+                                        setAppSettings(prev => {
+                                            FirestoreService.saveSettings(currentUser.uid, prev);
+                                            return prev;
+                                        });
+                                    }
+                                }}
                                 placeholder="Seu nome"
                                 icon={<User size={16} />}
                             />
@@ -621,9 +633,17 @@ const Settings: React.FC<SettingsProps> = ({
                                 onChange={(e) => {
                                     const value = e.target.value.replace(/\D/g, '');
                                     const numberValue = parseInt(value, 10);
-                                    setAppSettings({ ...appSettings, defaultStake: isNaN(numberValue) ? undefined : numberValue });
+                                    const finalVal = isNaN(numberValue) ? undefined : numberValue;
+                                    setAppSettings(prev => ({ ...prev, defaultStake: finalVal }));
                                 }}
-                                onBlur={() => { if (currentUser) FirestoreService.saveSettings(currentUser.uid, appSettings); }}
+                                onBlur={() => { 
+                                    if (currentUser) {
+                                        setAppSettings(prev => {
+                                            FirestoreService.saveSettings(currentUser.uid, prev);
+                                            return prev;
+                                        });
+                                    }
+                                }}
                                 placeholder="0,00"
                                 icon={<Coins size={16} />}
                             />
@@ -636,9 +656,12 @@ const Settings: React.FC<SettingsProps> = ({
                                     className="w-full bg-[#151b2e] border border-white/10 text-white rounded-xl p-3.5 text-sm outline-none focus:border-primary transition-all appearance-none cursor-pointer hover:border-white/20 shadow-inner pr-10"
                                     value={appSettings.defaultBookmakerId || ''}
                                     onChange={(e) => {
-                                        const newSettings = { ...appSettings, defaultBookmakerId: e.target.value };
-                                        setAppSettings(newSettings);
-                                        if (currentUser) FirestoreService.saveSettings(currentUser.uid, newSettings);
+                                        const val = e.target.value;
+                                        setAppSettings(prev => {
+                                            const final = { ...prev, defaultBookmakerId: val };
+                                            if (currentUser) FirestoreService.saveSettings(currentUser.uid, final);
+                                            return final;
+                                        });
                                     }}
                                 >
                                     <option value="">Nenhuma Preferência</option>
@@ -669,9 +692,11 @@ const Settings: React.FC<SettingsProps> = ({
                                 <div key={idx} className="relative group/recent">
                                     <button
                                         onClick={() => {
-                                            const newSettings = { ...appSettings, profileImage: img };
-                                            setAppSettings(newSettings);
-                                            if (currentUser) FirestoreService.saveSettings(currentUser.uid, newSettings);
+                                            setAppSettings(prev => {
+                                                const final = { ...prev, profileImage: img };
+                                                if (currentUser) FirestoreService.saveSettings(currentUser.uid, final);
+                                                return final;
+                                            });
                                         }}
                                         className={`w-20 h-20 rounded-[1.5rem] border-2 overflow-hidden transition-all duration-300 ${appSettings.profileImage === img 
                                             ? 'border-primary ring-8 ring-primary/10 scale-110 shadow-xl shadow-primary/20 z-10' 
