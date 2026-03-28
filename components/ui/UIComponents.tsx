@@ -1019,23 +1019,25 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
       // Maintain Aspect Ratio if locked
       if (aspect) {
         if (isDragging.type === 'n' || isDragging.type === 's') {
+          // If dragging height, adjust width from center
           const targetWidth = (newCrop.height * rect.height * aspect) / rect.width;
-          const deltaWidth = targetWidth - newCrop.width;
-          newCrop.x = Math.max(0, Math.min(100 - targetWidth, newCrop.x - deltaWidth / 2));
+          const deltaWidth = targetWidth - isDragging.startCrop.width;
+          newCrop.x = Math.max(0, Math.min(100 - targetWidth, isDragging.startCrop.x - deltaWidth / 2));
           newCrop.width = targetWidth;
         } else if (isDragging.type === 'e' || isDragging.type === 'w') {
+          // If dragging width, adjust height from center
           const targetHeight = (newCrop.width * rect.width) / aspect / rect.height;
-          const deltaHeight = targetHeight - newCrop.height;
-          newCrop.y = Math.max(0, Math.min(100 - targetHeight, newCrop.y - deltaHeight / 2));
+          const deltaHeight = targetHeight - isDragging.startCrop.height;
+          newCrop.y = Math.max(0, Math.min(100 - targetHeight, isDragging.startCrop.y - deltaHeight / 2));
           newCrop.height = targetHeight;
         } else {
+          // Corner dragging
           const targetHeight = (newCrop.width * rect.width) / aspect / rect.height;
           if (isDragging.type.includes('n')) newCrop.y = isDragging.startCrop.y + (isDragging.startCrop.height - targetHeight);
           newCrop.height = targetHeight;
         }
-        // Final boundary enforcement for aspect-ratio crops
-        if (newCrop.x < 0) newCrop.x = 0;
-        if (newCrop.y < 0) newCrop.y = 0;
+        
+        // Final sanity check for 1:1
         if (newCrop.x + newCrop.width > 100) newCrop.width = 100 - newCrop.x;
         if (newCrop.y + newCrop.height > 100) newCrop.height = 100 - newCrop.y;
       }
@@ -1068,17 +1070,23 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
       
       if (dim === 'w') {
         nw = val;
-        if (aspect) nh = (nw * (containerRef.current?.clientWidth || 500)) / aspect / (containerRef.current?.clientHeight || 500);
+        if (aspect) {
+          // Sync height to keep square
+          nh = (nw * (containerRef.current?.clientWidth || 500)) / aspect / (containerRef.current?.clientHeight || 500);
+        }
       } else {
         nh = val;
-        if (aspect) nw = (nh * (containerRef.current?.clientHeight || 500) * aspect) / (containerRef.current?.clientWidth || 500);
+        if (aspect) {
+          // Sync width to keep square
+          nw = (nh * (containerRef.current?.clientHeight || 500) * aspect) / (containerRef.current?.clientWidth || 500);
+        }
       }
       
       return {
         x: Math.max(0, Math.min(100 - nw, centerX - nw / 2)),
         y: Math.max(0, Math.min(100 - nh, centerY - nh / 2)),
-        width: nw,
-        height: nh
+        width: Math.min(100, nw),
+        height: Math.min(100, nh)
       };
     });
   };
@@ -1188,12 +1196,11 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
                 transform: `rotate(${rotation}deg) scale(${flipH ? -1 : 1}, ${flipV ? -1 : 1})`
               }}
             />
-
             {/* Professional Crop Overlay */}
             {imageSize.width > 0 && (
               <div className="absolute inset-0 z-10 overflow-hidden pointer-events-none">
-                {/* Dark Mask */}
-                <svg className="w-full h-full pointer-events-none opacity-60">
+                {/* Dark Mask Overlay (Precision SVG System) */}
+                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-85 backdrop-blur-[2px]">
                   <defs>
                     <mask id="crop-mask">
                       <rect width="100%" height="100%" fill="white" />
@@ -1209,10 +1216,10 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
                   </defs>
                   <rect width="100%" height="100%" fill="#000000" mask="url(#crop-mask)" />
                 </svg>
-
-                {/* THE CROP BOX */}
+ 
+                {/* THE CROP BOX (Interactable) */}
                 <div 
-                  className="absolute pointer-events-auto cursor-move border-[1px] border-white/40 shadow-[0_0_0_2000px_rgba(0,0,0,0.6)]"
+                  className="absolute pointer-events-auto cursor-move border-[2px] border-[#00f2ea]/40"
                   style={{ 
                     left: `${crop.x}%`, 
                     top: `${crop.y}%`, 
@@ -1223,73 +1230,73 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
                   onPointerDown={(e) => handlePointerDown('move', e)}
                 >
                   {/* Grid Lines 3x3 */}
-                  <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none">
-                    <div className="border-r border-b border-white/20" />
-                    <div className="border-r border-b border-white/20" />
-                    <div className="border-b border-white/20" />
-                    <div className="border-r border-b border-white/20" />
-                    <div className="border-r border-b border-white/20" />
-                    <div className="border-b border-white/20" />
-                    <div className="border-r border-white/20" />
-                    <div className="border-r border-white/20" />
+                  <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none opacity-40">
+                    <div className="border-r border-b border-white" />
+                    <div className="border-r border-b border-white" />
+                    <div className="border-b border-white" />
+                    <div className="border-r border-b border-white" />
+                    <div className="border-r border-b border-white" />
+                    <div className="border-b border-white" />
+                    <div className="border-r border-white" />
+                    <div className="border-r border-white" />
                     <div />
                   </div>
-
+ 
                   {/* HIGH-FIDELITY L-HANDLES (Corners) */}
                   {/* Top-Left */}
-                  <div className="absolute -top-[12px] -left-[12px] w-12 h-12 pointer-events-auto cursor-nw-resize flex items-center justify-center group" 
+                  <div className="absolute -top-[14px] -left-[14px] w-12 h-12 pointer-events-auto cursor-nw-resize flex items-center justify-center group" 
                     onPointerDown={(e) => handlePointerDown('nw', e)}
                   >
-                    <div className="absolute top-3 left-3 w-8 h-[5px] bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] group-active:scale-125 transition-transform" />
-                    <div className="absolute top-3 left-3 w-[5px] h-8 bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] group-active:scale-125 transition-transform" />
+                    <div className="absolute top-3 left-3 w-8 h-[6px] bg-[#00f2ea] rounded-full shadow-[0_0_15px_rgba(0,242,234,0.6)] group-active:scale-125 transition-transform" />
+                    <div className="absolute top-3 left-3 w-[6px] h-8 bg-[#00f2ea] rounded-full shadow-[0_0_15px_rgba(0,242,234,0.6)] group-active:scale-125 transition-transform" />
                   </div>
                   {/* Top-Right */}
-                  <div className="absolute -top-[12px] -right-[12px] w-12 h-12 pointer-events-auto cursor-ne-resize flex items-center justify-center group" 
+                  <div className="absolute -top-[14px] -right-[14px] w-12 h-12 pointer-events-auto cursor-ne-resize flex items-center justify-center group" 
                     onPointerDown={(e) => handlePointerDown('ne', e)}
                   >
-                    <div className="absolute top-3 right-3 w-8 h-[5px] bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] group-active:scale-125 transition-transform" />
-                    <div className="absolute top-3 right-3 w-[5px] h-8 bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] group-active:scale-125 transition-transform" />
+                    <div className="absolute top-3 right-3 w-8 h-[6px] bg-[#00f2ea] rounded-full shadow-[0_0_15px_rgba(0,242,234,0.6)] group-active:scale-125 transition-transform" />
+                    <div className="absolute top-3 right-3 w-[6px] h-8 bg-[#00f2ea] rounded-full shadow-[0_0_15px_rgba(0,242,234,0.6)] group-active:scale-125 transition-transform" />
                   </div>
                   {/* Bottom-Left */}
-                  <div className="absolute -bottom-[12px] -left-[12px] w-12 h-12 pointer-events-auto cursor-sw-resize flex items-center justify-center group" 
+                  <div className="absolute -bottom-[14px] -left-[14px] w-12 h-12 pointer-events-auto cursor-sw-resize flex items-center justify-center group" 
                     onPointerDown={(e) => handlePointerDown('sw', e)}
                   >
-                    <div className="absolute bottom-3 left-3 w-8 h-[5px] bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] group-active:scale-125 transition-transform" />
-                    <div className="absolute bottom-3 left-3 w-[5px] h-8 bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] group-active:scale-125 transition-transform" />
+                    <div className="absolute bottom-3 left-3 w-8 h-[6px] bg-[#00f2ea] rounded-full shadow-[0_0_15px_rgba(0,242,234,0.6)] group-active:scale-125 transition-transform" />
+                    <div className="absolute bottom-3 left-3 w-[6px] h-8 bg-[#00f2ea] rounded-full shadow-[0_0_15px_rgba(0,242,234,0.6)] group-active:scale-125 transition-transform" />
                   </div>
                   {/* Bottom-Right */}
-                  <div className="absolute -bottom-[12px] -right-[12px] w-12 h-12 pointer-events-auto cursor-se-resize flex items-center justify-center group" 
+                  <div className="absolute -bottom-[14px] -right-[14px] w-12 h-12 pointer-events-auto cursor-se-resize flex items-center justify-center group" 
                     onPointerDown={(e) => handlePointerDown('se', e)}
                   >
-                    <div className="absolute bottom-3 right-3 w-8 h-[5px] bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] group-active:scale-125 transition-transform" />
-                    <div className="absolute bottom-3 right-3 w-[5px] h-8 bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] group-active:scale-125 transition-transform" />
+                    <div className="absolute bottom-3 right-3 w-8 h-[6px] bg-[#00f2ea] rounded-full shadow-[0_0_15px_rgba(0,242,234,0.6)] group-active:scale-125 transition-transform" />
+                    <div className="absolute bottom-3 right-3 w-[6px] h-8 bg-[#00f2ea] rounded-full shadow-[0_0_15px_rgba(0,242,234,0.6)] group-active:scale-125 transition-transform" />
                   </div>
-
+ 
                   {/* BAR HANDLES (Edges) */}
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 w-12 h-8 cursor-n-resize pointer-events-auto flex items-start justify-center group" 
                     onPointerDown={(e) => handlePointerDown('n', e)}
                   >
-                    <div className="w-8 h-[5px] bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] mt-3 group-active:scale-x-125 transition-transform" />
+                    <div className="w-8 h-[6px] bg-[#00f2ea] rounded-full shadow-[0_0_15px_rgba(0,242,234,0.6)] mt-3 group-active:scale-x-125 transition-transform" />
                   </div>
                   <div className="absolute bottom-0 left-1/2 -translate-x-1/2 -mb-4 w-12 h-8 cursor-s-resize pointer-events-auto flex items-end justify-center group" 
                     onPointerDown={(e) => handlePointerDown('s', e)}
                   >
-                    <div className="w-8 h-[5px] bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] mb-3 group-active:scale-x-125 transition-transform" />
+                    <div className="w-8 h-[6px] bg-[#00f2ea] rounded-full shadow-[0_0_15px_rgba(0,242,234,0.6)] mb-3 group-active:scale-x-125 transition-transform" />
                   </div>
                   <div className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 w-8 h-12 cursor-w-resize pointer-events-auto flex items-center justify-start group" 
                     onPointerDown={(e) => handlePointerDown('w', e)}
                   >
-                    <div className="w-[5px] h-8 bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] ml-3 group-active:scale-y-125 transition-transform" />
+                    <div className="w-[6px] h-8 bg-[#00f2ea] rounded-full shadow-[0_0_15px_rgba(0,242,234,0.6)] ml-3 group-active:scale-y-125 transition-transform" />
                   </div>
                   <div className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 w-8 h-12 cursor-e-resize pointer-events-auto flex items-center justify-end group" 
                     onPointerDown={(e) => handlePointerDown('e', e)}
                   >
-                    <div className="w-[5px] h-8 bg-[#00f2ea] rounded-full shadow-[0_0_10px_rgba(0,242,234,0.5)] mr-3 group-active:scale-y-125 transition-transform" />
+                    <div className="w-[6px] h-8 bg-[#00f2ea] rounded-full shadow-[0_0_15px_rgba(0,242,234,0.6)] mr-3 group-active:scale-y-125 transition-transform" />
                   </div>
-
+ 
                   {/* Resolution Badge */}
                   <div className="absolute bottom-3 left-1/2 -translate-x-1/2 pointer-events-none">
-                    <div className="px-4 py-1.5 bg-black/80 backdrop-blur-xl rounded-md border border-white/20 text-[11px] font-bold text-white tracking-widest whitespace-nowrap shadow-2xl">
+                    <div className="px-4 py-1.5 bg-black/90 backdrop-blur-3xl rounded-md border border-white/20 text-[11px] font-bold text-white tracking-widest whitespace-nowrap shadow-2xl">
                       {resolution.w} x {resolution.h}
                     </div>
                   </div>
