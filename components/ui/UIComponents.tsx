@@ -929,6 +929,7 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
   
   // Cropping State
   const [aspect, setAspect] = useState<number | undefined>(initialAspect);
+  const [cropShape, setCropShape] = useState<'circle' | 'square' | 'rounded' | 'free'>('circle'); // Default to Circle for better first impression
   const [crop, setCrop] = useState({ x: 10, y: 10, width: 80, height: 80 }); // Percentages
   const [isDragging, setIsDragging] = useState<{ type: 'move' | 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w', startX: number, startY: number, startCrop: any } | null>(null);
 
@@ -1202,22 +1203,22 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
                         width={`${crop.width}%`} 
                         height={`${crop.height}%`} 
                         fill="black" 
-                        rx={aspect === 1 ? "500" : "0"} 
+                        rx={cropShape === 'circle' ? "500" : cropShape === 'rounded' ? "15%" : "0"} 
                       />
                     </mask>
                   </defs>
-                  <rect width="100%" height="100%" fill="#000000" mask="url(#crop-mask)" />
+<rect width="100%" height="100%" fill="#000000" mask="url(#crop-mask)" />
                 </svg>
 
                 {/* THE CROP BOX */}
                 <div 
-                  className="absolute pointer-events-auto cursor-move border-[1px] border-white/40 shadow-[0_0_0_2000px_rgba(0,0,0,0)]"
+                  className="absolute pointer-events-auto cursor-move border-[1px] border-white/40 shadow-[0_0_0_2000px_rgba(0,0,0,0.6)]"
                   style={{ 
                     left: `${crop.x}%`, 
                     top: `${crop.y}%`, 
                     width: `${crop.width}%`, 
                     height: `${crop.height}%`,
-                    borderRadius: aspect === 1 ? '50%' : '0' 
+                    borderRadius: cropShape === 'circle' ? '50%' : cropShape === 'rounded' ? '15%' : '0' 
                   }}
                   onPointerDown={(e) => handlePointerDown('move', e)}
                 >
@@ -1350,18 +1351,38 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
           </div>
 
           <div className="flex items-center gap-12 pt-2">
-            <div className="flex bg-white/5 rounded-xl p-1">
+            <div className="flex bg-white/5 rounded-xl p-1 gap-1">
               <button 
-                onClick={() => setAspect(undefined)}
-                className={`px-8 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${!aspect ? 'bg-[#00f2ea]/20 text-[#00f2ea] shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
+                onClick={() => { setCropShape('circle'); setAspect(1); }}
+                className={`flex items-center gap-2 px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${cropShape === 'circle' ? 'bg-[#00f2ea] text-[#090c19] shadow-lg shadow-[#00f2ea]/20' : 'text-gray-500 hover:text-white'}`}
+                title="Corte Circular"
               >
-                Livre
+                <div className={`w-3 h-3 rounded-full border-2 ${cropShape === 'circle' ? 'border-[#090c19]' : 'border-gray-500'}`} />
+                Redondo
               </button>
               <button 
-                onClick={() => setAspect(1)}
-                className={`px-8 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${aspect === 1 ? 'bg-[#00f2ea]/20 text-[#00f2ea] shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
+                onClick={() => { setCropShape('rounded'); setAspect(1); }}
+                className={`flex items-center gap-2 px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${cropShape === 'rounded' ? 'bg-[#00f2ea] text-[#090c19] shadow-lg shadow-[#00f2ea]/20' : 'text-gray-500 hover:text-white'}`}
+                title="Corte Arredondado"
               >
-                1:1
+                <div className={`w-3 h-3 rounded-[3px] border-2 ${cropShape === 'rounded' ? 'border-[#090c19]' : 'border-gray-500'}`} />
+                Arredondado
+              </button>
+              <button 
+                onClick={() => { setCropShape('square'); setAspect(1); }}
+                className={`flex items-center gap-2 px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${cropShape === 'square' ? 'bg-[#00f2ea] text-[#090c19] shadow-lg shadow-[#00f2ea]/20' : 'text-gray-500 hover:text-white'}`}
+                title="Corte Quadrado"
+              >
+                <div className={`w-3 h-3 rounded-[1px] border-2 ${cropShape === 'square' ? 'border-[#090c19]' : 'border-gray-500'}`} />
+                Quadrado
+              </button>
+              <button 
+                onClick={() => { setCropShape('free'); setAspect(undefined); }}
+                className={`flex items-center gap-2 px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${cropShape === 'free' ? 'bg-[#00f2ea] text-[#090c19] shadow-lg shadow-[#00f2ea]/20' : 'text-gray-500 hover:text-white'}`}
+                title="Corte Livre"
+              >
+                <Scissors size={14} className={cropShape === 'free' ? 'text-[#090c19]' : 'text-gray-500'} />
+                Livre
               </button>
             </div>
 
