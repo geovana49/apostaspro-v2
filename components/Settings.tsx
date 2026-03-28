@@ -4,7 +4,7 @@ import {
     Trash2, RefreshCcw, RefreshCw, Plus, Star, Palette, Edit2, Check, X, Upload, Image as ImageIcon, AlertCircle,
     Gamepad2, Trophy, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target,
     Layout, User, ToggleLeft, ToggleRight, Monitor, LayoutTemplate, Camera, AlertTriangle, Ban, Lock, Mail, Save,
-    Cloud, Crop, Maximize, Minimize, Wand2, Search, Link, Loader2, Smile
+    Cloud, Crop, Maximize, Minimize, Wand2, Search, Link, Loader2, Smile, ChevronDown
 } from 'lucide-react';
 import { Bookmaker, AppSettings, StatusItem, PromotionItem, OriginItem, SettingsTab, User as UserType } from '../types';
 import { FirestoreService } from '../services/firestoreService';
@@ -476,45 +476,48 @@ const Settings: React.FC<SettingsProps> = ({
             </div>
 
             <Card className="p-6 bg-[#0d1121] border-white/5">
-                <h5 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-6">PERFIL DO USUÁRIO</h5>
-                <div className="flex flex-col sm:flex-row items-start gap-6">
-                    <div className="relative group shrink-0">
-                        <div className="w-24 h-24 rounded-2xl border-2 border-white/10 overflow-hidden bg-[#151b2e] flex items-center justify-center shadow-lg relative group">
+                <h5 className="text-xs font-bold text-primary uppercase tracking-wider mb-6 flex items-center gap-2">
+                    <Wand2 size={16} /> MODO DE AJUSTE MANUAL DE AVATARES
+                </h5>
+                <div className="flex flex-col lg:flex-row items-center lg:items-start gap-10">
+                    {/* Primary Tool: The Centralizer Box */}
+                    <div className="flex flex-col items-center justify-center p-8 bg-black/20 rounded-3xl border border-dashed border-primary/20 hover:border-primary/40 transition-all group shrink-0">
+                        <div className="w-32 h-32 rounded-3xl border-2 border-white/10 overflow-hidden bg-[#151b2e] flex items-center justify-center shadow-2xl relative mb-6 group-hover:scale-105 transition-transform duration-500">
                             {appSettings.profileImage ? (
-                                <img src={appSettings.profileImage} alt="Avatar" className="w-full h-full object-cover" />
+                                <img src={appSettings.profileImage} alt="Preview" className="w-full h-full object-cover" />
                             ) : (
-                                <User size={40} className="text-gray-500" />
+                                <User size={50} className="text-gray-700" />
                             )}
                             {appSettings.profileImage && (
                                 <button
                                     onClick={() => handleOpenAdjuster(appSettings.profileImage!, 1, handleCroppedImage)}
                                     className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-[2px]"
                                 >
-                                    <Crop size={24} className="text-primary mb-1 drop-shadow-md" />
-                                    <span className="text-[10px] font-bold text-white uppercase tracking-tighter">Ajustar</span>
+                                    <Crop size={32} className="text-primary mb-1" />
+                                    <span className="text-[10px] font-bold text-white uppercase tracking-wider font-mono">Refinar</span>
                                 </button>
                             )}
                         </div>
 
-                        <div className="flex flex-col gap-2">
-                            <label htmlFor="avatar-upload" className="bg-primary text-[#090c19] px-3 py-1.5 rounded-lg cursor-pointer hover:scale-105 transition-all shadow-lg border-2 border-[#0d1121] flex items-center gap-2 text-xs font-bold">
-                                {isUploading ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
-                                Trocar Foto
+                        <div className="flex flex-col gap-3 w-48">
+                            <label htmlFor="top-manual-upload" className="w-full bg-primary text-[#090c19] px-4 py-3 rounded-xl cursor-pointer hover:bg-primary/90 transition-all shadow-[0_10px_20px_rgba(23,186,164,0.2)] flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                                {isUploading ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
+                                Adicionar Novo
                             </label>
                             
                             {appSettings.profileImage && (
                                 <button
                                     onClick={() => handleOpenAdjuster(appSettings.profileImage!, 1, handleCroppedImage)}
-                                    className="bg-white/5 hover:bg-white/10 text-white/70 hover:text-white px-3 py-1.5 rounded-lg transition-all border border-white/5 flex items-center gap-2 text-xs font-bold"
+                                    className="w-full bg-white/5 hover:bg-white/10 text-white px-4 py-2.5 rounded-xl transition-all border border-white/10 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest"
                                 >
                                     <Maximize size={14} className="text-primary" />
-                                    Centralizar
+                                    Ajustar Atual
                                 </button>
                             )}
                         </div>
                         
                         <input
-                            id="avatar-upload"
+                            id="top-manual-upload"
                             type="file"
                             accept="image/*"
                             className="hidden"
@@ -526,19 +529,16 @@ const Settings: React.FC<SettingsProps> = ({
                             }}
                         />
                     </div>
-                    
-                    <div className="flex-1 w-full space-y-6">
+
+                    <div className="flex-1 w-full space-y-8">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                             <Input
                                 label="Nome de Exibição"
                                 value={appSettings.username || ''}
                                 onChange={(e) => setAppSettings({ ...appSettings, username: e.target.value })}
-                                onBlur={() => {
-                                    if (currentUser) {
-                                        FirestoreService.saveSettings(currentUser.uid, appSettings);
-                                    }
-                                }}
+                                onBlur={() => { if (currentUser) FirestoreService.saveSettings(currentUser.uid, appSettings); }}
                                 placeholder="Seu nome"
+                                icon={<User size={16} />}
                             />
                             
                             <Input
@@ -551,37 +551,40 @@ const Settings: React.FC<SettingsProps> = ({
                                     const numberValue = parseInt(value, 10);
                                     setAppSettings({ ...appSettings, defaultStake: isNaN(numberValue) ? undefined : numberValue });
                                 }}
-                                onBlur={() => {
-                                    if (currentUser) FirestoreService.saveSettings(currentUser.uid, appSettings);
-                                }}
+                                onBlur={() => { if (currentUser) FirestoreService.saveSettings(currentUser.uid, appSettings); }}
                                 placeholder="0,00"
+                                icon={<Coins size={16} />}
                             />
                         </div>
 
-                        <div className="space-y-1.5 w-full sm:w-1/2">
-                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Casa Padrão</label>
-                            <select
-                                className="w-full bg-[#151b2e] border border-white/10 text-white rounded-lg p-2.5 text-sm outline-none focus:border-primary transition-colors appearance-none cursor-pointer"
-                                value={appSettings.defaultBookmakerId || ''}
-                                onChange={(e) => {
-                                    const newSettings = { ...appSettings, defaultBookmakerId: e.target.value };
-                                    setAppSettings(newSettings);
-                                    if (currentUser) {
-                                        FirestoreService.saveSettings(currentUser.uid, newSettings);
-                                    }
-                                }}
-                            >
-                                <option value="">Nenhuma</option>
-                                {bookmakers.map(b => (
-                                    <option key={b.id} value={b.id}>{b.name}</option>
-                                ))}
-                            </select>
+                        <div className="space-y-2 w-full sm:w-1/2">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block">Casa de Apostas Preferencial</label>
+                            <div className="relative group">
+                                <select
+                                    className="w-full bg-[#151b2e] border border-white/10 text-white rounded-xl p-3.5 text-sm outline-none focus:border-primary transition-all appearance-none cursor-pointer hover:border-white/20 shadow-inner pr-10"
+                                    value={appSettings.defaultBookmakerId || ''}
+                                    onChange={(e) => {
+                                        const newSettings = { ...appSettings, defaultBookmakerId: e.target.value };
+                                        setAppSettings(newSettings);
+                                        if (currentUser) FirestoreService.saveSettings(currentUser.uid, newSettings);
+                                    }}
+                                >
+                                    <option value="">Nenhuma Preferência</option>
+                                    {bookmakers.map(b => (
+                                        <option key={b.id} value={b.id}>{b.name}</option>
+                                    ))}
+                                </select>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none group-hover:text-primary transition-colors">
+                                    <ChevronDown size={18} />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div className="mt-8 pt-8 border-t border-white/5 space-y-8">
-                    {/* Avatars Section - Full Width and Clean */}
+                    {/* Avatars Section - Hidden for Manual Adjustment Mode */}
+                    {/* 
                     <div>
                         <label className="text-xs font-bold text-textMuted uppercase tracking-wider mb-6 block flex items-center gap-2">
                             <span className="bg-primary/10 p-1.5 rounded-md text-primary">
@@ -619,6 +622,9 @@ const Settings: React.FC<SettingsProps> = ({
                             ))}
                         </div>
                     </div>
+                    */}
+
+
 
                     {/* Maintenance Section - Clean Block */}
                     <div className="pt-8 border-t border-white/5 space-y-6">
