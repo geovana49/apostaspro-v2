@@ -745,45 +745,75 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                 className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#17baa4]/50 cursor-pointer w-full"
                                             />
                                         </div>
-                                        <div className="flex flex-col gap-2">
-                                            <div className="flex items-center justify-between">
-                                                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Hora</label>
-                                                <span className="text-primary font-bold">{tempTime ? tempTime.split(':')[0] : '12'}</span>
-                                            </div>
-                                            <div className="flex gap-2 overflow-x-auto scrollbar-hide snap-x pb-1 pr-4">
-                                                {Array.from({ length: 24 }).map((_, i) => {
-                                                    const hour = i.toString().padStart(2, '0');
-                                                    const isSelected = (tempTime ? tempTime.split(':')[0] : '12') === hour;
-                                                    return (
+                                        <div className="flex flex-col gap-3">
+                                            {/* Hora Section */}
+                                            <div className="flex flex-col gap-2">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Hora (12h)</label>
+                                                    <div className="flex gap-1">
                                                         <button
-                                                            key={hour}
-                                                            onClick={() => setTempTime(`${hour}:${tempTime ? tempTime.split(':')[1] : '00'}`)}
-                                                            className={`snap-center shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs transition-all border ${isSelected ? 'bg-primary border-primary text-[#090c19] shadow-[0_0_15px_rgba(23,186,164,0.4)] scale-105' : 'bg-black/40 border-white/10 text-white hover:bg-white/10'}`}
+                                                            onClick={() => {
+                                                                const [h, m] = (tempTime || "12:00").split(':');
+                                                                let hour = parseInt(h);
+                                                                if (hour >= 12) hour -= 12;
+                                                                setTempTime(`${hour.toString().padStart(2, '0')}:${m}`);
+                                                            }}
+                                                            className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${(parseInt((tempTime || "12:00").split(':')[0]) < 12) ? 'bg-primary text-[#090c19]' : 'bg-white/5 text-gray-500 hover:text-white'}`}
                                                         >
-                                                            {hour}
+                                                            AM
                                                         </button>
-                                                    );
-                                                })}
+                                                        <button
+                                                            onClick={() => {
+                                                                const [h, m] = (tempTime || "12:00").split(':');
+                                                                let hour = parseInt(h);
+                                                                if (hour < 12) hour += 12;
+                                                                setTempTime(`${hour.toString().padStart(2, '0')}:${m}`);
+                                                            }}
+                                                            className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${(parseInt((tempTime || "12:00").split(':')[0]) >= 12) ? 'bg-primary text-[#090c19]' : 'bg-white/5 text-gray-500 hover:text-white'}`}
+                                                        >
+                                                            PM
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-6 gap-1.5">
+                                                    {Array.from({ length: 12 }).map((_, i) => {
+                                                        const displayHour = i === 0 ? 12 : i;
+                                                        const isPM = parseInt((tempTime || "12:00").split(':')[0]) >= 12;
+                                                        const militaryHour = isPM ? (i === 0 ? 12 : i + 12) : (i === 0 ? 0 : i);
+                                                        const hourStr = militaryHour.toString().padStart(2, '0');
+                                                        const isSelected = (tempTime || "12:00").split(':')[0] === hourStr;
+
+                                                        return (
+                                                            <button
+                                                                key={i}
+                                                                onClick={() => setTempTime(`${hourStr}:${(tempTime || "12:00").split(':')[1]}`)}
+                                                                className={`h-8 rounded-lg flex items-center justify-center font-bold text-[11px] transition-all border ${isSelected ? 'bg-primary border-primary text-[#090c19] shadow-[0_0_10px_rgba(23,186,164,0.3)]' : 'bg-black/20 border-white/5 text-white hover:bg-white/10'}`}
+                                                            >
+                                                                {displayHour}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
 
-                                            <div className="flex items-center justify-between mt-1">
+                                            {/* Minuto Section */}
+                                            <div className="flex flex-col gap-2">
                                                 <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Minuto</label>
-                                                <span className="text-primary font-bold">{tempTime ? tempTime.split(':')[1] : '00'}</span>
-                                            </div>
-                                            <div className="flex gap-2 overflow-x-auto scrollbar-hide snap-x pb-1 pr-4">
-                                                {Array.from({ length: 12 }).map((_, i) => {
-                                                    const minute = (i * 5).toString().padStart(2, '0');
-                                                    const isSelected = (tempTime ? tempTime.split(':')[1] : '00') === minute;
-                                                    return (
-                                                        <button
-                                                            key={minute}
-                                                            onClick={() => setTempTime(`${tempTime ? tempTime.split(':')[0] : '12'}:${minute}`)}
-                                                            className={`snap-center shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs transition-all border ${isSelected ? 'bg-primary border-primary text-[#090c19] shadow-[0_0_15px_rgba(23,186,164,0.4)] scale-105' : 'bg-black/40 border-white/10 text-white hover:bg-white/10'}`}
-                                                        >
-                                                            {minute}
-                                                        </button>
-                                                    );
-                                                })}
+                                                <div className="grid grid-cols-6 gap-1.5">
+                                                    {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => {
+                                                        const minStr = m.toString().padStart(2, '0');
+                                                        const isSelected = (tempTime || "12:00").split(':')[1] === minStr;
+                                                        return (
+                                                            <button
+                                                                key={m}
+                                                                onClick={() => setTempTime(`${(tempTime || "12:00").split(':')[0]}:${minStr}`)}
+                                                                className={`h-8 rounded-lg flex items-center justify-center font-bold text-[11px] transition-all border ${isSelected ? 'bg-primary border-primary text-[#090c19] shadow-[0_0_10px_rgba(23,186,164,0.3)]' : 'bg-black/20 border-white/5 text-white hover:bg-white/10'}`}
+                                                            >
+                                                                {minStr}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2 mt-2 w-full">
