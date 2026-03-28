@@ -4,7 +4,7 @@ import {
     Trash2, RefreshCcw, RefreshCw, Plus, Star, Palette, Edit2, Check, X, Upload, Image as ImageIcon, AlertCircle,
     Gamepad2, Trophy, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target,
     Layout, User, ToggleLeft, ToggleRight, Monitor, LayoutTemplate, Camera, AlertTriangle, Ban, Lock, Mail, Save,
-    Cloud, Crop, Maximize, Minimize, Wand2, Search, Link, Loader2
+    Cloud, Crop, Maximize, Minimize, Wand2, Search, Link, Loader2, Smile
 } from 'lucide-react';
 import { Bookmaker, AppSettings, StatusItem, PromotionItem, OriginItem, SettingsTab, User as UserType } from '../types';
 import { FirestoreService } from '../services/firestoreService';
@@ -479,7 +479,7 @@ const Settings: React.FC<SettingsProps> = ({
                 <h5 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-6">PERFIL DO USUÁRIO</h5>
                 <div className="flex flex-col sm:flex-row items-start gap-6">
                     <div className="relative group shrink-0">
-                        <div className="w-24 h-24 rounded-full border-2 border-white/10 overflow-hidden bg-[#151b2e] flex items-center justify-center shadow-lg">
+                        <div className="w-24 h-24 rounded-2xl border-2 border-white/10 overflow-hidden bg-[#151b2e] flex items-center justify-center shadow-lg">
                             {appSettings.profileImage ? (
                                 <img src={appSettings.profileImage} alt="Avatar" className="w-full h-full object-cover" />
                             ) : (
@@ -511,8 +511,9 @@ const Settings: React.FC<SettingsProps> = ({
                             }}
                         />
                     </div>
-                    <div className="flex-1 w-full space-y-5">
-                        <div>
+                    
+                    <div className="flex-1 w-full space-y-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                             <Input
                                 label="Nome de Exibição"
                                 value={appSettings.username || ''}
@@ -524,9 +525,7 @@ const Settings: React.FC<SettingsProps> = ({
                                 }}
                                 placeholder="Seu nome"
                             />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
+                            
                             <Input
                                 label="Stake Padrão"
                                 prefix="R$"
@@ -542,125 +541,128 @@ const Settings: React.FC<SettingsProps> = ({
                                 }}
                                 placeholder="0,00"
                             />
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Casa Padrão</label>
-                                <select
-                                    className="w-full bg-[#151b2e] border border-white/10 text-white rounded-lg p-2.5 text-sm outline-none focus:border-primary transition-colors appearance-none cursor-pointer"
-                                    value={appSettings.defaultBookmakerId || ''}
-                                    onChange={(e) => {
-                                        setAppSettings({ ...appSettings, defaultBookmakerId: e.target.value });
-                                        if (currentUser) {
-                                            // Small delay to ensure state is updated before save if doing immediate save
-                                            // But for select usually we can save immediately or use effect. 
-                                            // Ideally we save on blur or separate effect, but select doesn't always blur nicely.
-                                            // Let's rely on the user navigating away or explicit save if we had one, 
-                                            // but since other fields save on blur, let's just save.
-                                            // Actually, let's just update local state, and maybe add a useEffect for auto-save or just do it here.
-                                            const newSettings = { ...appSettings, defaultBookmakerId: e.target.value };
-                                            FirestoreService.saveSettings(currentUser.uid, newSettings);
-                                        }
-                                    }}
-                                >
-                                    <option value="">Nenhuma</option>
-                                    {bookmakers.map(b => (
-                                        <option key={b.id} value={b.id}>{b.name}</option>
-                                    ))}
-                                </select>
-                            </div>
                         </div>
-                        <div className="pt-6 border-t border-white/5 space-y-4">
-                            <h4 className="font-bold text-white flex items-center gap-2">
+
+                        <div className="space-y-1.5 w-full sm:w-1/2">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Casa Padrão</label>
+                            <select
+                                className="w-full bg-[#151b2e] border border-white/10 text-white rounded-lg p-2.5 text-sm outline-none focus:border-primary transition-colors appearance-none cursor-pointer"
+                                value={appSettings.defaultBookmakerId || ''}
+                                onChange={(e) => {
+                                    const newSettings = { ...appSettings, defaultBookmakerId: e.target.value };
+                                    setAppSettings(newSettings);
+                                    if (currentUser) {
+                                        FirestoreService.saveSettings(currentUser.uid, newSettings);
+                                    }
+                                }}
+                            >
+                                <option value="">Nenhuma</option>
+                                {bookmakers.map(b => (
+                                    <option key={b.id} value={b.id}>{b.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-8 pt-8 border-t border-white/5 space-y-8">
+                    {/* Avatars Section - Full Width and Clean */}
+                    <div>
+                        <label className="text-xs font-bold text-textMuted uppercase tracking-wider mb-6 block flex items-center gap-2">
+                            <span className="bg-primary/10 p-1.5 rounded-md text-primary">
+                                <Smile size={14} />
+                            </span>
+                            Sugestões de Avatar
+                        </label>
+                        <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                            {PRESET_AVATARS.map((avatar, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => setAppSettings({ ...appSettings, profileImage: avatar })}
+                                    className={`aspect-square rounded-2xl border-2 overflow-hidden transition-all hover:shadow-lg ${appSettings.profileImage === avatar
+                                        ? 'border-primary ring-4 ring-primary/20 scale-110 shadow-xl z-10'
+                                        : 'border-white/10 hover:border-primary/50 hover:scale-105'
+                                        }`}
+                                    title={`Avatar ${index + 1}`}
+                                >
+                                    <img src={avatar} alt={`Avatar ${index + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Maintenance Section - Clean Block */}
+                    <div className="pt-8 border-t border-white/5 space-y-6">
+                        <div>
+                            <h4 className="font-bold text-white flex items-center gap-2 mb-2">
                                 <Monitor size={18} className="text-primary" />
                                 Manutenção do Aplicativo
                             </h4>
-                            <p className="text-[11px] text-textMuted leading-relaxed">
+                            <p className="text-[11px] text-textMuted leading-relaxed max-w-xl">
                                 Se você notar que o aplicativo no celular está desatualizado (faltando recursos que aparecem no site), use os botões abaixo para forçar a atualização.
                             </p>
-                            <div className="flex flex-wrap gap-3">
-                                <button
-                                    onClick={() => {
-                                        if (confirm("Deseja verificar e forçar a atualização para a versão mais recente? O app irá recarregar.")) {
-                                            if ('serviceWorker' in navigator) {
-                                                navigator.serviceWorker.getRegistrations().then(registrations => {
-                                                    for (let registration of registrations) {
-                                                        registration.update();
-                                                    }
-                                                });
-                                            }
-                                            window.location.reload();
-                                        }
-                                    }}
-                                    className="flex items-center gap-2 bg-[#151b2e] hover:bg-white/5 border border-primary/20 hover:border-primary/50 text-primary px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-lg hover:shadow-primary/10"
-                                >
-                                    <RefreshCw size={14} className="animate-spin-slow" />
-                                    Atualizar Aplicativo (Force)
-                                </button>
-
-                                <button
-                                    onClick={async () => {
-                                        if (confirm("Isso irá limpar o cache local de apostas e forçar uma nova sincronização total com o banco de dados. Continuar?")) {
-                                            await FirestoreService.clearLocalCache();
-                                        }
-                                    }}
-                                    className="flex items-center gap-2 bg-[#151b2e] hover:bg-white/5 border border-white/10 hover:border-white/20 text-gray-400 hover:text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all"
-                                >
-                                    <Trash2 size={14} />
-                                    Limpar Cache de Dados
-                                </button>
-                            </div>
                         </div>
+                        
+                        <div className="flex flex-wrap gap-3">
+                            <button
+                                onClick={() => {
+                                    if (confirm("Deseja verificar e forçar a atualização para a versão mais recente? O app irá recarregar.")) {
+                                        if ('serviceWorker' in navigator) {
+                                            navigator.serviceWorker.getRegistrations().then(registrations => {
+                                                for (let registration of registrations) {
+                                                    registration.update();
+                                                }
+                                            });
+                                        }
+                                        window.location.reload();
+                                    }
+                                }}
+                                className="flex items-center gap-2 bg-[#151b2e] hover:bg-white/5 border border-primary/20 hover:border-primary/50 text-primary px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-lg hover:shadow-primary/10"
+                            >
+                                <RefreshCw size={14} className="animate-spin-slow" />
+                                Atualizar Aplicativo (Force)
+                            </button>
+
+                            <button
+                                onClick={async () => {
+                                    if (confirm("Isso irá limpar o cache local de apostas e forçar uma nova sincronização total com o banco de dados. Continuar?")) {
+                                        await FirestoreService.clearLocalCache();
+                                    }
+                                }}
+                                className="flex items-center gap-2 bg-[#151b2e] hover:bg-white/5 border border-white/10 hover:border-white/20 text-gray-400 hover:text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all"
+                            >
+                                <Trash2 size={14} />
+                                Limpar Cache de Dados
+                            </button>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20">
-                                <h5 className="font-bold text-red-400 mb-2 flex items-center gap-2"><Trash2 size={16} /> Reset de Fábrica</h5>
-                                <p className="text-xs text-gray-400 mb-4">Apaga todos os seus dados e restaura as configurações originais. Esta ação é irreversível.</p>
+                            <div className="p-5 rounded-2xl bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 transition-colors">
+                                <h5 className="font-bold text-red-400 mb-2 flex items-center gap-2 text-sm"><Trash2 size={16} /> Reset de Fábrica</h5>
+                                <p className="text-[11px] text-gray-500 mb-4 font-medium">Apaga todos os seus dados e restaura as configurações originais.</p>
                                 <Button
                                     onClick={() => setIsResetModalOpen(true)}
                                     variant="danger"
-                                    className="w-full text-sm"
+                                    className="w-full text-xs py-2"
                                 >
                                     Resetar Tudo
                                 </Button>
                             </div>
 
-                            <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
-                                <h5 className="font-bold text-blue-400 mb-2 flex items-center gap-2"><RefreshCcw size={16} /> Reparar Sincronização</h5>
-                                <p className="text-xs text-gray-400 mb-4">Se seus dados estiverem diferentes entre dispositivos (celular/PC), use isso para limpar o cache local e baixar tudo de novo.</p>
+                            <div className="p-5 rounded-2xl bg-blue-500/5 border border-blue-500/10 hover:bg-blue-500/10 transition-colors">
+                                <h5 className="font-bold text-blue-400 mb-2 flex items-center gap-2 text-sm"><RefreshCcw size={16} /> Reparar Sincronização</h5>
+                                <p className="text-[11px] text-gray-500 mb-4 font-medium">Se seus dados estiverem diferentes entre dispositivos, use isso para baixar tudo novamente.</p>
                                 <Button
                                     onClick={() => {
                                         if (confirm("Isso irá recarregar a página e baixar todos os dados novamente da nuvem. Deseja continuar?")) {
                                             FirestoreService.clearLocalCache();
                                         }
                                     }}
-                                    className="w-full text-sm bg-blue-600 hover:bg-blue-700 text-white border-none"
+                                    className="w-full text-xs py-2 bg-blue-600/80 hover:bg-blue-600 text-white border-none"
                                 >
                                     Forçar Ressincronização
                                 </Button>
                             </div>
-                        </div>
-                    </div>
-                    <div className="pt-4 mt-4 border-t border-white/5">
-                        <label className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4 block flex items-center gap-2">
-                            <span className="bg-primary/10 p-1.5 rounded-md">
-                                <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </span>
-                            Sugestões de Avatar
-                        </label>
-                        <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-3">
-                            {PRESET_AVATARS.map((avatar, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => setAppSettings({ ...appSettings, profileImage: avatar })}
-                                    className={`aspect-square rounded-2xl border-2 overflow-hidden transition-all hover:shadow-lg ${appSettings.profileImage === avatar
-                                        ? 'border-primary ring-4 ring-primary/20 scale-110 shadow-xl'
-                                        : 'border-white/10 hover:border-primary/50 hover:scale-105'
-                                        }`}
-                                    title={`Avatar ${index + 1}`}
-                                >
-                                    <img src={avatar} alt={`Avatar ${index + 1}`} className="w-full h-full object-cover" />
-                                </button>
-                            ))}
                         </div>
                     </div>
                 </div>
