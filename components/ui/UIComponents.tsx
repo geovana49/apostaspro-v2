@@ -1129,7 +1129,7 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
             {/* The actual image + overlay container, sized exactly to the rendered pixels */}
             <div 
               ref={containerRef}
-              className="relative shadow-2xl transition-all duration-300 ease-out"
+              className="relative shadow-2xl"
               style={{
                 width: imageSize.width || 'auto',
                 height: imageSize.height || 'auto',
@@ -1198,13 +1198,13 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
                     {['nw', 'ne', 'sw', 'se'].map((h) => (
                       <div 
                         key={h}
-                        className={`absolute w-4 h-4 bg-white border-2 border-primary shadow-lg z-30
-                          ${h === 'nw' ? '-top-2 -left-2 cursor-nw-resize' : ''}
-                          ${h === 'ne' ? '-top-2 -right-2 cursor-ne-resize' : ''}
-                          ${h === 'sw' ? '-bottom-2 -left-2 cursor-sw-resize' : ''}
-                          ${h === 'se' ? '-bottom-2 -right-2 cursor-se-resize' : ''}
+                        className={`absolute w-6 h-6 bg-white border-2 border-primary shadow-lg z-30 rounded-full pointer-events-auto
+                          ${h === 'nw' ? '-top-3 -left-3 cursor-nw-resize' : ''}
+                          ${h === 'ne' ? '-top-3 -right-3 cursor-ne-resize' : ''}
+                          ${h === 'sw' ? '-bottom-3 -left-3 cursor-sw-resize' : ''}
+                          ${h === 'se' ? '-bottom-3 -right-3 cursor-se-resize' : ''}
                         `}
-                        onMouseDown={(e) => { e.stopPropagation(); handleMouseDown(h as any, e); }}
+                        onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); handleMouseDown(h as any, e); }}
                         onTouchStart={(e) => { e.stopPropagation(); handleMouseDown(h as any, e); }}
                       />
                     ))}
