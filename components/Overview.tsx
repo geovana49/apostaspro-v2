@@ -561,22 +561,26 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
                             {bestMonths.map((item, index) => {
                                 const [year, month] = item.month.split('-');
                                 const date = new Date(Number(year), Number(month) - 1, 1);
-                                const monthName = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                                // Abrevia o mês para economizar espaço e evitar quebras (ex: Dez/25)
+                                const monthName = date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+                                const yearShort = year.slice(2);
 
                                 return (
-                                    <div key={item.month} className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/5">
-                                        <div className="flex items-center gap-3">
+                                    <div key={item.month} className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/5 gap-2 overflow-hidden">
+                                        <div className="flex items-center gap-3 min-w-0">
                                             <div className={`
-                                                w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold
+                                                w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black shrink-0
                                                 ${index === 0 ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' :
                                                     index === 1 ? 'bg-gray-400/20 text-gray-400 border border-gray-400/30' :
                                                         'bg-orange-700/20 text-orange-700 border border-orange-700/30'}
                                             `}>
                                                 {index + 1}º
                                             </div>
-                                            <span className="text-sm text-gray-300 capitalize">{monthName}</span>
+                                            <span className="text-sm font-bold text-gray-200 capitalize truncate">
+                                                {monthName}/{yearShort}
+                                            </span>
                                         </div>
-                                        <span className={`text-sm font-bold ${item.profit >= 0 ? 'text-[#6ee7b7]' : 'text-red-400'}`}>
+                                        <span className={`text-sm font-black whitespace-nowrap shrink-0 ${item.profit >= 0 ? 'text-[#6ee7b7]' : 'text-red-400'}`}>
                                             <MoneyDisplay value={item.profit} privacyMode={settings.privacyMode} />
                                         </span>
                                     </div>
