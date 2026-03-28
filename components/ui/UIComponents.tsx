@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronDown, Check, ZoomIn, RotateCcw, Move, Crop, Pipette, ChevronUp, Gamepad2, Trophy, Star, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target, Search, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { X, ChevronDown, Check, ZoomIn, ZoomOut, RotateCcw, RotateCw, Move, Crop, Pipette, ChevronUp, Gamepad2, Trophy, Star, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target, Search, ChevronLeft, ChevronRight, Download, Sun, Contrast, Maximize, Minimize, FlipHorizontal, FlipVertical, Sparkles, Scissors, Scaling } from 'lucide-react';
 
 // --- Color Helpers ---
 const hexToRgb = (hex: string) => {
@@ -902,223 +902,401 @@ export const ICON_MAP: Record<string, React.ElementType> = {
 export const RenderIcon: React.FC<{ iconSource?: string, size?: number, className?: string }> = ({ iconSource, size = 16, className = "" }) => {
   if (!iconSource) return <Star size={size} className={className} />;
 
-  if (iconSource.startsWith('data:') || iconSource.startsWith('http') || iconSource.includes('/')) {
-    return <img src={iconSource} alt="icon" className={`object-contain ${className}`} style={{ width: size, height: size }} />;
-  }
-
   const IconComp = ICON_MAP[iconSource] || Star;
   return <IconComp size={size} className={className} />;
 };
 
-// --- Image Adjuster ---
+// --- Pro Image Editor ---
 interface ImageAdjusterProps {
   isOpen: boolean;
   imageSrc: string;
   onClose: () => void;
   onSave: (newImage: Blob | null) => void;
-  aspect?: number; // Desired aspect ratio (width/height). Default 1 (square).
+  aspect?: number; 
 }
 
-export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, onClose, onSave, aspect = 1 }) => {
+export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, onClose, onSave, aspect: initialAspect = 1 }) => {
+  // Transformation State
   const [scale, setScale] = useState(1);
   const [rotation, setRotation] = useState(0);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+  const [flipH, setFlipH] = useState(false);
+  const [flipV, setFlipV] = useState(false);
+  
+  // Filter State
+  const [brightness, setBrightness] = useState(100);
+  const [contrast, setContrast] = useState(100);
+  const [saturation, setSaturation] = useState(100);
+  
+  // Cropping State
+  const [aspect, setAspect] = useState<number | undefined>(initialAspect);
+  const [crop, setCrop] = useState({ x: 10, y: 10, width: 80, height: 80 }); // Percentages
+  const [isDragging, setIsDragging] = useState<{ type: 'move' | 'nw' | 'ne' | 'sw' | 'se', startX: number, startY: number, startCrop: any } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
 
-  // Reset state on open
+  // Reset on open
   useEffect(() => {
     if (isOpen) {
       setScale(1);
       setRotation(0);
-      setPosition({ x: 0, y: 0 });
+      setFlipH(false);
+      setFlipV(false);
+      setBrightness(100);
+      setContrast(100);
+      setSaturation(100);
+      setAspect(initialAspect);
+      setCrop({ x: 10, y: 10, width: 80, height: 80 });
     }
-  }, [isOpen, imageSrc]);
+  }, [isOpen, imageSrc, initialAspect]);
 
-  // Mouse Wheel Zoom
+  const handleMouseDown = (type: 'move' | 'nw' | 'ne' | 'sw' | 'se', e: React.MouseEvent | React.TouchEvent) => {
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    setIsDragging({ type, startX: clientX, startY: clientY, startCrop: { ...crop } });
+  };
+
+  const handleMouseMove = useCallback((e: MouseEvent | TouchEvent) => {
+    if (!isDragging || !containerRef.current) return;
+    
+    const rect = containerRef.current.getBoundingClientRect();
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
+    
+    const dx = ((clientX - isDragging.startX) / rect.width) * 100;
+    const dy = ((clientY - isDragging.startY) / rect.height) * 100;
+    
+    let newCrop = { ...isDragging.startCrop };
+
+    if (isDragging.type === 'move') {
+      newCrop.x = Math.max(0, Math.min(100 - newCrop.width, newCrop.x + dx));
+      newCrop.y = Math.max(0, Math.min(100 - newCrop.height, newCrop.y + dy));
+    } else {
+      // Resizing logic
+      if (isDragging.type.includes('w')) {
+        const potentialWidth = newCrop.width - dx;
+        if (potentialWidth > 5) {
+          newCrop.x = newCrop.x + dx;
+          newCrop.width = potentialWidth;
+        }
+      }
+      if (isDragging.type.includes('e')) {
+        newCrop.width = Math.max(5, Math.min(100 - newCrop.x, newCrop.width + dx));
+      }
+      if (isDragging.type.includes('n')) {
+        const potentialHeight = newCrop.height - dy;
+        if (potentialHeight > 5) {
+          newCrop.y = newCrop.y + dy;
+          newCrop.height = potentialHeight;
+        }
+      }
+      if (isDragging.type.includes('s')) {
+        newCrop.height = Math.max(5, Math.min(100 - newCrop.y, newCrop.height + dy));
+      }
+
+      // Maintain Aspect Ratio if locked
+      if (aspect) {
+        const rectAspect = (rect.width / rect.height);
+        const currentCropPixelWidth = (newCrop.width / 100) * rect.width;
+        const currentCropPixelHeight = (newCrop.height / 100) * rect.height;
+        
+        // Force height based on width and aspect
+        const targetPixelHeight = currentCropPixelWidth / aspect;
+        newCrop.height = (targetPixelHeight / rect.height) * 100;
+
+        // Boundary check for height
+        if (newCrop.y + newCrop.height > 100) {
+          newCrop.height = 100 - newCrop.y;
+          const correctedPixelWidth = (newCrop.height / 100) * rect.height * aspect;
+          newCrop.width = (correctedPixelWidth / rect.width) * 100;
+        }
+      }
+    }
+
+    setCrop(newCrop);
+  }, [isDragging, aspect]);
+
   useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      if (!isOpen) return;
-      e.preventDefault();
-      const delta = e.deltaY * -0.001;
-      const newScale = Math.min(3, Math.max(0.1, scale + delta));
-      setScale(newScale);
-    };
-
-    const container = containerRef.current;
-    if (container) {
-      container.addEventListener('wheel', handleWheel, { passive: false });
+    const up = () => setIsDragging(null);
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', up);
+      window.addEventListener('touchmove', handleMouseMove, { passive: false });
+      window.addEventListener('touchend', up);
     }
     return () => {
-      if (container) {
-        container.removeEventListener('wheel', handleWheel);
-      }
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', up);
+      window.removeEventListener('touchmove', handleMouseMove);
+      window.removeEventListener('touchend', up);
     };
-  }, [isOpen, scale]);
-
-  const handleReset = () => {
-    setScale(1);
-    setRotation(0);
-    setPosition({ x: 0, y: 0 });
-  };
-
-  const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
-    setIsDragging(true);
-    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-    setStartPos({ x: clientX - position.x, y: clientY - position.y });
-  };
-
-  const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDragging) return;
-    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-    setPosition({ x: clientX - startPos.x, y: clientY - startPos.y });
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
+  }, [isDragging, handleMouseMove]);
 
   const handleSave = () => {
-    if (!imgRef.current) return;
+    if (!imgRef.current || !containerRef.current) return;
 
+    const img = imgRef.current;
     const canvas = document.createElement('canvas');
-    const outputSize = 512;
-    canvas.width = outputSize;
-    canvas.height = outputSize / aspect;
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Output size resolution (high quality)
+    const outputWidth = 1024;
+    const outputHeight = aspect ? outputWidth / aspect : (outputWidth * (crop.height / crop.width));
+    canvas.width = outputWidth;
+    canvas.height = outputHeight;
+
     ctx.save();
-    ctx.translate(canvas.width / 2, canvas.height / 2);
-    ctx.rotate((rotation * Math.PI) / 180);
-    ctx.scale(scale, scale);
+    
+    // 1. Apply Filters
+    ctx.filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
 
-    const uiViewportSize = 280;
-    const ratio = outputSize / uiViewportSize;
+    // 2. Calculate source rect in pixels
+    const sourceX = (crop.x / 100) * img.naturalWidth;
+    const sourceY = (crop.y / 100) * img.naturalHeight;
+    const sourceW = (crop.width / 100) * img.naturalWidth;
+    const sourceH = (crop.height / 100) * img.naturalHeight;
 
-    ctx.translate(position.x * ratio, position.y * ratio);
-
-    const img = imgRef.current;
-    const imgAspect = img.naturalWidth / img.naturalHeight;
-
-    const drawWidth = canvas.width;
-    const drawHeight = drawWidth / imgAspect;
-
-    ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+    // 3. Transformations (Mirror/Rotate) - Complex logic as we are drawing a sub-rect
+    // To simplify: we draw the Full image transformed on an intermediate canvas, then clip
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = img.naturalWidth;
+    tempCanvas.height = img.naturalHeight;
+    const tCtx = tempCanvas.getContext('2d');
+    if (tCtx) {
+      tCtx.save();
+      tCtx.translate(tempCanvas.width / 2, tempCanvas.height / 2);
+      tCtx.rotate((rotation * Math.PI) / 180);
+      tCtx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+      tCtx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+      tCtx.restore();
+      
+      ctx.drawImage(tempCanvas, sourceX, sourceY, sourceW, sourceH, 0, 0, canvas.width, canvas.height);
+    }
 
     ctx.restore();
 
     canvas.toBlob((blob) => {
       onSave(blob);
-    }, 'image/png', 0.9);
+    }, 'image/png', 0.95);
     onClose();
   };
 
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100002] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-[#151b2e] border border-white/10 rounded-2xl w-full max-w-sm flex flex-col shadow-2xl">
-        <div className="p-4 border-b border-white/5 flex items-center justify-between">
-          <h3 className="font-bold text-white flex items-center gap-2"><Crop size={16} /> Ajustar Imagem</h3>
-          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors"><X size={18} className="text-gray-400" /></button>
+    <div className="fixed inset-0 z-[100005] flex items-center justify-center bg-[#090c19]/95 backdrop-blur-xl animate-in fade-in duration-300 overflow-hidden">
+      <div className="w-full h-full lg:max-w-6xl lg:h-[90vh] bg-[#151b2e] border border-white/5 lg:rounded-3xl shadow-2xl flex flex-col relative overflow-hidden">
+        
+        {/* Header */}
+        <div className="p-4 border-b border-white/5 flex items-center justify-between bg-[#1c2438]/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-xl text-primary">
+              <Scissors size={20} />
+            </div>
+            <div>
+              <h3 className="font-bold text-white tracking-tight">Editor de Imagem Pro</h3>
+              <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Estúdio de Identidade Visual</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full transition-all text-gray-500 hover:text-white">
+            <X size={24} />
+          </button>
         </div>
 
-        <div className="p-6 flex flex-col items-center gap-6">
-          {/* Viewport */}
-          <div
-            className="group relative overflow-hidden bg-black/50 border-2 border-white/5 cursor-move rounded-3xl touch-none shadow-2xl"
-            style={{ width: '280px', height: `${280 / aspect}px` }}
-            onMouseDown={handleMouseDown}
-            onTouchStart={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onTouchMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onTouchEnd={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-            ref={containerRef}
-          >
-            {/* Visual Mask Overlays */}
-            <div className="absolute inset-0 pointer-events-none z-20">
-              <div className="w-full h-full border-[20px] border-black/40" />
-              <div className="absolute inset-0 border-2 border-white/20 rounded-3xl" />
-            </div>
-
-            {/* Grid overlay for reference */}
-            <div className="absolute inset-x-5 inset-y-5 pointer-events-none z-10 opacity-20">
-              <div className="w-full h-1/3 border-b border-white absolute top-0" />
-              <div className="w-full h-1/3 border-b border-white absolute bottom-0" />
-              <div className="h-full w-1/3 border-r border-white absolute left-0" />
-              <div className="h-full w-1/3 border-r border-white absolute right-0" />
-            </div>
-
-            <img
-              ref={imgRef}
-              src={imageSrc}
-              alt="To Crop"
-              className="absolute max-w-[280px] select-none pointer-events-none"
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+          {/* Main Editing Area */}
+          <div className="flex-1 bg-black/40 flex items-center justify-center p-8 relative">
+            <div 
+              ref={containerRef}
+              className="relative shadow-2xl"
               style={{
-                top: '50%', left: '50%',
-                transform: `translate(-50%, -50%) translate(${position.x}px, ${position.y}px) rotate(${rotation}deg) scale(${scale})`,
-                transformOrigin: 'center'
+                maxWidth: '100%',
+                maxHeight: '100%',
+                aspectRatio: imgRef.current ? `${imgRef.current.naturalWidth}/${imgRef.current.naturalHeight}` : 'auto'
               }}
-            />
+            >
+              <img
+                ref={imgRef}
+                src={imageSrc}
+                alt="Editor"
+                className="max-w-full max-h-[50vh] lg:max-h-[60vh] object-contain select-none"
+                style={{
+                  filter: `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`,
+                  transform: `rotate(${rotation}deg) scale(${flipH ? -1 : 1}, ${flipV ? -1 : 1})`
+                }}
+              />
+
+              {/* Crop Overlay */}
+              <div className="absolute inset-0 z-10 overflow-hidden pointer-events-none">
+                {/* Dark Mask */}
+                <svg className="w-full h-full pointer-events-none opacity-60">
+                  <defs>
+                    <mask id="crop-mask">
+                      <rect width="100%" height="100%" fill="white" />
+                      <rect 
+                        x={`${crop.x}%`} 
+                        y={`${crop.y}%`} 
+                        width={`${crop.width}%`} 
+                        height={`${crop.height}%`} 
+                        fill="black" 
+                        rx={initialAspect === 1 ? "100" : "0"}
+                      />
+                    </mask>
+                  </defs>
+                  <rect width="100%" height="100%" fill="#090c19" mask="url(#crop-mask)" />
+                </svg>
+
+                {/* The Crop Box */}
+                <div 
+                  className="absolute pointer-events-auto cursor-move border-2 border-primary shadow-[0_0_0_1px_rgba(255,255,255,0.2)] group"
+                  style={{ 
+                    left: `${crop.x}%`, 
+                    top: `${crop.y}%`, 
+                    width: `${crop.width}%`, 
+                    height: `${crop.height}%`,
+                    borderRadius: initialAspect === 1 ? '50%' : '0' 
+                  }}
+                  onMouseDown={(e) => handleMouseDown('move', e)}
+                  onTouchStart={(e) => handleMouseDown('move', e)}
+                >
+                  {/* Grid Lines */}
+                  <div className="absolute inset-0 flex group-hover:opacity-100 opacity-30 transition-opacity">
+                    <div className="flex-1 border-r border-white/20 h-full" />
+                    <div className="flex-1 border-r border-white/20 h-full" />
+                  </div>
+                  <div className="absolute inset-0 flex flex-col group-hover:opacity-100 opacity-30 transition-opacity">
+                    <div className="flex-1 border-b border-white/20 w-full" />
+                    <div className="flex-1 border-b border-white/20 w-full" />
+                  </div>
+
+                  {/* Resize Handles */}
+                  {['nw', 'ne', 'sw', 'se'].map((h) => (
+                    <div 
+                      key={h}
+                      className={`absolute w-4 h-4 bg-white border-2 border-primary shadow-lg z-30
+                        ${h === 'nw' ? '-top-2 -left-2 cursor-nw-resize' : ''}
+                        ${h === 'ne' ? '-top-2 -right-2 cursor-ne-resize' : ''}
+                        ${h === 'sw' ? '-bottom-2 -left-2 cursor-sw-resize' : ''}
+                        ${h === 'se' ? '-bottom-2 -right-2 cursor-se-resize' : ''}
+                      `}
+                      onMouseDown={(e) => { e.stopPropagation(); handleMouseDown(h as any, e); }}
+                      onTouchStart={(e) => { e.stopPropagation(); handleMouseDown(h as any, e); }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Controls */}
-          <div className="w-full space-y-4">
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs font-bold text-gray-400 uppercase">
-                <span className="flex items-center gap-1"><ZoomIn size={12} /> Zoom</span>
-                <span>{Math.round(scale * 100)}%</span>
+          {/* Sidebar Controls */}
+          <div className="w-full lg:w-80 bg-[#1c2438] border-l border-white/5 flex flex-col p-6 space-y-8 overflow-y-auto custom-scrollbar">
+            
+            {/* Aspect Ratio Section */}
+            <div className="space-y-4">
+              <h5 className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                <Scaling size={12} /> Proporção do Corte
+              </h5>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { label: 'Livre', value: undefined },
+                  { label: 'Quadrado (1:1)', value: 1 },
+                  { label: 'Horizontal (4:3)', value: 4/3 },
+                  { label: 'Widescreen (16:9)', value: 16/9 }
+                ].map((opt) => (
+                  <button
+                    key={opt.label}
+                    onClick={() => setAspect(opt.value)}
+                    className={`py-2 px-3 rounded-xl text-[10px] font-bold uppercase transition-all border ${aspect === opt.value ? 'bg-primary/20 border-primary text-primary' : 'bg-white/5 border-white/5 text-gray-400 hover:text-white'}`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
-              <input
-                type="range"
-                min="0.5"
-                max="3"
-                step="0.1"
-                value={scale}
-                onChange={(e) => setScale(parseFloat(e.target.value))}
-                className="w-full accent-primary h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
-              />
             </div>
 
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs font-bold text-gray-400 uppercase">
-                <span className="flex items-center gap-1"><RotateCcw size={12} /> Rotação</span>
-                <span>{rotation}°</span>
+            {/* Transformations */}
+            <div className="space-y-4">
+              <h5 className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                <RotateCw size={12} /> Transformações
+              </h5>
+              <div className="flex gap-2">
+                <button onClick={() => setRotation(r => (r + 90) % 360)} className="flex-1 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-all flex flex-col items-center gap-1 group">
+                  <RotateCw size={18} className="text-gray-400 group-hover:text-white" />
+                  <span className="text-[9px] font-bold uppercase text-gray-500">Girar 90°</span>
+                </button>
+                <button onClick={() => setFlipH(!flipH)} className="flex-1 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-all flex flex-col items-center gap-1 group">
+                  <FlipHorizontal size={18} className="text-gray-400 group-hover:text-white" />
+                  <span className="text-[9px] font-bold uppercase text-gray-500">Espelhar H</span>
+                </button>
+                <button onClick={() => setFlipV(!flipV)} className="flex-1 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-all flex flex-col items-center gap-1 group">
+                  <FlipVertical size={18} className="text-gray-400 group-hover:text-white" />
+                  <span className="text-[9px] font-bold uppercase text-gray-500">Espelhar V</span>
+                </button>
               </div>
-              <input
-                type="range"
-                min="-180"
-                max="180"
-                step="1"
-                value={rotation}
-                onChange={(e) => setRotation(parseInt(e.target.value))}
-                className="w-full accent-primary h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
-              />
             </div>
 
-            <div className="text-[10px] text-gray-500 flex items-center justify-between gap-1 italic">
-              <span className="flex items-center gap-1 font-bold font-mono"><Move size={10} /> Arraste / Scroll</span>
+            {/* Filters */}
+            <div className="space-y-6">
+              <h5 className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                <Sparkles size={12} /> Ajustes de Retoque
+              </h5>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase">
+                    <span className="flex items-center gap-1.5"><Sun size={12} /> Brilho</span>
+                    <span>{brightness / 100}x</span>
+                  </div>
+                  <input 
+                    type="range" min="50" max="150" value={brightness} 
+                    onChange={e => setBrightness(Number(e.target.value))}
+                    className="w-full accent-primary h-1 bg-white/5 rounded-full appearance-none px-0"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase">
+                    <span className="flex items-center gap-1.5"><Contrast size={12} /> Contraste</span>
+                    <span>{contrast / 100}x</span>
+                  </div>
+                  <input 
+                    type="range" min="50" max="150" value={contrast} 
+                    onChange={e => setContrast(Number(e.target.value))}
+                    className="w-full accent-primary h-1 bg-white/5 rounded-full appearance-none"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase">
+                    <span className="flex items-center gap-1.5"><Pipette size={12} /> Saturação</span>
+                    <span>{saturation / 100}x</span>
+                  </div>
+                  <input 
+                    type="range" min="0" max="200" value={saturation} 
+                    onChange={e => setSaturation(Number(e.target.value))}
+                    className="w-full accent-primary h-1 bg-white/5 rounded-full appearance-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="pt-4 space-y-3">
+              <Button onClick={handleSave} className="w-full py-4 text-xs font-black uppercase tracking-widest shadow-xl shadow-primary/20">
+                <Check size={18} /> Aplicar Alterações
+              </Button>
               <button 
-                onClick={handleReset}
-                className="text-primary hover:text-primary/70 transition-colors uppercase font-black"
+                onClick={() => {
+                  setBrightness(100); setContrast(100); setSaturation(100);
+                  setRotation(0); setFlipH(false); setFlipV(false);
+                  setCrop({ x: 10, y: 10, width: 80, height: 80 });
+                }}
+                className="w-full py-3 text-[10px] font-black uppercase text-gray-500 hover:text-white transition-colors tracking-tighter"
               >
-                Resetar Enquadramento
+                Resetar Filtros e Corte
               </button>
             </div>
-          </div>
-
-          <div className="flex w-full gap-3 pt-2">
-            <Button variant="neutral" onClick={onClose} className="flex-1">Cancelar</Button>
-            <Button onClick={handleSave} className="flex-1">Salvar Ajuste</Button>
           </div>
         </div>
       </div>

@@ -4,7 +4,7 @@ import {
     Trash2, RefreshCcw, RefreshCw, Plus, Star, Palette, Edit2, Check, X, Upload, Image as ImageIcon, AlertCircle,
     Gamepad2, Trophy, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target,
     Layout, User, ToggleLeft, ToggleRight, Monitor, LayoutTemplate, Camera, AlertTriangle, Ban, Lock, Mail, Save,
-    Cloud, Crop, Maximize, Minimize, Wand2, Search, Link, Loader2, Smile, ChevronDown, Sparkles
+    Cloud, Crop, Maximize, Minimize, Wand2, Search, Link, Loader2, Smile, ChevronDown, Sparkles, Scissors
 } from 'lucide-react';
 import { Bookmaker, AppSettings, StatusItem, PromotionItem, OriginItem, SettingsTab, User as UserType } from '../types';
 import { FirestoreService } from '../services/firestoreService';
@@ -626,9 +626,9 @@ const Settings: React.FC<SettingsProps> = ({
                     <div className="mt-12 pt-8 border-t border-white/5 animate-in fade-in duration-700">
                         <div className="flex items-center justify-between mb-6">
                             <h6 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
-                                <Sparkles size={14} /> Recém Ajustados
+                                <Wand2 size={14} /> Histórico de Edição
                             </h6>
-                            <span className="text-[9px] text-gray-500 font-bold uppercase tracking-tight">Suas últimas edições</span>
+                            <span className="text-[9px] text-gray-500 font-bold uppercase tracking-tight">Suas últimas criações</span>
                         </div>
                         <div className="flex flex-wrap gap-5">
                             {recentCrops.map((img, idx) => (
@@ -669,45 +669,39 @@ const Settings: React.FC<SettingsProps> = ({
 
                 <div className="mt-8 pt-8 border-t border-white/5 space-y-8">
                     {/* Avatars Section - Hidden for Manual Adjustment Mode */}
-                    {/* 
-                    <div>
-                        <label className="text-xs font-bold text-textMuted uppercase tracking-wider mb-6 block flex items-center gap-2">
-                            <span className="bg-primary/10 p-1.5 rounded-md text-primary">
-                                <Smile size={14} />
+                    <div className="space-y-6">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4 block flex items-center gap-2">
+                            <span className="bg-primary/10 p-2 rounded-xl text-primary shadow-lg shadow-primary/10">
+                                <Smile size={16} />
                             </span>
-                            Sugestões de Avatar
+                            Sugestões da Comunidade
                         </label>
-                        <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-3 max-h-[460px] overflow-y-auto pr-3 custom-scrollbar p-1">
                             {PRESET_AVATARS.map((avatar, index) => (
                                 <button
                                     key={index}
-                                    onClick={() => setAppSettings({ ...appSettings, profileImage: avatar })}
-                                    className={`aspect-square rounded-2xl border-2 overflow-hidden transition-all hover:shadow-lg relative group/suggestion ${appSettings.profileImage === avatar
-                                        ? 'border-primary ring-4 ring-primary/20 scale-110 shadow-xl z-10'
-                                        : 'border-white/10 hover:border-primary/50 hover:scale-105'
+                                    onClick={() => handleOpenAdjuster(avatar, 1, handleCroppedImage)}
+                                    className={`aspect-square rounded-2xl border-2 overflow-hidden transition-all duration-300 relative group/suggestion ${appSettings.profileImage === avatar
+                                        ? 'border-primary ring-4 ring-primary/20 scale-105 shadow-xl z-20'
+                                        : 'border-white/5 hover:border-primary/40 hover:scale-110 grayscale hover:grayscale-0'
                                         }`}
-                                    title={`Avatar ${index + 1}`}
+                                    title={`Ajustar ${index + 1}`}
                                 >
                                     <img src={avatar} alt={`Avatar ${index + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/suggestion:opacity-100 transition-all flex items-center justify-center backdrop-blur-[1px]">
+                                        <div className="bg-primary text-[#090c19] p-2 rounded-full shadow-2xl scale-50 group-hover/suggestion:scale-100 transition-transform duration-300">
+                                            <Scissors size={14} strokeWidth={3} />
+                                        </div>
+                                    </div>
                                     {appSettings.profileImage === avatar && (
-                                        <div 
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleOpenAdjuster(avatar, 1, handleCroppedImage);
-                                            }}
-                                            className="absolute inset-0 bg-primary/20 flex items-center justify-center opacity-0 group-hover/suggestion:opacity-100 transition-opacity backdrop-blur-[1px] cursor-pointer"
-                                            title="Ajustar Enquadramento"
-                                        >
-                                            <div className="bg-primary text-[#090c19] p-1.5 rounded-full shadow-lg">
-                                                <Maximize size={16} />
-                                            </div>
+                                        <div className="absolute top-1 right-1 bg-primary text-[#090c19] p-1 rounded-lg shadow-lg">
+                                            <Check size={10} strokeWidth={4} />
                                         </div>
                                     )}
                                 </button>
                             ))}
                         </div>
                     </div>
-                    */}
 
 
 
