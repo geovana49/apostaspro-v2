@@ -724,9 +724,10 @@ const BlocoNotas: React.FC<BlocoNotasProps> = ({ currentUser, notes }) => {
                                                     ? schedulerRef.current.getBoundingClientRect().top - 230
                                                     : schedulerRef.current.getBoundingClientRect().bottom + 10)
                                                 : '50%',
-                                            left: schedulerRef.current
-                                                ? Math.max(10, Math.min(window.innerWidth - 220, schedulerRef.current.getBoundingClientRect().left))
-                                                : '50%',
+                                            left: window.innerWidth < 640 ? '16px' : (schedulerRef.current
+                                                ? Math.max(10, Math.min(window.innerWidth - 320, schedulerRef.current.getBoundingClientRect().left))
+                                                : '50%'),
+                                            right: window.innerWidth < 640 ? '16px' : 'auto',
                                         }}
                                         className="z-[999] p-4 bg-[#1a1f35] border border-white/10 rounded-2xl shadow-2xl flex flex-col gap-3 min-w-[200px] animate-in slide-in-from-bottom-2 duration-300"
                                     >
