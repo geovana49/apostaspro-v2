@@ -178,8 +178,10 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             };
         });
 
-        const totalProfit = resolvedBets.reduce((acc, bet) => acc + calculateBetStats(bet).profit, 0);
-        const roi = resolvedStaked > 0 ? (totalProfit / resolvedStaked) * 100 : 0;
+        const totalBetsProfit = resolvedBets.reduce((acc, bet) => acc + calculateBetStats(bet).profit, 0);
+        const totalGainsProfit = filteredGains.reduce((acc, gain) => acc + gain.amount, 0);
+        const totalProfit = totalBetsProfit + totalGainsProfit;
+        const roi = resolvedStaked > 0 ? (totalBetsProfit / resolvedStaked) * 100 : 0; // ROI remains strategy-focused (bets only)
 
         const betPromotionsCount = filteredBets.filter(b => b.promotionType && b.promotionType !== 'Nenhuma').length;
 
@@ -288,6 +290,16 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
             const { profit } = calculateBetStats(bet);
             monthlyProfits[key] = (monthlyProfits[key] || 0) + profit;
+        });
+
+        // Include Extra Gains in the ranking
+        const allGains = gains; // These are already available in props
+        allGains.forEach(gain => {
+            const dateStr = gain.date.includes('T') ? gain.date.split('T')[0] : gain.date;
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const gainDate = new Date(y, m - 1, d);
+            const key = `${gainDate.getFullYear()}-${String(gainDate.getMonth() + 1).padStart(2, '0')}`;
+            monthlyProfits[key] = (monthlyProfits[key] || 0) + gain.amount;
         });
 
         const bestMonths = Object.entries(monthlyProfits)

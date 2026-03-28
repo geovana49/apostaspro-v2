@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, Button, Input, Modal, ImageAdjuster, CustomColorPicker, RenderIcon, ICON_MAP } from './ui/UIComponents';
 import {
-    Trash2, RefreshCcw, Plus, Star, Palette, Edit2, Check, X, Upload, Image as ImageIcon, AlertCircle,
+    Trash2, RefreshCcw, RefreshCw, Plus, Star, Palette, Edit2, Check, X, Upload, Image as ImageIcon, AlertCircle,
     Gamepad2, Trophy, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target,
     Layout, User, ToggleLeft, ToggleRight, Monitor, LayoutTemplate, Camera, AlertTriangle, Ban, Lock, Mail, Save,
     Cloud, Crop, Maximize, Minimize, Wand2, Search, Link, Loader2
@@ -593,70 +593,105 @@ const Settings: React.FC<SettingsProps> = ({
                                 </select>
                             </div>
                         </div>
-                        <div className="pt-6 border-t border-white/5">
-                            <h4 className="font-bold text-white mb-4 flex items-center gap-2">
+                        <div className="pt-6 border-t border-white/5 space-y-4">
+                            <h4 className="font-bold text-white flex items-center gap-2">
                                 <Monitor size={18} className="text-primary" />
-                                Zona de Perigo & Manutenção
+                                Manutenção do Aplicativo
                             </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20">
-                                    <h5 className="font-bold text-red-400 mb-2 flex items-center gap-2"><Trash2 size={16} /> Reset de Fábrica</h5>
-                                    <p className="text-xs text-gray-400 mb-4">Apaga todos os seus dados e restaura as configurações originais. Esta ação é irreversível.</p>
-                                    <Button
-                                        onClick={() => setIsResetModalOpen(true)}
-                                        variant="danger"
-                                        className="w-full text-sm"
-                                    >
-                                        Resetar Tudo
-                                    </Button>
-                                </div>
-
-                                <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
-                                    <h5 className="font-bold text-blue-400 mb-2 flex items-center gap-2"><RefreshCcw size={16} /> Reparar Sincronização</h5>
-                                    <p className="text-xs text-gray-400 mb-4">Se seus dados estiverem diferentes entre dispositivos (celular/PC), use isso para limpar o cache local e baixar tudo de novo.</p>
-                                    <Button
-                                        onClick={() => {
-                                            if (confirm("Isso irá recarregar a página e baixar todos os dados novamente da nuvem. Deseja continuar?")) {
-                                                FirestoreService.clearLocalCache();
+                            <p className="text-[11px] text-textMuted leading-relaxed">
+                                Se você notar que o aplicativo no celular está desatualizado (faltando recursos que aparecem no site), use os botões abaixo para forçar a atualização.
+                            </p>
+                            <div className="flex flex-wrap gap-3">
+                                <button
+                                    onClick={() => {
+                                        if (confirm("Deseja verificar e forçar a atualização para a versão mais recente? O app irá recarregar.")) {
+                                            if ('serviceWorker' in navigator) {
+                                                navigator.serviceWorker.getRegistrations().then(registrations => {
+                                                    for (let registration of registrations) {
+                                                        registration.update();
+                                                    }
+                                                });
                                             }
-                                        }}
-                                        className="w-full text-sm bg-blue-600 hover:bg-blue-700 text-white border-none"
-                                    >
-                                        Forçar Ressincronização
-                                    </Button>
-                                </div>
+                                            window.location.reload();
+                                        }
+                                    }}
+                                    className="flex items-center gap-2 bg-[#151b2e] hover:bg-white/5 border border-primary/20 hover:border-primary/50 text-primary px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-lg hover:shadow-primary/10"
+                                >
+                                    <RefreshCw size={14} className="animate-spin-slow" />
+                                    Atualizar Aplicativo (Force)
+                                </button>
+
+                                <button
+                                    onClick={async () => {
+                                        if (confirm("Isso irá limpar o cache local de apostas e forçar uma nova sincronização total com o banco de dados. Continuar?")) {
+                                            await FirestoreService.clearLocalCache();
+                                        }
+                                    }}
+                                    className="flex items-center gap-2 bg-[#151b2e] hover:bg-white/5 border border-white/10 hover:border-white/20 text-gray-400 hover:text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all"
+                                >
+                                    <Trash2 size={14} />
+                                    Limpar Cache de Dados
+                                </button>
                             </div>
                         </div>
-                        <div className="pt-4 mt-4 border-t border-white/5">
-                            <label className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4 block flex items-center gap-2">
-                                <span className="bg-primary/10 p-1.5 rounded-md">
-                                    <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </span>
-                                Sugestões de Avatar
-                            </label>
-                            <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-3">
-                                {PRESET_AVATARS.map((avatar, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => setAppSettings({ ...appSettings, profileImage: avatar })}
-                                        className={`aspect-square rounded-full border-2 overflow-hidden transition-all hover:shadow-lg ${appSettings.profileImage === avatar
-                                            ? 'border-primary ring-4 ring-primary/20 scale-110 shadow-xl'
-                                            : 'border-white/10 hover:border-primary/50 hover:scale-105'
-                                            }`}
-                                        title={`Avatar ${index + 1}`}
-                                    >
-                                        <img src={avatar} alt={`Avatar ${index + 1}`} className="w-full h-full object-cover bg-[#151b2e]" />
-                                    </button>
-                                ))}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+                                <h5 className="font-bold text-red-400 mb-2 flex items-center gap-2"><Trash2 size={16} /> Reset de Fábrica</h5>
+                                <p className="text-xs text-gray-400 mb-4">Apaga todos os seus dados e restaura as configurações originais. Esta ação é irreversível.</p>
+                                <Button
+                                    onClick={() => setIsResetModalOpen(true)}
+                                    variant="danger"
+                                    className="w-full text-sm"
+                                >
+                                    Resetar Tudo
+                                </Button>
                             </div>
+
+                            <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                                <h5 className="font-bold text-blue-400 mb-2 flex items-center gap-2"><RefreshCcw size={16} /> Reparar Sincronização</h5>
+                                <p className="text-xs text-gray-400 mb-4">Se seus dados estiverem diferentes entre dispositivos (celular/PC), use isso para limpar o cache local e baixar tudo de novo.</p>
+                                <Button
+                                    onClick={() => {
+                                        if (confirm("Isso irá recarregar a página e baixar todos os dados novamente da nuvem. Deseja continuar?")) {
+                                            FirestoreService.clearLocalCache();
+                                        }
+                                    }}
+                                    className="w-full text-sm bg-blue-600 hover:bg-blue-700 text-white border-none"
+                                >
+                                    Forçar Ressincronização
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="pt-4 mt-4 border-t border-white/5">
+                        <label className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4 block flex items-center gap-2">
+                            <span className="bg-primary/10 p-1.5 rounded-md">
+                                <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </span>
+                            Sugestões de Avatar
+                        </label>
+                        <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-3">
+                            {PRESET_AVATARS.map((avatar, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => setAppSettings({ ...appSettings, profileImage: avatar })}
+                                    className={`aspect-square rounded-full border-2 overflow-hidden transition-all hover:shadow-lg ${appSettings.profileImage === avatar
+                                        ? 'border-primary ring-4 ring-primary/20 scale-110 shadow-xl'
+                                        : 'border-white/10 hover:border-primary/50 hover:scale-105'
+                                        }`}
+                                    title={`Avatar ${index + 1}`}
+                                >
+                                    <img src={avatar} alt={`Avatar ${index + 1}`} className="w-full h-full object-cover bg-[#151b2e]" />
+                                </button>
+                            ))}
                         </div>
                     </div>
                 </div>
             </Card>
 
-            {/* --- SYNC SECTION (SIMPLIFIED) --- */}
+            {/* --- SYNC SECTION --- */}
             <Card className="p-6 bg-[#0d1121] border-white/5">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
@@ -700,7 +735,7 @@ const Settings: React.FC<SettingsProps> = ({
                     </Button>
                 </div>
             </Card>
-        </div >
+        </div>
     );
 
     const renderColorSelection = () => (
