@@ -506,13 +506,26 @@ const Settings: React.FC<SettingsProps> = ({
                             </label>
                             
                             {appSettings.profileImage && (
-                                <button
-                                    onClick={() => handleOpenAdjuster(appSettings.profileImage!, 1, handleCroppedImage)}
-                                    className="w-full bg-white/5 hover:bg-white/10 text-white px-4 py-2.5 rounded-xl transition-all border border-white/10 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest"
-                                >
-                                    <Maximize size={14} className="text-primary" />
-                                    Ajustar Atual
-                                </button>
+                                <div className="flex flex-col gap-2 w-full">
+                                    <button
+                                        onClick={() => handleOpenAdjuster(appSettings.profileImage!, 1, handleCroppedImage)}
+                                        className="w-full bg-white/5 hover:bg-white/10 text-white px-4 py-2.5 rounded-xl transition-all border border-white/10 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest"
+                                    >
+                                        <Maximize size={14} className="text-primary" />
+                                        Ajustar Atual
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const newSettings = { ...appSettings, profileImage: '' };
+                                            setAppSettings(newSettings);
+                                            if (currentUser) FirestoreService.saveSettings(currentUser.uid, newSettings);
+                                        }}
+                                        className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-xl transition-all border border-red-500/10 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest"
+                                    >
+                                        <Trash2 size={14} />
+                                        Remover Foto
+                                    </button>
+                                </div>
                             )}
                         </div>
                         
