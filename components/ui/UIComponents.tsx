@@ -938,6 +938,33 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
     }
   }, [isOpen, imageSrc]);
 
+  // Mouse Wheel Zoom
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (!isOpen) return;
+      e.preventDefault();
+      const delta = e.deltaY * -0.001;
+      const newScale = Math.min(3, Math.max(0.1, scale + delta));
+      setScale(newScale);
+    };
+
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('wheel', handleWheel, { passive: false });
+    }
+    return () => {
+      if (container) {
+        container.removeEventListener('wheel', handleWheel);
+      }
+    };
+  }, [isOpen, scale]);
+
+  const handleReset = () => {
+    setScale(1);
+    setRotation(0);
+    setPosition({ x: 0, y: 0 });
+  };
+
   const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
     setIsDragging(true);
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
@@ -1006,7 +1033,7 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
         <div className="p-6 flex flex-col items-center gap-6">
           {/* Viewport */}
           <div
-            className="relative overflow-hidden bg-black/50 border-2 border-dashed border-white/20 cursor-move rounded-lg touch-none"
+            className="group relative overflow-hidden bg-black/50 border-2 border-white/5 cursor-move rounded-3xl touch-none shadow-2xl"
             style={{ width: '280px', height: `${280 / aspect}px` }}
             onMouseDown={handleMouseDown}
             onTouchStart={handleMouseDown}
@@ -1017,12 +1044,18 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
             onMouseLeave={handleMouseUp}
             ref={containerRef}
           >
+            {/* Visual Mask Overlays */}
+            <div className="absolute inset-0 pointer-events-none z-20">
+              <div className="w-full h-full border-[20px] border-black/40" />
+              <div className="absolute inset-0 border-2 border-white/20 rounded-3xl" />
+            </div>
+
             {/* Grid overlay for reference */}
-            <div className="absolute inset-0 pointer-events-none z-10 opacity-30">
-              <div className="w-full h-1/3 border-b border-white/50 absolute top-0" />
-              <div className="w-full h-1/3 border-b border-white/50 absolute bottom-0" />
-              <div className="h-full w-1/3 border-r border-white/50 absolute left-0" />
-              <div className="h-full w-1/3 border-r border-white/50 absolute right-0" />
+            <div className="absolute inset-x-5 inset-y-5 pointer-events-none z-10 opacity-20">
+              <div className="w-full h-1/3 border-b border-white absolute top-0" />
+              <div className="w-full h-1/3 border-b border-white absolute bottom-0" />
+              <div className="h-full w-1/3 border-r border-white absolute left-0" />
+              <div className="h-full w-1/3 border-r border-white absolute right-0" />
             </div>
 
             <img
@@ -1072,8 +1105,14 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
               />
             </div>
 
-            <div className="text-[10px] text-gray-500 flex items-center justify-center gap-1">
-              <Move size={10} /> Arraste a imagem para posicionar
+            <div className="text-[10px] text-gray-500 flex items-center justify-between gap-1 italic">
+              <span className="flex items-center gap-1 font-bold font-mono"><Move size={10} /> Arraste / Scroll</span>
+              <button 
+                onClick={handleReset}
+                className="text-primary hover:text-primary/70 transition-colors uppercase font-black"
+              >
+                Resetar Enquadramento
+              </button>
             </div>
           </div>
 

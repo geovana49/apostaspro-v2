@@ -4,7 +4,7 @@ import {
     Trash2, RefreshCcw, RefreshCw, Plus, Star, Palette, Edit2, Check, X, Upload, Image as ImageIcon, AlertCircle,
     Gamepad2, Trophy, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target,
     Layout, User, ToggleLeft, ToggleRight, Monitor, LayoutTemplate, Camera, AlertTriangle, Ban, Lock, Mail, Save,
-    Cloud, Crop, Maximize, Minimize, Wand2, Search, Link, Loader2, Smile, ChevronDown
+    Cloud, Crop, Maximize, Minimize, Wand2, Search, Link, Loader2, Smile, ChevronDown, Sparkles
 } from 'lucide-react';
 import { Bookmaker, AppSettings, StatusItem, PromotionItem, OriginItem, SettingsTab, User as UserType } from '../types';
 import { FirestoreService } from '../services/firestoreService';
@@ -76,8 +76,30 @@ const Settings: React.FC<SettingsProps> = ({
     const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
     const [bookmakerSearchTerm, setBookmakerSearchTerm] = useState('');
     const [lastSavedId, setLastSavedId] = useState<string | null>(null);
+    const [recentCrops, setRecentCrops] = useState<string[]>([]);
 
     const topOfPageRef = useRef<HTMLDivElement>(null);
+
+    // Carregar sugestões recentes do localStorage
+    useEffect(() => {
+        const saved = localStorage.getItem('recentAvatars');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed)) setRecentCrops(parsed);
+            } catch (e) {
+                console.error("Erro ao carregar avatares recentes:", e);
+            }
+        }
+    }, []);
+
+    const addToRecentCrops = (img: string) => {
+        setRecentCrops(prev => {
+            const updated = [img, ...prev.filter(c => c !== img)].slice(0, 12);
+            localStorage.setItem('recentAvatars', JSON.stringify(updated));
+            return updated;
+        });
+    };
 
     useEffect(() => {
         setActiveTab(initialTab);
@@ -249,9 +271,14 @@ const Settings: React.FC<SettingsProps> = ({
                 });
 
                 const newSettings = { ...appSettings, profileImage: base64 };
-                await FirestoreService.saveSettings(currentUser.uid, newSettings);
-            } catch (e) {
-                setError("Falha ao salvar avatar.");
+                setAppSettings(newSettings);
+                addToRecentCrops(base64); // Adicionar à lista de sugestões recentes
+                
+                if (currentUser) {
+                    await FirestoreService.saveSettings(currentUser.uid, newSettings);
+                }
+            } catch (err) {
+                console.error("Error uploading profile image:", err);
             } finally {
                 setIsUploading(false);
             }
@@ -594,6 +621,51 @@ const Settings: React.FC<SettingsProps> = ({
                         </div>
                     </div>
                 </div>
+
+                {recentCrops.length > 0 && (
+                    <div className="mt-12 pt-8 border-t border-white/5 animate-in fade-in duration-700">
+                        <div className="flex items-center justify-between mb-6">
+                            <h6 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
+                                <Sparkles size={14} /> Recém Ajustados
+                            </h6>
+                            <span className="text-[9px] text-gray-500 font-bold uppercase tracking-tight">Suas últimas edições</span>
+                        </div>
+                        <div className="flex flex-wrap gap-5">
+                            {recentCrops.map((img, idx) => (
+                                <div key={idx} className="relative group/recent">
+                                    <button
+                                        onClick={() => {
+                                            const newSettings = { ...appSettings, profileImage: img };
+                                            setAppSettings(newSettings);
+                                            if (currentUser) FirestoreService.saveSettings(currentUser.uid, newSettings);
+                                        }}
+                                        className={`w-20 h-20 rounded-[1.5rem] border-2 overflow-hidden transition-all duration-300 ${appSettings.profileImage === img 
+                                            ? 'border-primary ring-8 ring-primary/10 scale-110 shadow-xl shadow-primary/20 z-10' 
+                                            : 'border-white/10 hover:border-primary/50 hover:scale-105'}`}
+                                    >
+                                        <img src={img} alt="Recent" className="w-full h-full object-cover" />
+                                        {appSettings.profileImage === img && (
+                                            <div className="absolute inset-0 bg-primary/20 flex items-center justify-center backdrop-blur-[1px]">
+                                                <Check size={24} className="text-white drop-shadow-lg" strokeWidth={3} />
+                                            </div>
+                                        )}
+                                    </button>
+                                    <button 
+                                        onClick={() => {
+                                            const updated = recentCrops.filter((_, i) => i !== idx);
+                                            setRecentCrops(updated);
+                                            localStorage.setItem('recentAvatars', JSON.stringify(updated));
+                                        }}
+                                        className="absolute -top-2 -right-2 bg-[#151b2e] border border-white/10 text-gray-500 hover:text-red-500 p-1.5 rounded-full opacity-0 group-hover/recent:opacity-100 transition-all shadow-xl hover:scale-110 z-20"
+                                        title="Remover das sugestões"
+                                    >
+                                        <X size={12} strokeWidth={3} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 <div className="mt-8 pt-8 border-t border-white/5 space-y-8">
                     {/* Avatars Section - Hidden for Manual Adjustment Mode */}
