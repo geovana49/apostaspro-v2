@@ -93,8 +93,8 @@ const Settings: React.FC<SettingsProps> = ({
         }
     }, []);
 
-    const getUpdatedCustomAvatars = (newImg: string, originalImg?: string | null): string[] => {
-        const current = [...(appSettings.customAvatars || [])];
+    const getUpdatedCustomAvatars = (currentList: string[], newImg: string, originalImg?: string | null): string[] => {
+        const current = [...(currentList || [])];
         const existingIndex = originalImg ? current.indexOf(originalImg) : -1;
         
         if (existingIndex !== -1) {
@@ -106,8 +106,10 @@ const Settings: React.FC<SettingsProps> = ({
     };
 
     const addToCustomAvatars = (newImg: string, originalImg?: string | null) => {
-        const updated = getUpdatedCustomAvatars(newImg, originalImg);
-        setAppSettings(prev => ({ ...prev, customAvatars: updated }));
+        setAppSettings(prev => {
+            const updated = getUpdatedCustomAvatars(prev.customAvatars || [], newImg, originalImg);
+            return { ...prev, customAvatars: updated };
+        });
     };
 
     useEffect(() => {
@@ -271,7 +273,7 @@ const Settings: React.FC<SettingsProps> = ({
         if (blob && currentUser) {
             setIsUploading(true);
             try {
-                // Convert blob to File and compress
+                // 1. Process image
                 const file = new File([blob], 'avatar.png', { type: 'image/png' });
                 const base64 = await compressImage(file, {
                     maxWidth: 400,
@@ -280,32 +282,35 @@ const Settings: React.FC<SettingsProps> = ({
                     maxSizeMB: 0.05
                 });
 
-                // 1. Calculate the new custom avatars list
-                const updatedCustomAvatars = getUpdatedCustomAvatars(base64, originalSrc);
+                // 2. Use functional update to ensure we have RECENT state
+                setAppSettings(prev => {
+                    const updatedCustomAvatars = getUpdatedCustomAvatars(prev.customAvatars || [], base64, originalSrc);
+                    const finalSettings = { 
+                        ...prev, 
+                        profileImage: base64,
+                        customAvatars: updatedCustomAvatars
+                    };
 
-                // 2. Create the unified final settings object
-                const finalSettings = { 
-                    ...appSettings, 
-                    profileImage: base64,
-                    customAvatars: updatedCustomAvatars
-                };
-
-                // 3. Update React state AND Firestore simultaneously
-                setAppSettings(finalSettings);
-                await FirestoreService.saveSettings(currentUser.uid, finalSettings);
-                
-                // 4. Sync Firebase Auth Profile for fallback
-                const authUser = auth.currentUser;
-                if (authUser) {
-                    await updateProfile(authUser, {
-                        displayName: finalSettings.username,
-                        photoURL: finalSettings.profileImage
+                    // 3. Save to Firestore within the update to use the correct final object
+                    FirestoreService.saveSettings(currentUser.uid, finalSettings).then(() => {
+                        console.info("Identity updated successfully in Firestore.");
+                    }).catch(err => {
+                        console.error("Firestore sync error:", err);
                     });
-                }
-                
-                console.info("Identity updated successfully in Firestore and Auth.");
+
+                    // 4. Sync Firebase Auth Profile for fallback
+                    const authUser = auth.currentUser;
+                    if (authUser) {
+                        updateProfile(authUser, {
+                            displayName: finalSettings.username,
+                            photoURL: finalSettings.profileImage
+                        }).catch(e => console.error("Auth sync error:", e));
+                    }
+
+                    return finalSettings;
+                });
             } catch (err) {
-                console.error("Error updating identity gallery:", err);
+                console.error("Error updating identity upload:", err);
             } finally {
                 setIsUploading(false);
             }
