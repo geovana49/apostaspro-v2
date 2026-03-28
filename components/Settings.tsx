@@ -31,39 +31,7 @@ interface SettingsProps {
 
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e', '#64748b', '#000000', '#FFFFFF'];
 
-const PRESET_AVATARS = [
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Panda',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Shiba',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Cat',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Fox',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Bear',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Rabbit',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Owl',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Rainbow',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Ghost',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Astronaut',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Baker',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Dino',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Lion',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Artist',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Gamer',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Doctor',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Sloth',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Chef',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Penguin',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Fireman',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Elephant',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Turtle',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Detective',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Wizard',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=UFO',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Robot',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Bee',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Archer',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Narwhal',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Miner',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Phoenix'
-];
+const PRESET_AVATARS = Array.from({ length: 79 }, (_, i) => `/assets/avatars/suggested_${i + 1}.png`);
 
 const Settings: React.FC<SettingsProps> = ({
     bookmakers,
