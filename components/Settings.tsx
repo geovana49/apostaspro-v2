@@ -652,13 +652,13 @@ const Settings: React.FC<SettingsProps> = ({
                                 <button
                                     key={index}
                                     onClick={() => setAppSettings({ ...appSettings, profileImage: avatar })}
-                                    className={`aspect-square rounded-full border-2 overflow-hidden transition-all hover:shadow-lg ${appSettings.profileImage === avatar
+                                    className={`aspect-square rounded-2xl border-2 overflow-hidden transition-all hover:shadow-lg ${appSettings.profileImage === avatar
                                         ? 'border-primary ring-4 ring-primary/20 scale-110 shadow-xl'
                                         : 'border-white/10 hover:border-primary/50 hover:scale-105'
                                         }`}
                                     title={`Avatar ${index + 1}`}
                                 >
-                                    <img src={avatar} alt={`Avatar ${index + 1}`} className="w-full h-full object-cover bg-[#151b2e]" />
+                                    <img src={avatar} alt={`Avatar ${index + 1}`} className="w-full h-full object-cover" />
                                 </button>
                             ))}
                         </div>

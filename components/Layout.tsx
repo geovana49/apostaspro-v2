@@ -260,8 +260,8 @@ const Layout: React.FC<LayoutProps> = ({
                 setIsSidebarOpen(false);
               }}
             >
-              {/* Avatar with Teal Outline */}
-              <div className="w-12 h-12 rounded-full border-[1.5px] border-[#17baa4] flex items-center justify-center shrink-0 bg-transparent shadow-[0_0_10px_rgba(23,186,164,0.2)] overflow-hidden">
+              {/* Avatar with Teal Outline - Rounded Square Style */}
+              <div className="w-12 h-12 rounded-[14px] border-[1.5px] border-[#17baa4] flex items-center justify-center shrink-0 bg-transparent shadow-[0_0_10px_rgba(23,186,164,0.2)] overflow-hidden">
                 {settings.profileImage ? (
                   <img src={settings.profileImage} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
@@ -348,10 +348,10 @@ const Layout: React.FC<LayoutProps> = ({
               <div className="relative">
                 <div
                   ref={profileButtonRef}
-                  className="flex items-center gap-3 bg-[#151b2e] border border-white/10 rounded-full p-1.5 pr-4 shadow-sm hover:border-white/20 transition-colors cursor-pointer group"
+                  className="flex items-center gap-3 bg-[#151b2e] border border-white/10 rounded-xl p-1.5 pr-4 shadow-sm hover:border-white/20 transition-colors cursor-pointer group"
                   onClick={() => setIsProfileMenuOpen(prev => !prev)}
                 >
-                  <div className="w-8 h-8 rounded-full bg-[#0d1121] flex items-center justify-center border border-white/5 overflow-hidden">
+                  <div className="w-8 h-8 rounded-lg bg-[#0d1121] flex items-center justify-center border border-white/5 overflow-hidden text-primary shadow-[0_0_10px_rgba(23,186,164,0.1)]">
                     {settings.profileImage ? (
                       <img src={settings.profileImage} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
@@ -370,7 +370,7 @@ const Layout: React.FC<LayoutProps> = ({
                     className="absolute top-full right-0 mt-3 w-56 bg-[#1c2438] border border-white/10 rounded-xl shadow-2xl z-50 p-2 animate-in fade-in zoom-in-95"
                   >
                     <div className="flex items-center gap-3 p-2 border-b border-white/5 mb-2">
-                      <div className="w-9 h-9 rounded-full bg-[#0d1121] flex items-center justify-center border border-white/5 overflow-hidden">
+                      <div className="w-10 h-10 rounded-[12px] bg-[#0d1121] flex items-center justify-center border border-white/5 overflow-hidden shadow-inner">
                         {settings.profileImage ? (
                           <img src={settings.profileImage} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
