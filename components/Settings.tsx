@@ -93,23 +93,21 @@ const Settings: React.FC<SettingsProps> = ({
         }
     }, []);
 
+    const getUpdatedCustomAvatars = (newImg: string, originalImg?: string | null): string[] => {
+        const current = [...(appSettings.customAvatars || [])];
+        const existingIndex = originalImg ? current.indexOf(originalImg) : -1;
+        
+        if (existingIndex !== -1) {
+            current[existingIndex] = newImg;
+        } else {
+            current.unshift(newImg);
+        }
+        return current.slice(0, 12);
+    };
+
     const addToCustomAvatars = (newImg: string, originalImg?: string | null) => {
-        setAppSettings(prev => {
-            const current = [...(prev.customAvatars || [])];
-            
-            // Check if we are updating an existing custom avatar
-            const existingIndex = originalImg ? current.indexOf(originalImg) : -1;
-            
-            if (existingIndex !== -1) {
-                // UPDATE: Replace at original index
-                current[existingIndex] = newImg;
-            } else {
-                // NEW: Prepend and trim to limit
-                current.unshift(newImg);
-            }
-            
-            return { ...prev, customAvatars: current.slice(0, 12) };
-        });
+        const updated = getUpdatedCustomAvatars(newImg, originalImg);
+        setAppSettings(prev => ({ ...prev, customAvatars: updated }));
     };
 
     useEffect(() => {
@@ -157,12 +155,13 @@ const Settings: React.FC<SettingsProps> = ({
     }, [lastSavedId]);
 
     const handleCroppedImage = async (base64: string) => {
+        if (!currentUser) return;
         try {
             const res = await fetch(base64);
             const blob = await res.blob();
-            // Pass the original image being adjusted to check for updates
-            addToCustomAvatars(base64, imageToAdjust);
-            handleProfileImageUpload(blob);
+            
+            // Prepare both updates in one go
+            await handleProfileImageUpload(blob, imageToAdjust);
         } catch (e) {
             console.error("Error converting cropped image:", e);
         }
@@ -268,30 +267,45 @@ const Settings: React.FC<SettingsProps> = ({
         }
     };
 
-    const handleProfileImageUpload = async (blob: Blob | null) => {
+    const handleProfileImageUpload = async (blob: Blob | null, originalSrc?: string | null) => {
         if (blob && currentUser) {
             setIsUploading(true);
             try {
-                // Convert blob to File
+                // Convert blob to File and compress
                 const file = new File([blob], 'avatar.png', { type: 'image/png' });
-
-                // Comprimir para base64
                 const base64 = await compressImage(file, {
                     maxWidth: 400,
                     maxHeight: 400,
                     quality: 0.9,
-                    maxSizeMB: 0.05 // 50KB para avatar
+                    maxSizeMB: 0.05
                 });
 
-                const newSettings = { ...appSettings, profileImage: base64 };
-                setAppSettings(newSettings);
-                addToCustomAvatars(base64); // Adicionar à lista de sugestões salvas na conta
+                // 1. Calculate the new custom avatars list
+                const updatedCustomAvatars = getUpdatedCustomAvatars(base64, originalSrc);
+
+                // 2. Create the unified final settings object
+                const finalSettings = { 
+                    ...appSettings, 
+                    profileImage: base64,
+                    customAvatars: updatedCustomAvatars
+                };
+
+                // 3. Update React state AND Firestore simultaneously
+                setAppSettings(finalSettings);
+                await FirestoreService.saveSettings(currentUser.uid, finalSettings);
                 
-                if (currentUser) {
-                    await FirestoreService.saveSettings(currentUser.uid, newSettings);
+                // 4. Sync Firebase Auth Profile for fallback
+                const authUser = auth.currentUser;
+                if (authUser) {
+                    await updateProfile(authUser, {
+                        displayName: finalSettings.username,
+                        photoURL: finalSettings.profileImage
+                    });
                 }
+                
+                console.info("Identity updated successfully in Firestore and Auth.");
             } catch (err) {
-                console.error("Error uploading profile image:", err);
+                console.error("Error updating identity gallery:", err);
             } finally {
                 setIsUploading(false);
             }
