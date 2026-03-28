@@ -1016,30 +1016,35 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
         newCrop.height = isDragging.startCrop.height + boundedDy;
       }
 
-      // Maintain Aspect Ratio if locked
-      if (aspect) {
+      // Maintain Aspect Ratio if locked (Pixel-Perfect logic)
+      if (aspect && imgRef.current) {
+        const naturalRatio = imgRef.current.naturalWidth / imgRef.current.naturalHeight;
+        
         if (isDragging.type === 'n' || isDragging.type === 's') {
-          // If dragging height, adjust width from center
-          const targetWidth = (newCrop.height * rect.height * aspect) / rect.width;
+          // Sync width to height based on pixel scale
+          const targetWidth = newCrop.height / naturalRatio;
           const deltaWidth = targetWidth - isDragging.startCrop.width;
           newCrop.x = Math.max(0, Math.min(100 - targetWidth, isDragging.startCrop.x - deltaWidth / 2));
           newCrop.width = targetWidth;
         } else if (isDragging.type === 'e' || isDragging.type === 'w') {
-          // If dragging width, adjust height from center
-          const targetHeight = (newCrop.width * rect.width) / aspect / rect.height;
+          // Sync height to width based on pixel scale
+          const targetHeight = newCrop.width * naturalRatio;
           const deltaHeight = targetHeight - isDragging.startCrop.height;
           newCrop.y = Math.max(0, Math.min(100 - targetHeight, isDragging.startCrop.y - deltaHeight / 2));
           newCrop.height = targetHeight;
         } else {
-          // Corner dragging
-          const targetHeight = (newCrop.width * rect.width) / aspect / rect.height;
-          if (isDragging.type.includes('n')) newCrop.y = isDragging.startCrop.y + (isDragging.startCrop.height - targetHeight);
-          newCrop.height = targetHeight;
+          // Corners: Sync height to width
+          newCrop.height = newCrop.width * naturalRatio;
+          if (isDragging.type.includes('n')) {
+            newCrop.y = isDragging.startCrop.y + (isDragging.startCrop.height - newCrop.height);
+          }
         }
         
-        // Final sanity check for 1:1
-        if (newCrop.x + newCrop.width > 100) newCrop.width = 100 - newCrop.x;
-        if (newCrop.y + newCrop.height > 100) newCrop.height = 100 - newCrop.y;
+        // Safety clamp: If it exceeds bounds, shrink BOTH to fit the limit
+        if (newCrop.x < 0) { newCrop.width += newCrop.x; newCrop.x = 0; newCrop.height = newCrop.width * naturalRatio; }
+        if (newCrop.y < 0) { newCrop.height += newCrop.y; newCrop.y = 0; newCrop.width = newCrop.height / naturalRatio; }
+        if (newCrop.x + newCrop.width > 100) { newCrop.width = 100 - newCrop.x; newCrop.height = newCrop.width * naturalRatio; }
+        if (newCrop.y + newCrop.height > 100) { newCrop.height = 100 - newCrop.y; newCrop.width = newCrop.height / naturalRatio; }
       }
     }
     setCrop(newCrop);
@@ -1068,17 +1073,19 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
       let nw = prev.width;
       let nh = prev.height;
       
+      const naturalRatio = imgRef.current?.naturalWidth ? (imgRef.current.naturalWidth / imgRef.current.naturalHeight) : 1;
+      
       if (dim === 'w') {
         nw = val;
         if (aspect) {
-          // Sync height to keep square
-          nh = (nw * (containerRef.current?.clientWidth || 500)) / aspect / (containerRef.current?.clientHeight || 500);
+          // Pixel-perfect Sync (using source image ratio)
+          nh = nw * naturalRatio;
         }
       } else {
         nh = val;
         if (aspect) {
-          // Sync width to keep square
-          nw = (nh * (containerRef.current?.clientHeight || 500) * aspect) / (containerRef.current?.clientWidth || 500);
+          // Pixel-perfect Sync (using source image ratio)
+          nw = nh / naturalRatio;
         }
       }
       
@@ -1199,8 +1206,8 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
             {/* Professional Crop Overlay */}
             {imageSize.width > 0 && (
               <div className="absolute inset-0 z-10 overflow-hidden pointer-events-none">
-                {/* Dark Mask Overlay (Precision SVG System) */}
-                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-85 backdrop-blur-[2px]">
+                {/* Dark Mask Overlay (Precision SVG System - NO BLUR) */}
+                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-85">
                   <defs>
                     <mask id="crop-mask">
                       <rect width="100%" height="100%" fill="white" />
