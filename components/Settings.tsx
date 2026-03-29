@@ -81,6 +81,20 @@ const Settings: React.FC<SettingsProps> = ({
 
     const topOfPageRef = useRef<HTMLDivElement>(null);
 
+    // Custom Presets Local State
+    const [customPresets, setCustomPresets] = useState<string[]>(() => {
+        try {
+            const saved = localStorage.getItem('customPresets');
+            return saved ? JSON.parse(saved) : [];
+        } catch {
+            return [];
+        }
+    });
+
+    useEffect(() => {
+        localStorage.setItem('customPresets', JSON.stringify(customPresets));
+    }, [customPresets]);
+
     // Carregar sugestões recentes do localStorage
     useEffect(() => {
         const saved = localStorage.getItem('recentAvatars');
@@ -92,26 +106,7 @@ const Settings: React.FC<SettingsProps> = ({
                 console.error("Erro ao carregar avatares recentes:", e);
             }
         }
-        // Load customPresets from localStorage (kept local to avoid Firestore 1MB limit)
-        const savedPresets = localStorage.getItem('customPresets');
-        if (savedPresets) {
-            try {
-                const parsed = JSON.parse(savedPresets);
-                if (Array.isArray(parsed)) {
-                    setAppSettings(prev => ({ ...prev, customPresets: parsed }));
-                }
-            } catch (e) {
-                console.error("Erro ao carregar presets customizados:", e);
-            }
-        }
     }, []);
-
-    // Persist customPresets to localStorage whenever they change
-    useEffect(() => {
-        if (appSettings.customPresets) {
-            localStorage.setItem('customPresets', JSON.stringify(appSettings.customPresets));
-        }
-    }, [appSettings.customPresets]);
 
     const getUpdatedCustomAvatars = (currentList: string[], newImg: string, targetIndex?: number | null): string[] => {
         const current = [...(currentList || [])];
@@ -775,9 +770,9 @@ const Settings: React.FC<SettingsProps> = ({
                         </label>
                         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-3 max-h-[460px] overflow-y-auto pr-3 custom-scrollbar p-1">
                             {PRESET_AVATARS.map((avatar, index) => {
-                                const customPresets = appSettings.customPresets || [];
-                                const displaySrc = customPresets[index] || avatar;
-                                const hasCustom = !!customPresets[index];
+                                const currentPresets = customPresets || [];
+                                const displaySrc = currentPresets[index] || avatar;
+                                const hasCustom = !!currentPresets[index];
                                 return (
                                     <div
                                         key={index}
@@ -820,10 +815,10 @@ const Settings: React.FC<SettingsProps> = ({
                                                         if (!file) return;
                                                         try {
                                                             const base64 = await compressImage(file, { maxWidth: 512, maxHeight: 512, quality: 0.9 });
-                                                            setAppSettings(prev => {
-                                                                const presets = [...(prev.customPresets || Array(PRESET_AVATARS.length).fill(''))];
+                                                            setCustomPresets(prev => {
+                                                                const presets = [...(prev || Array(PRESET_AVATARS.length).fill(''))];
                                                                 presets[index] = base64;
-                                                                return { ...prev, customPresets: presets };
+                                                                return presets;
                                                             });
                                                         } catch (err) {
                                                             console.error('Erro ao substituir avatar:', err);
@@ -836,10 +831,10 @@ const Settings: React.FC<SettingsProps> = ({
                                             {hasCustom && (
                                                 <button
                                                     onClick={() => {
-                                                        setAppSettings(prev => {
-                                                            const presets = [...(prev.customPresets || [])];
+                                                        setCustomPresets(prev => {
+                                                            const presets = [...(prev || [])];
                                                             presets[index] = '';
-                                                            return { ...prev, customPresets: presets };
+                                                            return presets;
                                                         });
                                                     }}
                                                     className="flex items-center gap-1 bg-red-500/20 hover:bg-red-500/40 text-red-400 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wide cursor-pointer hover:scale-105 transition-transform"
