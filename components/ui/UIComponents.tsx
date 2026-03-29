@@ -1916,30 +1916,21 @@ export const BookmakerLogo: React.FC<{
       }}
     >
       {/* 3D Glass / Glossy Overlay */}
-      <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none z-30" />
+      <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none z-30 opacity-60" />
       <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/30 pointer-events-none z-30" />
       
       {logo ? (
-        <>
-          {/* Mirror Reflection Background (High Fidelity) */}
-          <img 
-            src={logo} 
-            alt="" 
-            className="absolute inset-0 w-full h-full object-cover blur-md opacity-100 scale-110 pointer-events-none z-10" 
-          />
-          {/* Main Logo Layer (No Zoom/Crop) */}
-          <img 
-            src={logo} 
-            alt={initials} 
-            className="relative z-20 w-full h-full object-contain p-[4%] drop-shadow-2xl transition-all duration-500 group-hover/bookie:scale-110" 
-          />
-        </>
+        <img 
+          src={logo} 
+          alt={initials} 
+          className="relative z-20 w-full h-full object-contain p-[6%] drop-shadow-2xl transition-all duration-500 group-hover/bookie:scale-110" 
+        />
       ) : (
-        <span className="relative z-20 drop-shadow-md uppercase text-center w-full px-0.5 truncate">{initials}</span>
+        <span className="relative z-20 drop-shadow-md uppercase text-center w-full px-0.5 truncate font-black">{initials}</span>
       )}
 
       {/* Subtle Inner Glow Border */}
-      <div className="absolute inset-0 border border-white/10 rounded-inherit pointer-events-none z-30" />
+      <div className="absolute inset-0 border border-white/15 rounded-inherit pointer-events-none z-30" />
     </div>
   );
 };
