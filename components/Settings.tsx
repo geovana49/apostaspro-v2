@@ -564,7 +564,7 @@ const Settings: React.FC<SettingsProps> = ({
                     <div className="flex flex-col items-center justify-center p-8 bg-black/20 rounded-3xl border border-dashed border-primary/20 hover:border-primary/40 transition-all group shrink-0">
                         <div className="w-32 h-32 rounded-3xl border-2 border-white/10 overflow-hidden bg-[#151b2e] flex items-center justify-center shadow-2xl relative mb-6 group-hover:scale-105 transition-transform duration-500">
                             {appSettings.profileImage ? (
-                                <img src={appSettings.profileImage} alt="Preview" className="w-full h-full object-cover" />
+                                <img src={appSettings.profileImage} alt="Preview" className="w-full h-full object-cover scale-[1.12]" />
                             ) : (
                                 <User size={50} className="text-gray-700" />
                             )}
@@ -781,7 +781,7 @@ const Settings: React.FC<SettingsProps> = ({
                                         <img
                                             src={displaySrc}
                                             alt={`Avatar ${index + 1}`}
-                                            className="absolute inset-0 w-full h-full object-cover"
+                                            className="absolute inset-0 w-full h-full object-cover scale-[1.12]"
                                             loading="lazy"
                                             style={{ display: 'block', objectPosition: 'center center' }}
                                         />
