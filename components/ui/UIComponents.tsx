@@ -970,17 +970,44 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
       // Blobify to fix CORS
       if (imageSrc && !imageSrc.startsWith('data:') && !imageSrc.startsWith('blob:')) {
         setIsBlobifying(true);
+        
+        // Helper to fetch through proxy
+        const fetchWithProxy = (url: string) => {
+          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+          return fetch(proxyUrl);
+        };
+
         fetch(imageSrc, { mode: 'cors' })
-          .then(res => res.blob())
+          .then(res => {
+            if (!res.ok) throw new Error("Direct fetch failed");
+            return res.blob();
+          })
           .then(blob => {
             const url = URL.createObjectURL(blob);
             setLocalImage(url);
           })
-          .catch(err => {
-            console.warn("CORS fetch failed, using original URL. Cropping might be limited.", err);
-            setLocalImage(imageSrc);
+          .catch(() => {
+            // Plano B: Tentar via Proxy
+            console.log("✂️ Direct image fetch blocked by CORS. Using proxy bridge...");
+            fetchWithProxy(imageSrc)
+              .then(res => {
+                if (!res.ok) throw new Error("Proxy fetch failed");
+                return res.blob();
+              })
+              .then(blob => {
+                const url = URL.createObjectURL(blob);
+                setLocalImage(url);
+              })
+              .catch(err => {
+                console.warn("✂️ Image editing remains restricted (CORS failure even with proxy).", err);
+                setLocalImage(imageSrc);
+              })
+              .finally(() => setIsBlobifying(false));
           })
-          .finally(() => setIsBlobifying(false));
+          .finally(() => {
+             // Only finalize if we haven't started the proxy path (which also finalizes)
+             // Actually it's safer to finalize in the then/catch of both
+          });
       } else {
         setLocalImage(imageSrc);
         setIsBlobifying(false);
