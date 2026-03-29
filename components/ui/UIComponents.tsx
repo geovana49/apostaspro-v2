@@ -911,7 +911,7 @@ interface ImageAdjusterProps {
   isOpen: boolean;
   imageSrc: string;
   onClose: () => void;
-  onSave: (newImage: Blob | null) => void;
+  onSave: (newImage: string | null) => void;
   aspect?: number; 
 }
 
@@ -1930,7 +1930,7 @@ export const BookmakerLogo: React.FC<{
       )}
 
       {/* Subtle Inner Glow Border */}
-      <div className="absolute inset-0 border border-white/15 rounded-inherit pointer-events-none z-30" />
+      <div className="absolute inset-0 border border-white/15 rounded-[inherit] pointer-events-none z-30" />
     </div>
   );
 };
