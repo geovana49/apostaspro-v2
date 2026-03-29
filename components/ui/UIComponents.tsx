@@ -934,6 +934,8 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
   const [isDragging, setIsDragging] = useState<{ type: 'move' | 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w', startX: number, startY: number, startCrop: any } | null>(null);
 
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
+  const [localImage, setLocalImage] = useState<string>(imageSrc);
+  const [isBlobifying, setIsBlobifying] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -963,9 +965,33 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
       setSaturation(100);
       setAspect(initialAspect);
       setCrop({ x: 10, y: 10, width: 80, height: 80 });
-      // Reset image size state before new load
       setImageSize({ width: 0, height: 0 });
+      
+      // Blobify to fix CORS
+      if (imageSrc && !imageSrc.startsWith('data:') && !imageSrc.startsWith('blob:')) {
+        setIsBlobifying(true);
+        fetch(imageSrc, { mode: 'cors' })
+          .then(res => res.blob())
+          .then(blob => {
+            const url = URL.createObjectURL(blob);
+            setLocalImage(url);
+          })
+          .catch(err => {
+            console.warn("CORS fetch failed, using original URL. Cropping might be limited.", err);
+            setLocalImage(imageSrc);
+          })
+          .finally(() => setIsBlobifying(false));
+      } else {
+        setLocalImage(imageSrc);
+        setIsBlobifying(false);
+      }
     }
+
+    return () => {
+      if (localImage && localImage.startsWith('blob:')) {
+        URL.revokeObjectURL(localImage);
+      }
+    };
   }, [isOpen, imageSrc, initialAspect]);
 
   // Resolution Calculation
@@ -1200,7 +1226,7 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
           >
             <img
               ref={imgRef}
-              src={imageSrc}
+              src={localImage}
               alt="Editor"
               onLoad={updateImageSize}
               className="max-w-full max-h-[60vh] lg:max-h-[70vh] object-contain select-none"
