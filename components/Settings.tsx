@@ -31,7 +31,13 @@ interface SettingsProps {
 
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e', '#64748b', '#000000', '#FFFFFF'];
 
-const PRESET_AVATARS = Array.from({ length: 79 }, (_, i) => `/assets/avatars/suggested_${i + 1}.png`);
+const PRESET_AVATARS = [
+    '/assets/avatars/premium/bear.png',
+    '/assets/avatars/premium/panda.png',
+    '/assets/avatars/premium/shiba.png',
+    '/assets/avatars/premium/cat.png',
+    '/assets/avatars/premium/fox.png'
+];
 
 const Settings: React.FC<SettingsProps> = ({
     bookmakers,
