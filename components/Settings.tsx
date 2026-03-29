@@ -111,30 +111,55 @@ const Settings: React.FC<SettingsProps> = ({
         setActiveTab(initialTab);
     }, [initialTab]);
 
-    // Auto-Save robusto: Garante que as configurações sejam salvas na nuvem se o usuário esquecer 
-    // ou se o celular não disparar o 'onBlur' nativo ao recolher o teclado.
+    // isDirty tracks if the user made local changes that need saving.
+    // This prevents the Firestore snapshot → save → snapshot infinite write loop.
+    const isDirty = useRef(false);
+    const lastSavedSettingsRef = useRef<string>('');
+    // Track when parent (App.tsx/Firestore) pushes a new value so we don't re-save it
+    const isExternalUpdate = useRef(false);
+
+    // When appSettings prop changes from parent (Firestore snapshot), update baseline silently
     useEffect(() => {
-        if (!currentUser || !appSettings) return;
+        const serialized = JSON.stringify(appSettings);
+        if (isExternalUpdate.current) {
+            lastSavedSettingsRef.current = serialized;
+            isDirty.current = false;
+            isExternalUpdate.current = false;
+            return;
+        }
+        if (serialized !== lastSavedSettingsRef.current) {
+            isDirty.current = true;
+        }
+    }, [appSettings]);
+
+    // Auto-Save robusto: só salva quando houver mudança local (isDirty)
+    useEffect(() => {
+        if (!currentUser || !appSettings || !isDirty.current) return;
         const autoSaveTimer = setTimeout(async () => {
+            if (!isDirty.current) return; // Double-check before write
+            const serialized = JSON.stringify(appSettings);
+            if (serialized === lastSavedSettingsRef.current) {
+                isDirty.current = false;
+                return; // No change, skip write
+            }
             // Salva no Firestore
             await FirestoreService.saveSettings(currentUser.uid, appSettings);
+            lastSavedSettingsRef.current = serialized;
+            isDirty.current = false;
 
-            // Também sincroniza com o Perfil do Firebase Auth para fallback e login em novos dispositivos
+            // Sincroniza displayName com Firebase Auth
             const authUser = auth.currentUser;
             if (authUser) {
                 try {
-                    // Only sync displayName to Auth - photoURL not supported for Base64 in Firebase Auth
                     if (authUser.displayName !== appSettings.username) {
-                        await updateProfile(authUser, {
-                            displayName: appSettings.username
-                        });
+                        await updateProfile(authUser, { displayName: appSettings.username });
                         console.debug("[Sync] Perfil Firebase Auth atualizado.");
                     }
                 } catch (e) {
                     console.error("[Sync] Erro ao sincronizar Perfil Auth:", e);
                 }
             }
-        }, 1500); // 1.5s de debounce
+        }, 2000); // 2s debounce
         return () => clearTimeout(autoSaveTimer);
     }, [appSettings, currentUser]);
 
