@@ -1925,7 +1925,7 @@ export const BookmakerLogo: React.FC<{
           <img 
             src={logo} 
             alt="" 
-            className="absolute inset-0 w-full h-full object-cover blur-lg opacity-100 scale-110 saturate-125 brightness-110 pointer-events-none z-10" 
+            className="absolute inset-0 w-full h-full object-cover blur-md opacity-100 scale-110 pointer-events-none z-10" 
           />
           {/* Main Logo Layer (No Zoom/Crop) */}
           <img 
