@@ -943,14 +943,18 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
   // Sync internal container size with displayed image size
   const updateImageSize = useCallback(() => {
     if (imgRef.current) {
-      const { width, height } = imgRef.current.getBoundingClientRect();
+      const rect = imgRef.current.getBoundingClientRect();
+      // Adjust dimensions by current scale to get layout pixels
+      const width = rect.width / scale || 1; 
+      const height = rect.height / scale || 1;
       setImageSize({ width, height });
     }
   }, []);
 
   useEffect(() => {
-    window.addEventListener('resize', updateImageSize);
-    return () => window.removeEventListener('resize', updateImageSize);
+    const handleResize = () => updateImageSize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [updateImageSize]);
 
   // Reset on open
@@ -973,7 +977,7 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
         
         // Helper to fetch through proxy
         const fetchWithProxy = (url: string) => {
-          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+          const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(url)}`;
           return fetch(proxyUrl);
         };
 
@@ -1160,8 +1164,8 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
     if (!ctx) return;
 
     // Output size resolution (high quality)
-    const outputWidth = Math.max(512, Math.min(2048, img.naturalWidth));
-    const outputHeight = aspect ? outputWidth / aspect : (outputWidth * (crop.height / crop.width));
+    const outputWidth = resolution.w || 256;
+    const outputHeight = aspect ? (outputWidth / aspect) : (outputWidth * ((crop.height || 1) / (crop.width || 1)));
     canvas.width = outputWidth;
     canvas.height = outputHeight;
 
@@ -1271,6 +1275,16 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
                   <defs>
                     <mask id="crop-mask">
                       <rect width="100%" height="100%" fill="white" />
+                      <rect 
+                        x={`${crop.x || 0}%`} 
+                        y={`${crop.y || 0}%`} 
+                        width={`${crop.width || 10}%`} 
+                        height={`${crop.height || 10}%`} 
+                        fill="none" 
+                        stroke="#00f2ea" 
+                        strokeWidth="2" 
+                        className="transition-all duration-75"
+                      />
                       <rect 
                         x={`${crop.x}%`} 
                         y={`${crop.y}%`} 
