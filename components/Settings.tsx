@@ -92,7 +92,26 @@ const Settings: React.FC<SettingsProps> = ({
                 console.error("Erro ao carregar avatares recentes:", e);
             }
         }
+        // Load customPresets from localStorage (kept local to avoid Firestore 1MB limit)
+        const savedPresets = localStorage.getItem('customPresets');
+        if (savedPresets) {
+            try {
+                const parsed = JSON.parse(savedPresets);
+                if (Array.isArray(parsed)) {
+                    setAppSettings(prev => ({ ...prev, customPresets: parsed }));
+                }
+            } catch (e) {
+                console.error("Erro ao carregar presets customizados:", e);
+            }
+        }
     }, []);
+
+    // Persist customPresets to localStorage whenever they change
+    useEffect(() => {
+        if (appSettings.customPresets) {
+            localStorage.setItem('customPresets', JSON.stringify(appSettings.customPresets));
+        }
+    }, [appSettings.customPresets]);
 
     const getUpdatedCustomAvatars = (currentList: string[], newImg: string, targetIndex?: number | null): string[] => {
         const current = [...(currentList || [])];

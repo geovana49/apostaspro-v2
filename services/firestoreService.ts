@@ -145,10 +145,24 @@ export const FirestoreService = {
     // --- Settings ---
     subscribeToSettings: (userId: string, callback: (settings: AppSettings | null, isSyncing: boolean) => void, onError?: (err: any) => void) => {
         const docRef = doc(db, "users", userId, "settings", "preferences");
-        return onSnapshot(docRef, { includeMetadataChanges: true }, (snapshot) => {
+        const mediaRef = doc(db, "users", userId, "settings", "media");
+        return onSnapshot(docRef, { includeMetadataChanges: true }, async (snapshot) => {
             const isSyncing = (snapshot as any).metadata?.hasPendingWrites || false;
             if (snapshot.exists()) {
-                callback(snapshot.data() as AppSettings, isSyncing);
+                const baseSettings = snapshot.data() as AppSettings;
+                // Merge avatar images from the separate media document
+                try {
+                    const { getDoc } = await import('firebase/firestore');
+                    const mediaSnap = await getDoc(mediaRef);
+                    if (mediaSnap.exists()) {
+                        const mediaData = mediaSnap.data();
+                        baseSettings.customAvatars = mediaData.customAvatars || [];
+                        baseSettings.profileImage = baseSettings.profileImage || mediaData.profileImage;
+                    }
+                } catch (e) {
+                    // Media doc fetch failed, proceed without images
+                }
+                callback(baseSettings, isSyncing);
             } else {
                 console.log("Settings document not found, returning null");
                 callback(null, isSyncing);
@@ -160,7 +174,33 @@ export const FirestoreService = {
     },
 
     saveSettings: async (userId: string, settings: AppSettings) => {
-        await setDoc(doc(db, "users", userId, "settings", "preferences"), settings, { merge: true });
+        // 1. Strip image data from the main document to stay under Firestore's 1MB limit
+        const { customAvatars, customPresets, ...textSettings } = settings;
+        
+        // Store profile image in media doc if it's Base64 (large)
+        const isBase64 = (s?: string) => s ? s.startsWith('data:') : false;
+        const profileImageIsBase64 = isBase64(settings.profileImage);
+        if (profileImageIsBase64) {
+            // Keep profileImage out of main doc, it goes to media
+            delete (textSettings as any).profileImage;
+        }
+
+        // 2. Save lean settings to main document
+        await setDoc(doc(db, "users", userId, "settings", "preferences"), textSettings, { merge: true });
+        
+        // 3. Save image data to separate media document
+        const mediaPayload: Record<string, any> = {
+            customAvatars: customAvatars || []
+        };
+        if (profileImageIsBase64) {
+            mediaPayload.profileImage = settings.profileImage;
+        }
+        await setDoc(doc(db, "users", userId, "settings", "media"), mediaPayload, { merge: true });
+    },
+
+    saveProfileImage: async (userId: string, profileImage: string) => {
+        // Quick direct update of just profile image in media doc
+        await setDoc(doc(db, "users", userId, "settings", "media"), { profileImage }, { merge: true });
     },
 
     // --- Configurations ---
