@@ -123,11 +123,10 @@ const Settings: React.FC<SettingsProps> = ({
             const authUser = auth.currentUser;
             if (authUser) {
                 try {
-                    // Só atualiza se houver mudança para evitar chamadas excessivas
-                    if (authUser.displayName !== appSettings.username || authUser.photoURL !== appSettings.profileImage) {
+                    // Only sync displayName to Auth - photoURL not supported for Base64 in Firebase Auth
+                    if (authUser.displayName !== appSettings.username) {
                         await updateProfile(authUser, {
-                            displayName: appSettings.username,
-                            photoURL: appSettings.profileImage
+                            displayName: appSettings.username
                         });
                         console.debug("[Sync] Perfil Firebase Auth atualizado.");
                     }
@@ -293,11 +292,8 @@ const Settings: React.FC<SettingsProps> = ({
                     return final;
                 });
 
-                // 3. Side-effect sync for Firebase Auth Profile
-                const authUser = auth.currentUser;
-                if (authUser) {
-                    updateProfile(authUser, { photoURL: base64 }).catch(e => console.error("Auth sync error:", e));
-                }
+                // 3. No need to sync to Firebase Auth photoURL - Base64 is too large for Auth profile
+                // The Firestore settings are the source of truth for the app.
             } catch (err) {
                 console.error("Error updating identity upload:", err);
             } finally {
