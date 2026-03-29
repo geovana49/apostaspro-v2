@@ -263,7 +263,7 @@ const Layout: React.FC<LayoutProps> = ({
               {/* Avatar with Teal Outline - Rounded Square Style */}
               <div className="w-12 h-12 rounded-[14px] border-[1.5px] border-[#17baa4] flex items-center justify-center shrink-0 bg-transparent shadow-[0_0_10px_rgba(23,186,164,0.2)] overflow-hidden">
                 {settings.profileImage ? (
-                  <img src={settings.profileImage} alt="Profile" className="w-full h-full object-cover" />
+                  <img src={settings.profileImage} alt="Profile" className="w-full h-full object-cover scale-[1.12]" />
                 ) : (
                   <User className="text-gray-400 group-hover:text-white transition-colors" size={22} />
                 )}
@@ -353,7 +353,7 @@ const Layout: React.FC<LayoutProps> = ({
                 >
                   <div className="w-8 h-8 rounded-lg bg-[#0d1121] flex items-center justify-center border border-white/5 overflow-hidden text-primary shadow-[0_0_10px_rgba(23,186,164,0.1)]">
                     {settings.profileImage ? (
-                      <img src={settings.profileImage} alt="Profile" className="w-full h-full object-cover" />
+                      <img src={settings.profileImage} alt="Profile" className="w-full h-full object-cover scale-[1.12]" />
                     ) : (
                       <User size={14} className="text-gray-400 group-hover:text-white" />
                     )}
@@ -372,7 +372,7 @@ const Layout: React.FC<LayoutProps> = ({
                     <div className="flex items-center gap-3 p-2 border-b border-white/5 mb-2">
                       <div className="w-10 h-10 rounded-[12px] bg-[#0d1121] flex items-center justify-center border border-white/5 overflow-hidden shadow-inner">
                         {settings.profileImage ? (
-                          <img src={settings.profileImage} alt="Profile" className="w-full h-full object-cover" />
+                          <img src={settings.profileImage} alt="Profile" className="w-full h-full object-cover scale-[1.12]" />
                         ) : (
                           <User size={16} className="text-gray-400" />
                         )}
