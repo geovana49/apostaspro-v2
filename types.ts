@@ -76,6 +76,7 @@ export interface AppSettings {
   extraGainsFilterPosition: 'below_toolbar' | 'within_toolbar'; // New setting for filter position
   privacyMode: boolean; // New setting for hiding balances
   customAvatars?: string[]; // Array of base64 cropped images
+  customPresets?: string[]; // User overrides for specific preset avatar slots
 }
 
 // Updated User interface for Firebase

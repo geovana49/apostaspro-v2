@@ -730,35 +730,95 @@ const Settings: React.FC<SettingsProps> = ({
                             Sugestões da Comunidade
                         </label>
                         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-3 max-h-[460px] overflow-y-auto pr-3 custom-scrollbar p-1">
-                            {PRESET_AVATARS.map((avatar, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => handleOpenAdjuster(avatar, undefined, handleCroppedImage)}
-                                    className={`aspect-square rounded-2xl border-2 overflow-hidden transition-all duration-300 relative group/suggestion ${appSettings.profileImage === avatar
-                                        ? 'border-primary ring-4 ring-primary/20 scale-105 shadow-xl z-20'
-                                        : 'border-white/5 hover:border-primary/40 hover:scale-110'
-                                        }`}
-                                    title={`Ajustar ${index + 1}`}
-                                >
-                                    <img
-                                        src={avatar}
-                                        alt={`Avatar ${index + 1}`}
-                                        className="absolute inset-0 w-full h-full object-cover"
-                                        loading="lazy"
-                                        style={{ display: 'block', objectPosition: 'center center' }}
-                                    />
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/suggestion:opacity-100 transition-all flex items-center justify-center backdrop-blur-[1px]">
-                                        <div className="bg-primary text-[#090c19] p-2 rounded-full shadow-2xl scale-50 group-hover/suggestion:scale-100 transition-transform duration-300">
-                                            <Scissors size={14} strokeWidth={3} />
+                            {PRESET_AVATARS.map((avatar, index) => {
+                                const customPresets = appSettings.customPresets || [];
+                                const displaySrc = customPresets[index] || avatar;
+                                const hasCustom = !!customPresets[index];
+                                return (
+                                    <div
+                                        key={index}
+                                        className={`aspect-square rounded-2xl border-2 overflow-hidden transition-all duration-300 relative group/suggestion ${appSettings.profileImage === displaySrc
+                                            ? 'border-primary ring-4 ring-primary/20 scale-105 shadow-xl z-20'
+                                            : 'border-white/5 hover:border-primary/40 hover:scale-110'
+                                            }`}
+                                    >
+                                        <img
+                                            src={displaySrc}
+                                            alt={`Avatar ${index + 1}`}
+                                            className="absolute inset-0 w-full h-full object-cover"
+                                            loading="lazy"
+                                            style={{ display: 'block', objectPosition: 'center center' }}
+                                        />
+                                        {/* Hover overlay with two actions */}
+                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/suggestion:opacity-100 transition-all flex flex-col items-center justify-center gap-1.5 backdrop-blur-[2px]">
+                                            {/* Ajustar (crop) */}
+                                            <button
+                                                onClick={() => handleOpenAdjuster(displaySrc, undefined, handleCroppedImage)}
+                                                className="flex items-center gap-1 bg-primary text-[#090c19] px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wide shadow-lg hover:scale-105 transition-transform"
+                                                title="Ajustar recorte"
+                                            >
+                                                <Scissors size={10} strokeWidth={3} />
+                                                Ajustar
+                                            </button>
+                                            {/* Substituir (upload) */}
+                                            <label
+                                                className="flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wide cursor-pointer shadow-lg hover:scale-105 transition-transform"
+                                                title="Substituir imagem"
+                                            >
+                                                <Upload size={10} strokeWidth={3} />
+                                                Substituir
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={async (e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (!file) return;
+                                                        try {
+                                                            const base64 = await compressImage(file, { maxWidth: 512, maxHeight: 512, quality: 0.9 });
+                                                            setAppSettings(prev => {
+                                                                const presets = [...(prev.customPresets || Array(PRESET_AVATARS.length).fill(''))];
+                                                                presets[index] = base64;
+                                                                return { ...prev, customPresets: presets };
+                                                            });
+                                                        } catch (err) {
+                                                            console.error('Erro ao substituir avatar:', err);
+                                                        }
+                                                        e.target.value = '';
+                                                    }}
+                                                />
+                                            </label>
+                                            {/* Reset to original if customised */}
+                                            {hasCustom && (
+                                                <button
+                                                    onClick={() => {
+                                                        setAppSettings(prev => {
+                                                            const presets = [...(prev.customPresets || [])];
+                                                            presets[index] = '';
+                                                            return { ...prev, customPresets: presets };
+                                                        });
+                                                    }}
+                                                    className="flex items-center gap-1 bg-red-500/20 hover:bg-red-500/40 text-red-400 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wide cursor-pointer hover:scale-105 transition-transform"
+                                                    title="Resetar para o original"
+                                                >
+                                                    <X size={9} strokeWidth={3} />
+                                                    Resetar
+                                                </button>
+                                            )}
                                         </div>
+                                        {appSettings.profileImage === displaySrc && (
+                                            <div className="absolute top-1 right-1 bg-primary text-[#090c19] p-1 rounded-lg shadow-lg">
+                                                <Check size={10} strokeWidth={4} />
+                                            </div>
+                                        )}
+                                        {hasCustom && (
+                                            <div className="absolute bottom-1 left-1 bg-white/20 backdrop-blur-sm p-0.5 rounded-md" title="Personalizado">
+                                                <Star size={8} className="text-yellow-400" fill="currentColor" />
+                                            </div>
+                                        )}
                                     </div>
-                                    {appSettings.profileImage === avatar && (
-                                        <div className="absolute top-1 right-1 bg-primary text-[#090c19] p-1 rounded-lg shadow-lg">
-                                            <Check size={10} strokeWidth={4} />
-                                        </div>
-                                    )}
-                                </button>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
 
