@@ -740,11 +740,17 @@ const Settings: React.FC<SettingsProps> = ({
                                     onClick={() => handleOpenAdjuster(avatar, undefined, handleCroppedImage)}
                                     className={`aspect-square rounded-2xl border-2 overflow-hidden transition-all duration-300 relative group/suggestion ${appSettings.profileImage === avatar
                                         ? 'border-primary ring-4 ring-primary/20 scale-105 shadow-xl z-20'
-                                        : 'border-white/5 hover:border-primary/40 hover:scale-110 grayscale hover:grayscale-0'
+                                        : 'border-white/5 hover:border-primary/40 hover:scale-110'
                                         }`}
                                     title={`Ajustar ${index + 1}`}
                                 >
-                                    <img src={avatar} alt={`Avatar ${index + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                                    <img
+                                        src={avatar}
+                                        alt={`Avatar ${index + 1}`}
+                                        className="absolute inset-0 w-full h-full object-cover"
+                                        loading="lazy"
+                                        style={{ display: 'block', objectPosition: 'center center' }}
+                                    />
                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/suggestion:opacity-100 transition-all flex items-center justify-center backdrop-blur-[1px]">
                                         <div className="bg-primary text-[#090c19] p-2 rounded-full shadow-2xl scale-50 group-hover/suggestion:scale-100 transition-transform duration-300">
                                             <Scissors size={14} strokeWidth={3} />
