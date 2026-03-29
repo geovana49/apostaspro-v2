@@ -936,6 +936,7 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const [localImage, setLocalImage] = useState<string>(imageSrc);
   const [isBlobifying, setIsBlobifying] = useState(false);
+  const [hasFailedAllProxies, setHasFailedAllProxies] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -971,44 +972,53 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
       setCrop({ x: 10, y: 10, width: 80, height: 80 });
       setImageSize({ width: 0, height: 0 });
       
-      // Blobify to fix CORS (JSON Bridge Strategy)
+      // Blobify to fix CORS (JSON Bridge Strategy with multiple fallbacks)
       if (imageSrc && !imageSrc.startsWith('data:') && !imageSrc.startsWith('blob:')) {
         setIsBlobifying(true);
+        setHasFailedAllProxies(false);
         
-        // Strategy: Use allorigins.win/get to fetch the JSON containing base64 data
-        // This is virtually impossible to block via normal CORS-Security policies for images
         const bridgeUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(imageSrc)}`;
 
         fetch(bridgeUrl)
-          .then(res => {
-            if (!res.ok) throw new Error("JSON bridge fetch failed");
-            return res.json();
-          })
+          .then(res => res.json())
           .then(data => {
             if (data.contents) {
               setLocalImage(data.contents);
-            } else {
-              throw new Error("Empty contents in JSON bridge");
-            }
+              setIsBlobifying(false);
+            } else throw new Error("JSON empty");
           })
-          .catch(err => {
-            console.warn("✂️ JSON Bridge failed, using direct Proxy fallback...", err);
-            // Fallback: Try a direct proxy as a last resort
-            const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(imageSrc)}`;
-            fetch(proxyUrl)
+          .catch(() => {
+            // Plano B: corsproxy.io
+            console.log("✂️ AllOrigins failed, trying corsproxy.io...");
+            const p2 = `https://corsproxy.io/?url=${encodeURIComponent(imageSrc)}`;
+            fetch(p2)
               .then(res => res.blob())
               .then(blob => {
-                 const url = URL.createObjectURL(blob);
-                 setLocalImage(url);
+                 setLocalImage(URL.createObjectURL(blob));
+                 setIsBlobifying(false);
               })
               .catch(() => {
-                 setLocalImage(imageSrc);
+                 // Plano C: codetabs.com
+                 console.log("✂️ corsproxy failed, trying codetabs...");
+                 const p3 = `https://api.codetabs.com/v1/proxy?url=${encodeURIComponent(imageSrc)}`;
+                 fetch(p3)
+                   .then(res => res.blob())
+                   .then(blob => {
+                      setLocalImage(URL.createObjectURL(blob));
+                      setIsBlobifying(false);
+                   })
+                   .catch(() => {
+                      console.error("✂️ All proxies failed for this logo.");
+                      setLocalImage(imageSrc);
+                      setHasFailedAllProxies(true);
+                      setIsBlobifying(false);
+                   });
               });
-          })
-          .finally(() => setIsBlobifying(false));
+          });
       } else {
         setLocalImage(imageSrc);
         setIsBlobifying(false);
+        setHasFailedAllProxies(false);
       }
     }
 
@@ -1277,6 +1287,28 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
               </div>
             )}
 
+            {/* Restricted Content UI Fallback */}
+            {hasFailedAllProxies && (
+              <div className="absolute inset-0 z-[110] bg-[#0c111d]/90 flex flex-col items-center justify-center gap-6 p-8 text-center backdrop-blur-md">
+                <div className="w-16 h-16 bg-danger/10 rounded-full flex items-center justify-center text-danger border border-danger/20">
+                  <FlipHorizontal size={32} />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-white font-bold text-lg">Logo Protegido</h3>
+                  <p className="text-gray-400 text-sm max-w-[280px]">
+                    Este site não permite o ajuste remoto do logo por segurança. 
+                    <strong> Baixe o arquivo e use o botão "Carregar Imagem" para ajustar.</strong>
+                  </p>
+                </div>
+                <button 
+                  onClick={() => document.getElementById('logo-upload')?.click()}
+                  className="bg-primary text-black font-bold px-6 py-3 rounded-xl flex items-center gap-2 hover:scale-105 transition-transform"
+                >
+                  <Download size={18} /> Carregar Manualmente
+                </button>
+              </div>
+            )}
+
             {/* Professional Crop Overlay */}
             {imageSize.width > 0 && (
               <div className="absolute inset-0 z-10 overflow-hidden pointer-events-none">
@@ -1290,22 +1322,27 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
                         y={`${crop.y || 0}%`} 
                         width={`${crop.width || 10}%`} 
                         height={`${crop.height || 10}%`} 
-                        fill="none" 
-                        stroke="#00f2ea" 
-                        strokeWidth="2" 
-                        className="transition-all duration-75"
-                      />
-                      <rect 
-                        x={`${crop.x}%`} 
-                        y={`${crop.y}%`} 
-                        width={`${crop.width}%`} 
-                        height={`${crop.height}%`} 
                         fill="black" 
                         rx={cropShape === 'circle' ? "500" : cropShape === 'rounded' ? "25%" : "0"} 
                       />
                     </mask>
                   </defs>
-                  <rect width="100%" height="100%" fill="#000000" mask="url(#crop-mask)" />
+                  <rect width="100%" height="100%" fill="#0c111d" mask="url(#crop-mask)" />
+                </svg>
+
+                {/* Visible Grid and Border (Neon System - NaN-SAFE) */}
+                <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                  <rect 
+                    x={`${crop.x || 0}%`} 
+                    y={`${crop.y || 0}%`} 
+                    width={`${crop.width || 10}%`} 
+                    height={`${crop.height || 10}%`} 
+                    fill="none" 
+                    stroke="#00f2ea" 
+                    strokeWidth="2" 
+                    rx={cropShape === 'circle' ? "500" : cropShape === 'rounded' ? "25%" : "0"}
+                    className="transition-all duration-75"
+                  />
                 </svg>
  
                 {/* THE CROP BOX (Interactable) */}
