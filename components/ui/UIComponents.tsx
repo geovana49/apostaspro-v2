@@ -1194,7 +1194,8 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
               maxHeight: '60vh',
               maxWidth: '100%',
               aspectRatio: imgRef.current ? `${imgRef.current.naturalWidth} / ${imgRef.current.naturalHeight}` : 'auto',
-              transition: isDragging ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              transition: isDragging ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              transform: `scale(${scale})` // Move scale here to zoom everything together
             }}
           >
             <img
@@ -1203,11 +1204,10 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
               alt="Editor"
               onLoad={updateImageSize}
               className="max-w-full max-h-[60vh] lg:max-h-[70vh] object-contain select-none"
-              crossOrigin="anonymous"
               style={{
                 display: 'block',
                 filter: `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`,
-                transform: `rotate(${rotation}deg) scale(${scale * (flipH ? -1 : 1)}, ${scale * (flipV ? -1 : 1)})`
+                transform: `rotate(${rotation}deg) scale(${flipH ? -1 : 1}, ${flipV ? -1 : 1})`
               }}
             />
             {/* Professional Crop Overlay */}
