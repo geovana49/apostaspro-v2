@@ -1925,13 +1925,13 @@ export const BookmakerLogo: React.FC<{
           <img 
             src={logo} 
             alt="" 
-            className="absolute inset-0 w-full h-full object-cover blur-xl opacity-100 scale-150 saturate-150 brightness-110 pointer-events-none z-10" 
+            className="absolute inset-0 w-full h-full object-cover blur-lg opacity-100 scale-110 saturate-125 brightness-110 pointer-events-none z-10" 
           />
           {/* Main Logo Layer (No Zoom/Crop) */}
           <img 
             src={logo} 
             alt={initials} 
-            className="relative z-20 w-full h-full object-contain p-[12%] drop-shadow-2xl transition-all duration-500 group-hover/bookie:scale-110" 
+            className="relative z-20 w-full h-full object-contain p-[4%] drop-shadow-2xl transition-all duration-500 group-hover/bookie:scale-110" 
           />
         </>
       ) : (
