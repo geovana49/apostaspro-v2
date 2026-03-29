@@ -13,7 +13,8 @@ import {
     limit,
     clearIndexedDbPersistence,
     terminate,
-    Bytes
+    Bytes,
+    deleteField
 } from "firebase/firestore";
 import { ref, uploadBytesResumable, uploadString, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase";
@@ -175,14 +176,17 @@ export const FirestoreService = {
 
     saveSettings: async (userId: string, settings: AppSettings) => {
         // 1. Strip image data from the main document to stay under Firestore's 1MB limit
-        const { customAvatars, customPresets, ...textSettings } = settings;
+        // We MUST explicitly use deleteField() otherwise `{ merge: true }` leaves the old huge data intact.
+        const textSettings: any = { ...settings };
+        textSettings.customAvatars = deleteField();
+        textSettings.customPresets = deleteField();
         
         // Store profile image in media doc if it's Base64 (large)
         const isBase64 = (s?: string) => s ? s.startsWith('data:') : false;
         const profileImageIsBase64 = isBase64(settings.profileImage);
         if (profileImageIsBase64) {
             // Keep profileImage out of main doc, it goes to media
-            delete (textSettings as any).profileImage;
+            textSettings.profileImage = deleteField();
         }
 
         // 2. Save lean settings to main document
@@ -190,7 +194,7 @@ export const FirestoreService = {
         
         // 3. Save image data to separate media document
         const mediaPayload: Record<string, any> = {
-            customAvatars: customAvatars || []
+            customAvatars: settings.customAvatars || []
         };
         if (profileImageIsBase64) {
             mediaPayload.profileImage = settings.profileImage;
