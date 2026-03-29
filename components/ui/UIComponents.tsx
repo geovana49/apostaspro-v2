@@ -1142,9 +1142,16 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
     ctx.restore();
 
     // 4. Return as Data URL (Base64) for maximum compatibility with state and storage
-    const base64 = canvas.toDataURL('image/png', 0.95);
-    onSave(base64);
-    onClose();
+    try {
+      const base64 = canvas.toDataURL('image/png', 0.95);
+      onSave(base64);
+      onClose();
+    } catch (err) {
+      console.warn("CORS/Canvas Error. Falling back to original image.", err);
+      // Fallback: If we can't get data url (CORS limit), return original as base64 if possible or just original src
+      onSave(imageSrc);
+      onClose();
+    }
   };
 
   if (!isOpen) return null;
@@ -1196,10 +1203,11 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
               alt="Editor"
               onLoad={updateImageSize}
               className="max-w-full max-h-[60vh] lg:max-h-[70vh] object-contain select-none"
+              crossOrigin="anonymous"
               style={{
                 display: 'block',
                 filter: `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`,
-                transform: `rotate(${rotation}deg) scale(${flipH ? -1 : 1}, ${flipV ? -1 : 1})`
+                transform: `rotate(${rotation}deg) scale(${scale * (flipH ? -1 : 1)}, ${scale * (flipV ? -1 : 1)})`
               }}
             />
             {/* Professional Crop Overlay */}
@@ -1333,6 +1341,20 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
                     />
                   ))}
                 </div>
+              </div>
+            </div>
+
+            {/* Zoom Slider */}
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-2">
+                <ZoomIn size={12} className="text-primary" /> Zoom: {Math.round(scale * 100)}%
+              </span>
+              <div className="w-full h-8 flex items-center px-4">
+                <input 
+                  type="range" min="0.5" max="3" step="0.01" value={scale} 
+                  onChange={e => setScale(Number(e.target.value))}
+                  className="w-full h-1 bg-white/5 rounded-full appearance-none accent-primary cursor-pointer"
+                />
               </div>
             </div>
 

@@ -202,17 +202,27 @@ export function validateFirestoreSize(base64Strings: string[]): {
  * Reduz o tamanho do payload em ~33% em comparação ao Base64
  */
 export function base64ToBlob(base64: string): Blob {
-    const parts = base64.split(';base64,');
-    const contentType = parts[0].split(':')[1];
-    const raw = window.atob(parts[1]);
-    const rawLength = raw.length;
-    const uInt8Array = new Uint8Array(rawLength);
-
-    for (let i = 0; i < rawLength; ++i) {
-        uInt8Array[i] = raw.charCodeAt(i);
+    if (!base64 || !base64.includes(';base64,')) {
+        // Fallback: If not a base64, return a placeholder or try to treat it as a blob-able string if needed
+        // For now, we return a simple error-blob or the original if it's already a URL
+        return new Blob([], { type: 'image/png' });
     }
+    try {
+        const parts = base64.split(';base64,');
+        const contentType = parts[0].split(':')[1];
+        const raw = window.atob(parts[1]);
+        const rawLength = raw.length;
+        const uInt8Array = new Uint8Array(rawLength);
 
-    return new Blob([uInt8Array], { type: contentType });
+        for (let i = 0; i < rawLength; ++i) {
+            uInt8Array[i] = raw.charCodeAt(i);
+        }
+
+        return new Blob([uInt8Array], { type: contentType });
+    } catch (e) {
+        console.error("Error converting base64 to blob:", e);
+        return new Blob([], { type: 'image/png' });
+    }
 }
 
 /**
