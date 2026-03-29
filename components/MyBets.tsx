@@ -1103,20 +1103,33 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const renderBookmakerLogo = (id: string, size: 'sm' | 'md' = 'md', fallbackText?: string) => {
         const bookie = getBookmaker(id, fallbackText);
         const initials = bookie?.name.substring(0, 2).toUpperCase() || '??';
-        const color = bookie?.color || '#FFFFFF';
+        const color = bookie?.color || '#334155'; // Fallback slate
         const logo = bookie?.logo;
 
-        const sizeClasses = size === 'sm' ? 'w-5 h-5 text-[8px]' : 'w-9 h-9 text-[10px]';
+        // Upgrade sizes and swap to premium rounded squares (squircles)
+        const sizeClasses = size === 'sm' 
+            ? 'w-6 h-6 rounded-[6px] text-[9px]' 
+            : 'w-10 h-10 rounded-[10px] text-[13px]';
 
         return (
             <div
-                className={`${sizeClasses} rounded-full flex items-center justify-center font-bold text-[#090c19] shrink-0 shadow-sm overflow-hidden`}
-                style={{ backgroundColor: color }}
+                className={`${sizeClasses} flex items-center justify-center font-black text-white shrink-0 relative group/bookie ring-1 ring-white/10 overflow-hidden shadow-sm`}
+                style={{ 
+                    backgroundColor: color,
+                    boxShadow: `0 4px 12px ${color}40, inset 0 1px 2px rgba(255,255,255,0.15)` 
+                }}
             >
+                {/* 3D Glass Highlight */}
+                <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-black/20 pointer-events-none" />
+                
                 {logo ? (
-                    <img src={logo} alt={initials} className="w-full h-full object-contain p-[2px]" />
+                    <img 
+                        src={logo} 
+                        alt={initials} 
+                        className="relative z-10 w-full h-full object-contain p-[3px] drop-shadow-md transition-transform duration-300 group-hover/bookie:scale-110" 
+                    />
                 ) : (
-                    initials
+                    <span className="relative z-10 drop-shadow-md">{initials}</span>
                 )}
             </div>
         );
