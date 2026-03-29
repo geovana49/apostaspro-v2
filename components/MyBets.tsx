@@ -1,5 +1,5 @@
 import React, { useState, useReducer, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
-import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, SingleDatePickerModal } from './ui/UIComponents';
+import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, SingleDatePickerModal, BookmakerLogo } from './ui/UIComponents';
 import { FireImage } from './ui/FireImage';
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
@@ -739,11 +739,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const bookmakerOptions = bookmakers.map(b => ({
         label: b.name,
         value: b.id,
-        icon: (
-            <div className="w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold text-[#090c19] overflow-hidden" style={{ backgroundColor: b.color || '#FFFFFF' }}>
-                {b.logo ? <img src={b.logo} alt={b.name} className="w-full h-full object-contain p-[1px]" /> : b.name.substring(0, 2).toUpperCase()}
-            </div>
-        )
+        icon: <BookmakerLogo logo={b.logo} name={b.name} color={b.color} size="sm" />
     }));
 
     const statusOptions = statuses.map(s => ({
@@ -1102,36 +1098,13 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
 
     const renderBookmakerLogo = (id: string, size: 'sm' | 'md' = 'md', fallbackText?: string) => {
         const bookie = getBookmaker(id, fallbackText);
-        const initials = bookie?.name.substring(0, 2).toUpperCase() || '??';
-        const color = bookie?.color || '#334155'; // Fallback slate
-        const logo = bookie?.logo;
-
-        // Upgrade sizes and swap to premium rounded squares (squircles)
-        const sizeClasses = size === 'sm' 
-            ? 'w-6 h-6 rounded-[6px] text-[9px]' 
-            : 'w-10 h-10 rounded-[10px] text-[13px]';
-
         return (
-            <div
-                className={`${sizeClasses} flex items-center justify-center font-black text-white shrink-0 relative group/bookie ring-1 ring-white/10 overflow-hidden shadow-sm`}
-                style={{ 
-                    backgroundColor: color,
-                    boxShadow: `0 4px 12px ${color}40, inset 0 1px 2px rgba(255,255,255,0.15)` 
-                }}
-            >
-                {/* 3D Glass Highlight */}
-                <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-black/20 pointer-events-none" />
-                
-                {logo ? (
-                    <img 
-                        src={logo} 
-                        alt={initials} 
-                        className="relative z-10 w-full h-full object-contain p-[3px] drop-shadow-md transition-transform duration-300 group-hover/bookie:scale-110" 
-                    />
-                ) : (
-                    <span className="relative z-10 drop-shadow-md">{initials}</span>
-                )}
-            </div>
+            <BookmakerLogo
+                logo={bookie?.logo}
+                name={bookie?.name}
+                color={bookie?.color}
+                size={size}
+            />
         );
     };
 

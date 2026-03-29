@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Card, Button, Input, Modal, Select } from './ui/UIComponents';
+import { Card, Button, Input, Modal, Select, BookmakerLogo } from './ui/UIComponents';
 import {
     Upload, Image as ImageIcon, Sparkles, CheckCircle2, XCircle, Edit3,
     Link as LinkIcon, Loader2, AlertCircle, TrendingUp, DollarSign, Calendar,
@@ -578,12 +578,12 @@ const AIAssistant: React.FC<AIAssistantProps> = ({
                             {extractedBookmaker && (
                                 <div className="p-4 bg-[#0d1121] rounded-xl border border-white/10 animate-in fade-in zoom-in-95">
                                     <div className="flex items-center gap-3 mb-4">
-                                        <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center border border-white/10 overflow-hidden">
-                                            {extractedBookmaker.logo ?
-                                                <img src={extractedBookmaker.logo} alt={extractedBookmaker.name} className="w-full h-full object-cover" /> :
-                                                <span className="text-xs font-bold">{extractedBookmaker.name.substring(0, 2)}</span>
-                                            }
-                                        </div>
+                                        <BookmakerLogo 
+                                            logo={extractedBookmaker.logo} 
+                                            name={extractedBookmaker.name} 
+                                            color="#3b82f6" 
+                                            size="sm" 
+                                        />
                                         <div className="flex-1 min-w-0">
                                             <p className="font-bold text-white truncate">{extractedBookmaker.name}</p>
                                             <p className="text-xs text-gray-500 truncate">{extractedBookmaker.domain}</p>

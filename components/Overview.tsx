@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { TrendingUp, Trophy, Wallet, Activity, Calendar, Infinity, Filter, DollarSign, Target, Eye, EyeOff, StickyNote, Copy, ChevronDown } from 'lucide-react';
-import { Card, Dropdown, Input, MoneyDisplay } from './ui/UIComponents';
+import { Card, Dropdown, Input, MoneyDisplay, BookmakerLogo } from './ui/UIComponents';
 import { Bet, ExtraGain, AppSettings, Bookmaker } from '../types';
 import { calculateBetStats } from '../utils/betCalculations';
 
@@ -626,18 +626,12 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
                                                 </div>
 
                                                 {/* Logo & Name */}
-                                                <div className="flex items-center gap-2">
-                                                    {bookmaker.logo ? (
-                                                        <div className="w-6 h-6 rounded-full overflow-hidden bg-white/10 shrink-0">
-                                                            <img src={bookmaker.logo} alt={bookmaker.name} className="w-full h-full object-cover" />
-                                                        </div>
-                                                    ) : (
-                                                        <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                                                            <Trophy size={12} className="text-white/50" />
-                                                        </div>
-                                                    )}
-                                                    <span className={`font-bold ${isWinner ? 'text-white text-base' : 'text-gray-300 text-sm'}`}>{bookmaker.name}</span>
-                                                </div>
+                                                <BookmakerLogo 
+                                                    logo={(bookmaker as any).logo} 
+                                                    name={bookmaker.name} 
+                                                    color={(bookmaker as any).color} 
+                                                    size="xs" 
+                                                />
                                             </div>
 
                                             <div className="flex items-center gap-2">

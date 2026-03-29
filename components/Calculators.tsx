@@ -5,6 +5,7 @@ import {
     Target, Zap, TrendingUp, BookOpen, X, Calculator, ArrowRight, Lightbulb,
     Eye, EyeOff, Search
 } from 'lucide-react';
+import { BookmakerLogo } from './ui/UIComponents';
 import {
     calculateArb, parseBR, formatBRL, formatOdd,
     HouseInput, getEffectiveOdd, applyIncrease
@@ -127,14 +128,13 @@ const BookmakerSearchSelector: React.FC<BookmakerSearchSelectorProps> = ({ value
                 <div className="flex items-center gap-2 min-w-0">
                     {selectedBookmaker ? (
                         <>
-                            {selectedBookmaker.logo ? (
-                                <img src={selectedBookmaker.logo} alt="" className="w-5 h-5 rounded object-contain bg-white/5" />
-                            ) : (
-                                <div className="w-5 h-5 rounded bg-emerald-500/20 flex items-center justify-center text-[10px] text-emerald-400 font-black">
-                                    {selectedBookmaker.name.substring(0, 1)}
-                                </div>
-                            )}
-                            <span className="truncate text-xs">{selectedBookmaker.name}</span>
+                            <BookmakerLogo 
+                                logo={selectedBookmaker.logo} 
+                                name={selectedBookmaker.name} 
+                                color={selectedBookmaker.color} 
+                                size="sm" 
+                            />
+                            <span className="truncate text-xs font-bold">{selectedBookmaker.name}</span>
                         </>
                     ) : (
                         <span className="text-gray-500 text-xs font-bold uppercase tracking-widest">Selecionar Casa</span>
@@ -175,13 +175,12 @@ const BookmakerSearchSelector: React.FC<BookmakerSearchSelectorProps> = ({ value
                                     }}
                                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-left group/item ${value === b.id ? 'bg-emerald-500/10 text-emerald-400' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
                                 >
-                                    {b.logo ? (
-                                        <img src={b.logo} alt="" className="w-6 h-6 rounded object-contain bg-white/5" />
-                                    ) : (
-                                        <div className="w-6 h-6 rounded bg-emerald-500/20 flex items-center justify-center text-xs text-emerald-400 font-black">
-                                            {b.name.substring(0, 1)}
-                                        </div>
-                                    )}
+                                    <BookmakerLogo 
+                                        logo={b.logo} 
+                                        name={b.name} 
+                                        color={b.color} 
+                                        size="sm" 
+                                    />
                                     <span className="font-bold text-xs uppercase tracking-tight">{b.name}</span>
                                     {value === b.id && <Check className="w-3.5 h-3.5 ml-auto" />}
                                 </button>

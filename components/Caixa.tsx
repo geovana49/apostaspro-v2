@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { CaixaAccount, CaixaMovement, Bookmaker, User, AppSettings, CaixaCategory } from '../types';
 import { FirestoreService } from '../services/firestoreService';
-import { Card, Button, Input, Modal, Select, MoneyDisplay, Dropdown } from './ui/UIComponents';
+import { Card, Button, Input, Modal, Select, MoneyDisplay, Dropdown, BookmakerLogo } from './ui/UIComponents';
 
 interface CaixaProps {
     currentUser: User | null;
@@ -325,16 +325,13 @@ const Caixa: React.FC<CaixaProps> = ({ currentUser, accounts, movements, bookmak
                                             onClick={() => setExpandedBmId(isExpanded ? null : bm.id)}
                                         >
                                             <div className="flex items-center gap-4 flex-1 min-w-0">
-                                                {bm.logo ? (
-                                                    <div className="relative">
-                                                        <div className="absolute -inset-1 bg-white/5 rounded-full blur-md opacity-50 group-hover:opacity-100 transition-opacity"></div>
-                                                        <img src={bm.logo} alt="" className="relative w-11 h-11 rounded-xl object-contain bg-[#0a0f1d] border border-white/10 p-1.5 shadow-lg" />
-                                                    </div>
-                                                ) : (
-                                                    <div className="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center border border-white/5">
-                                                        <Building2 size={22} className="text-gray-600" />
-                                                    </div>
-                                                )}
+                                                <BookmakerLogo
+                                                    logo={bm.logo}
+                                                    name={bm.name}
+                                                    color={bm.color}
+                                                    size="md"
+                                                    className="shadow-lg"
+                                                />
                                                 <div className="flex-1 min-w-0">
                                                     <div className="text-xs text-gray-400 font-bold uppercase mb-0.5 truncate tracking-tight">{bm.name}</div>
                                                     <MoneyDisplay
@@ -642,13 +639,13 @@ const AccountCard: React.FC<AccountCardProps> = ({ account, bookmakers, movement
             <div className="p-4">
                 <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transform group-hover/card:scale-110 group-hover/card:rotate-3 transition-all duration-500 overflow-hidden" style={{ backgroundColor: bookmaker?.color ? `${bookmaker.color}20` : `${account.color}20`, color: bookmaker?.color || account.color }}>
-                            {showLogo ? (
-                                <img src={bookmaker?.logo || account.icon} alt="" className="w-full h-full object-cover" />
-                            ) : (
-                                account.type === 'bank' ? <Landmark size={20} /> : account.type === 'bookmaker' ? <Building2 size={20} /> : <Banknote size={20} />
-                            )}
-                        </div>
+                        <BookmakerLogo
+                            logo={bookmaker?.logo || (account.useGenericIcon ? undefined : account.icon)}
+                            name={account.name}
+                            color={bookmaker?.color || account.color}
+                            size="md"
+                            className="transform group-hover/card:scale-110 group-hover/card:rotate-3 transition-all duration-500"
+                        />
                         <div>
                             <div className="flex items-center gap-1.5">
                                 <h4 className="font-bold text-white group-hover/card:text-primary transition-colors">{account.name}</h4>
@@ -777,7 +774,7 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
         return (bookmakers || []).map(bm => ({
             label: bm.name,
             value: bm.id,
-            icon: bm.logo ? <img src={bm.logo} alt="" className="w-5 h-5 rounded object-contain" /> : <Building2 size={14} />
+            icon: <BookmakerLogo logo={bm.logo} name={bm.name} color={bm.color} size="sm" />
         }));
     }, [bookmakers]);
 
@@ -887,9 +884,12 @@ const AccountModal = ({ isOpen, onClose, onSave, editingAccount, bookmakers }: a
                                 />
                             </div>
                             {(icon || (type === 'bookmaker' && bookmakerId && bookmakers.find(bm => bm.id === bookmakerId)?.logo)) && (
-                                <div className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
-                                    <img src={icon || bookmakers.find(bm => bm.id === bookmakerId)?.logo} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
-                                </div>
+                                <BookmakerLogo 
+                                    logo={icon || bookmakers.find(bm => bm.id === bookmakerId)?.logo} 
+                                    name={name || 'Conta'} 
+                                    color={color} 
+                                    size="sm" 
+                                />
                             )}
                         </div>
 
@@ -1009,8 +1009,8 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts, bookm
             return {
                 label: `${acc.name} (Saldo: R$ ${(acc.balance / 100).toFixed(2)})`,
                 value: acc.id,
-                icon: bm?.logo ? (
-                    <img src={bm.logo} alt="" className="w-5 h-5 rounded object-contain" />
+                icon: bm ? (
+                    <BookmakerLogo logo={bm.logo} name={bm.name} color={bm.color} size="sm" />
                 ) : (
                     acc.type === 'bank' ? <Landmark size={14} /> : <Building2 size={14} />
                 )
@@ -1023,9 +1023,7 @@ const MovementModal = ({ isOpen, onClose, onSave, type, setType, accounts, bookm
             .map(bm => ({
                 label: `${bm.name}`,
                 value: `new_bm_${bm.id}`,
-                icon: bm.logo ? (
-                    <img src={bm.logo} alt="" className="w-5 h-5 rounded object-contain" />
-                ) : <Building2 size={14} />
+                icon: <BookmakerLogo logo={bm.logo} name={bm.name} color={bm.color} size="sm" />
             }));
 
         return [...options, ...newBmOptions];

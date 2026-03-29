@@ -1,5 +1,5 @@
 import React, { useState, useReducer, useRef, useEffect } from 'react';
-import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, CustomColorPicker, RenderIcon, ICON_MAP, DateRangePickerModal, SingleDatePickerModal, DropdownOption } from './ui/UIComponents';
+import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, CustomColorPicker, RenderIcon, ICON_MAP, DateRangePickerModal, SingleDatePickerModal, DropdownOption, BookmakerLogo } from './ui/UIComponents';
 import { FireImage } from './ui/FireImage';
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronLeft, ChevronRight,
@@ -736,7 +736,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onloadend = () => { setNewCategoryIcon(reader.result as string); setIconMode('upload'); }; reader.readAsDataURL(file); } };
 
     const originOptions: DropdownOption[] = [{ label: 'Todas Origens', value: 'all', icon: <Coins size={16} className="text-gray-400" /> }, ...origins.map(o => ({ label: o.name, value: o.name, icon: <RenderIcon iconSource={o.icon} size={16} className="opacity-70" /> }))];
-    const bookmakerOptions: DropdownOption[] = bookmakers.map(b => ({ label: b.name, value: b.id, icon: (<div className="w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold text-[#090c19] overflow-hidden" style={{ backgroundColor: b.color || '#FFFFFF' }}> {b.logo ? <img src={b.logo} alt={b.name} className="w-full h-full object-contain p-[1px]" /> : b.name.substring(0, 2).toUpperCase()} </div>) }));
+    const bookmakerOptions: DropdownOption[] = bookmakers.map(b => ({ label: b.name, value: b.id, icon: <BookmakerLogo logo={b.logo} name={b.name} color={b.color} size="sm" /> }));
     const statusOptionsForForm: DropdownOption[] = statuses.map(s => ({ label: s.name, value: s.name, icon: <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} /> }));
     const periodTypeOptions: DropdownOption[] = [
         { label: 'Mês', value: 'month', icon: <Calendar size={14} /> },
@@ -938,15 +938,14 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                                 {gain.game || gain.origin}
                                             </h4>
                                             <div className="flex items-center gap-2 mt-1">
-                                                <span className="flex items-center gap-1 text-xs text-textMuted">
-                                                    <div className="w-3 h-3 rounded-sm flex items-center justify-center text-[6px] font-bold text-[#090c19] overflow-hidden" style={{ backgroundColor: bookie?.color || '#fff' }}>
-                                                        {bookie?.logo ? (
-                                                            <img src={bookie.logo} alt={bookie.name} className="w-full h-full object-contain p-[1px]" />
-                                                        ) : (
-                                                            bookie?.name?.substring(0, 1)
-                                                        )}
-                                                    </div>
-                                                    <span>{bookie?.name}</span>
+                                                <span className="flex items-center gap-1.5 text-xs text-textMuted">
+                                                    <BookmakerLogo 
+                                                        logo={bookie?.logo} 
+                                                        name={bookie?.name} 
+                                                        color={bookie?.color} 
+                                                        size="xs" 
+                                                    />
+                                                    <span className="font-medium">{bookie?.name}</span>
                                                 </span>
                                                 <span className="text-xs text-textMuted">•</span>
                                                 <span className="text-xs text-textMuted">{new Date(gain.date).toLocaleDateString('pt-BR')}</span>
@@ -987,13 +986,15 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                                         return (
                                                             <div key={idx} className="bg-[#0d1121] border border-white/5 rounded-lg p-3">
                                                                 <div className="flex items-center justify-between mb-2">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="w-6 h-6 rounded flex items-center justify-center text-[8px] font-bold text-[#090c19]" style={{ backgroundColor: bookie?.color || '#FFFFFF' }}>
-                                                                            {bookie?.logo ? <img src={bookie.logo} alt={bookie.name} className="w-full h-full object-contain p-[1px]" />
-                                                                                : bookie?.name?.substring(0, 1)}
-                                                                        </div>
-                                                                        <span className="text-sm font-medium text-white">{coverage.market}</span>
-                                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <BookmakerLogo 
+                                                            logo={bookie?.logo} 
+                                                            name={bookie?.name} 
+                                                            color={bookie?.color} 
+                                                            size="xs" 
+                                                        />
+                                                        <span className="text-sm font-medium text-white">{coverage.market}</span>
+                                                    </div>
                                                                     <span style={{ backgroundColor: `${coverageStatusColor} 1A`, color: coverageStatusColor, borderColor: `${coverageStatusColor} 33` }} className="text-[10px] font-medium px-2 py-0.5 rounded-full border">
                                                                         {coverage.status}
                                                                     </span>

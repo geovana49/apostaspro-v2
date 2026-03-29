@@ -7,7 +7,7 @@ import {
     Target, Trophy, StickyNote, Gift
 } from 'lucide-react';
 import { Bet, Bookmaker, StatusItem, AppSettings, User, PromotionItem } from '../types';
-import { Card, Button, Input, Dropdown, MoneyDisplay, Badge, Modal } from './ui/UIComponents';
+import { Card, Button, Input, Dropdown, MoneyDisplay, Badge, Modal, BookmakerLogo } from './ui/UIComponents';
 import { calculateBetStats } from '../utils/betCalculations';
 
 interface NewBetsProps {
@@ -243,9 +243,7 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                 ...bookmakers.map(b => ({
                                     label: b.name,
                                     value: b.id,
-                                    icon: <div className="w-4 h-4 rounded bg-white/10 flex items-center justify-center text-[8px] font-bold text-white overflow-hidden">
-                                        {b.logo ? <img src={b.logo} className="w-full h-full object-contain" /> : b.name.substring(0, 2)}
-                                    </div>
+                                    icon: <BookmakerLogo logo={b.logo} name={b.name} color={b.color} size="sm" />
                                 }))
                             ]}
                         />
@@ -451,14 +449,13 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
 
                                         {/* Top Row: Logo + Title */}
                                         <div className="flex items-center gap-5 w-full">
-                                            {/* LOGO */}
-                                            <div className="w-12 h-12 flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shrink-0 pr-2">
-                                                {bookie?.logo ? (
-                                                    <img src={bookie.logo} alt="" className="w-full h-full object-contain" />
-                                                ) : (
-                                                    <BookOpen size={24} style={{ color: bookie?.color }} />
-                                                )}
-                                            </div>
+                                            <BookmakerLogo 
+                                                logo={bookie?.logo} 
+                                                name={bookie?.name || ''} 
+                                                color={bookie?.color} 
+                                                size="md" 
+                                                className="transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500"
+                                            />
 
                                             {/* Title & Date */}
                                             <div className="flex-1">
@@ -613,17 +610,12 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                         <div className="flex flex-col bg-white/5 p-4 sm:p-5 rounded-2xl border border-white/5 gap-3">
                             <div className="flex items-center justify-between w-full">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 flex items-center justify-center shrink-0">
-                                        {getBookmaker(selectedBetForModal.mainBookmakerId)?.logo ? (
-                                            <img
-                                                src={getBookmaker(selectedBetForModal.mainBookmakerId)?.logo}
-                                                alt=""
-                                                className="w-full h-full object-contain"
-                                            />
-                                        ) : (
-                                            <Trophy size={24} className="text-primary" />
-                                        )}
-                                    </div>
+                                    <BookmakerLogo 
+                                        logo={getBookmaker(selectedBetForModal.mainBookmakerId)?.logo} 
+                                        name={getBookmaker(selectedBetForModal.mainBookmakerId)?.name || ''} 
+                                        color={getBookmaker(selectedBetForModal.mainBookmakerId)?.color} 
+                                        size="lg" 
+                                    />
                                     <div className="flex flex-col justify-center">
                                         <p className="text-gray-500 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest mb-0.5">Data da Aposta</p>
                                         <p className="text-white text-sm sm:text-[15px] font-bold">{new Date(selectedBetForModal.date).toLocaleDateString('pt-BR')}</p>
@@ -646,15 +638,12 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="bg-[#05070e] p-4 rounded-2xl border border-white/5 flex items-center gap-3">
-                                <div className="w-10 h-10 flex-shrink-0">
-                                    {getBookmaker(selectedBetForModal.mainBookmakerId)?.logo && (
-                                        <img
-                                            src={getBookmaker(selectedBetForModal.mainBookmakerId)?.logo}
-                                            alt=""
-                                            className="w-full h-full object-contain"
-                                        />
-                                    )}
-                                </div>
+                                <BookmakerLogo 
+                                    logo={getBookmaker(selectedBetForModal.mainBookmakerId)?.logo} 
+                                    name={getBookmaker(selectedBetForModal.mainBookmakerId)?.name || ''} 
+                                    color={getBookmaker(selectedBetForModal.mainBookmakerId)?.color} 
+                                    size="md" 
+                                />
                                 <div className="flex-1 min-w-0">
                                     <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Casa de Aposta</p>
                                     <p className="text-white font-bold truncate">{getBookmaker(selectedBetForModal.mainBookmakerId)?.name || 'N/A'}</p>
@@ -684,19 +673,12 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     <div key={idx} className="flex flex-col bg-white/5 p-3 sm:p-4 rounded-xl border border-white/5 group hover:bg-white/10 transition-all gap-2 sm:gap-2.5">
                                         <div className="flex items-center justify-between w-full">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 flex items-center justify-center shrink-0 overflow-hidden">
-                                                    {getBookmaker(cov.bookmakerId)?.logo ? (
-                                                        <img
-                                                            src={getBookmaker(cov.bookmakerId)?.logo}
-                                                            alt=""
-                                                            className="w-full h-full object-contain"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-full h-full bg-[#05070e] rounded-lg flex items-center justify-center text-xs font-bold text-gray-400">
-                                                            {cov.market?.substring(0, 1)}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                <BookmakerLogo 
+                                                    logo={getBookmaker(cov.bookmakerId)?.logo} 
+                                                    name={getBookmaker(cov.bookmakerId)?.name || ''} 
+                                                    color={getBookmaker(cov.bookmakerId)?.color} 
+                                                    size="sm" 
+                                                />
                                                 <div className="flex flex-col justify-center gap-0.5">
                                                     <span className={`text-[10px] sm:text-[11px] font-black uppercase tracking-widest ${cov.status === 'Green' ? 'text-[#10b981]' : cov.status === 'Red' ? 'text-danger' : 'text-primary'}`}>
                                                         {cov.status}

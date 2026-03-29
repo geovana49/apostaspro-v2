@@ -1889,3 +1889,43 @@ export const SingleDatePickerModal: React.FC<{
     </Modal>
   );
 };
+
+// --- Bookmaker Logo (Premium Squircle Design) ---
+export const BookmakerLogo: React.FC<{
+  logo?: string;
+  name?: string;
+  color?: string;
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+}> = ({ logo, name, color = '#334155', size = 'md', className = '' }) => {
+  const initials = name?.substring(0, 2).toUpperCase() || '??';
+  
+  const sizes = {
+    sm: 'w-6 h-6 rounded-[6px] text-[9px]',
+    md: 'w-10 h-10 rounded-[10px] text-[13px]',
+    lg: 'w-14 h-14 rounded-[14px] text-[16px]'
+  };
+
+  return (
+    <div
+      className={`${sizes[size]} flex items-center justify-center font-black text-white shrink-0 relative group/bookie ring-1 ring-white/10 overflow-hidden shadow-sm ${className}`}
+      style={{ 
+        backgroundColor: color,
+        boxShadow: `0 4px 12px ${color}40, inset 0 1px 2px rgba(255,255,255,0.15)` 
+      }}
+    >
+      {/* 3D Glass Highlight */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-black/20 pointer-events-none" />
+      
+      {logo ? (
+        <img 
+          src={logo} 
+          alt={initials} 
+          className="relative z-10 w-full h-full object-contain p-[3px] drop-shadow-md transition-transform duration-300 group-hover/bookie:scale-110" 
+        />
+      ) : (
+        <span className="relative z-10 drop-shadow-md uppercase text-center w-full px-0.5 truncate">{initials}</span>
+      )}
+    </div>
+  );
+};

@@ -1,6 +1,6 @@
 import React, { useState, useReducer, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Button, Input, Dropdown, Modal, SingleDatePickerModal, ImageViewer, MoneyDisplay } from './ui/UIComponents';
+import { Button, Input, Dropdown, Modal, SingleDatePickerModal, ImageViewer, MoneyDisplay, BookmakerLogo } from './ui/UIComponents';
 import { FireImage } from './ui/FireImage';
 import {
     Plus, Trash2, X, Calendar, Paperclip, Minus, Loader2, Copy, ChevronUp, ChevronDown, UploadCloud,
@@ -695,9 +695,12 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
         label: b.name,
         value: b.id,
         icon: (
-            <div className="w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold text-[#090c19] overflow-hidden" style={{ backgroundColor: b.color || '#FFFFFF' }}>
-                {b.logo ? <img src={b.logo} alt={b.name} className="w-full h-full object-contain p-[1px]" /> : b.name.substring(0, 2).toUpperCase()}
-            </div>
+            <BookmakerLogo 
+                logo={b.logo} 
+                name={b.name} 
+                color={b.color} 
+                size="sm" 
+            />
         )
     }));
 

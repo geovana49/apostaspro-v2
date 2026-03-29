@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, Button, Input, Modal, ImageAdjuster, CustomColorPicker, RenderIcon, ICON_MAP } from './ui/UIComponents';
+import { Card, Button, Input, Modal, ImageAdjuster, CustomColorPicker, RenderIcon, ICON_MAP, BookmakerLogo } from './ui/UIComponents';
 import {
     Trash2, RefreshCcw, RefreshCw, Plus, Star, Palette, Edit2, Check, X, Upload, Image as ImageIcon, AlertCircle,
     Gamepad2, Trophy, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target,
@@ -993,9 +993,12 @@ const Settings: React.FC<SettingsProps> = ({
                         <div className="p-4 border border-dashed border-white/10 rounded-xl bg-white/[0.02] space-y-3">
                             <label className="text-xs font-bold text-textMuted uppercase tracking-wider block">Logo</label>
                             <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 rounded-xl bg-[#151b2e] flex items-center justify-center border border-white/10 overflow-hidden shadow-inner">
-                                    {selectedLogo ? <img src={selectedLogo} alt="Logo" className="w-full h-full object-cover" /> : <div className="text-xs text-gray-600 font-bold">{newItemName.substring(0, 2).toUpperCase() || 'LOGO'}</div>}
-                                </div>
+                                <BookmakerLogo 
+                                    logo={selectedLogo} 
+                                    name={newItemName} 
+                                    color={selectedColor} 
+                                    size="md" 
+                                />
                                 <div className="flex-1 space-y-2">
                                     <input type="file" className="hidden" id="logo-upload" accept="image/*" onChange={(e) => handleImageUpload(e, 'logos', setSelectedLogo)} />
                                     <label
@@ -1043,9 +1046,12 @@ const Settings: React.FC<SettingsProps> = ({
                     {filteredBookmakers.map(bookie => (
                         <div key={bookie.id} id={`bookmaker-${bookie.id}`} className="group bg-[#0d1121] border border-white/5 rounded-xl p-4 flex items-center justify-between hover:border-white/10 transition-all gap-3">
                             <div className="flex items-center gap-4 flex-1 min-w-0">
-                                <div className="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-[#090c19] text-xs shadow-sm overflow-hidden border border-white/5 shrink-0" style={{ backgroundColor: bookie.color || '#fff' }}>
-                                    {bookie.logo ? <img src={bookie.logo} alt={bookie.name} className="w-full h-full object-cover" /> : bookie.name.substring(0, 2).toUpperCase()}
-                                </div>
+                                <BookmakerLogo
+                                    logo={bookie.logo}
+                                    name={bookie.name}
+                                    color={bookie.color}
+                                    size="md"
+                                />
                                 <div className="min-w-0 flex-1">
                                     <span className="font-bold text-white block truncate">{bookie.name}</span>
                                     {bookie.siteUrl && <span className="text-[10px] text-gray-500 block truncate">{bookie.siteUrl}</span>}
