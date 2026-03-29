@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useLayoutEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronDown, Check, ZoomIn, ZoomOut, RotateCcw, RotateCw, Move, Crop, Pipette, ChevronUp, Gamepad2, Trophy, Star, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target, Search, ChevronLeft, ChevronRight, Download, Sun, Contrast, Maximize, Minimize, FlipHorizontal, FlipVertical, Sparkles, Scissors, Scaling, RefreshCw } from 'lucide-react';
+import { X, ChevronDown, Check, ZoomIn, ZoomOut, RotateCcw, RotateCw, Move, Crop, Pipette, ChevronUp, Gamepad2, Trophy, Star, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target, Search, ChevronLeft, ChevronRight, Download, Sun, Contrast, Maximize, Minimize, FlipHorizontal, FlipVertical, Sparkles, Scissors, Scaling, RefreshCw, Loader2 } from 'lucide-react';
 
 // --- Color Helpers ---
 const hexToRgb = (hex: string) => {
@@ -971,47 +971,41 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
       setCrop({ x: 10, y: 10, width: 80, height: 80 });
       setImageSize({ width: 0, height: 0 });
       
-      // Blobify to fix CORS
+      // Blobify to fix CORS (JSON Bridge Strategy)
       if (imageSrc && !imageSrc.startsWith('data:') && !imageSrc.startsWith('blob:')) {
         setIsBlobifying(true);
         
-        // Helper to fetch through proxy
-        const fetchWithProxy = (url: string) => {
-          const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(url)}`;
-          return fetch(proxyUrl);
-        };
+        // Strategy: Use allorigins.win/get to fetch the JSON containing base64 data
+        // This is virtually impossible to block via normal CORS-Security policies for images
+        const bridgeUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(imageSrc)}`;
 
-        fetch(imageSrc, { mode: 'cors' })
+        fetch(bridgeUrl)
           .then(res => {
-            if (!res.ok) throw new Error("Direct fetch failed");
-            return res.blob();
+            if (!res.ok) throw new Error("JSON bridge fetch failed");
+            return res.json();
           })
-          .then(blob => {
-            const url = URL.createObjectURL(blob);
-            setLocalImage(url);
+          .then(data => {
+            if (data.contents) {
+              setLocalImage(data.contents);
+            } else {
+              throw new Error("Empty contents in JSON bridge");
+            }
           })
-          .catch(() => {
-            // Plano B: Tentar via Proxy
-            console.log("✂️ Direct image fetch blocked by CORS. Using proxy bridge...");
-            fetchWithProxy(imageSrc)
-              .then(res => {
-                if (!res.ok) throw new Error("Proxy fetch failed");
-                return res.blob();
-              })
+          .catch(err => {
+            console.warn("✂️ JSON Bridge failed, using direct Proxy fallback...", err);
+            // Fallback: Try a direct proxy as a last resort
+            const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(imageSrc)}`;
+            fetch(proxyUrl)
+              .then(res => res.blob())
               .then(blob => {
-                const url = URL.createObjectURL(blob);
-                setLocalImage(url);
+                 const url = URL.createObjectURL(blob);
+                 setLocalImage(url);
               })
-              .catch(err => {
-                console.warn("✂️ Image editing remains restricted (CORS failure even with proxy).", err);
-                setLocalImage(imageSrc);
-              })
-              .finally(() => setIsBlobifying(false));
+              .catch(() => {
+                 setLocalImage(imageSrc);
+              });
           })
-          .finally(() => {
-             // Only finalize if we haven't started the proxy path (which also finalizes)
-             // Actually it's safer to finalize in the then/catch of both
-          });
+          .finally(() => setIsBlobifying(false));
       } else {
         setLocalImage(imageSrc);
         setIsBlobifying(false);
@@ -1252,6 +1246,7 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
               maxWidth: '100%',
               aspectRatio: imgRef.current ? `${imgRef.current.naturalWidth} / ${imgRef.current.naturalHeight}` : 'auto',
               transition: isDragging ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              transformOrigin: 'center center',
               transform: `scale(${scale})` // Move scale here to zoom everything together
             }}
           >
@@ -1267,6 +1262,21 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
                 transform: `rotate(${rotation}deg) scale(${flipH ? -1 : 1}, ${flipV ? -1 : 1})`
               }}
             />
+
+            {/* Preparation Loading Overlay */}
+            {isBlobifying && (
+              <div className="absolute inset-0 z-[100] bg-[#0c111d]/90 flex flex-col items-center justify-center gap-4 backdrop-blur-md">
+                <div className="relative">
+                  <div className="w-16 h-16 border-4 border-primary/20 rounded-full animate-pulse" />
+                  <Loader2 className="w-8 h-8 text-primary animate-spin absolute inset-0 m-auto" />
+                </div>
+                <div className="text-center">
+                  <p className="text-white text-sm font-bold tracking-tight mb-1">Preparando Editor</p>
+                  <p className="text-gray-400 text-[10px] uppercase tracking-widest animate-pulse">Ignorando restrições de segurança...</p>
+                </div>
+              </div>
+            )}
+
             {/* Professional Crop Overlay */}
             {imageSize.width > 0 && (
               <div className="absolute inset-0 z-10 overflow-hidden pointer-events-none">
