@@ -1895,12 +1895,13 @@ export const BookmakerLogo: React.FC<{
   logo?: string;
   name?: string;
   color?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   className?: string;
 }> = ({ logo, name, color = '#334155', size = 'md', className = '' }) => {
   const initials = name?.substring(0, 2).toUpperCase() || '??';
   
   const sizes = {
+    xs: 'w-5 h-5 rounded-[4px] text-[8px]',
     sm: 'w-6 h-6 rounded-[6px] text-[9px]',
     md: 'w-10 h-10 rounded-[10px] text-[13px]',
     lg: 'w-14 h-14 rounded-[14px] text-[16px]'
@@ -1914,18 +1915,22 @@ export const BookmakerLogo: React.FC<{
         boxShadow: `0 4px 12px ${color}40, inset 0 1px 2px rgba(255,255,255,0.15)` 
       }}
     >
-      {/* 3D Glass Highlight */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-black/20 pointer-events-none" />
+      {/* 3D Glass / Glossy Overlay */}
+      <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none z-20" />
+      <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/30 pointer-events-none z-20" />
       
       {logo ? (
         <img 
           src={logo} 
           alt={initials} 
-          className="relative z-10 w-full h-full object-contain p-[3px] drop-shadow-md transition-transform duration-300 group-hover/bookie:scale-110" 
+          className="relative z-10 w-full h-full object-cover transition-all duration-500 group-hover/bookie:scale-110" 
         />
       ) : (
         <span className="relative z-10 drop-shadow-md uppercase text-center w-full px-0.5 truncate">{initials}</span>
       )}
+
+      {/* Subtle Inner Glow Border */}
+      <div className="absolute inset-0 border border-white/10 rounded-inherit pointer-events-none z-30" />
     </div>
   );
 };
