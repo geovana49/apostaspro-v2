@@ -1091,10 +1091,17 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         dispatch({ type: 'UPDATE_COVERAGE', id, field, value });
     };
 
-    const getBookmaker = (id: string) => bookmakers.find(b => b.id === id);
+    const getBookmaker = (id: string, fallbackText?: string) => {
+        let bm = bookmakers.find(b => b.id === id);
+        if (!bm && fallbackText) {
+            const lowerFallback = fallbackText.toLowerCase();
+            bm = bookmakers.find(b => lowerFallback.includes(b.name.toLowerCase()));
+        }
+        return bm;
+    };
 
-    const renderBookmakerLogo = (id: string, size: 'sm' | 'md' = 'md') => {
-        const bookie = getBookmaker(id);
+    const renderBookmakerLogo = (id: string, size: 'sm' | 'md' = 'md', fallbackText?: string) => {
+        const bookie = getBookmaker(id, fallbackText);
         const initials = bookie?.name.substring(0, 2).toUpperCase() || '??';
         const color = bookie?.color || '#FFFFFF';
         const logo = bookie?.logo;
@@ -1167,7 +1174,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         const term = searchTerm.toLowerCase() || '';
         const betEvent = (bet.event || '').toLowerCase();
         const matchesEvent = betEvent.includes(term);
-        const bookmakerForFilter = getBookmaker(bet.mainBookmakerId);
+        const bookmakerForFilter = getBookmaker(bet.mainBookmakerId, bet.event + ' ' + (bet.notes || ''));
         const matchesBookie = bookmakerForFilter ? bookmakerForFilter.name.toLowerCase().includes(term) : false;
 
         let matchesDate = false;
@@ -1401,7 +1408,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                         className="flex flex-col md:flex-row md:items-center gap-4 hover:bg-white/5 transition-colors -mx-4 -mt-4 p-4 rounded-t-xl"
                                     >
                                         <div className="flex items-center gap-3 flex-1">
-                                            {renderBookmakerLogo(bet.mainBookmakerId, 'md')}
+                                            {renderBookmakerLogo(bet.mainBookmakerId, 'md', bet.event + ' ' + (bet.notes || ''))}
 
                                             <div>
                                                 <h4 className="font-semibold text-white text-base flex items-center gap-2">
