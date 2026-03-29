@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head><title>Avatares Premium</title></head>
+<body style="font-family:sans-serif; text-align:center; padding-top: 50px;">
+    <h2>Transferência de Avatares</h2>
+    <p>Clique no botão abaixo para salvar seus avatares premium.</p>
+    <button id="btn" style="padding: 15px 30px; font-size: 18px; background: #6366f1; color: white; border: none; border-radius: 8px; cursor: pointer;">
+        1. Exportar Avatares
+    </button>
+    <p id="status" style="margin-top:20px; color: green;"></p>
+    
+    <script>
+    document.getElementById('btn').onclick = function() {
+        const presets = localStorage.getItem('customPresets');
+        if (!presets || presets === '[]') {
+            document.getElementById('status').innerText = 'Nenhum avatar encontrado! Você tem certeza que customizou agum slot nesta aba?';
+            document.getElementById('status').style.color = 'red';
+            return;
+        }
+        
+        // Forma simples e garantida de fazer download via HTML
+        const blob = new Blob([presets], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'meus_avatars_premium.json';
+        document.body.appendChild(a);
+        a.click();
+        
+        document.getElementById('status').innerText = '? Arquivo baixado com sucesso! Agora é só arrastar ele para o VS Code. (Pode fechar esta janela)';
+    };
+    </script>
+</body>
+</html>
