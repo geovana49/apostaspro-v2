@@ -126,6 +126,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const [currentDate, setCurrentDate] = useState(new Date());
     const [searchTerm, setSearchTerm] = useState('');
     const [promotionFilter, setPromotionFilter] = useState('all');
+    const [bookmakerFilter, setBookmakerFilter] = useState('all');
     const [showOnlyPending, setShowOnlyPending] = useState(false);
     const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
     const [pickerYear, setPickerYear] = useState(new Date().getFullYear());
@@ -1157,6 +1158,10 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             }
         }
 
+        if (bookmakerFilter !== 'all' && bet.mainBookmakerId !== bookmakerFilter) {
+            return false;
+        }
+
         const term = searchTerm.toLowerCase() || '';
         const betEvent = (bet.event || '').toLowerCase();
         const matchesEvent = betEvent.includes(term);
@@ -1239,6 +1244,20 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                             icon={<Search size={18} />}
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <div className="w-full sm:w-auto min-w-[180px]">
+                        <Dropdown
+                            options={[
+                                { label: 'Todas as Casas', value: 'all', icon: <Box size={16} className="text-gray-400" /> },
+                                ...bookmakers.map(b => ({
+                                    label: b.name,
+                                    value: b.id,
+                                    icon: <BookmakerLogo logo={b.logo} name={b.name} color={b.color} size="sm" />
+                                }))
+                            ]}
+                            value={bookmakerFilter}
+                            onChange={setBookmakerFilter}
                         />
                     </div>
                     <div className="w-full sm:w-auto min-w-[180px]">
