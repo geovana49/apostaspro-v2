@@ -123,7 +123,14 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const saveLockRef = useRef(false);
 
     // Filter State
-    const [currentDate, setCurrentDate] = useState(new Date());
+    const [currentDate, setCurrentDate] = useState(() => {
+        const saved = localStorage.getItem('apostaspro_mybets_current_date');
+        return saved ? new Date(saved) : new Date();
+    });
+
+    useEffect(() => {
+        localStorage.setItem('apostaspro_mybets_current_date', currentDate.toISOString());
+    }, [currentDate]);
     const [searchTerm, setSearchTerm] = useState('');
     const [promotionFilter, setPromotionFilter] = useState('all');
     const [bookmakerFilter, setBookmakerFilter] = useState('all');

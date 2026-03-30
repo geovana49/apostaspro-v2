@@ -39,8 +39,14 @@ const DEFAULT_SETTINGS: AppSettings = {
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [activePage, setActivePage] = useState<Page>(Page.OVERVIEW);
-  const [initialSettingsTab, setInitialSettingsTab] = useState<SettingsTab>('general');
+  const [activePage, setActivePage] = useState<Page>(() => {
+    const saved = localStorage.getItem('apostaspro_active_page');
+    return saved ? (saved as Page) : Page.OVERVIEW;
+  });
+  const [initialSettingsTab, setInitialSettingsTab] = useState<SettingsTab>(() => {
+    const saved = localStorage.getItem('apostaspro_initial_settings_tab');
+    return saved ? (saved as SettingsTab) : 'general';
+  });
 
   // -- Data State --
   const [bets, setBets] = useState<Bet[]>([]);
@@ -296,8 +302,10 @@ const App: React.FC = () => {
 
   const handleNavigate = (page: Page, tab?: SettingsTab) => {
     setActivePage(page);
+    localStorage.setItem('apostaspro_active_page', page);
     if (page === Page.SETTINGS && tab) {
       setInitialSettingsTab(tab);
+      localStorage.setItem('apostaspro_initial_settings_tab', tab);
     }
   };
 

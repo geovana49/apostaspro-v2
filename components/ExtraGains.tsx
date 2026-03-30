@@ -204,9 +204,24 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
 
     // Filter State
     const [searchTerm, setSearchTerm] = useState('');
-    const [periodType, setPeriodType] = useState<'month' | 'year' | 'custom' | 'all'>('month');
-    const [startDate, setStartDate] = useState<Date>(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-    const [endDate, setEndDate] = useState<Date>(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0, 23, 59, 59, 999));
+    const [periodType, setPeriodType] = useState<'month' | 'year' | 'custom' | 'all'>(() => {
+        const saved = localStorage.getItem('apostaspro_extragains_period_type');
+        return (saved as any) || 'month';
+    });
+    const [startDate, setStartDate] = useState<Date>(() => {
+        const saved = localStorage.getItem('apostaspro_extragains_start_date');
+        return saved ? new Date(saved) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    });
+    const [endDate, setEndDate] = useState<Date>(() => {
+        const saved = localStorage.getItem('apostaspro_extragains_end_date');
+        return saved ? new Date(saved) : new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0, 23, 59, 59, 999);
+    });
+
+    useEffect(() => {
+        localStorage.setItem('apostaspro_extragains_period_type', periodType);
+        localStorage.setItem('apostaspro_extragains_start_date', startDate.toISOString());
+        localStorage.setItem('apostaspro_extragains_end_date', endDate.toISOString());
+    }, [periodType, startDate, endDate]);
     const [isDateRangeModalOpen, setIsDateRangeModalOpen] = useState(false);
     const [localPrivacyMode, setLocalPrivacyMode] = useState(appSettings.privacyMode);
     const [originFilter, setOriginFilter] = useState('all');
