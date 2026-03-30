@@ -1275,20 +1275,10 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                         multiple
                         className="hidden"
                     />
-                    <div className="flex gap-2">
-                        <Button
-                            onClick={() => smartImportInputRef.current?.click()}
-                            className="flex-1 h-12 flex items-center justify-center gap-2 !rounded-xl shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-[1.01] transition-all duration-300 bg-gradient-to-br from-purple-600 to-indigo-600 text-white font-bold text-base"
-                            title="Importar Print via IA"
-                            disabled={isAnalyzing}
-                        >
-                            {isAnalyzing ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} strokeWidth={2} />}
-                            <span className="hidden sm:inline">Importar Print</span>
-                            <span className="sm:hidden">IA</span>
-                        </Button>
+                    <div className="flex w-full">
                         <Button
                             onClick={handleOpenNew}
-                            className="flex-[2] h-12 flex items-center justify-center gap-2 !rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.01] transition-all duration-300 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] font-bold text-base"
+                            className="w-full h-12 flex items-center justify-center gap-2 !rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.01] transition-all duration-300 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] font-bold text-base"
                             title="Nova Aposta"
                         >
                             <Plus size={20} strokeWidth={3} />
