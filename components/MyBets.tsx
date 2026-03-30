@@ -1248,6 +1248,8 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     </div>
                     <div className="w-full sm:w-auto min-w-[180px]">
                         <Dropdown
+                            isSearchable={true}
+                            searchPlaceholder="Buscar casa..."
                             options={[
                                 { label: 'Casas', value: 'all', icon: <Box size={16} className="text-gray-400" /> },
                                 ...bookmakers.map(b => ({
@@ -1262,6 +1264,8 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     </div>
                     <div className="w-full sm:w-auto min-w-[180px]">
                         <Dropdown
+                            isSearchable={true}
+                            searchPlaceholder="Buscar promoção..."
                             options={[
                                 { label: 'Promoções', value: 'all', icon: <Ticket size={16} /> },
                                 ...promotions.map(p => ({
