@@ -1813,31 +1813,12 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                         value={formData.status}
                         onChange={value => dispatch({ type: 'UPDATE_FIELD', field: 'status', value })}
                     />
-
-                    <div className="h-px bg-white/5 my-2" />
+<div className="h-px bg-white/5 my-2" />
 
                     <div>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-sm font-bold text-primary uppercase tracking-wider">Coberturas</h3>
                             <div className="flex items-center gap-2">
-                                <input
-                                    type="file"
-                                    ref={coverageImportInputRef}
-                                    onChange={handleCoverageImport}
-                                    accept="image/*"
-                                    multiple
-                                    className="hidden"
-                                />
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => coverageImportInputRef.current?.click()}
-                                    className="text-[10px] h-8 px-3 border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
-                                    disabled={isAnalyzing}
-                                >
-                                    {isAnalyzing ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                                    Importar Print
-                                </Button>
                                 <Button size="sm" variant="neutral" onClick={addCoverage} className="text-[10px] h-8 px-3">
                                     <Plus size={14} /> Adicionar
                                 </Button>
