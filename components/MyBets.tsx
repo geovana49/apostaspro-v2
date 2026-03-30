@@ -1249,7 +1249,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     <div className="w-full sm:w-auto min-w-[180px]">
                         <Dropdown
                             options={[
-                                { label: 'Todas as Casas', value: 'all', icon: <Box size={16} className="text-gray-400" /> },
+                                { label: 'Casas', value: 'all', icon: <Box size={16} className="text-gray-400" /> },
                                 ...bookmakers.map(b => ({
                                     label: b.name,
                                     value: b.id,
@@ -1263,7 +1263,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     <div className="w-full sm:w-auto min-w-[180px]">
                         <Dropdown
                             options={[
-                                { label: 'Todas Promoções', value: 'all', icon: <Ticket size={16} /> },
+                                { label: 'Promoções', value: 'all', icon: <Ticket size={16} /> },
                                 ...promotions.map(p => ({
                                     label: p.name,
                                     value: p.name,
