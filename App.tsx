@@ -294,6 +294,10 @@ const App: React.FC = () => {
         setOrigins(INITIAL_ORIGINS);
         setSettings(DEFAULT_SETTINGS);
         setIsLoading(false);
+        setActivePage(Page.OVERVIEW);
+        localStorage.removeItem('apostaspro_active_page');
+        localStorage.removeItem('apostaspro_initial_settings_tab');
+        localStorage.removeItem('apostaspro_mybets_current_date');
       }
     });
 
