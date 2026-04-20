@@ -1297,26 +1297,27 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                             onChange={setPromotionFilter}
                         />
                     </div>
-                    <div className="flex gap-2 w-full sm:w-auto shrink-0">
-                        <Button
-                            variant={showOnlyPending ? 'primary' : 'outline'}
-                            onClick={() => setShowOnlyPending(!showOnlyPending)}
-                            className="flex-1 sm:flex-initial"
-                            title="Filtrar apostas pendentes ou em rascunho"
-                        >
-                            <Filter size={16} />
-                            <span className="hidden xs:inline">Apostas em Aberto</span>
-                            <span className="xs:hidden">Apostas</span>
-                        </Button>
-                        <Button
-                            variant="neutral"
-                            onClick={handleClearFilters}
-                            title="Limpar todos os filtros"
-                            className="px-3"
-                        >
-                            <RefreshCw size={16} />
-                        </Button>
-                    </div>
+                </div>
+
+                <div className="flex gap-2 w-full">
+                    <Button
+                        variant={showOnlyPending ? 'primary' : 'outline'}
+                        onClick={() => setShowOnlyPending(!showOnlyPending)}
+                        className="flex-1"
+                        title="Filtrar apostas pendentes ou em rascunho"
+                    >
+                        <Filter size={16} />
+                        <span>Apostas em Aberto</span>
+                    </Button>
+                    <Button
+                        variant="neutral"
+                        onClick={handleClearFilters}
+                        title="Limpar todos os filtros"
+                        className="flex-1"
+                    >
+                        <RefreshCw size={16} />
+                        <span>Limpar Filtros</span>
+                    </Button>
                 </div>
 
                 <div>

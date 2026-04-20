@@ -876,38 +876,6 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 <p className="text-textMuted text-sm ml-[52px]">Registre recompensas fora das apostas (rodadas grátis, baús, etc).</p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2 items-center">
-                <div className="relative w-full flex-1">
-                    <Input
-                        icon={<Search size={18} />}
-                        placeholder="Buscar ganhos por jogo, casa, origem, notas..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onClear={() => setSearchTerm('')}
-                    />
-                </div>
-                <div className="flex gap-2 w-full sm:w-auto shrink-0">
-                    <Button
-                        variant={showOnlyPending ? 'primary' : 'outline'}
-                        onClick={() => setShowOnlyPending(!showOnlyPending)}
-                        className="flex-1 sm:flex-initial"
-                        title="Filtrar ganhos pendentes ou confirmados"
-                    >
-                        <Filter size={16} />
-                        <span className="hidden xs:inline">Apostas em Aberto</span>
-                        <span className="xs:hidden">Apostas</span>
-                    </Button>
-                    <Button
-                        variant="neutral"
-                        onClick={handleClearFilters}
-                        title="Limpar todos os filtros"
-                        className="px-3"
-                    >
-                        <RefreshCw size={16} />
-                    </Button>
-                </div>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="p-5">
                     <div className="flex items-center justify-between mb-2">
@@ -943,6 +911,18 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             </div>
 
             <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-2 items-center">
+                    <div className="relative w-full flex-1">
+                        <Input
+                            icon={<Search size={18} />}
+                            placeholder="Buscar ganhos por jogo, casa, origem, notas..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onClear={() => setSearchTerm('')}
+                        />
+                    </div>
+                </div>
+
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="flex flex-col md:flex-row flex-1 items-stretch md:items-center gap-2 bg-surface p-2 rounded-xl border border-white/5">
                         <div className="flex-1 md:flex-initial">
@@ -957,6 +937,27 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     <div className="flex-1">
                         <Dropdown options={originOptions} value={originFilter} onChange={setOriginFilter} />
                     </div>
+                </div>
+
+                <div className="flex gap-2 w-full">
+                    <Button
+                        variant={showOnlyPending ? 'primary' : 'outline'}
+                        onClick={() => setShowOnlyPending(!showOnlyPending)}
+                        className="flex-1"
+                        title="Filtrar ganhos pendentes ou confirmados"
+                    >
+                        <Filter size={16} />
+                        <span>Apostas em Aberto</span>
+                    </Button>
+                    <Button
+                        variant="neutral"
+                        onClick={handleClearFilters}
+                        title="Limpar todos os filtros"
+                        className="flex-1"
+                    >
+                        <RefreshCw size={16} />
+                        <span>Limpar Filtros</span>
+                    </Button>
                 </div>
             </div>
 
