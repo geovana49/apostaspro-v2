@@ -1303,19 +1303,21 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     <Button
                         variant={showOnlyPending ? 'primary' : 'outline'}
                         onClick={() => setShowOnlyPending(!showOnlyPending)}
-                        className="flex-1"
+                        className="flex-1 text-[11px] h-9 whitespace-nowrap"
+                        size="sm"
                         title="Filtrar apostas pendentes ou em rascunho"
                     >
-                        <Filter size={16} />
+                        <Filter size={14} />
                         <span>Apostas em Aberto</span>
                     </Button>
                     <Button
                         variant="neutral"
                         onClick={handleClearFilters}
                         title="Limpar todos os filtros"
-                        className="flex-1"
+                        className="flex-1 text-[11px] h-9 whitespace-nowrap"
+                        size="sm"
                     >
-                        <RefreshCw size={16} />
+                        <RefreshCw size={14} />
                         <span>Limpar Filtros</span>
                     </Button>
                 </div>
