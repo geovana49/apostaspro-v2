@@ -951,7 +951,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                         <span>Apostas em Aberto</span>
                     </Button>
                     <Button
-                        variant="neutral"
+                        variant="outline"
                         onClick={handleClearFilters}
                         title="Limpar todos os filtros"
                         className="flex-1 text-[11px] h-9 whitespace-nowrap"
