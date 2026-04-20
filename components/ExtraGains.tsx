@@ -4,7 +4,7 @@ import { FireImage } from './ui/FireImage';
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronLeft, ChevronRight,
     Copy, MoreVertical, AlertCircle, ImageIcon, StickyNote, Trophy, Coins, Gamepad2, Paperclip, SearchX, Settings2,
-    Infinity, Eye, EyeOff, Maximize, Minimize, Palette, Box, Ban, Loader2, Ticket, Sparkles, Wand2, RefreshCw
+    Infinity, Eye, EyeOff, Maximize, Minimize, Palette, Box, Ban, Loader2, Ticket, Sparkles, Wand2, RefreshCw, HelpCircle
 } from 'lucide-react';
 import { ExtraGain, Bookmaker, StatusItem, OriginItem, AppSettings, User, PromotionItem } from '../types';
 import BetFormModal from './BetFormModal';
@@ -204,6 +204,10 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
 
     // Filter State
     const [searchTerm, setSearchTerm] = useState('');
+    const [searchMode, setSearchMode] = useState<'principal' | 'global'>(() => {
+        return (localStorage.getItem('apostaspro_gains_search_mode') as 'principal' | 'global') || 'principal';
+    });
+    const [isSearchHelpOpen, setIsSearchHelpOpen] = useState(false);
     const [periodType, setPeriodType] = useState<'month' | 'year' | 'custom' | 'all'>(() => {
         const saved = localStorage.getItem('apostaspro_extragains_period_type');
         return (saved as any) || 'month';
@@ -241,10 +245,18 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         setShowOnlyPending(false);
         setOriginFilter('all');
         setPeriodType('month');
+        setSearchMode('principal');
+        localStorage.setItem('apostaspro_gains_search_mode', 'principal');
         // Reset to current month
         const now = new Date();
         setStartDate(new Date(now.getFullYear(), now.getMonth(), 1));
         setEndDate(new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999));
+    };
+
+    const toggleSearchMode = () => {
+        const newMode = searchMode === 'principal' ? 'global' : 'principal';
+        setSearchMode(newMode);
+        localStorage.setItem('apostaspro_gains_search_mode', newMode);
     };
 
     const handleEdit = (gain: ExtraGain) => {
@@ -537,12 +549,23 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         const bookmakerName = bookmakers.find(b => b.id === gain.bookmakerId)?.name || '';
         const coverageBookmakers = gain.coverages?.map(c => bookmakers.find(b => b.id === c.bookmakerId)?.name || '').join(' ') || '';
 
-        const matchesSearch = searchTerm === '' ||
-            gain.game?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            gain.origin.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            gain.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            bookmakerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            coverageBookmakers.toLowerCase().includes(searchTerm.toLowerCase());
+        const term = searchTerm.toLowerCase();
+        const matchesPrincipal = searchTerm === '' ||
+            gain.game?.toLowerCase().includes(term) ||
+            gain.origin.toLowerCase().includes(term) ||
+            gain.notes?.toLowerCase().includes(term) ||
+            bookmakerName.toLowerCase().includes(term);
+
+        let matchesGlobal = false;
+        if (searchMode === 'global' && term) {
+            matchesGlobal = gain.coverages?.some(c => {
+                const cMarket = (c.market || '').toLowerCase();
+                const cBookie = bookmakers.find(b => b.id === c.bookmakerId)?.name?.toLowerCase() || '';
+                return cMarket.includes(term) || cBookie.includes(term);
+            }) || false;
+        }
+
+        const matchesSearch = matchesPrincipal || matchesGlobal;
 
         const matchesOrigin = originFilter === 'all' || gain.origin === originFilter;
 
@@ -912,14 +935,35 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
 
             <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row gap-2 items-center">
-                    <div className="relative w-full flex-1">
-                        <Input
-                            icon={<Search size={18} />}
-                            placeholder="Buscar ganhos por jogo, casa, origem, notas..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            onClear={() => setSearchTerm('')}
-                        />
+                    <div className="relative w-full flex-1 flex gap-2">
+                        <div className="relative flex-1">
+                            <Input
+                                icon={<Search size={18} />}
+                                placeholder="Buscar por jogo, casa, origem ou notas..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onClear={() => setSearchTerm('')}
+                            />
+                        </div>
+                        <Button
+                            variant={searchMode === 'global' ? 'primary' : 'outline'}
+                            onClick={toggleSearchMode}
+                            size="sm"
+                            className="h-[46px] px-3 shrink-0"
+                            title={searchMode === 'global' ? "Busca Global: Pesquisando em tudo (notas, coberturas, etc)" : "Busca Principal: Pesquisando nos campos principais"}
+                        >
+                            {searchMode === 'global' ? <Sparkles size={20} /> : <Search size={20} className="text-gray-500" />}
+                            <span className="hidden lg:inline text-xs font-bold ml-1">
+                                {searchMode === 'global' ? 'Global' : 'Geral'}
+                            </span>
+                        </Button>
+                        <button 
+                            onClick={() => setIsSearchHelpOpen(true)}
+                            className="w-8 h-[46px] flex items-center justify-center text-gray-500 hover:text-primary transition-colors shrink-0"
+                            title="Ajuda sobre a busca"
+                        >
+                            <HelpCircle size={18} />
+                        </button>
                     </div>
                 </div>
 
@@ -1416,6 +1460,51 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     <Plus size={24} strokeWidth={3} />
                 </button>
             )}
+
+            <Modal
+                isOpen={isSearchHelpOpen}
+                onClose={() => setIsSearchHelpOpen(false)}
+                title="Dicas de Busca"
+                footer={
+                    <Button variant="primary" className="w-full" onClick={() => setIsSearchHelpOpen(false)}>
+                        Entendi
+                    </Button>
+                }
+            >
+                <div className="space-y-6">
+                    <div className="flex gap-4">
+                        <div className="w-10 h-10 rounded-full bg-gray-500/10 flex items-center justify-center shrink-0">
+                            <Search size={20} className="text-gray-400" />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-white mb-1">Modo Geral (Padrão)</h4>
+                            <p className="text-xs text-textMuted leading-relaxed">
+                                Pesquisa nos campos principais do card: **Jogo**, **Origem**, **Casa Principal** e todas as suas **Anotações**. É ideal para encontrar rapidamente um registro específico.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="h-px bg-white/5" />
+
+                    <div className="flex gap-4">
+                        <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center shrink-0">
+                            <Sparkles size={20} className="text-secondary" />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-secondary mb-1">Modo Global</h4>
+                            <p className="text-xs text-textMuted leading-relaxed">
+                                Uma busca profunda que inclui tudo do modo Geral **MAIS** todos os detalhes dentro das **Coberturas** (mercados e casas secundárias). Use quando o ganho estiver vinculado a uma aposta esportiva complexa.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div className="bg-secondary/5 rounded-xl p-4 border border-secondary/10">
+                        <p className="text-[10px] text-secondary/80 font-medium leading-relaxed italic">
+                            * Dica: Você pode pesquisar por nomes de casas de apostas, tipos de mercado ou até partes de detalhes que você anotou.
+                        </p>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 };
