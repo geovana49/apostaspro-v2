@@ -1133,8 +1133,12 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             return false;
         }
 
-        if (showOnlyPending && !['Pendente', 'Rascunho'].includes(bet.status)) {
-            return false;
+        if (showOnlyPending) {
+            const isMainPending = ['Pendente', 'Rascunho'].includes(bet.status);
+            const hasPendingCoverage = bet.coverages?.some(c => ['Pendente', 'Rascunho'].includes(c.status));
+            if (!isMainPending && !hasPendingCoverage) {
+                return false;
+            }
         }
 
         if (promotionFilter !== 'all') {

@@ -217,11 +217,16 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         return saved ? new Date(saved) : new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0, 23, 59, 59, 999);
     });
 
+    const [showOnlyPending, setShowOnlyPending] = useState(() => {
+        return localStorage.getItem('apostaspro_extragains_show_only_pending') === 'true';
+    });
+
     useEffect(() => {
         localStorage.setItem('apostaspro_extragains_period_type', periodType);
         localStorage.setItem('apostaspro_extragains_start_date', startDate.toISOString());
         localStorage.setItem('apostaspro_extragains_end_date', endDate.toISOString());
-    }, [periodType, startDate, endDate]);
+        localStorage.setItem('apostaspro_extragains_show_only_pending', String(showOnlyPending));
+    }, [periodType, startDate, endDate, showOnlyPending]);
     const [isDateRangeModalOpen, setIsDateRangeModalOpen] = useState(false);
     const [localPrivacyMode, setLocalPrivacyMode] = useState(appSettings.privacyMode);
     const [originFilter, setOriginFilter] = useState('all');
@@ -542,6 +547,14 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             matchesPeriod = isAfterStart && isBeforeEnd;
         }
 
+        if (showOnlyPending) {
+            const isMainPending = ['Pendente', 'Confirmado'].includes(gain.status);
+            const hasPendingCoverage = gain.coverages?.some(c => ['Pendente', 'Rascunho'].includes(c.status));
+            if (!isMainPending && !hasPendingCoverage) {
+                return false;
+            }
+        }
+
         return matchesSearch && matchesOrigin && matchesPeriod;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -852,13 +865,24 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 <p className="text-textMuted text-sm ml-[52px]">Registre recompensas fora das apostas (rodadas grátis, baús, etc).</p>
             </div>
 
-            <div>
-                <Input
-                    icon={<Search size={18} />}
-                    placeholder="Buscar ganhos por jogo, casa, origem, notas..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
+            <div className="flex flex-col sm:flex-row gap-2 items-center">
+                <div className="relative w-full flex-1">
+                    <Input
+                        icon={<Search size={18} />}
+                        placeholder="Buscar ganhos por jogo, casa, origem, notas..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <Button
+                    variant={showOnlyPending ? 'primary' : 'outline'}
+                    onClick={() => setShowOnlyPending(!showOnlyPending)}
+                    className="w-full sm:w-auto shrink-0"
+                    title="Filtrar ganhos pendentes ou confirmados"
+                >
+                    <Filter size={16} />
+                    <span>Apostas em Aberto</span>
+                </Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
