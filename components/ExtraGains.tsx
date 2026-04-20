@@ -548,7 +548,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         }
 
         if (showOnlyPending) {
-            const isMainPending = ['Pendente', 'Confirmado'].includes(gain.status);
+            const isMainPending = gain.status === 'Pendente';
             const hasPendingCoverage = gain.coverages?.some(c => ['Pendente', 'Rascunho'].includes(c.status));
             if (!isMainPending && !hasPendingCoverage) {
                 return false;
