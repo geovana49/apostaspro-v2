@@ -4,7 +4,7 @@ import { Button, Input, Dropdown, Modal, SingleDatePickerModal, ImageViewer, Mon
 import { FireImage } from './ui/FireImage';
 import {
     Plus, Trash2, X, Calendar, Paperclip, Minus, Loader2, Copy, ChevronUp, ChevronDown, UploadCloud,
-    ChevronLeft, ChevronRight, Maximize
+    ChevronLeft, ChevronRight, Maximize, Target, Zap
 } from 'lucide-react';
 import { Bet, Bookmaker, StatusItem, PromotionItem, Coverage, User } from '../types';
 import { FirestoreService } from '../services/firestoreService';
@@ -35,6 +35,7 @@ interface FormState {
     notes: string;
     extraGain?: number;
     isDoubleGreen?: boolean;
+    calcMode: 'manual' | 'surebet' | 'freebet';
 }
 
 const initialFormState: FormState = {
@@ -46,19 +47,67 @@ const initialFormState: FormState = {
 
     coverages: [],
     notes: '',
-    isDoubleGreen: false
+    isDoubleGreen: false,
+    calcMode: 'manual'
+};
+
+const applyAutoCalc = (coverages: Coverage[], calcMode: 'manual' | 'surebet' | 'freebet'): Coverage[] => {
+    if (calcMode === 'manual' || coverages.length < 2) return coverages;
+
+    const anchor = coverages[0];
+    if (!anchor.stake || anchor.odd <= 1) return coverages;
+
+    let targetReturn = 0;
+    if (calcMode === 'surebet') {
+        targetReturn = anchor.stake * anchor.odd;
+    } else if (calcMode === 'freebet') {
+        targetReturn = anchor.stake * (anchor.odd - 1);
+    }
+
+    if (targetReturn <= 0) return coverages;
+
+    return coverages.map((cov, index) => {
+        if (index === 0) return cov;
+        if (cov.odd <= 0) return cov;
+
+        // Calculate stake: Stake = TargetReturn / Odd
+        const calculatedStake = targetReturn / cov.odd;
+        return { ...cov, stake: Math.round(calculatedStake * 100) / 100 };
+    });
 };
 
 const formReducer = (state: FormState, action: any): FormState => {
     switch (action.type) {
         case 'SET_FORM': return action.payload;
-        case 'UPDATE_FIELD': return { ...state, [action.field]: action.value };
-        case 'ADD_COVERAGE': return { ...state, coverages: [...state.coverages, action.payload] };
-        case 'REMOVE_COVERAGE': return { ...state, coverages: state.coverages.filter(c => c.id !== action.id) };
-        case 'UPDATE_COVERAGE': return {
-            ...state,
-            coverages: state.coverages.map(c => c.id === action.id ? { ...c, [action.field]: action.value } : c)
-        };
+        case 'UPDATE_FIELD': {
+            let newState = { ...state, [action.field]: action.value };
+            if (action.field === 'calcMode' && action.value !== 'manual') {
+                newState.coverages = applyAutoCalc(newState.coverages, action.value);
+            }
+            return newState;
+        }
+        case 'ADD_COVERAGE': {
+            const newCoverages = [...state.coverages, action.payload];
+            return { ...state, coverages: applyAutoCalc(newCoverages, state.calcMode) };
+        }
+        case 'REMOVE_COVERAGE': {
+            const newCoverages = state.coverages.filter(c => c.id !== action.id);
+            return { ...state, coverages: applyAutoCalc(newCoverages, state.calcMode) };
+        }
+        case 'UPDATE_COVERAGE': {
+            const newCoverages = state.coverages.map(c => c.id === action.id ? { ...c, [action.field]: action.value } : c);
+            
+            // Trigger auto-calc if relevant info changed
+            // Relevant: First coverage stake/odd changed, OR any coverage odd changed
+            const isFirst = state.coverages.findIndex(c => c.id === action.id) === 0;
+            const isOddChange = action.field === 'odd';
+            const isStakeChange = action.field === 'stake';
+
+            if (state.calcMode !== 'manual' && ( (isFirst && (isStakeChange || isOddChange)) || isOddChange )) {
+                return { ...state, coverages: applyAutoCalc(newCoverages, state.calcMode) };
+            }
+            return { ...state, coverages: newCoverages };
+        }
         case 'DUPLICATE_COVERAGE': {
             const index = state.coverages.findIndex(c => c.id === action.id);
             if (index === -1) return state;
@@ -162,7 +211,8 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                     coverages: initialData.coverages,
                     notes: initialData.notes || '',
                     extraGain: (initialData as any).extraGain,
-                    isDoubleGreen: (initialData as any).isDoubleGreen || false
+                    isDoubleGreen: (initialData as any).isDoubleGreen || false,
+                    calcMode: (initialData as any).calcMode || 'manual'
                 };
                 let photosPayload = initialData.photos ? initialData.photos.map(url => ({ url })) : [];
 
@@ -813,6 +863,38 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
                     <div className="h-px bg-white/5 my-2" />
 
+                    <div className="flex flex-col gap-2">
+                        <label className="text-[10px] text-textMuted uppercase font-black tracking-widest px-1">Modo de Cálculo (Auto-Balancear)</label>
+                        <div className="flex bg-[#0d1121] p-1 rounded-xl border border-white/5">
+                            {[
+                                { id: 'manual', label: 'Manual', icon: <Minus size={14} /> },
+                                { id: 'surebet', label: 'Arbitragem', icon: <Target size={14} className="text-emerald-400" /> },
+                                { id: 'freebet', label: 'Conversão Freebet', icon: <Zap size={14} className="text-purple-400" /> }
+                            ].map(mode => (
+                                <button
+                                    key={mode.id}
+                                    onClick={() => dispatch({ type: 'UPDATE_FIELD', field: 'calcMode', value: mode.id })}
+                                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                                        formData.calcMode === mode.id 
+                                        ? 'bg-primary/20 text-primary border border-primary/30 shadow-lg shadow-primary/5' 
+                                        : 'text-gray-500 hover:text-gray-300'
+                                    }`}
+                                >
+                                    {mode.icon}
+                                    <span>{mode.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                        {formData.calcMode !== 'manual' && (
+                            <p className="text-[10px] text-emerald-500/80 font-medium px-1 flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                Ajustando coberturas automaticamente baseadas na Cobertura 1
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="h-px bg-white/5 my-2" />
+
                     <div>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-sm font-bold text-primary uppercase tracking-wider">Coberturas</h3>
@@ -937,10 +1019,11 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                                             ? cov.manualReturn.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
                                                             : (cov.stake && cov.odd ? (() => {
                                                                 const isFirstCoverage = index === 0;
-                                                                const isFreebetConversion = formData.promotionType?.toLowerCase().includes('conversão freebet');
+                                                                const isFreebetMode = formData.calcMode === 'freebet';
                                                                 let calculatedReturn = cov.stake * cov.odd;
 
-                                                                if (isFreebetConversion && isFirstCoverage) {
+                                                                // Return for Freebet is Stake * (Odd - 1)
+                                                                if (isFreebetMode && isFirstCoverage) {
                                                                     calculatedReturn -= cov.stake;
                                                                 }
 

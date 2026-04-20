@@ -51,6 +51,7 @@ export interface Bet {
   photos?: string[]; // Array of base64 image strings
   extraGain?: number; // Optional extra gain/loss to add to profit calculation
   isDoubleGreen?: boolean; // Indicator for Double Green bets
+  calcMode?: 'manual' | 'surebet' | 'freebet'; // Mode for calculating cover stakes
 }
 
 export interface ExtraGain {
@@ -64,6 +65,7 @@ export interface ExtraGain {
   notes?: string;
   photos?: string[]; // Array of base64 image strings
   coverages?: Coverage[]; // Optional coverages for sports bets
+  calcMode?: 'manual' | 'surebet' | 'freebet'; // Mode for calculating cover stakes
 }
 
 export interface AppSettings {
