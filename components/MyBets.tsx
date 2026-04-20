@@ -4,7 +4,7 @@ import { FireImage } from './ui/FireImage';
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
     Copy, MoreVertical, AlertCircle, ImageIcon, Ticket, ArrowUpRight, ArrowDownRight, Minus, DollarSign, Percent,
-    Maximize, Minimize, Palette, Box, Ban, Loader2, Sparkles, Wand2, Paperclip, StickyNote, Trophy, Coins, Gamepad2, SearchX, Settings2, Infinity, Eye, EyeOff
+    Maximize, Minimize, Palette, Box, Ban, Loader2, Sparkles, Wand2, Paperclip, StickyNote, Trophy, Coins, Gamepad2, SearchX, Settings2, Infinity, Eye, EyeOff, RefreshCw
 } from 'lucide-react';
 import { Bet, Bookmaker, StatusItem, PromotionItem, AppSettings, Coverage, User } from '../types';
 import { FirestoreService } from '../services/firestoreService';
@@ -1116,6 +1116,13 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         );
     };
 
+    const handleClearFilters = () => {
+        setSearchTerm('');
+        setBookmakerFilter('all');
+        setPromotionFilter('all');
+        setShowOnlyPending(false);
+    };
+
     const filteredBets = bets.filter(bet => {
         if (!bet) return false;
 
@@ -1255,9 +1262,10 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                             icon={<Search size={18} />}
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
+                            onClear={() => setSearchTerm('')}
                         />
                     </div>
-                    <div className="w-full sm:w-auto min-w-[180px]">
+                    <div className="w-full sm:w-auto min-w-[150px]">
                         <Dropdown
                             isSearchable={true}
                             searchPlaceholder="Buscar casa..."
@@ -1273,7 +1281,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                             onChange={setBookmakerFilter}
                         />
                     </div>
-                    <div className="w-full sm:w-auto min-w-[180px]">
+                    <div className="w-full sm:w-auto min-w-[150px]">
                         <Dropdown
                             isSearchable={true}
                             searchPlaceholder="Buscar promoção..."
@@ -1289,15 +1297,26 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                             onChange={setPromotionFilter}
                         />
                     </div>
-                    <Button
-                        variant={showOnlyPending ? 'primary' : 'outline'}
-                        onClick={() => setShowOnlyPending(!showOnlyPending)}
-                        className="w-full sm:w-auto shrink-0"
-                        title="Filtrar apostas pendentes ou em rascunho"
-                    >
-                        <Filter size={16} />
-                        <span>Apostas em Aberto</span>
-                    </Button>
+                    <div className="flex gap-2 w-full sm:w-auto shrink-0">
+                        <Button
+                            variant={showOnlyPending ? 'primary' : 'outline'}
+                            onClick={() => setShowOnlyPending(!showOnlyPending)}
+                            className="flex-1 sm:flex-initial"
+                            title="Filtrar apostas pendentes ou em rascunho"
+                        >
+                            <Filter size={16} />
+                            <span className="hidden xs:inline">Apostas em Aberto</span>
+                            <span className="xs:hidden">Apostas</span>
+                        </Button>
+                        <Button
+                            variant="neutral"
+                            onClick={handleClearFilters}
+                            title="Limpar todos os filtros"
+                            className="px-3"
+                        >
+                            <RefreshCw size={16} />
+                        </Button>
+                    </div>
                 </div>
 
                 <div>

@@ -4,7 +4,7 @@ import { FireImage } from './ui/FireImage';
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronLeft, ChevronRight,
     Copy, MoreVertical, AlertCircle, ImageIcon, StickyNote, Trophy, Coins, Gamepad2, Paperclip, SearchX, Settings2,
-    Infinity, Eye, EyeOff, Maximize, Minimize, Palette, Box, Ban, Loader2, Ticket, Sparkles, Wand2
+    Infinity, Eye, EyeOff, Maximize, Minimize, Palette, Box, Ban, Loader2, Ticket, Sparkles, Wand2, RefreshCw
 } from 'lucide-react';
 import { ExtraGain, Bookmaker, StatusItem, OriginItem, AppSettings, User, PromotionItem } from '../types';
 import BetFormModal from './BetFormModal';
@@ -235,6 +235,17 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
     const [configTab, setConfigTab] = useState<'categories' | 'status'>('categories');
     const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleClearFilters = () => {
+        setSearchTerm('');
+        setShowOnlyPending(false);
+        setOriginFilter('all');
+        setPeriodType('month');
+        // Reset to current month
+        const now = new Date();
+        setStartDate(new Date(now.getFullYear(), now.getMonth(), 1));
+        setEndDate(new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999));
+    };
 
     const handleEdit = (gain: ExtraGain) => {
         // If gain has coverages, it's a sports bet - open BetFormModal
@@ -872,17 +883,29 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                         placeholder="Buscar ganhos por jogo, casa, origem, notas..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        onClear={() => setSearchTerm('')}
                     />
                 </div>
-                <Button
-                    variant={showOnlyPending ? 'primary' : 'outline'}
-                    onClick={() => setShowOnlyPending(!showOnlyPending)}
-                    className="w-full sm:w-auto shrink-0"
-                    title="Filtrar ganhos pendentes ou confirmados"
-                >
-                    <Filter size={16} />
-                    <span>Apostas em Aberto</span>
-                </Button>
+                <div className="flex gap-2 w-full sm:w-auto shrink-0">
+                    <Button
+                        variant={showOnlyPending ? 'primary' : 'outline'}
+                        onClick={() => setShowOnlyPending(!showOnlyPending)}
+                        className="flex-1 sm:flex-initial"
+                        title="Filtrar ganhos pendentes ou confirmados"
+                    >
+                        <Filter size={16} />
+                        <span className="hidden xs:inline">Apostas em Aberto</span>
+                        <span className="xs:hidden">Apostas</span>
+                    </Button>
+                    <Button
+                        variant="neutral"
+                        onClick={handleClearFilters}
+                        title="Limpar todos os filtros"
+                        className="px-3"
+                    >
+                        <RefreshCw size={16} />
+                    </Button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
