@@ -37,6 +37,7 @@ interface FormState {
     notes: string;
     extraGain?: number;
     isDoubleGreen?: boolean;
+    calcMode: 'manual' | 'surebet' | 'freebet';
 }
 
 const initialFormState: FormState = {
@@ -47,19 +48,66 @@ const initialFormState: FormState = {
     status: 'Pendente',
     coverages: [],
     notes: '',
-    isDoubleGreen: false
+    isDoubleGreen: false,
+    calcMode: 'manual'
+};
+
+const applyAutoCalc = (coverages: Coverage[], calcMode: 'manual' | 'surebet' | 'freebet'): Coverage[] => {
+    if (calcMode === 'manual' || coverages.length < 2) return coverages;
+
+    const anchor = coverages[0];
+    if (!anchor.stake || anchor.odd <= 1) return coverages;
+
+    let targetReturn = 0;
+    if (calcMode === 'surebet') {
+        targetReturn = anchor.stake * anchor.odd;
+    } else if (calcMode === 'freebet') {
+        targetReturn = anchor.stake * (anchor.odd - 1);
+    }
+
+    if (targetReturn <= 0) return coverages;
+
+    return coverages.map((cov, index) => {
+        if (index === 0) return cov;
+        if (cov.odd <= 0) return cov;
+
+        // Calculate stake: Stake = TargetReturn / Odd
+        const calculatedStake = targetReturn / cov.odd;
+        return { ...cov, stake: Math.round(calculatedStake * 100) / 100 };
+    });
 };
 
 const formReducer = (state: FormState, action: any): FormState => {
     switch (action.type) {
         case 'SET_FORM': return action.payload;
-        case 'UPDATE_FIELD': return { ...state, [action.field]: action.value };
-        case 'ADD_COVERAGE': return { ...state, coverages: [...state.coverages, action.payload] };
-        case 'REMOVE_COVERAGE': return { ...state, coverages: state.coverages.filter(c => c.id !== action.id) };
-        case 'UPDATE_COVERAGE': return {
-            ...state,
-            coverages: state.coverages.map(c => c.id === action.id ? { ...c, [action.field]: action.value } : c)
-        };
+        case 'UPDATE_FIELD': {
+            let newState = { ...state, [action.field]: action.value };
+            if (action.field === 'calcMode' && action.value !== 'manual') {
+                newState.coverages = applyAutoCalc(newState.coverages, action.value);
+            }
+            return newState;
+        }
+        case 'ADD_COVERAGE': {
+            const newCoverages = [...state.coverages, action.payload];
+            return { ...state, coverages: applyAutoCalc(newCoverages, state.calcMode) };
+        }
+        case 'REMOVE_COVERAGE': {
+            const newCoverages = state.coverages.filter(c => c.id !== action.id);
+            return { ...state, coverages: applyAutoCalc(newCoverages, state.calcMode) };
+        }
+        case 'UPDATE_COVERAGE': {
+            const newCoverages = state.coverages.map(c => c.id === action.id ? { ...c, [action.field]: action.value } : c);
+            
+            // Trigger auto-calc if relevant info changed
+            const isFirst = state.coverages.findIndex(c => c.id === action.id) === 0;
+            const isOddChange = action.field === 'odd';
+            const isStakeChange = action.field === 'stake';
+
+            if (state.calcMode !== 'manual' && ( (isFirst && (isStakeChange || isOddChange)) || isOddChange )) {
+                return { ...state, coverages: applyAutoCalc(newCoverages, state.calcMode) };
+            }
+            return { ...state, coverages: newCoverages };
+        }
         case 'DUPLICATE_COVERAGE': {
             const index = state.coverages.findIndex(c => c.id === action.id);
             if (index === -1) return state;
@@ -102,7 +150,8 @@ const formReducer = (state: FormState, action: any): FormState => {
                 coverages: initialCoverages,
                 event: '',
                 notes: '',
-                extraGain: undefined
+                extraGain: undefined,
+                calcMode: 'manual'
             };
         }
         default: return state;
@@ -520,7 +569,8 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             status: bet.status as any,
             coverages: bet.coverages,
             notes: bet.notes || '',
-            isDoubleGreen: bet.isDoubleGreen || false
+            isDoubleGreen: bet.isDoubleGreen || false,
+            calcMode: (bet as any).calcMode || 'manual'
         };
         let photosPayload = bet.photos ? bet.photos.map(url => ({ url })) : [];
 
@@ -2058,7 +2108,40 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                         value={formData.status}
                         onChange={value => dispatch({ type: 'UPDATE_FIELD', field: 'status', value })}
                     />
-<div className="h-px bg-white/5 my-2" />
+
+                    <div className="h-px bg-white/5 my-2" />
+
+                    <div className="flex flex-col gap-2">
+                        <label className="text-[10px] text-textMuted uppercase font-black tracking-widest px-1">Modo de Cálculo (Auto-Balancear)</label>
+                        <div className="flex bg-[#0d1121] p-1 rounded-xl border border-white/5">
+                            {[
+                                { id: 'manual', label: 'Manual', icon: <Minus size={14} /> },
+                                { id: 'surebet', label: 'Arbitragem', icon: <Target size={14} className="text-emerald-400" /> },
+                                { id: 'freebet', label: 'Conversão Freebet', icon: <Zap size={14} className="text-purple-400" /> }
+                            ].map(mode => (
+                                <button
+                                    key={mode.id}
+                                    onClick={() => dispatch({ type: 'UPDATE_FIELD', field: 'calcMode', value: mode.id })}
+                                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                                        formData.calcMode === mode.id 
+                                        ? 'bg-primary/20 text-primary border border-primary/30 shadow-lg shadow-primary/5' 
+                                        : 'text-gray-500 hover:text-gray-300'
+                                    }`}
+                                >
+                                    {mode.icon}
+                                    <span>{mode.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                        {formData.calcMode !== 'manual' && (
+                            <p className="text-[10px] text-emerald-500/80 font-medium px-1 flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                Ajustando coberturas automaticamente baseadas na Cobertura 1
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="h-px bg-white/5 my-2" />
 
                     <div>
                         <div className="flex items-center justify-between mb-4">
@@ -2154,6 +2237,8 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                                         const val = parseInt(digits) / 100;
                                                         updateCoverage(cov.id, 'odd', val);
                                                     }
+                                                    // Reset manual return when odd changes to ensure auto-calc is used
+                                                    updateCoverage(cov.id, 'manualReturn', undefined);
                                                 }}
                                             />
                                             <Input
@@ -2167,6 +2252,8 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                                     const value = e.target.value.replace(/\D/g, '');
                                                     const numberValue = parseInt(value, 10) / 100;
                                                     updateCoverage(cov.id, 'stake', isNaN(numberValue) ? 0 : numberValue);
+                                                    // Reset manual return when stake changes to ensure auto-calc is used
+                                                    updateCoverage(cov.id, 'manualReturn', undefined);
                                                 }}
                                             />
 
@@ -2182,10 +2269,10 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                                             ? cov.manualReturn.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
                                                             : (cov.stake && cov.odd ? (() => {
                                                                 const isFirstCoverage = index === 0;
-                                                                const isFreebetConversion = formData.promotionType?.toLowerCase().includes('conversão freebet');
+                                                                const isFreebetMode = formData.calcMode === 'freebet';
                                                                 let calculatedReturn = cov.stake * cov.odd;
 
-                                                                if (isFreebetConversion && isFirstCoverage) {
+                                                                if (isFreebetMode && isFirstCoverage) {
                                                                     calculatedReturn -= cov.stake;
                                                                 }
 
