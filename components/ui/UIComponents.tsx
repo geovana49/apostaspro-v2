@@ -465,6 +465,16 @@ export const MoneyDisplay: React.FC<{ value: number; privacyMode?: boolean; pref
   return <span className={className}>{prefix} {formatted}</span>;
 };
 
+export const DateSeparator: React.FC<{ label: string }> = ({ label }) => (
+  <div className="flex items-center gap-4 my-3 px-1 py-4 animate-in fade-in duration-700">
+    <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+    <span className="text-[10px] font-extrabold text-gray-500 uppercase tracking-[0.25em] whitespace-nowrap bg-white/5 px-3 py-1 rounded-full border border-white/5 backdrop-blur-sm shadow-sm">
+      {label}
+    </span>
+    <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+  </div>
+);
+
 // --- Card 3D ---
 export const Card = React.forwardRef<HTMLDivElement, { children: React.ReactNode; className?: string; onClick?: () => void }>(({ children, className = '', onClick }, ref) => (
   <div

@@ -1,5 +1,5 @@
 import React, { useState, useReducer, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
-import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, SingleDatePickerModal, BookmakerLogo } from './ui/UIComponents';
+import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, SingleDatePickerModal, BookmakerLogo, DateSeparator } from './ui/UIComponents';
 import { FireImage } from './ui/FireImage';
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
@@ -1551,12 +1551,27 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
             </div>
 
             <div ref={betsListRef} className="space-y-3">
-                {sortedBets.map(bet => {
+                {sortedBets.map((bet, index) => {
 
                     // Safety check for coverages
                     if (!bet.coverages || !Array.isArray(bet.coverages)) {
                         console.error("❌ Bet has no coverages array:", bet);
                         return null;
+                    }
+
+                    const prevBet = index > 0 ? sortedBets[index - 1] : null;
+                    const isPendingCopy = (b: any | null) => b ? b.status === 'Pendente' && (b.event || '').includes('(Cópia)') : false;
+                    
+                    const aIsCopy = isPendingCopy(bet);
+                    const bIsCopy = isPendingCopy(prevBet);
+                    
+                    let separatorLabel = '';
+                    if (index === 0) {
+                        separatorLabel = aIsCopy ? 'Novas Cópias' : `${new Date(bet.date).getDate()} de ${MONTHS[new Date(bet.date).getMonth()]}`;
+                    } else if (aIsCopy !== bIsCopy) {
+                        separatorLabel = aIsCopy ? 'Novas Cópias' : `${new Date(bet.date).getDate()} de ${MONTHS[new Date(bet.date).getMonth()]}`;
+                    } else if (!aIsCopy && bet.date !== prevBet?.date) {
+                        separatorLabel = `${new Date(bet.date).getDate()} de ${MONTHS[new Date(bet.date).getMonth()]}`;
                     }
 
                     const isExpanded = expandedId === bet.id;
@@ -1570,6 +1585,7 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                             key={bet.id}
                             className="relative"
                         >
+                            {separatorLabel && <DateSeparator label={separatorLabel} />}
                             <Card
                                 className={`
 overflow-hidden border-none bg-surface transition-all duration-300 hover:border-white/10 hover:-translate-y-0.5 hover:shadow-lg select-none cursor-pointer

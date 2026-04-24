@@ -1,5 +1,5 @@
 import React, { useState, useReducer, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
-import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, CustomColorPicker, RenderIcon, ICON_MAP, DateRangePickerModal, SingleDatePickerModal, DropdownOption, BookmakerLogo } from './ui/UIComponents';
+import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, CustomColorPicker, RenderIcon, ICON_MAP, DateRangePickerModal, SingleDatePickerModal, DropdownOption, BookmakerLogo, DateSeparator } from './ui/UIComponents';
 import { FireImage } from './ui/FireImage';
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronLeft, ChevronRight,
@@ -13,6 +13,7 @@ import { compressImages, base64ToBlob } from '../utils/imageCompression';
 import { calculateBetStats } from '../utils/betCalculations';
 
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e', '#64748b', '#000000', '#FFFFFF'];
+const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
 interface ExtraGainsProps {
     gains: ExtraGain[];
@@ -1098,7 +1099,22 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             </div>
 
             <div ref={gainsListRef} className="space-y-3 relative min-h-[300px]">
-                {filteredGains.length > 0 ? filteredGains.map(gain => {
+                {filteredGains.length > 0 ? filteredGains.map((gain, index) => {
+                    const prevGain = index > 0 ? filteredGains[index - 1] : null;
+                    const isPendingCopy = (g: ExtraGain | null) => g ? g.status === 'Pendente' && ((g.game || '').includes('(Cópia)') || g.origin.includes('(Cópia)')) : false;
+
+                    const aIsCopy = isPendingCopy(gain);
+                    const bIsCopy = isPendingCopy(prevGain);
+
+                    let separatorLabel = '';
+                    if (index === 0) {
+                        separatorLabel = aIsCopy ? 'Novas Cópias' : `${new Date(gain.date).getDate()} de ${MONTHS[new Date(gain.date).getMonth()]}`;
+                    } else if (aIsCopy !== bIsCopy) {
+                        separatorLabel = aIsCopy ? 'Novas Cópias' : `${new Date(gain.date).getDate()} de ${MONTHS[new Date(gain.date).getMonth()]}`;
+                    } else if (!aIsCopy && gain.date !== prevGain?.date) {
+                        separatorLabel = `${new Date(gain.date).getDate()} de ${MONTHS[new Date(gain.date).getMonth()]}`;
+                    }
+
                     const bookie = bookmakers.find(b => b.id === gain.bookmakerId);
                     const originItem = origins.find(o => o.name === gain.origin);
                     const originColor = originItem?.color || '#94a3b8';
@@ -1121,7 +1137,9 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     const isExpanded = expandedGains.has(gain.id);
 
                     return (
-                        <Card key={gain.id} className="group border-none bg-surface hover:bg-[#1a2133] transition-all relative p-0 overflow-hidden cursor-pointer" onClick={() => { if (!deleteId) toggleGainDetails(gain.id); }}>
+                        <div key={gain.id} className="relative">
+                            {separatorLabel && <DateSeparator label={separatorLabel} />}
+                            <Card className="group border-none bg-surface hover:bg-[#1a2133] transition-all relative p-0 overflow-hidden cursor-pointer" onClick={() => { if (!deleteId) toggleGainDetails(gain.id); }}>
                             <div className="p-4">
                                 <div className="flex flex-col md:flex-row md:items-center gap-4 hover:bg-white/5 transition-colors -mx-4 -mt-4 p-4 rounded-t-xl">
                                     <div className="flex items-center gap-3 flex-1">
