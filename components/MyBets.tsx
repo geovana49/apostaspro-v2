@@ -1739,23 +1739,24 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                 {isExpanded && (
                                     <div className="bg-black/20 p-4 border-t border-white/5 animate-in slide-in-from-top-2" onClick={(e) => e.stopPropagation()}>
                                         <h5 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-3 ml-1">Coberturas & Entradas</h5>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                            {bet.coverages.map(cov => {
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {bet.coverages.map((cov, idx) => {
                                                 const statusItem = statuses.find(s => s.name === cov.status);
-                                                const statusColor = statusItem ? statusItem.color : '#fbbf24';
+                                                const statusColor = statusItem ? statusItem.color : (cov.status === 'Green' ? '#10b981' : cov.status === 'Red' ? '#ef4444' : '#6b7280');
+                                                const returnAmount = cov.manualReturn !== undefined ? cov.manualReturn : cov.odd * cov.stake;
 
                                                 return (
-                                                    <div key={cov.id} className="bg-background rounded-lg p-3 border border-white/5 relative hover:border-white/20 transition-colors">
-                                                        <div
-                                                            className="absolute left-0 top-0 bottom-0 w-1"
-                                                            style={{ backgroundColor: statusColor }}
-                                                        />
+                                                    <div key={cov.id} className="relative bg-[#0d1421] border border-white/5 rounded-xl overflow-hidden shadow-lg p-4 sm:p-5 pl-5 sm:pl-6 group hover:border-white/20 transition-all">
+                                                        {/* Left Border */}
+                                                        <div className="absolute left-0 top-0 bottom-0 w-[5px]" style={{ backgroundColor: statusColor }} />
 
-                                                        <div className="flex justify-between items-center mb-2">
-                                                            <div className="flex items-center gap-2">
+                                                        {/* Top Row: Logo/Name and Status Badge */}
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <div className="flex items-center gap-2.5">
                                                                 {renderBookmakerLogo(cov.bookmakerId, 'sm')}
-                                                                <span className="text-xs font-bold text-white">{getBookmaker(cov.bookmakerId)?.name}</span>
+                                                                <span className="text-[15px] font-bold text-white">{getBookmaker(cov.bookmakerId)?.name || 'N/A'}</span>
                                                             </div>
+                                                            
                                                             {editingId === `${bet.id}-${cov.id}-status` ? (
                                                                 <div onClick={(e) => e.stopPropagation()}>
                                                                     <Dropdown
@@ -1766,38 +1767,41 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                                                     />
                                                                 </div>
                                                             ) : (
-                                                                <div
+                                                                <div 
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         setEditingId(`${bet.id}-${cov.id}-status`);
                                                                         setEditingValue(cov.status);
                                                                     }}
-                                                                    className="cursor-pointer hover:opacity-80 transition-opacity"
-                                                                    title="Clique para alterar status"
+                                                                    className="px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest border cursor-pointer hover:opacity-80 transition-opacity"
+                                                                    style={{ 
+                                                                        color: statusColor, 
+                                                                        borderColor: `${statusColor}40`,
+                                                                        backgroundColor: 'transparent'
+                                                                    }}
                                                                 >
-                                                                    {renderStatusBadge(cov.status)}
+                                                                    {cov.status}
                                                                 </div>
                                                             )}
                                                         </div>
 
+                                                        {/* Market Name */}
                                                         {editingId === `${bet.id}-${cov.id}-market` ? (
                                                             <textarea
-                                                                className="w-full bg-[#0d1121] border border-primary text-white rounded-lg py-2 px-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 mb-3"
+                                                                className="w-full bg-[#05070e] border border-primary text-white rounded-lg py-2 px-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4"
                                                                 value={editingValue}
                                                                 onChange={(e) => setEditingValue(e.target.value)}
                                                                 onBlur={() => saveEdit(bet.id, cov.id, 'market', editingValue)}
                                                                 onKeyDown={(e) => {
-                                                                    if (e.key === 'Escape') {
-                                                                        setEditingId(null);
-                                                                    }
+                                                                    if (e.key === 'Escape') setEditingId(null);
                                                                 }}
                                                                 autoFocus
                                                                 rows={3}
                                                                 onClick={(e) => e.stopPropagation()}
                                                             />
                                                         ) : (
-                                                            <p
-                                                                className="text-sm text-gray-400 mb-3 pl-1 break-words whitespace-pre-wrap cursor-pointer hover:text-gray-300 transition-colors"
+                                                            <p 
+                                                                className="text-[14px] text-gray-300 font-medium leading-relaxed mb-4 pr-2 cursor-pointer hover:text-white transition-colors"
                                                                 onDoubleClick={(e) => {
                                                                     e.stopPropagation();
                                                                     setEditingId(`${bet.id}-${cov.id}-market`);
@@ -1809,13 +1813,14 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                                             </p>
                                                         )}
 
-                                                        <div className="flex justify-between items-end border-t border-white/5 pt-2">
-                                                            <div>
-                                                                <span className="text-[10px] text-textMuted uppercase font-bold block">ODD</span>
+                                                        {/* Data Row: ODD, STAKE, RETORNO */}
+                                                        <div className="grid grid-cols-3 gap-2 border-t border-white/5 pt-3 mt-1">
+                                                            <div className="flex flex-col items-start">
+                                                                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Odd</p>
                                                                 {editingId === `${bet.id}-${cov.id}-odd` ? (
                                                                     <input
                                                                         type="tel"
-                                                                        className="bg-[#0d1121] border border-primary text-white rounded px-2 py-1 text-lg font-bold w-20 focus:outline-none"
+                                                                        className="bg-[#05070e] border border-primary text-white rounded px-2 py-1 text-[16px] font-bold w-full focus:outline-none"
                                                                         value={editingValue}
                                                                         onChange={(e) => setEditingValue(e.target.value)}
                                                                         onBlur={() => {
@@ -1826,16 +1831,14 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                                                             if (e.key === 'Enter') {
                                                                                 const val = parseFloat(editingValue);
                                                                                 saveEdit(bet.id, cov.id, 'odd', isNaN(val) ? 0 : val);
-                                                                            } else if (e.key === 'Escape') {
-                                                                                setEditingId(null);
-                                                                            }
+                                                                            } else if (e.key === 'Escape') setEditingId(null);
                                                                         }}
                                                                         autoFocus
                                                                         onClick={(e) => e.stopPropagation()}
                                                                     />
                                                                 ) : (
-                                                                    <span
-                                                                        className="font-bold text-blue-400 text-lg cursor-pointer hover:text-blue-300 transition-colors"
+                                                                    <span 
+                                                                        className="text-[16px] font-bold text-[#22d3ee] leading-none cursor-pointer hover:text-[#5ce5f7] transition-colors"
                                                                         onDoubleClick={(e) => {
                                                                             e.stopPropagation();
                                                                             setEditingId(`${bet.id}-${cov.id}-odd`);
@@ -1847,12 +1850,12 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                                                     </span>
                                                                 )}
                                                             </div>
-                                                            <div className="text-right">
-                                                                <span className="text-[10px] text-textMuted uppercase font-bold block">Stake</span>
+                                                            <div className="flex flex-col items-center">
+                                                                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Stake</p>
                                                                 {editingId === `${bet.id}-${cov.id}-stake` ? (
                                                                     <input
                                                                         type="tel"
-                                                                        className="bg-[#0d1121] border border-primary text-white rounded px-2 py-1 text-lg font-bold w-24 text-right focus:outline-none"
+                                                                        className="bg-[#05070e] border border-primary text-white rounded px-2 py-1 text-[16px] font-bold w-full text-center focus:outline-none"
                                                                         value={editingValue}
                                                                         onChange={(e) => setEditingValue(e.target.value)}
                                                                         onBlur={() => {
@@ -1863,16 +1866,14 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                                                             if (e.key === 'Enter') {
                                                                                 const val = parseFloat(editingValue);
                                                                                 saveEdit(bet.id, cov.id, 'stake', isNaN(val) ? 0 : val);
-                                                                            } else if (e.key === 'Escape') {
-                                                                                setEditingId(null);
-                                                                            }
+                                                                            } else if (e.key === 'Escape') setEditingId(null);
                                                                         }}
                                                                         autoFocus
                                                                         onClick={(e) => e.stopPropagation()}
                                                                     />
                                                                 ) : (
-                                                                    <span
-                                                                        className="font-bold text-white cursor-pointer hover:text-gray-300 transition-colors"
+                                                                    <span 
+                                                                        className="text-[16px] font-bold text-white leading-none cursor-pointer hover:text-gray-300 transition-colors"
                                                                         onDoubleClick={(e) => {
                                                                             e.stopPropagation();
                                                                             setEditingId(`${bet.id}-${cov.id}-stake`);
@@ -1883,6 +1884,10 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                                                         <MoneyDisplay value={cov.stake} privacyMode={settings.privacyMode} />
                                                                     </span>
                                                                 )}
+                                                            </div>
+                                                            <div className="flex flex-col items-end">
+                                                                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Retorno</p>
+                                                                <MoneyDisplay value={returnAmount} className={`text-[16px] font-bold leading-none ${cov.status === 'Green' ? 'text-[#10b981]' : 'text-gray-400'}`} privacyMode={settings.privacyMode} />
                                                             </div>
                                                         </div>
                                                     </div>
