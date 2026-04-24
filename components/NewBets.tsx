@@ -673,63 +673,72 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                     const statusObj = statuses.find(s => s.name === cov.status);
                                     const statusColor = statusObj?.color || (cov.status.toLowerCase() === 'green' ? '#10b981' : cov.status.toLowerCase() === 'red' ? '#ef4444' : '#6b7280');
                                     
-                                    // Return logic: potential return when pending, zero when lost
+                                    // Robust return logic: potential return when pending, zero when lost
                                     let returnAmount = 0;
-                                    const statusLower = cov.status.toLowerCase();
-                                    if (statusLower === 'pendente') {
-                                        returnAmount = cov.odd * cov.stake;
-                                    } else if (statusLower === 'green' || statusLower === 'meio green' || statusLower === 'concluído' || statusLower === 'concluido') {
-                                        returnAmount = cov.manualReturn !== undefined ? cov.manualReturn : cov.odd * cov.stake;
+                                    const sLow = (cov.status || '').toLowerCase();
+                                    const isWinning = sLow.includes('green') || sLow.includes('conclu') || sLow.includes('vence') || sLow.includes('ganha');
+                                    const isPending = sLow.includes('pendente');
+
+                                    if (isPending) {
+                                        returnAmount = (Number(cov.odd) || 0) * (Number(cov.stake) || 0);
+                                    } else if (isWinning) {
+                                        returnAmount = (cov.manualReturn !== undefined && cov.manualReturn !== null && Number(cov.manualReturn) > 0) 
+                                            ? Number(cov.manualReturn) 
+                                            : (Number(cov.odd) || 0) * (Number(cov.stake) || 0);
                                     } else {
                                         returnAmount = 0;
                                     }
 
                                     return (
-                                        <div key={idx} className="relative bg-[#0d1421] border border-white/5 rounded-2xl overflow-hidden shadow-2xl p-5 pl-6 group transition-all duration-300">
-                                            {/* Solid Indicator Bar */}
-                                            <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: statusColor }} />
+                                        <div key={idx} className="relative bg-[#0b0f1a] border border-white/[0.03] rounded-xl overflow-hidden p-4 group transition-all duration-500 hover:bg-[#0e1424] shadow-sm">
+                                            {/* Sleek Vertical Accent */}
+                                            <div className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full shadow-[0_0_10px_rgba(0,0,0,0.5)]" style={{ backgroundColor: statusColor }} />
                                             
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-1.5 bg-white/5 rounded-lg border border-white/5">
+                                            <div className="flex flex-col gap-3.5 pl-3">
+                                                {/* Top Line: Bookie & Status */}
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
                                                         <BookmakerLogo 
                                                             logo={getBookmaker(cov.bookmakerId)?.logo} 
                                                             name={getBookmaker(cov.bookmakerId)?.name || ''} 
                                                             color={getBookmaker(cov.bookmakerId)?.color} 
                                                             size="sm" 
                                                         />
+                                                        <span className="text-[13px] font-bold text-white/90 uppercase tracking-tight">{getBookmaker(cov.bookmakerId)?.name || 'N/A'}</span>
                                                     </div>
-                                                    <span className="text-base font-black text-white tracking-tight">{getBookmaker(cov.bookmakerId)?.name || 'N/A'}</span>
-                                                </div>
-                                                <div 
-                                                    className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] border"
-                                                    style={{ color: statusColor, borderColor: `${statusColor}40`, backgroundColor: `${statusColor}0D` }}
-                                                >
-                                                    {cov.status}
-                                                </div>
-                                            </div>
-
-                                            <p className="text-sm text-gray-400 font-medium leading-relaxed mb-5 pr-4">
-                                                {cov.market}
-                                            </p>
-
-                                            <div className="flex items-center gap-2 bg-white/[0.02] border border-white/[0.05] rounded-xl p-3">
-                                                <div className="flex-1 flex flex-col gap-1">
-                                                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Odd</span>
-                                                    <span className="text-[15px] font-bold text-[#22d3ee] tracking-tight">{cov.odd.toFixed(2)}</span>
-                                                </div>
-                                                <div className="w-px h-8 bg-white/5" />
-                                                <div className="flex-1 flex flex-col gap-1 items-center">
-                                                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Stake</span>
-                                                    <span className="whitespace-nowrap">
-                                                        <MoneyDisplay value={cov.stake} className="text-[14px] font-bold text-white tracking-tight" />
+                                                    
+                                                    <span 
+                                                        className="text-[9px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-md border"
+                                                        style={{ color: statusColor, borderColor: `${statusColor}30` }}
+                                                    >
+                                                        {cov.status}
                                                     </span>
                                                 </div>
-                                                <div className="w-px h-8 bg-white/5" />
-                                                <div className="flex-1 flex flex-col gap-1 items-end">
-                                                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Retorno</span>
-                                                    <div className={`px-2 py-0.5 rounded-md ${returnAmount > 0 ? 'bg-primary/10' : ''} whitespace-nowrap`}>
-                                                        <MoneyDisplay value={returnAmount} className={`text-[14px] font-black tracking-tight ${returnAmount > 0 ? 'text-primary' : 'text-gray-600'}`} />
+
+                                                {/* Market Title */}
+                                                <p className="text-[13px] text-gray-400 font-medium leading-relaxed line-clamp-2">
+                                                    {cov.market}
+                                                </p>
+
+                                                {/* Minimalist Data Row */}
+                                                <div className="flex items-center justify-between pt-3 border-t border-white/[0.04]">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[8px] text-gray-600 uppercase font-black tracking-widest mb-0.5">Odd</span>
+                                                        <span className="text-[14px] font-bold text-[#22d3ee]">{cov.odd.toFixed(2)}</span>
+                                                    </div>
+
+                                                    <div className="flex flex-col items-center">
+                                                        <span className="text-[8px] text-gray-600 uppercase font-black tracking-widest mb-0.5">Stake</span>
+                                                        <span className="text-[14px] font-bold text-white/90 whitespace-nowrap">
+                                                            <MoneyDisplay value={cov.stake} />
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="text-[8px] text-gray-600 uppercase font-black tracking-widest mb-0.5">Retorno</span>
+                                                        <span className={`text-[15px] font-black tracking-tight whitespace-nowrap ${returnAmount > 0 ? 'text-[#10b981]' : 'text-gray-700'}`}>
+                                                            <MoneyDisplay value={returnAmount} />
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
