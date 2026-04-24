@@ -865,23 +865,23 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
 
                     <div className="flex flex-col gap-2">
                         <label className="text-[10px] text-textMuted uppercase font-black tracking-widest px-1">Modo de Cálculo (Auto-Balancear)</label>
-                        <div className="flex bg-[#0d1121] p-1 rounded-xl border border-white/5">
+                        <div className="grid grid-cols-3 bg-[#0d1121] p-1 rounded-xl border border-white/5">
                             {[
                                 { id: 'manual', label: 'Manual', icon: <Minus size={14} /> },
                                 { id: 'surebet', label: 'Arbitragem', icon: <Target size={14} className="text-emerald-400" /> },
-                                { id: 'freebet', label: 'Conversão Freebet', icon: <Zap size={14} className="text-purple-400" /> }
+                                { id: 'freebet', label: 'Freebet', icon: <Zap size={14} className="text-purple-400" /> }
                             ].map(mode => (
                                 <button
                                     key={mode.id}
                                     onClick={() => dispatch({ type: 'UPDATE_FIELD', field: 'calcMode', value: mode.id })}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                                    className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-lg text-[10px] font-bold transition-all ${
                                         formData.calcMode === mode.id 
                                         ? 'bg-primary/20 text-primary border border-primary/30 shadow-lg shadow-primary/5' 
                                         : 'text-gray-500 hover:text-gray-300'
                                     }`}
                                 >
                                     {mode.icon}
-                                    <span>{mode.label}</span>
+                                    <span className="whitespace-nowrap">{mode.label}</span>
                                 </button>
                             ))}
                         </div>
