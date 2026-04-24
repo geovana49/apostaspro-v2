@@ -10,31 +10,31 @@ computing gzip size...
 [2mdist/[22m[32mregisterSW.js                        [39m[1m[2m  0.13 kB[22m[1m[22m
 [2mdist/[22m[32mmanifest.webmanifest                 [39m[1m[2m  0.48 kB[22m[1m[22m
 [2mdist/[22m[32mindex.html                           [39m[1m[2m  8.89 kB[22m[1m[22m[2m │ gzip:   2.82 kB[22m
-[2mdist/[22m[36massets/FireImage-DZ5IZK2q.js         [39m[1m[2m  1.25 kB[22m[1m[22m[2m │ gzip:   0.71 kB[22m
+[2mdist/[22m[36massets/FireImage-Bnwp29W6.js         [39m[1m[2m  1.25 kB[22m[1m[22m[2m │ gzip:   0.71 kB[22m
 [2mdist/[22m[36massets/betCalculations-BtD09nns.js   [39m[1m[2m  1.78 kB[22m[1m[22m[2m │ gzip:   0.70 kB[22m
 [2mdist/[22m[36massets/imageCompression-CXr_Z5tq.js  [39m[1m[2m  2.39 kB[22m[1m[22m[2m │ gzip:   1.07 kB[22m
-[2mdist/[22m[36massets/MonthlyHistory-CbcuGWKd.js    [39m[1m[2m 10.15 kB[22m[1m[22m[2m │ gzip:   2.93 kB[22m
-[2mdist/[22m[36massets/LandingPage-5O39Tn7a.js       [39m[1m[2m 17.57 kB[22m[1m[22m[2m │ gzip:   4.11 kB[22m
-[2mdist/[22m[36massets/Overview-BFqEAsJw.js          [39m[1m[2m 21.12 kB[22m[1m[22m[2m │ gzip:   5.41 kB[22m
-[2mdist/[22m[36massets/BetFormModal-_VAsEE08.js      [39m[1m[2m 25.38 kB[22m[1m[22m[2m │ gzip:   8.09 kB[22m
-[2mdist/[22m[36massets/NewBets-DX8EaFp2.js           [39m[1m[2m 25.70 kB[22m[1m[22m[2m │ gzip:   5.73 kB[22m
-[2mdist/[22m[36massets/Caixa-95rh3J07.js             [39m[1m[2m 36.44 kB[22m[1m[22m[2m │ gzip:   8.99 kB[22m
-[2mdist/[22m[36massets/Calculators-Ctb88Qqj.js       [39m[1m[2m 38.33 kB[22m[1m[22m[2m │ gzip:   9.78 kB[22m
-[2mdist/[22m[36massets/Settings-BtyhtQGA.js          [39m[1m[2m 39.33 kB[22m[1m[22m[2m │ gzip:  10.29 kB[22m
-[2mdist/[22m[36massets/ExtraGains-Cah-RTQC.js        [39m[1m[2m 50.95 kB[22m[1m[22m[2m │ gzip:  13.71 kB[22m
-[2mdist/[22m[36massets/UIComponents-D8XS2lm8.js      [39m[1m[2m 51.15 kB[22m[1m[22m[2m │ gzip:  13.50 kB[22m
-[2mdist/[22m[36massets/BlocoNotas-D79mMCed.js        [39m[1m[2m 52.89 kB[22m[1m[22m[2m │ gzip:  11.88 kB[22m
-[2mdist/[22m[36massets/MyBets-CJvhse9Q.js            [39m[1m[2m 73.55 kB[22m[1m[22m[2m │ gzip:  24.17 kB[22m
-[2mdist/[22m[36massets/index-D7svilZa.js             [39m[1m[2m217.47 kB[22m[1m[22m[2m │ gzip:  67.95 kB[22m
-[2mdist/[22m[36massets/Coach-Z78tZc7M.js             [39m[1m[2m224.95 kB[22m[1m[22m[2m │ gzip:  41.64 kB[22m
+[2mdist/[22m[36massets/MonthlyHistory-DHMrQfOJ.js    [39m[1m[2m 10.15 kB[22m[1m[22m[2m │ gzip:   2.93 kB[22m
+[2mdist/[22m[36massets/LandingPage-Ctd43kw_.js       [39m[1m[2m 17.57 kB[22m[1m[22m[2m │ gzip:   4.11 kB[22m
+[2mdist/[22m[36massets/Overview-C-DE0Kom.js          [39m[1m[2m 21.12 kB[22m[1m[22m[2m │ gzip:   5.41 kB[22m
+[2mdist/[22m[36massets/BetFormModal-CYi38_mJ.js      [39m[1m[2m 25.38 kB[22m[1m[22m[2m │ gzip:   8.09 kB[22m
+[2mdist/[22m[36massets/NewBets-C8zp5mnx.js           [39m[1m[2m 25.70 kB[22m[1m[22m[2m │ gzip:   5.73 kB[22m
+[2mdist/[22m[36massets/Caixa-CpBeg3NC.js             [39m[1m[2m 36.44 kB[22m[1m[22m[2m │ gzip:   8.99 kB[22m
+[2mdist/[22m[36massets/Calculators-Bdx7BHpu.js       [39m[1m[2m 38.33 kB[22m[1m[22m[2m │ gzip:   9.78 kB[22m
+[2mdist/[22m[36massets/Settings-nX9FWXhe.js          [39m[1m[2m 39.33 kB[22m[1m[22m[2m │ gzip:  10.30 kB[22m
+[2mdist/[22m[36massets/ExtraGains-B-pD6Ye9.js        [39m[1m[2m 50.95 kB[22m[1m[22m[2m │ gzip:  13.71 kB[22m
+[2mdist/[22m[36massets/UIComponents-D2FPlA8I.js      [39m[1m[2m 51.15 kB[22m[1m[22m[2m │ gzip:  13.50 kB[22m
+[2mdist/[22m[36massets/BlocoNotas-Dp3vZObV.js        [39m[1m[2m 52.89 kB[22m[1m[22m[2m │ gzip:  11.88 kB[22m
+[2mdist/[22m[36massets/MyBets-C877b77s.js            [39m[1m[2m 74.60 kB[22m[1m[22m[2m │ gzip:  24.51 kB[22m
+[2mdist/[22m[36massets/index-D5xCUqU1.js             [39m[1m[2m217.47 kB[22m[1m[22m[2m │ gzip:  67.95 kB[22m
+[2mdist/[22m[36massets/Coach-BgA2T3Y1.js             [39m[1m[2m224.95 kB[22m[1m[22m[2m │ gzip:  41.64 kB[22m
 [2mdist/[22m[36massets/ui-vendor-CN147Bez.js         [39m[1m[2m388.11 kB[22m[1m[22m[2m │ gzip: 113.31 kB[22m
 [2mdist/[22m[36massets/firebase-vendor-xGjtVKjv.js   [39m[1m[2m591.30 kB[22m[1m[22m[2m │ gzip: 140.99 kB[22m
-[32m✓ built in 6.77s[39m
+[32m✓ built in 6.71s[39m
 [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
 
 PWA v1.2.0
 mode      generateSW
-precache  28 entries (2166.74 KiB)
+precache  28 entries (2167.76 KiB)
 files generated
   dist/sw.js
   dist/workbox-d4f8be5c.js

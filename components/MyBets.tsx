@@ -1606,16 +1606,47 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                         ? '#6ee7b7'
                                         : (bet.status === 'Pendente' || isDraft) ? '#94a3b8' : '#ff6b6b';
 
+                                    const getStatusDescription = (status: string) => {
+                                        if (status === 'Pendente') return 'Esta aposta está em andamento. Aguardando resultado.';
+                                        if (status === 'Concluído') return 'Aposta finalizada a seu favor!';
+                                        if (status === 'Perdida') return 'Infelizmente essa não bateu.';
+                                        if (['Devolvida', 'Anulada', 'Cancelada'].includes(status)) return 'Valor devolvido para a conta.';
+                                        if (status === 'Meio Ganha') return 'Aposta parcialmente vencedora.';
+                                        if (status === 'Meio Perdida') return 'Aposta parcialmente perdida.';
+                                        return 'Acompanhe os detalhes da aposta.';
+                                    };
+
                                     return (
                                         <>
-                                            {/* Top Stripe — color = status */}
-                                            <div
-                                                className="h-[3px] w-full rounded-t-2xl"
-                                                style={{ background: `linear-gradient(90deg, ${accentColor}cc, ${accentColor}33)` }}
-                                            />
+                                            {/* Long-press Overlay */}
+                                            {longPressId === bet.id && (
+                                                <div 
+                                                    className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-200 backdrop-blur-md rounded-2xl"
+                                                    style={{ backgroundColor: `${accentColor}E6` }} // 90% opacity over blur
+                                                >
+                                                    <h2 className="text-3xl font-black text-white uppercase tracking-widest drop-shadow-md mb-2">
+                                                        {bet.status}
+                                                    </h2>
+                                                    <p className="text-sm text-white font-medium drop-shadow-sm font-semibold">
+                                                        {getStatusDescription(bet.status)}
+                                                    </p>
+                                                </div>
+                                            )}
 
-                                            <div className="px-4 pt-3 pb-3">
-                                                {/* Header row: logo + title block + status pill */}
+                                            {/* Top Stripe with subtle text */}
+                                            <div
+                                                className="w-full rounded-t-2xl px-4 py-0.5 flex justify-end"
+                                                style={{ background: `linear-gradient(90deg, ${accentColor}11, ${accentColor}66)` }}
+                                            >
+                                                <span 
+                                                    className="text-[9px] uppercase font-bold tracking-[0.2em] text-white/90 drop-shadow-sm"
+                                                >
+                                                    {bet.status}
+                                                </span>
+                                            </div>
+
+                                            <div className="px-4 pt-2 pb-3 relative z-10 transition-opacity duration-300" style={{ opacity: longPressId === bet.id ? 0 : 1 }}>
+                                                {/* Header row: logo + title block */}
                                                 <div className="flex items-start gap-3">
                                                     {/* Logo with colored glow */}
                                                     <div
@@ -1627,10 +1658,8 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
 
                                                     {/* Title + meta */}
                                                     <div className="flex-1 min-w-0">
-                                                        {/* Status pill — top right */}
                                                         <div className="flex items-start justify-between gap-2 mb-1">
                                                             <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">{bookmaker?.name || ''}</span>
-                                                            {renderStatusBadge(bet.status)}
                                                         </div>
                                                         <h4 className="font-bold text-white text-[15px] leading-snug">
                                                             {bet.event}
