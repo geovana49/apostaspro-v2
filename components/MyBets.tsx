@@ -1597,88 +1597,107 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                 onTouchMove={handlePressMove}
                                 onTouchEnd={handlePressEnd}
                             >
-                                {/* Status accent bar on left */}
+                                {/* === PREMIUM CARD DESIGN === */}
                                 {(() => {
                                     const statusItem = statuses.find(s => s.name === bet.status);
-                                    const color = statusItem?.color || (bet.status === 'Pendente' ? '#fbbf24' : '#64748b');
-                                    return <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ backgroundColor: color }} />;
-                                })()}
+                                    const accentColor = statusItem?.color || (bet.status === 'Pendente' ? '#fbbf24' : '#64748b');
+                                    const bookmaker = bookmakers.find(b => b.id === bet.mainBookmakerId) || getBookmaker(bet.mainBookmakerId, bet.event);
+                                    const profitColor = profit >= 0 && bet.status !== 'Pendente' && !isDraft
+                                        ? '#6ee7b7'
+                                        : (bet.status === 'Pendente' || isDraft) ? '#94a3b8' : '#ff6b6b';
 
-                                <div className="pl-4 pr-4 pt-4 pb-3">
-                                    {/* Row 1: Logo + Content */}
-                                    <div className="flex items-center gap-3">
-                                        {/* Logo centered with content block */}
-                                        <div className="shrink-0 self-center">
-                                            {renderBookmakerLogo(bet.mainBookmakerId, 'md', bet.event + ' ' + (bet.notes || ''))}
-                                        </div>
-                                        {/* Content: status top-right, title below */}
-                                        <div className="flex-1 min-w-0">
-                                            {/* Status aligned to the right, above title */}
-                                            <div className="flex justify-end mb-1">
-                                                {renderStatusBadge(bet.status)}
-                                            </div>
-                                            <h4 className="font-bold text-white text-sm leading-snug">
-                                                {bet.event}
-                                                {isDraft && <span className="ml-2 text-[9px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-1.5 py-0.5 rounded font-bold tracking-wider">RASCUNHO</span>}
-                                                {isDoubleGreen && <span className="ml-2 text-[9px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded font-bold tracking-wider inline-flex items-center gap-1"><Copy size={8} /> 2X</span>}
-                                            </h4>
-                                            {/* Date + Promo + notes */}
-                                            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                                <span className="text-[11px] text-textMuted">{new Date(bet.date).toLocaleDateString('pt-BR')}</span>
-                                                {bet.promotionType && bet.promotionType !== 'Nenhuma' && (() => {
-                                                    let promo = promotions.find(p => p.name === bet.promotionType);
-                                                    if (!promo) promo = promotions.find(p => p.name.toLowerCase() === bet.promotionType.toLowerCase());
-                                                    if (!promo) promo = promotions.find(p => p.name.toLowerCase().includes(bet.promotionType.toLowerCase()) || bet.promotionType.toLowerCase().includes(p.name.toLowerCase()));
-                                                    return <Badge color={promo?.color || '#8B5CF6'}>{bet.promotionType}</Badge>;
-                                                })()}
-                                                {bet.notes && <div className="flex items-center gap-1 text-textMuted" title="Tem anotações"><StickyNote size={11} /></div>}
-                                            </div>
-                                        </div>
-                                    </div>
+                                    return (
+                                        <>
+                                            {/* Top Stripe — color = status */}
+                                            <div
+                                                className="h-[3px] w-full rounded-t-2xl"
+                                                style={{ background: `linear-gradient(90deg, ${accentColor}cc, ${accentColor}33)` }}
+                                            />
 
-                                    {/* Row 2: Stats */}
-                                    <div className="mt-3 grid grid-cols-2 gap-3 bg-black/20 rounded-xl px-3 py-2.5">
-                                        <div>
-                                            <p className="text-[9px] text-textMuted uppercase font-bold tracking-wider">Apostado</p>
-                                            <p className="font-bold text-sm text-white mt-0.5">
-                                                <MoneyDisplay value={totalStake} privacyMode={settings.privacyMode} />
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[9px] text-textMuted uppercase font-bold tracking-wider">Lucro/Prejuízo</p>
-                                            <p className={`font-bold text-sm mt-0.5 ${profit >= 0 && bet.status !== 'Pendente' && !isDraft ? 'text-[#6ee7b7]' : ((bet.status === 'Pendente' || isDraft) ? 'text-textMuted' : 'text-[#ff6b6b]')}`}>
-                                                {(bet.status === 'Pendente' || isDraft) ? '--' : <MoneyDisplay value={Math.abs(profit)} privacyMode={settings.privacyMode} />}
-                                            </p>
-                                            {bet.extraGain !== undefined && bet.extraGain !== null && Math.abs(bet.extraGain) >= 0.01 && (
-                                                <p className={`text-[10px] font-medium mt-0.5 ${bet.extraGain > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                                    {bet.extraGain > 0 ? '+' : ''}<MoneyDisplay value={bet.extraGain} privacyMode={settings.privacyMode} /> (Extra)
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
+                                            <div className="px-4 pt-3 pb-3">
+                                                {/* Header row: logo + title block + status pill */}
+                                                <div className="flex items-start gap-3">
+                                                    {/* Logo with colored glow */}
+                                                    <div
+                                                        className="shrink-0 rounded-xl overflow-hidden shadow-lg mt-0.5"
+                                                        style={{ boxShadow: `0 4px 14px ${accentColor}33` }}
+                                                    >
+                                                        {renderBookmakerLogo(bet.mainBookmakerId, 'md', bet.event + ' ' + (bet.notes || ''))}
+                                                    </div>
 
-                                    {/* Row 3: Expand + Actions */}
-                                    <div className="flex items-center justify-between pt-2.5 mt-1">
-                                        <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
-                                            <ChevronDown size={18} className="text-textMuted" />
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            {deleteId === bet.id ? (
-                                                <div className="flex items-center gap-2 animate-in slide-in-from-right-2 duration-200">
-                                                    <span className="text-[10px] text-danger font-bold uppercase mr-1">Excluir?</span>
-                                                    <button onClick={(e) => { e.stopPropagation(); confirmDelete(); }} className="p-1.5 px-3 bg-danger text-white rounded-lg hover:bg-red-600 transition-colors text-xs font-bold flex items-center gap-1"><Check size={12} /> Sim</button>
-                                                    <button onClick={(e) => { e.stopPropagation(); cancelDelete(); }} className="p-1.5 px-3 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 transition-colors text-xs font-bold flex items-center gap-1"><X size={12} /> Não</button>
+                                                    {/* Title + meta */}
+                                                    <div className="flex-1 min-w-0">
+                                                        {/* Status pill — top right */}
+                                                        <div className="flex items-start justify-between gap-2 mb-1">
+                                                            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">{bookmaker?.name || ''}</span>
+                                                            {renderStatusBadge(bet.status)}
+                                                        </div>
+                                                        <h4 className="font-bold text-white text-[15px] leading-snug">
+                                                            {bet.event}
+                                                            {isDraft && <span className="ml-2 text-[9px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-1.5 py-0.5 rounded font-bold tracking-wider">RASCUNHO</span>}
+                                                            {isDoubleGreen && <span className="ml-2 text-[9px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded font-bold tracking-wider inline-flex items-center gap-1"><Copy size={8} /> 2X</span>}
+                                                        </h4>
+                                                        {/* Date + promo + notes */}
+                                                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                                            <span className="text-[11px] text-gray-500">{new Date(bet.date).toLocaleDateString('pt-BR')}</span>
+                                                            {bet.promotionType && bet.promotionType !== 'Nenhuma' && (() => {
+                                                                let promo = promotions.find(p => p.name === bet.promotionType);
+                                                                if (!promo) promo = promotions.find(p => p.name.toLowerCase() === bet.promotionType.toLowerCase());
+                                                                if (!promo) promo = promotions.find(p => p.name.toLowerCase().includes(bet.promotionType.toLowerCase()) || bet.promotionType.toLowerCase().includes(p.name.toLowerCase()));
+                                                                return <Badge color={promo?.color || '#8B5CF6'}>{bet.promotionType}</Badge>;
+                                                            })()}
+                                                            {bet.notes && <span className="text-gray-600" title="Tem anotações"><StickyNote size={11} /></span>}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            ) : (
-                                                <>
-                                                    <button onClick={(e) => { e.stopPropagation(); handleDuplicate(bet); }} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-all active:scale-95" title="Duplicar"><Copy size={15} /></button>
-                                                    <button onClick={(e) => { e.stopPropagation(); handleEdit(bet); }} className="p-2 text-gray-500 hover:text-primary hover:bg-white/5 rounded-lg transition-all active:scale-95" title="Editar"><Edit2 size={15} /></button>
-                                                    <button onClick={(e) => { e.stopPropagation(); requestDelete(bet.id); }} className="p-2 text-gray-500 hover:text-danger hover:bg-white/5 rounded-lg transition-all active:scale-95" title="Excluir"><Trash2 size={15} /></button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
+
+                                                {/* Stats row with vertical divider */}
+                                                <div className="mt-3 flex items-stretch bg-white/[0.04] rounded-xl overflow-hidden border border-white/5">
+                                                    <div className="flex-1 px-4 py-3">
+                                                        <p className="text-[9px] text-gray-500 uppercase font-bold tracking-widest mb-1">Apostado</p>
+                                                        <p className="font-bold text-white text-[15px]">
+                                                            <MoneyDisplay value={totalStake} privacyMode={settings.privacyMode} />
+                                                        </p>
+                                                    </div>
+                                                    <div className="w-px bg-white/10 my-2" />
+                                                    <div className="flex-1 px-4 py-3">
+                                                        <p className="text-[9px] text-gray-500 uppercase font-bold tracking-widest mb-1">Lucro/Prejuízo</p>
+                                                        <p className="font-bold text-[15px]" style={{ color: profitColor }}>
+                                                            {(bet.status === 'Pendente' || isDraft) ? '--' : <MoneyDisplay value={Math.abs(profit)} privacyMode={settings.privacyMode} />}
+                                                        </p>
+                                                        {bet.extraGain !== undefined && bet.extraGain !== null && Math.abs(bet.extraGain) >= 0.01 && (
+                                                            <p className={`text-[10px] font-medium mt-0.5 ${bet.extraGain > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                                {bet.extraGain > 0 ? '+' : ''}<MoneyDisplay value={bet.extraGain} privacyMode={settings.privacyMode} /> (Extra)
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Action row */}
+                                                <div className="flex items-center justify-between pt-2.5 mt-1 border-t border-white/[0.06]">
+                                                    <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                                                        <ChevronDown size={16} className="text-gray-600" />
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        {deleteId === bet.id ? (
+                                                            <div className="flex items-center gap-2 animate-in slide-in-from-right-2 duration-200">
+                                                                <span className="text-[10px] text-danger font-bold uppercase mr-1">Excluir?</span>
+                                                                <button onClick={(e) => { e.stopPropagation(); confirmDelete(); }} className="p-1.5 px-3 bg-danger text-white rounded-lg hover:bg-red-600 transition-colors text-xs font-bold flex items-center gap-1"><Check size={12} /> Sim</button>
+                                                                <button onClick={(e) => { e.stopPropagation(); cancelDelete(); }} className="p-1.5 px-3 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 transition-colors text-xs font-bold flex items-center gap-1"><X size={12} /> Não</button>
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                <button onClick={(e) => { e.stopPropagation(); handleDuplicate(bet); }} className="p-2 text-gray-600 hover:text-white hover:bg-white/5 rounded-lg transition-all active:scale-95" title="Duplicar"><Copy size={14} /></button>
+                                                                <button onClick={(e) => { e.stopPropagation(); handleEdit(bet); }} className="p-2 text-gray-600 hover:text-primary hover:bg-white/5 rounded-lg transition-all active:scale-95" title="Editar"><Edit2 size={14} /></button>
+                                                                <button onClick={(e) => { e.stopPropagation(); requestDelete(bet.id); }} className="p-2 text-gray-600 hover:text-danger hover:bg-white/5 rounded-lg transition-all active:scale-95" title="Excluir"><Trash2 size={14} /></button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
 
                                 {isExpanded && (
                                     <div className="bg-black/20 p-4 border-t border-white/5 animate-in slide-in-from-top-2" onClick={(e) => e.stopPropagation()}>
