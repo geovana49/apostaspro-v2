@@ -1587,10 +1587,7 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                         >
                             {separatorLabel && <DateSeparator label={separatorLabel} />}
                             <Card
-                                className={`
-overflow-hidden border-none bg-surface transition-all duration-300 hover:border-white/10 hover:-translate-y-0.5 hover:shadow-lg select-none cursor-pointer
-                            ${isDraft ? 'border-dashed border-2 border-gray-600/50 opacity-90' : ''}
-`}
+                                className={`overflow-hidden border-none bg-surface transition-all duration-200 hover:shadow-lg select-none cursor-pointer relative ${isDraft ? 'opacity-80' : ''}`}
                                 onClick={() => { if (!longPressId) setExpandedId(isExpanded ? null : bet.id); }}
                                 onMouseDown={(e) => handlePressStart(bet.id, e)}
                                 onMouseMove={handlePressMove}
@@ -1600,129 +1597,80 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                                 onTouchMove={handlePressMove}
                                 onTouchEnd={handlePressEnd}
                             >
-                                <div className="p-4">
-                                    <div
-                                        className="flex flex-col md:flex-row md:items-center gap-4 hover:bg-white/5 transition-colors -mx-4 -mt-4 p-4 rounded-t-xl"
-                                    >
-                                        <div className="flex items-center gap-3 flex-1">
+                                {/* Status accent bar on left */}
+                                {(() => {
+                                    const statusItem = statuses.find(s => s.name === bet.status);
+                                    const color = statusItem?.color || (bet.status === 'Pendente' ? '#fbbf24' : '#64748b');
+                                    return <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ backgroundColor: color }} />;
+                                })()}
+
+                                <div className="pl-4 pr-4 pt-4 pb-3">
+                                    {/* Row 1: Logo + Title + Status badge */}
+                                    <div className="flex items-start gap-3">
+                                        <div className="shrink-0 mt-0.5">
                                             {renderBookmakerLogo(bet.mainBookmakerId, 'md', bet.event + ' ' + (bet.notes || ''))}
-
-                                            <div>
-                                                <h4 className="font-semibold text-white text-base flex items-center gap-2">
-                                                    {bet.event}
-                                                    {isDraft && <span className="text-[9px] bg-yellow-500/20 text-yellow-500 border border-yellow-500/30 px-1.5 py-0.5 rounded ml-2 font-bold tracking-wider">RASCUNHO</span>}
-                                                    {isDoubleGreen && <span className="text-[9px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded ml-2 font-bold tracking-wider flex items-center gap-1"><Copy size={8} /> 2X</span>}
-                                                </h4>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-xs text-textMuted">{new Date(bet.date).toLocaleDateString('pt-BR')}</span>
-                                                    {bet.promotionType && bet.promotionType !== 'Nenhuma' && (() => {
-                                                        // Try exact match first
-                                                        let promo = promotions.find(p => p.name === bet.promotionType);
-                                                        // If not found, try case-insensitive match
-                                                        if (!promo) {
-                                                            promo = promotions.find(p =>
-                                                                p.name.toLowerCase() === bet.promotionType.toLowerCase()
-                                                            );
-                                                        }
-                                                        // If still not found, try partial match (handles "Super Odd" vs "Super Odds")
-                                                        if (!promo) {
-                                                            promo = promotions.find(p =>
-                                                                p.name.toLowerCase().includes(bet.promotionType.toLowerCase()) ||
-                                                                bet.promotionType.toLowerCase().includes(p.name.toLowerCase())
-                                                            );
-                                                        }
-                                                        const color = promo?.color || '#8B5CF6';
-                                                        return (
-                                                            <Badge color={color}>
-                                                                {bet.promotionType}
-                                                            </Badge>
-                                                        );
-                                                    })()}
-                                                    {bet.notes && (
-                                                        <div className="flex items-center gap-1 text-xs text-textMuted" title="Tem anotações">
-                                                            <StickyNote size={12} />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
                                         </div>
-
-                                        <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto mt-2 md:mt-0">
-                                            <div className="text-right hidden sm:block">
-                                                <p className="text-[10px] text-textMuted uppercase font-bold">Apostado</p>
-                                                <p className="font-bold text-sm text-white">
-                                                    <MoneyDisplay value={totalStake} privacyMode={settings.privacyMode} />
-                                                </p>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <h4 className="font-bold text-white text-sm leading-snug line-clamp-2 flex-1">
+                                                    {bet.event}
+                                                    {isDraft && <span className="ml-2 text-[9px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-1.5 py-0.5 rounded font-bold tracking-wider">RASCUNHO</span>}
+                                                    {isDoubleGreen && <span className="ml-2 text-[9px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded font-bold tracking-wider inline-flex items-center gap-1"><Copy size={8} /> 2X</span>}
+                                                </h4>
+                                                <div className="shrink-0">{renderStatusBadge(bet.status)}</div>
                                             </div>
-                                            <div className="text-left">
-                                                <p className="text-[10px] text-textMuted uppercase font-bold">Lucro/Prejuízo</p>
-                                                <p className={`font-bold text-sm ${profit >= 0 && bet.status !== 'Pendente' && !isDraft ? 'text-[#6ee7b7]' : ((bet.status === 'Pendente' || isDraft) ? 'text-textMuted' : 'text-[#ff0100]')}`}>
-                                                    {(bet.status === 'Pendente' || isDraft) ? '--' : <MoneyDisplay value={Math.abs(profit)} privacyMode={settings.privacyMode} />}
-                                                </p>
-                                                {bet.extraGain !== undefined && bet.extraGain !== null && Math.abs(bet.extraGain) >= 0.01 && (
-                                                    <p className={`text-[10px] font-medium mt-0.5 ${bet.extraGain > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                                        {bet.extraGain > 0 ? '+' : ''}<MoneyDisplay value={bet.extraGain} privacyMode={settings.privacyMode} /> (Extra)
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            <div className="flex items-center gap-3">
-                                                {renderStatusBadge(bet.status)}
+                                            {/* Date + Promo badge + notes icon */}
+                                            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                                <span className="text-[11px] text-textMuted">{new Date(bet.date).toLocaleDateString('pt-BR')}</span>
+                                                {bet.promotionType && bet.promotionType !== 'Nenhuma' && (() => {
+                                                    let promo = promotions.find(p => p.name === bet.promotionType);
+                                                    if (!promo) promo = promotions.find(p => p.name.toLowerCase() === bet.promotionType.toLowerCase());
+                                                    if (!promo) promo = promotions.find(p => p.name.toLowerCase().includes(bet.promotionType.toLowerCase()) || bet.promotionType.toLowerCase().includes(p.name.toLowerCase()));
+                                                    return <Badge color={promo?.color || '#8B5CF6'}>{bet.promotionType}</Badge>;
+                                                })()}
+                                                {bet.notes && <div className="flex items-center gap-1 text-textMuted" title="Tem anotações"><StickyNote size={11} /></div>}
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div
-                                        className="flex items-center justify-between gap-2 pt-3 mt-1 border-t border-white/5"
-                                    >
-                                        <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
-                                            <ChevronDown size={20} className="text-textMuted" />
+                                    {/* Row 2: Stats */}
+                                    <div className="mt-3 grid grid-cols-2 gap-3 bg-black/20 rounded-xl px-3 py-2.5">
+                                        <div>
+                                            <p className="text-[9px] text-textMuted uppercase font-bold tracking-wider">Apostado</p>
+                                            <p className="font-bold text-sm text-white mt-0.5">
+                                                <MoneyDisplay value={totalStake} privacyMode={settings.privacyMode} />
+                                            </p>
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div>
+                                            <p className="text-[9px] text-textMuted uppercase font-bold tracking-wider">Lucro/Prejuízo</p>
+                                            <p className={`font-bold text-sm mt-0.5 ${profit >= 0 && bet.status !== 'Pendente' && !isDraft ? 'text-[#6ee7b7]' : ((bet.status === 'Pendente' || isDraft) ? 'text-textMuted' : 'text-[#ff6b6b]')}`}>
+                                                {(bet.status === 'Pendente' || isDraft) ? '--' : <MoneyDisplay value={Math.abs(profit)} privacyMode={settings.privacyMode} />}
+                                            </p>
+                                            {bet.extraGain !== undefined && bet.extraGain !== null && Math.abs(bet.extraGain) >= 0.01 && (
+                                                <p className={`text-[10px] font-medium mt-0.5 ${bet.extraGain > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                    {bet.extraGain > 0 ? '+' : ''}<MoneyDisplay value={bet.extraGain} privacyMode={settings.privacyMode} /> (Extra)
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Row 3: Expand + Actions */}
+                                    <div className="flex items-center justify-between pt-2.5 mt-1">
+                                        <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                                            <ChevronDown size={18} className="text-textMuted" />
+                                        </div>
+                                        <div className="flex items-center gap-1">
                                             {deleteId === bet.id ? (
                                                 <div className="flex items-center gap-2 animate-in slide-in-from-right-2 duration-200">
-                                                    <span className="text-[10px] text-danger font-bold uppercase mr-1">Confirmar Exclusão?</span>
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); confirmDelete(); }}
-                                                        className="p-1.5 px-3 bg-danger text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm flex items-center gap-1 text-xs font-bold"
-                                                        title="Confirmar"
-                                                    >
-                                                        <Check size={14} /> Sim
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); cancelDelete(); }}
-                                                        className="p-1.5 px-3 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors shadow-sm flex items-center gap-1 text-xs font-bold"
-                                                        title="Cancelar"
-                                                    >
-                                                        <X size={14} /> Não
-                                                    </button>
+                                                    <span className="text-[10px] text-danger font-bold uppercase mr-1">Excluir?</span>
+                                                    <button onClick={(e) => { e.stopPropagation(); confirmDelete(); }} className="p-1.5 px-3 bg-danger text-white rounded-lg hover:bg-red-600 transition-colors text-xs font-bold flex items-center gap-1"><Check size={12} /> Sim</button>
+                                                    <button onClick={(e) => { e.stopPropagation(); cancelDelete(); }} className="p-1.5 px-3 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 transition-colors text-xs font-bold flex items-center gap-1"><X size={12} /> Não</button>
                                                 </div>
                                             ) : (
                                                 <>
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); handleDuplicate(bet); }}
-                                                        className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5 group/btn"
-                                                        title="Duplicar"
-                                                    >
-                                                        <Copy size={16} />
-                                                        <span className="text-[10px] font-medium group-hover/btn:text-white hidden sm:inline">Duplicar</span>
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); handleEdit(bet); }}
-                                                        className="p-2 text-gray-500 hover:text-primary hover:bg-white/5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5 group/btn"
-                                                        title="Editar"
-                                                    >
-                                                        <Edit2 size={16} />
-                                                        <span className="text-[10px] font-medium group-hover/btn:text-primary hidden sm:inline">Editar</span>
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); requestDelete(bet.id); }}
-                                                        className="p-2 text-gray-500 hover:text-danger hover:bg-white/5 rounded-lg transition-all active:scale-95 flex items-center gap-1.5 group/btn"
-                                                        title="Excluir"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                        <span className="text-[10px] font-medium group-hover/btn:text-danger hidden sm:inline">Excluir</span>
-                                                    </button>
+                                                    <button onClick={(e) => { e.stopPropagation(); handleDuplicate(bet); }} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-all active:scale-95" title="Duplicar"><Copy size={15} /></button>
+                                                    <button onClick={(e) => { e.stopPropagation(); handleEdit(bet); }} className="p-2 text-gray-500 hover:text-primary hover:bg-white/5 rounded-lg transition-all active:scale-95" title="Editar"><Edit2 size={15} /></button>
+                                                    <button onClick={(e) => { e.stopPropagation(); requestDelete(bet.id); }} className="p-2 text-gray-500 hover:text-danger hover:bg-white/5 rounded-lg transition-all active:scale-95" title="Excluir"><Trash2 size={15} /></button>
                                                 </>
                                             )}
                                         </div>
