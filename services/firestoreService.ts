@@ -65,8 +65,13 @@ export const FirestoreService = {
                 dateToSave = new Date(); // Fallback
             }
 
+            // Cleanup undefined values
+            const cleanData = Object.fromEntries(
+                Object.entries(bet).filter(([_, v]) => v !== undefined)
+            );
+
             const dataToSave = {
-                ...bet,
+                ...cleanData,
                 date: Timestamp.fromDate(dateToSave)
             };
 
@@ -115,8 +120,13 @@ export const FirestoreService = {
             let dateToSave = new Date(gain.date);
             if (isNaN(dateToSave.getTime())) dateToSave = new Date();
 
+            // Cleanup undefined values
+            const cleanData = Object.fromEntries(
+                Object.entries(gain).filter(([_, v]) => v !== undefined)
+            );
+
             const dataToSave = {
-                ...gain,
+                ...cleanData,
                 date: Timestamp.fromDate(dateToSave)
             };
 

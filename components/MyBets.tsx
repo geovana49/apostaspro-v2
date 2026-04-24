@@ -1309,7 +1309,10 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     setDuplicatingBet(null);
                 }}
                 date={new Date()}
-                onSelect={confirmDuplicate}
+                onSelect={(date) => {
+                    confirmDuplicate(date);
+                    setIsDuplicateDatePickerOpen(false);
+                }}
             />
 
             <Modal
