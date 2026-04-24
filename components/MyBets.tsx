@@ -1380,17 +1380,6 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     </div>
                     <p className="text-textMuted text-sm ml-[52px]">Acompanhe e gerencie todas as suas apostas em um só lugar.</p>
                 </div>
-                <Button 
-                    variant="primary" 
-                    onClick={() => {
-                        setIsEditing(false);
-                        handleOpenNew();
-                    }}
-                    className="sm:w-auto w-full group"
-                >
-                    <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" />
-                    Nova Aposta
-                </Button>
             </div>
 
             <div className="flex flex-col gap-4">
