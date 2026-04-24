@@ -1,4 +1,4 @@
-import React, { useState, useReducer, useRef, useEffect } from 'react';
+import React, { useState, useReducer, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, CustomColorPicker, RenderIcon, ICON_MAP, DateRangePickerModal, SingleDatePickerModal, DropdownOption, BookmakerLogo } from './ui/UIComponents';
 import { FireImage } from './ui/FireImage';
 import {
@@ -441,39 +441,83 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         return new Date(year, month - 1, day);
     };
 
-    const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const processFiles = useCallback(async (files: File[]) => {
+        if (files.length === 0) return;
+        const MAX_PHOTOS = 10;
+        files.sort((a, b) => a.lastModified - b.lastModified);
+
+        if (tempPhotos.length + files.length > MAX_PHOTOS) {
+            alert(`Máximo de ${MAX_PHOTOS} fotos por ganho.`);
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            const compressedBase64 = await compressImages(files);
+            const newPhotos = compressedBase64.map((base64) => ({
+                url: base64,
+                file: undefined
+            }));
+            setTempPhotos(prev => [...prev, ...newPhotos]);
+        } catch (error) {
+            console.error('Erro ao processar imagens:', error);
+            alert('Erro ao processar imagens. Tente novamente.');
+        } finally {
+            setIsUploading(false);
+        }
+    }, [tempPhotos.length]);
+
+    const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            const MAX_PHOTOS = 10;
-            const files = Array.from(e.target.files) as File[];
-            files.sort((a, b) => a.lastModified - b.lastModified);
-
-            if (tempPhotos.length + files.length > MAX_PHOTOS) {
-                alert(`Máximo de ${MAX_PHOTOS} fotos por ganho.`);
-                e.target.value = '';
-                return;
-            }
-
-            setIsUploading(true);
-            try {
-                // Comprimir imagens com a mesma qualidade de MyBets
-                const compressedBase64 = await compressImages(files);
-
-                // Criar objetos com preview
-                const newPhotos = compressedBase64.map((base64) => ({
-                    url: base64,
-                    file: undefined // Já está em base64
-                }));
-
-                setTempPhotos(prev => [...prev, ...newPhotos]);
-            } catch (error) {
-                console.error('Erro ao comprimir imagens:', error);
-                alert('Erro ao processar imagens. Tente novamente.');
-            } finally {
-                setIsUploading(false);
-                e.target.value = ''; // Reset input
-            }
+            processFiles(Array.from(e.target.files));
+            e.target.value = '';
         }
     };
+
+    // Stable reference to processFiles for listeners
+    const processFilesRef = useRef(processFiles);
+    useEffect(() => {
+        processFilesRef.current = processFiles;
+    }, [processFiles]);
+
+    // Register global drop handler
+    useLayoutEffect(() => {
+        if (isModalOpen) {
+            (window as any).onApostasProDrop = (files: FileList) => {
+                processFilesRef.current(Array.from(files));
+            };
+        }
+        return () => {
+            if (isModalOpen) {
+                (window as any).onApostasProDrop = null;
+            }
+        };
+    }, [isModalOpen]);
+
+    // Register paste handler
+    useEffect(() => {
+        if (!isModalOpen) return;
+
+        const handlePaste = (e: ClipboardEvent) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+
+            const files: File[] = [];
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const file = items[i].getAsFile();
+                    if (file) files.push(file);
+                }
+            }
+
+            if (files.length > 0) {
+                processFilesRef.current(files);
+            }
+        };
+
+        window.addEventListener('paste', handlePaste);
+        return () => window.removeEventListener('paste', handlePaste);
+    }, [isModalOpen]);
 
     const removePhoto = (index: number) => {
         setTempPhotos(prev => prev.filter((_, i) => i !== index));
@@ -917,14 +961,29 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 date={new Date()}
                 onSelect={confirmDuplicate}
             />
-            <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-secondary/10 rounded-lg border border-secondary/20">
-                        <Coins size={24} className="text-secondary" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-secondary/10 rounded-lg border border-secondary/20">
+                            <Coins size={24} className="text-secondary" />
+                        </div>
+                        <h2 className="text-xl font-bold text-white tracking-tight">Ganhos Extras</h2>
                     </div>
-                    <h2 className="text-xl font-bold text-white tracking-tight">Ganhos Extras</h2>
+                    <p className="text-textMuted text-sm ml-[52px]">Registre recompensas fora das apostas (rodadas grátis, baús, etc).</p>
                 </div>
-                <p className="text-textMuted text-sm ml-[52px]">Registre recompensas fora das apostas (rodadas grátis, baús, etc).</p>
+                <Button 
+                    variant="primary" 
+                    onClick={() => {
+                        dispatch({ type: 'RESET_FORM' });
+                        setEditingId(null);
+                        setTempPhotos([]);
+                        setIsModalOpen(true);
+                    }}
+                    className="sm:w-auto w-full group"
+                >
+                    <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" />
+                    Novo Ganho
+                </Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1282,7 +1341,37 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     </div>
                 </div>
             </Modal>
-            <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={editingId ? "Editar Ganho" : "Novo Ganho Extra"} footer={<div className="flex justify-between gap-3 w-full"> {editingId && (<button onClick={() => setIsDeleting(true)} className="p-3 text-gray-500 hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"> <Trash2 size={20} /> </button>)} <div className="flex gap-3 ml-auto"> <Button variant="neutral" onClick={handleCloseModal} disabled={isUploading}>Cancelar</Button> {isDeleting ? (<Button variant="danger" onClick={handleDeleteModal}>Confirmar Exclusão</Button>) : (<Button onClick={handleSave} disabled={isUploading}> {isUploading ? (<> <Loader2 size={16} className="animate-spin" /> <span>{uploadProgress || 'Salvando...'}</span> </>) : ("Salvar")} </Button>)} </div> </div>}>
+            <Modal 
+                isOpen={isModalOpen} 
+                onClose={handleCloseModal} 
+                title={editingId ? "Editar Ganho" : "Novo Ganho Extra"} 
+                footer={
+                    <div className="flex justify-between gap-3 w-full"> 
+                        {editingId && (
+                            <button onClick={() => setIsDeleting(true)} className="p-3 text-gray-500 hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"> 
+                                <Trash2 size={20} /> 
+                            </button>
+                        )} 
+                        <div className="flex gap-3 ml-auto"> 
+                            <Button variant="neutral" onClick={handleCloseModal} disabled={isUploading}>Cancelar</Button> 
+                            {isDeleting ? (
+                                <Button variant="danger" onClick={handleDeleteModal}>Confirmar Exclusão</Button>
+                            ) : (
+                                <Button onClick={handleSave} disabled={isUploading}> 
+                                    {isUploading ? (
+                                        <> 
+                                            <Loader2 size={16} className="animate-spin" /> 
+                                            <span>{uploadProgress || 'Salvando...'}</span> 
+                                        </> 
+                                    ) : (
+                                        "Salvar"
+                                    )} 
+                                </Button>
+                            )} 
+                        </div> 
+                    </div>
+                }
+            >
                 <div className="space-y-5">
                     <div className="bg-[#0d1121] p-4 rounded-xl border border-white/5 flex flex-col items-center justify-center mb-2">
                         <label className="text-[10px] text-textMuted uppercase font-bold mb-2">Valor do Ganho</label>
@@ -1297,9 +1386,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                             <button
                                 type="button"
                                 onClick={() => {
-                                    console.log('Botão de data clicado!');
                                     setIsFormDatePickerOpen(true);
-                                    console.log('isFormDatePickerOpen definido como true');
                                 }}
                                 className="w-full bg-[#0d1121] border border-white/10 focus:border-primary text-white rounded-lg py-3 px-4 text-left hover:bg-[#151b2e] transition-colors flex items-center justify-between group"
                             >
@@ -1315,37 +1402,18 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                     const month = String(date.getMonth() + 1).padStart(2, '0');
                                     const day = String(date.getDate()).padStart(2, '0');
                                     const dateStr = `${year}-${month}-${day}`;
-
                                     dispatch({ type: 'UPDATE_FIELD', field: 'date', value: dateStr });
                                     setIsFormDatePickerOpen(false);
-
-                                    // Auto-save logic if needed, but the original code only had auto-save on Status change
-                                    if (editingId && currentUser) {
-                                        // We could consider auto-saving date too, but maybe safer to wait for explicit save?
-                                        // The existing status dropdown has auto-save.
-                                        // Let's stick to just updating state for now.
-                                    }
                                 }}
                             />
                         </div>
                         <Dropdown label="Status" options={statusOptionsForForm} value={formData.status || 'Recebido'} onChange={async (v) => {
                             dispatch({ type: 'UPDATE_FIELD', field: 'status', value: v as any });
-
-                            // Auto-save if editing existing gain
                             if (editingId && currentUser) {
                                 try {
-                                    const gainData: ExtraGain = {
-                                        ...formData,
-                                        id: editingId,
-                                        status: v as any,
-                                        notes: formData.notes,
-                                        photos: tempPhotos.map(p => p.url),
-                                        date: formData.date.includes('T') ? formData.date : `${formData.date} T12:00:00.000Z`,
-                                    };
+                                    const rawGainData: ExtraGain = { ...formData, id: editingId, status: v as any };
+                                    const gainData = JSON.parse(JSON.stringify(rawGainData, (k, v) => v === undefined ? null : v));
                                     await FirestoreService.saveGain(currentUser.uid, gainData);
-                                    console.log('✅ Status auto-saved!');
-
-                                    // Close modal to refresh data and update balance
                                     setIsModalOpen(false);
                                     setEditingId(null);
                                 } catch (error) {
@@ -1364,103 +1432,107 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                         isSearchable={true}
                         searchPlaceholder="Buscar casa..."
                     />
-                    <Input label="Jogo / Detalhe (Opcional)" placeholder="Ex: Gates of Olympus, Roda da Sorte..." value={formData.game || ''} onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'game', value: e.target.value })} icon={<Gamepad2 size={16} />} />
-
+                    <Input
+                        label="Procedimento / Jogo"
+                        placeholder="Ex: Cashback de Outubro"
+                        value={formData.game || ''}
+                        onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'game', value: e.target.value })}
+                    />
                     <div className="space-y-3">
                         <label className="block text-textMuted text-xs font-bold uppercase tracking-wider">Anotações & Mídia</label>
-
                         <textarea
                             className="w-full bg-[#0d1121] border border-white/10 focus:border-primary text-white rounded-lg py-3 px-4 placeholder-gray-600 focus:outline-none transition-colors text-sm min-h-[100px] resize-none shadow-inner"
-                            placeholder="Detalhes extras..."
-                            value={formData.notes}
+                            placeholder="Detalhes adicionais..."
+                            value={formData.notes || ''}
                             onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'notes', value: e.target.value })}
                         />
-
-                        <div className="p-4 bg-[#0d1121] border border-dashed border-white/10 rounded-xl">
-                            <div className="flex justify-between items-center mb-3">
-                                <label className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase cursor-pointer hover:text-white transition-colors">
-                                    <div className="p-2 bg-white/5 rounded-full"><Paperclip size={14} /></div>
-                                    <span>Adicionar Fotos</span>
-                                    <input
-                                        type="file"
-                                        multiple
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={handlePhotoSelect}
-                                    />
-                                </label>
+                        
+                        <div
+                            className="p-8 bg-[#0d1121] border-2 border-dashed border-white/10 rounded-xl hover:border-primary/50 transition-colors cursor-pointer group flex flex-col items-center justify-center gap-2"
+                            onClick={() => fileInputRef.current?.click()}
+                            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                                    processFiles(Array.from(e.dataTransfer.files));
+                                }
+                            }}
+                        >
+                            <div className="p-3 bg-white/5 rounded-full group-hover:bg-primary/20 group-hover:text-primary transition-all">
+                                <Paperclip size={24} />
                             </div>
-
-                            {tempPhotos.length > 0 && (
-                                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3 mt-2">
-                                    {tempPhotos.map((photo, index) => (
-                                        <div
-                                            key={index}
-                                            draggable
-                                            onDragStart={() => handleDragStart(index)}
-                                            onDragOver={(e) => e.preventDefault()}
-                                            onDrop={() => handleDrop(index)}
-                                            onClick={() => handlePhotoClick(index)}
-                                            className={`relative aspect-square rounded-lg overflow-hidden border transition-all duration-300 group bg-black/40 cursor-move
-                                                ${draggedIdx === index ? 'opacity-40 scale-95 border-primary shadow-2xl' :
-                                                    selectedIdx === index ? 'border-primary ring-2 ring-primary ring-offset-2 ring-offset-[#0d1121] scale-[1.05] z-20' :
-                                                        'border-white/10 hover:border-primary/50'}`}
-                                        >
-                                            <img src={photo.url} alt="Preview" className="w-full h-full object-cover" />
-
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    openImageViewer(tempPhotos.map(p => p.url), index, formData.id || null);
-                                                }}
-                                                className="absolute top-1.5 left-1.5 p-1.5 bg-black/70 text-white rounded-full hover:bg-primary transition-all shadow-lg active:scale-90 z-20 sm:p-2"
-                                                title="Ver foto"
-                                            >
-                                                <Maximize size={14} className="sm:w-4 sm:h-4" />
-                                            </button>
-
-                                            {/* Delete Button */}
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    removePhoto(index);
-                                                }}
-                                                className="absolute top-1.5 right-1.5 p-1.5 bg-black/70 text-white rounded-full hover:bg-danger transition-all shadow-lg active:scale-90 z-20 sm:p-2"
-                                                title="Remover foto"
-                                            >
-                                                <X size={14} className="sm:w-4 sm:h-4" />
-                                            </button>
-
-                                            {/* Reorder Buttons - Always visible */}
-                                            <div className="absolute inset-x-0 bottom-0 flex justify-between p-1 transition-opacity bg-gradient-to-t from-black/60 to-transparent">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        movePhoto(index, 'left');
-                                                    }}
-                                                    disabled={index === 0}
-                                                    className={`p-1.5 bg-black/40 text-white rounded hover:bg-primary transition-colors ${index === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
-                                                    title="Mover para esquerda"
-                                                >
-                                                    <ChevronLeft size={14} />
-                                                </button>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        movePhoto(index, 'right');
-                                                    }}
-                                                    disabled={index === tempPhotos.length - 1}
-                                                    className={`p-1.5 bg-black/40 text-white rounded hover:bg-primary transition-colors ${index === tempPhotos.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}
-                                                    title="Mover para direita"
-                                                >
-                                                    <ChevronRight size={14} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                            <div className="text-center">
+                                <p className="text-sm font-bold text-gray-300 group-hover:text-white transition-colors">Adicionar Fotos</p>
+                                <p className="text-[10px] text-gray-500 uppercase font-medium tracking-wider mt-1">Clique, arraste ou cole (Ctrl+V)</p>
+                            </div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                multiple
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                                onChange={handlePhotoSelect}
+                            />
                         </div>
+
+                        {tempPhotos.length > 0 && (
+                            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3 mt-2">
+                                {tempPhotos.map((photo, index) => (
+                                    <div
+                                        key={index}
+                                        draggable
+                                        onDragStart={() => handleDragStart(index)}
+                                        onDragOver={(e) => e.preventDefault()}
+                                        onDrop={() => handleDrop(index)}
+                                        className={`relative aspect-square rounded-lg overflow-hidden border transition-all duration-300 group bg-black/40 cursor-move 
+                                            ${draggedIdx === index ? 'opacity-40 scale-95 border-primary shadow-2xl' :
+                                            'border-white/10 hover:border-primary/50'}`}
+                                    >
+                                        {photo.url.startsWith('ph_') && formData.id ? (
+                                            <FireImage
+                                                photoId={photo.url}
+                                                parentId={formData.id}
+                                                type="gains"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <img src={photo.url} alt="Preview" className="w-full h-full object-cover" />
+                                        )}
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); openImageViewer(tempPhotos.map(p => p.url), index); }}
+                                            className="absolute top-1.5 left-1.5 p-1.5 bg-black/70 text-white rounded-full hover:bg-primary transition-all z-20"
+                                        >
+                                            <Maximize size={12} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); removePhoto(index); }}
+                                            className="absolute top-1.5 right-1.5 p-1.5 bg-black/70 text-white rounded-full hover:bg-danger transition-all z-20"
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                        <div className="absolute inset-x-0 bottom-0 flex justify-between p-1 bg-gradient-to-t from-black/60 to-transparent">
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); movePhoto(index, 'left'); }} 
+                                                disabled={index === 0} 
+                                                className="p-1 bg-black/40 text-white rounded disabled:opacity-30 hover:bg-primary transition-colors"
+                                                title="Mover para esquerda"
+                                            >
+                                                <ChevronLeft size={10} />
+                                            </button>
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); movePhoto(index, 'right'); }} 
+                                                disabled={index === tempPhotos.length - 1} 
+                                                className="p-1 bg-black/40 text-white rounded disabled:opacity-30 hover:bg-primary transition-colors"
+                                                title="Mover para direita"
+                                            >
+                                                <ChevronRight size={10} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </Modal>
@@ -1477,17 +1549,17 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     setIsDateRangeModalOpen(false);
                 }}
             />
-
-            {/* Floating Novo Ganho Button */}
-            {showFloatingButton && (
-                <button
-                    onClick={handleOpenNew}
-                    className={`fixed bottom-36 right-6 z-40 p-3 bg-gradient-to-br from-[#17baa4] to-[#10b981] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-primary/40 transition-all duration-500 active:scale-95 shadow-lg ${isFabVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
-                    title="Novo Ganho"
-                >
-                    <Plus size={24} strokeWidth={3} />
-                </button>
-            )}
+ 
+            <SingleDatePickerModal
+                isOpen={isDuplicateDatePickerOpen}
+                onClose={() => setIsDuplicateDatePickerOpen(false)}
+                onSelect={(date) => {
+                    confirmDuplicate(date);
+                    setIsDuplicateDatePickerOpen(false);
+                }}
+                initialDate={new Date()}
+                title="Data da Cópia"
+            />
 
             <Modal
                 isOpen={isSearchHelpOpen}
@@ -1533,6 +1605,22 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     </div>
                 </div>
             </Modal>
+
+            {/* Floating Nova Aposta Button */}
+            {showFloatingButton && (
+                <button
+                    onClick={() => {
+                        dispatch({ type: 'RESET_FORM' });
+                        setEditingId(null);
+                        setTempPhotos([]);
+                        setIsModalOpen(true);
+                    }}
+                    className={`fixed bottom-36 right-6 z-40 p-3 bg-gradient-to-br from-secondary to-[#f97316] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-secondary/40 transition-all duration-500 active:scale-95 shadow-lg ${isFabVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
+                    title="Novo Ganho"
+                >
+                    <Plus size={24} strokeWidth={3} />
+                </button>
+            )}
         </div>
     );
 };

@@ -421,6 +421,31 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         };
     }, [isModalOpen]);
 
+    // Register paste handler
+    useEffect(() => {
+        if (!isModalOpen) return;
+
+        const handlePaste = (e: ClipboardEvent) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+
+            const files: File[] = [];
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const file = items[i].getAsFile();
+                    if (file) files.push(file);
+                }
+            }
+
+            if (files.length > 0) {
+                processFilesRef.current(files);
+            }
+        };
+
+        window.addEventListener('paste', handlePaste);
+        return () => window.removeEventListener('paste', handlePaste);
+    }, [isModalOpen]);
+
     // IntersectionObserver for floating button
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -1332,14 +1357,27 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                 </div>
             </Modal>
 
-            <div className="flex flex-col gap-1 mb-6">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg border border-primary/20">
-                        <Ticket size={24} className="text-primary" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg border border-primary/20">
+                            <Ticket size={24} className="text-primary" />
+                        </div>
+                        <h2 className="text-xl font-bold text-white tracking-tight">Minhas Apostas</h2>
                     </div>
-                    <h2 className="text-xl font-bold text-white tracking-tight">Minhas Apostas</h2>
+                    <p className="text-textMuted text-sm ml-[52px]">Acompanhe e gerencie todas as suas apostas em um só lugar.</p>
                 </div>
-                <p className="text-textMuted text-sm ml-[52px]">Acompanhe e gerencie todas as suas apostas em um só lugar.</p>
+                <Button 
+                    variant="primary" 
+                    onClick={() => {
+                        setIsEditing(false);
+                        handleOpenNew();
+                    }}
+                    className="sm:w-auto w-full group"
+                >
+                    <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" />
+                    Nova Aposta
+                </Button>
             </div>
 
             <div className="flex flex-col gap-4">
@@ -2175,25 +2213,34 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                             onChange={e => dispatch({ type: 'UPDATE_FIELD', field: 'notes', value: e.target.value })}
                         />
 
-                        <div className="p-4 bg-[#0d1121] border border-dashed border-white/10 rounded-xl">
-                            <div className="flex justify-between items-center mb-3">
-                                <button
-                                    type="button"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase cursor-pointer hover:text-white transition-colors"
-                                >
-                                    <div className="p-2 bg-white/5 rounded-full"><Paperclip size={14} /></div>
-                                    <span>Adicionar Fotos</span>
-                                </button>
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    multiple
-                                    accept="image/*"
-                                    style={{ display: 'none' }}
-                                    onChange={handlePhotoSelect}
-                                />
+                        <div
+                            className="p-8 bg-[#0d1121] border-2 border-dashed border-white/10 rounded-xl hover:border-primary/50 transition-colors cursor-pointer group flex flex-col items-center justify-center gap-2"
+                            onClick={() => fileInputRef.current?.click()}
+                            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                                    processFiles(Array.from(e.dataTransfer.files));
+                                }
+                            }}
+                        >
+                            <div className="p-3 bg-white/5 rounded-full group-hover:bg-primary/20 group-hover:text-primary transition-all">
+                                <Paperclip size={24} />
                             </div>
+                            <div className="text-center">
+                                <p className="text-sm font-bold text-gray-300 group-hover:text-white transition-colors">Adicionar Fotos</p>
+                                <p className="text-[10px] text-gray-500 uppercase font-medium tracking-wider mt-1">Clique, arraste ou cole (Ctrl+V)</p>
+                            </div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                multiple
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                                onChange={handlePhotoSelect}
+                            />
+                        </div>
 
                             {tempPhotos.length > 0 && (
                                 <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3 mt-2">
@@ -2276,7 +2323,6 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                             )}
                         </div>
                     </div>
-                </div>
             </Modal>
 
             {/* Floating Nova Aposta Button */}
