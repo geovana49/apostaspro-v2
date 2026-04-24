@@ -1639,10 +1639,10 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                                 style={{ background: `linear-gradient(90deg, ${accentColor}00, ${accentColor})` }}
                                             >
                                                 <span 
-                                                    className="text-[20px] text-white drop-shadow-md pr-2 relative z-10 inline-block"
+                                                    className="text-[15px] md:text-[20px] lowercase md:capitalize italic md:not-italic tracking-[0.4em] md:tracking-normal text-white drop-shadow-md pr-1 relative z-10 inline-block transform -skew-x-[35deg] md:-skew-x-0"
                                                     style={{ fontFamily: "'Great Vibes', cursive", lineHeight: 0 }}
                                                 >
-                                                    {bet.status.charAt(0).toUpperCase() + bet.status.slice(1).toLowerCase()}
+                                                    {bet.status.toLowerCase()}
                                                 </span>
                                             </div>
 
