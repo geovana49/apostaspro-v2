@@ -20,16 +20,17 @@ export const calculateBetStats = (bet: Bet) => {
 
     let totalReturn = 0;
     bet.coverages.forEach((c, index) => {
-        if (c.status === 'Red') {
+        const statusLower = (c.status || '').toLowerCase();
+        if (statusLower === 'red') {
             totalReturn += 0;
         } else if (c.manualReturn !== undefined && c.manualReturn !== null && c.manualReturn !== 0) {
             totalReturn += Number(c.manualReturn);
         } else {
             let returnValue = 0;
-            if (c.status === 'Green') returnValue = (c.stake * c.odd);
-            else if (c.status === 'Anulada' || c.status === 'Cashout') returnValue = c.stake;
-            else if (c.status === 'Meio Green') returnValue = (c.stake * c.odd) / 2 + (c.stake / 2);
-            else if (c.status === 'Meio Red') returnValue = (c.stake / 2);
+            if (statusLower === 'green' || statusLower === 'concluído' || statusLower === 'concluido') returnValue = (c.stake * c.odd);
+            else if (statusLower === 'anulada' || statusLower === 'cashout' || statusLower === 'cancelada') returnValue = c.stake;
+            else if (statusLower === 'meio green') returnValue = (c.stake * c.odd) / 2 + (c.stake / 2);
+            else if (statusLower === 'meio red') returnValue = (c.stake / 2);
 
             // For freebet conversions, subtract stake from first coverage return (you don't get the stake back)
             // Only apply if it's an auto-calculated return (manualReturn check handled above)
@@ -49,7 +50,7 @@ export const calculateBetStats = (bet: Bet) => {
     }
 
     // Debug: Log multi-green bets
-    if (bet.coverages.filter(c => c.status === 'Green').length > 1) {
+    if (bet.coverages.filter(c => (c.status || '').toLowerCase() === 'green').length > 1) {
         console.log('🎯 Multi-Green Bet:', {
             event: bet.event,
             coverages: bet.coverages.map(c => ({
@@ -57,7 +58,7 @@ export const calculateBetStats = (bet: Bet) => {
                 odd: c.odd,
                 status: c.status,
                 manualReturn: c.manualReturn,
-                autoReturn: c.status === 'Green' ? (c.stake * c.odd) : 0
+                autoReturn: (c.status || '').toLowerCase() === 'green' ? (c.stake * c.odd) : 0
             })),
             totalStake,
             totalReturn,
@@ -67,7 +68,10 @@ export const calculateBetStats = (bet: Bet) => {
     }
 
     const greenMarkets = bet.coverages
-        .filter(c => c.status === 'Green' || c.status === 'Meio Green')
+        .filter(c => {
+            const s = (c.status || '').toLowerCase();
+            return s === 'green' || s === 'meio green' || s === 'concluído' || s === 'concluido';
+        })
         .map(c => (c.market || '').trim().toLowerCase()); // Normalize market names
 
     // Count unique winning markets
@@ -76,16 +80,17 @@ export const calculateBetStats = (bet: Bet) => {
 
     const coverageProfits = bet.coverages.map((c, index) => {
         let returnValue = 0;
+        const statusLower = (c.status || '').toLowerCase();
 
-        if (c.status === 'Red') {
+        if (statusLower === 'red') {
             returnValue = 0;
         } else if (c.manualReturn !== undefined && c.manualReturn !== null && c.manualReturn !== 0) {
             returnValue = Number(c.manualReturn);
         } else {
-            if (c.status === 'Green') returnValue = (c.stake * c.odd);
-            else if (c.status === 'Anulada' || c.status === 'Cashout') returnValue = c.stake;
-            else if (c.status === 'Meio Green') returnValue = (c.stake * c.odd) / 2 + (c.stake / 2);
-            else if (c.status === 'Meio Red') returnValue = (c.stake / 2);
+            if (statusLower === 'green' || statusLower === 'concluído' || statusLower === 'concluido') returnValue = (c.stake * c.odd);
+            else if (statusLower === 'anulada' || statusLower === 'cashout' || statusLower === 'cancelada') returnValue = c.stake;
+            else if (statusLower === 'meio green') returnValue = (c.stake * c.odd) / 2 + (c.stake / 2);
+            else if (statusLower === 'meio red') returnValue = (c.stake / 2);
         }
 
         // Apply Freebet conversion logic to individual coverage return

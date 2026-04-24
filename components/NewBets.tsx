@@ -671,13 +671,14 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                             <div className="space-y-4">
                                 {selectedBetForModal.coverages?.map((cov, idx) => {
                                     const statusObj = statuses.find(s => s.name === cov.status);
-                                    const statusColor = statusObj?.color || (cov.status === 'Green' ? '#10b981' : cov.status === 'Red' ? '#ef4444' : '#6b7280');
+                                    const statusColor = statusObj?.color || (cov.status.toLowerCase() === 'green' ? '#10b981' : cov.status.toLowerCase() === 'red' ? '#ef4444' : '#6b7280');
                                     
                                     // Return logic: potential return when pending, zero when lost
                                     let returnAmount = 0;
-                                    if (cov.status === 'Pendente') {
+                                    const statusLower = cov.status.toLowerCase();
+                                    if (statusLower === 'pendente') {
                                         returnAmount = cov.odd * cov.stake;
-                                    } else if (cov.status === 'Green' || cov.status === 'Meio Green') {
+                                    } else if (statusLower === 'green' || statusLower === 'meio green' || statusLower === 'concluído' || statusLower === 'concluido') {
                                         returnAmount = cov.manualReturn !== undefined ? cov.manualReturn : cov.odd * cov.stake;
                                     } else {
                                         returnAmount = 0;
@@ -715,18 +716,20 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                             <div className="flex items-center gap-2 bg-white/[0.02] border border-white/[0.05] rounded-xl p-3">
                                                 <div className="flex-1 flex flex-col gap-1">
                                                     <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Odd</span>
-                                                    <span className="text-lg font-bold text-[#22d3ee] tracking-tight">{cov.odd.toFixed(2)}</span>
+                                                    <span className="text-[15px] font-bold text-[#22d3ee] tracking-tight">{cov.odd.toFixed(2)}</span>
                                                 </div>
                                                 <div className="w-px h-8 bg-white/5" />
                                                 <div className="flex-1 flex flex-col gap-1 items-center">
                                                     <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Stake</span>
-                                                    <MoneyDisplay value={cov.stake} className="text-lg font-bold text-white tracking-tight" />
+                                                    <span className="whitespace-nowrap">
+                                                        <MoneyDisplay value={cov.stake} className="text-[14px] font-bold text-white tracking-tight" />
+                                                    </span>
                                                 </div>
                                                 <div className="w-px h-8 bg-white/5" />
                                                 <div className="flex-1 flex flex-col gap-1 items-end">
                                                     <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Retorno</span>
-                                                    <div className={`px-2 py-0.5 rounded-md ${returnAmount > 0 ? 'bg-primary/10' : ''}`}>
-                                                        <MoneyDisplay value={returnAmount} className={`text-lg font-black tracking-tight ${returnAmount > 0 ? 'text-primary' : 'text-gray-600'}`} />
+                                                    <div className={`px-2 py-0.5 rounded-md ${returnAmount > 0 ? 'bg-primary/10' : ''} whitespace-nowrap`}>
+                                                        <MoneyDisplay value={returnAmount} className={`text-[14px] font-black tracking-tight ${returnAmount > 0 ? 'text-primary' : 'text-gray-600'}`} />
                                                     </div>
                                                 </div>
                                             </div>
