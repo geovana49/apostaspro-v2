@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useLayoutEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronDown, Check, ZoomIn, ZoomOut, RotateCcw, RotateCw, Move, Crop, Pipette, ChevronUp, Gamepad2, Trophy, Star, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, Sun, Contrast, Maximize, Minimize, FlipHorizontal, FlipVertical, Sparkles, Scissors, Scaling, RefreshCw, Loader2 } from 'lucide-react';
+import { X, ChevronDown, Check, ZoomIn, ZoomOut, RotateCcw, RotateCw, Move, Crop, Pipette, ChevronUp, Gamepad2, Trophy, Star, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, Sun, Contrast, Maximize, Minimize, FlipHorizontal, FlipVertical, Sparkles, Scissors, Scaling, RefreshCw, Loader2, Calendar, Copy } from 'lucide-react';
 
 // --- Color Helpers ---
 const hexToRgb = (hex: string) => {
@@ -2099,5 +2099,56 @@ export const BookmakerLogo: React.FC<{
       {/* Subtle Inner Glow Border */}
       <div className="absolute inset-0 border border-white/15 rounded-[inherit] pointer-events-none z-30" />
     </div>
+  );
+};
+
+export const DuplicateActionModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onDuplicateToday: () => void;
+  onChooseDate: () => void;
+}> = ({ isOpen, onClose, onDuplicateToday, onChooseDate }) => {
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Duplicar Aposta" zIndex={100002}>
+      <div className="space-y-4">
+        <p className="text-gray-400 text-sm mb-6">Como você deseja duplicar esta aposta?</p>
+        
+        <button
+          onClick={onDuplicateToday}
+          className="w-full flex items-center justify-between p-4 bg-[#151b2e] hover:bg-primary/10 border border-white/5 hover:border-primary/30 rounded-xl transition-all group"
+        >
+          <div className="flex items-center gap-3 text-left">
+            <div className="p-2.5 bg-primary/10 rounded-lg text-primary group-hover:scale-110 transition-transform">
+              <Zap size={20} />
+            </div>
+            <div>
+              <span className="text-white font-bold block">Duplicar para Hoje</span>
+              <span className="text-[10px] text-gray-500 font-medium">Aposta será criada com a data atual</span>
+            </div>
+          </div>
+          <ChevronRight size={18} className="text-gray-600 group-hover:text-primary transition-colors" />
+        </button>
+
+        <button
+          onClick={onChooseDate}
+          className="w-full flex items-center justify-between p-4 bg-[#151b2e] hover:bg-secondary/10 border border-white/5 hover:border-secondary/30 rounded-xl transition-all group"
+        >
+          <div className="flex items-center gap-3 text-left">
+            <div className="p-2.5 bg-secondary/10 rounded-lg text-secondary group-hover:scale-110 transition-transform">
+              <Calendar size={20} />
+            </div>
+            <div>
+              <span className="text-white font-bold block">Escolher Data</span>
+              <span className="text-[10px] text-gray-500 font-medium">Selecione um dia específico no calendário</span>
+            </div>
+          </div>
+          <ChevronRight size={18} className="text-gray-600 group-hover:text-secondary transition-colors" />
+        </button>
+
+        <div className="pt-2">
+            <Button variant="neutral" onClick={onClose} className="w-full">Cancelar</Button>
+        </div>
+      </div>
+    </Modal>
   );
 };

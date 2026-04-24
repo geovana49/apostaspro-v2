@@ -1,5 +1,5 @@
 import React, { useState, useReducer, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
-import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, CustomColorPicker, RenderIcon, ICON_MAP, DateRangePickerModal, SingleDatePickerModal, DropdownOption, BookmakerLogo, DateSeparator } from './ui/UIComponents';
+import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, CustomColorPicker, RenderIcon, ICON_MAP, DateRangePickerModal, SingleDatePickerModal, DropdownOption, BookmakerLogo, DateSeparator, DuplicateActionModal } from './ui/UIComponents';
 import { FireImage } from './ui/FireImage';
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronLeft, ChevronRight,
@@ -211,6 +211,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const [isSearchHelpOpen, setIsSearchHelpOpen] = useState(false);
     const [duplicatingGain, setDuplicatingGain] = useState<ExtraGain | null>(null);
     const [isDuplicateDatePickerOpen, setIsDuplicateDatePickerOpen] = useState(false);
+    const [isDuplicateActionModalOpen, setIsDuplicateActionModalOpen] = useState(false);
     const [periodType, setPeriodType] = useState<'month' | 'year' | 'custom' | 'all'>(() => {
         const saved = localStorage.getItem('apostaspro_extragains_period_type');
         return (saved as any) || 'month';
@@ -670,7 +671,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
 
     const handleDuplicate = (gain: ExtraGain) => {
         setDuplicatingGain(gain);
-        setIsDuplicateDatePickerOpen(true);
+        setIsDuplicateActionModalOpen(true);
     };
 
     const confirmDuplicate = async (targetDate: Date) => {
@@ -1572,6 +1573,19 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 }}
             />
  
+            <DuplicateActionModal
+                isOpen={isDuplicateActionModalOpen}
+                onClose={() => setIsDuplicateActionModalOpen(false)}
+                onDuplicateToday={() => {
+                    setIsDuplicateActionModalOpen(false);
+                    confirmDuplicate(new Date());
+                }}
+                onChooseDate={() => {
+                    setIsDuplicateActionModalOpen(false);
+                    setIsDuplicateDatePickerOpen(true);
+                }}
+            />
+
             <SingleDatePickerModal
                 isOpen={isDuplicateDatePickerOpen}
                 onClose={() => setIsDuplicateDatePickerOpen(false)}

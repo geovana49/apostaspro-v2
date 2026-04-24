@@ -1,5 +1,5 @@
 import React, { useState, useReducer, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
-import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, SingleDatePickerModal, BookmakerLogo, DateSeparator } from './ui/UIComponents';
+import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, SingleDatePickerModal, BookmakerLogo, DateSeparator, DuplicateActionModal } from './ui/UIComponents';
 import { FireImage } from './ui/FireImage';
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
@@ -193,6 +193,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
     const [duplicatingBet, setDuplicatingBet] = useState<Bet | null>(null);
     const [isDuplicateDatePickerOpen, setIsDuplicateDatePickerOpen] = useState(false);
+    const [isDuplicateActionModalOpen, setIsDuplicateActionModalOpen] = useState(false);
 
     // Viewer State
     const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -1123,7 +1124,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
 
     const handleDuplicate = (originalBet: Bet) => {
         setDuplicatingBet(originalBet);
-        setIsDuplicateDatePickerOpen(true);
+        setIsDuplicateActionModalOpen(true);
     };
 
     const confirmDuplicate = async (targetDate: Date) => {
@@ -1360,6 +1361,19 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                         ? FirestoreService.getPhotoData(currentUser.uid, viewerParentId, photoId, 'bets')
                         : Promise.resolve(null)
                 }
+            />
+
+            <DuplicateActionModal
+                isOpen={isDuplicateActionModalOpen}
+                onClose={() => setIsDuplicateActionModalOpen(false)}
+                onDuplicateToday={() => {
+                    setIsDuplicateActionModalOpen(false);
+                    confirmDuplicate(new Date());
+                }}
+                onChooseDate={() => {
+                    setIsDuplicateActionModalOpen(false);
+                    setIsDuplicateDatePickerOpen(true);
+                }}
             />
 
             <SingleDatePickerModal
