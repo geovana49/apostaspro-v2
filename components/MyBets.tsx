@@ -1259,6 +1259,16 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         return true;
     });
 
+    const sortedBets = [...filteredBets].sort((a, b) => {
+        const aIsPendingCopy = a.status === 'Pendente' && a.event.includes('(Cópia)');
+        const bIsPendingCopy = b.status === 'Pendente' && b.event.includes('(Cópia)');
+        
+        if (aIsPendingCopy && !bIsPendingCopy) return -1;
+        if (!aIsPendingCopy && bIsPendingCopy) return 1;
+        
+        return 0; // Maintain Firestore date-descending order
+    });
+
     console.log("Total bets:", bets.length, "Filtered bets:", filteredBets.length, "Current month:", currentDate.getMonth(), "Current year:", currentDate.getFullYear());
 
     const renderStatusBadge = (statusName: string) => {
@@ -1552,7 +1562,7 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
             </div>
 
             <div ref={betsListRef} className="space-y-3">
-                {filteredBets.map(bet => {
+                {sortedBets.map(bet => {
 
                     // Safety check for coverages
                     if (!bet.coverages || !Array.isArray(bet.coverages)) {
@@ -1928,7 +1938,7 @@ overflow-hidden border-none bg-surface transition-all duration-300 hover:border-
                     );
                 })}
 
-                {filteredBets.length === 0 && (
+                {sortedBets.length === 0 && (
                     <div className="text-center py-12 text-textMuted">
                         <p>Nenhuma aposta encontrada em {MONTHS[currentDate.getMonth()].toLowerCase()}.</p>
                         <button

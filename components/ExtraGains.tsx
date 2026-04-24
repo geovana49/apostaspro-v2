@@ -636,7 +636,15 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         }
 
         return matchesSearch && matchesOrigin && matchesPeriod;
-    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }).sort((a, b) => {
+        const aIsPendingCopy = a.status === 'Pendente' && (a.game || '').includes('(Cópia)');
+        const bIsPendingCopy = b.status === 'Pendente' && (b.game || '').includes('(Cópia)');
+        
+        if (aIsPendingCopy && !bIsPendingCopy) return -1;
+        if (!aIsPendingCopy && bIsPendingCopy) return 1;
+        
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+    });
 
     const validStatuses = ['Confirmado', 'Recebido', 'Green', 'Red', 'Meio Green', 'Meio Red', 'Cashout', 'Anulada', 'Concluido', 'Concluído'];
 
@@ -973,12 +981,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 </div>
                 <Button 
                     variant="primary" 
-                    onClick={() => {
-                        dispatch({ type: 'RESET_FORM' });
-                        setEditingId(null);
-                        setTempPhotos([]);
-                        setIsModalOpen(true);
-                    }}
+                    onClick={handleOpenNew}
                     className="sm:w-auto w-full group"
                 >
                     <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" />
@@ -1609,12 +1612,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             {/* Floating Nova Aposta Button */}
             {showFloatingButton && (
                 <button
-                    onClick={() => {
-                        dispatch({ type: 'RESET_FORM' });
-                        setEditingId(null);
-                        setTempPhotos([]);
-                        setIsModalOpen(true);
-                    }}
+                    onClick={handleOpenNew}
                     className={`fixed bottom-36 right-6 z-40 p-3 bg-gradient-to-br from-secondary to-[#f97316] text-[#05070e] rounded-full hover:scale-110 hover:shadow-2xl hover:shadow-secondary/40 transition-all duration-500 active:scale-95 shadow-lg ${isFabVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
                     title="Novo Ganho"
                 >
