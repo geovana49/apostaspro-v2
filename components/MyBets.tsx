@@ -1605,14 +1605,18 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                 })()}
 
                                 <div className="pl-4 pr-4 pt-4 pb-3">
-                                    {/* Row 1: Logo + Content + Status (top-right) */}
+                                    {/* Row 1: Logo + Content */}
                                     <div className="flex items-center gap-3">
-                                        {/* Logo: centered with the whole content block */}
+                                        {/* Logo centered with content block */}
                                         <div className="shrink-0 self-center">
                                             {renderBookmakerLogo(bet.mainBookmakerId, 'md', bet.event + ' ' + (bet.notes || ''))}
                                         </div>
-                                        {/* Middle: title + meta */}
+                                        {/* Content: status top-right, title below */}
                                         <div className="flex-1 min-w-0">
+                                            {/* Status aligned to the right, above title */}
+                                            <div className="flex justify-end mb-1">
+                                                {renderStatusBadge(bet.status)}
+                                            </div>
                                             <h4 className="font-bold text-white text-sm leading-snug">
                                                 {bet.event}
                                                 {isDraft && <span className="ml-2 text-[9px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-1.5 py-0.5 rounded font-bold tracking-wider">RASCUNHO</span>}
@@ -1630,8 +1634,6 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                                 {bet.notes && <div className="flex items-center gap-1 text-textMuted" title="Tem anotações"><StickyNote size={11} /></div>}
                                             </div>
                                         </div>
-                                        {/* Status: top-right, self-start so it stays at top */}
-                                        <div className="shrink-0 self-start">{renderStatusBadge(bet.status)}</div>
                                     </div>
 
                                     {/* Row 2: Stats */}
