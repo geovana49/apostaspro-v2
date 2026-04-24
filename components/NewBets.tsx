@@ -672,54 +672,62 @@ const NewBets: React.FC<NewBetsProps> = ({ bets, bookmakers, statuses, promotion
                                 {selectedBetForModal.coverages?.map((cov, idx) => {
                                     const statusObj = statuses.find(s => s.name === cov.status);
                                     const statusColor = statusObj?.color || (cov.status === 'Green' ? '#10b981' : cov.status === 'Red' ? '#ef4444' : '#6b7280');
-                                    const returnAmount = cov.manualReturn !== undefined ? cov.manualReturn : cov.odd * cov.stake;
+                                    
+                                    // Return logic: potential return when pending, zero when lost
+                                    let returnAmount = 0;
+                                    if (cov.status === 'Pendente') {
+                                        returnAmount = cov.odd * cov.stake;
+                                    } else if (cov.status === 'Green' || cov.status === 'Meio Green') {
+                                        returnAmount = cov.manualReturn !== undefined ? cov.manualReturn : cov.odd * cov.stake;
+                                    } else {
+                                        returnAmount = 0;
+                                    }
 
                                     return (
-                                        <div key={idx} className="relative bg-[#0d1421] border border-white/5 rounded-xl overflow-hidden shadow-lg p-4 sm:p-5 pl-5 sm:pl-6">
-                                            {/* Left Border */}
-                                            <div className="absolute left-0 top-0 bottom-0 w-[5px]" style={{ backgroundColor: statusColor }} />
-
-                                            {/* Top Row: Logo/Name and Status Badge */}
-                                            <div className="flex items-center justify-between mb-3">
-                                                <div className="flex items-center gap-2.5">
-                                                    <BookmakerLogo 
-                                                        logo={getBookmaker(cov.bookmakerId)?.logo} 
-                                                        name={getBookmaker(cov.bookmakerId)?.name || ''} 
-                                                        color={getBookmaker(cov.bookmakerId)?.color} 
-                                                        size="sm" 
-                                                    />
-                                                    <span className="text-[15px] font-bold text-white">{getBookmaker(cov.bookmakerId)?.name || 'N/A'}</span>
+                                        <div key={idx} className="relative bg-[#0d1421] border border-white/5 rounded-2xl overflow-hidden shadow-2xl p-5 pl-6 group transition-all duration-300">
+                                            {/* Solid Indicator Bar */}
+                                            <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: statusColor }} />
+                                            
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-1.5 bg-white/5 rounded-lg border border-white/5">
+                                                        <BookmakerLogo 
+                                                            logo={getBookmaker(cov.bookmakerId)?.logo} 
+                                                            name={getBookmaker(cov.bookmakerId)?.name || ''} 
+                                                            color={getBookmaker(cov.bookmakerId)?.color} 
+                                                            size="sm" 
+                                                        />
+                                                    </div>
+                                                    <span className="text-base font-black text-white tracking-tight">{getBookmaker(cov.bookmakerId)?.name || 'N/A'}</span>
                                                 </div>
                                                 <div 
-                                                    className="px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest border"
-                                                    style={{ 
-                                                        color: statusColor, 
-                                                        borderColor: `${statusColor}40`,
-                                                        backgroundColor: 'transparent'
-                                                    }}
+                                                    className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] border"
+                                                    style={{ color: statusColor, borderColor: `${statusColor}40`, backgroundColor: `${statusColor}0D` }}
                                                 >
                                                     {cov.status}
                                                 </div>
                                             </div>
 
-                                            {/* Market Name */}
-                                            <p className="text-[14px] text-gray-300 font-medium leading-relaxed mb-4 pr-2">
+                                            <p className="text-sm text-gray-400 font-medium leading-relaxed mb-5 pr-4">
                                                 {cov.market}
                                             </p>
 
-                                            {/* Data Row: ODD, STAKE, RETORNO */}
-                                            <div className="grid grid-cols-3 gap-2 border-t border-white/5 pt-3 mt-1">
-                                                <div className="flex flex-col items-start">
-                                                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Odd</p>
-                                                    <span className="text-[16px] font-bold text-[#22d3ee] leading-none">{cov.odd.toFixed(2)}</span>
+                                            <div className="flex items-center gap-2 bg-white/[0.02] border border-white/[0.05] rounded-xl p-3">
+                                                <div className="flex-1 flex flex-col gap-1">
+                                                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Odd</span>
+                                                    <span className="text-lg font-bold text-[#22d3ee] tracking-tight">{cov.odd.toFixed(2)}</span>
                                                 </div>
-                                                <div className="flex flex-col items-center">
-                                                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Stake</p>
-                                                    <MoneyDisplay value={cov.stake} className="text-[16px] font-bold text-white leading-none" />
+                                                <div className="w-px h-8 bg-white/5" />
+                                                <div className="flex-1 flex flex-col gap-1 items-center">
+                                                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Stake</span>
+                                                    <MoneyDisplay value={cov.stake} className="text-lg font-bold text-white tracking-tight" />
                                                 </div>
-                                                <div className="flex flex-col items-end">
-                                                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Retorno</p>
-                                                    <MoneyDisplay value={returnAmount} className={`text-[16px] font-bold leading-none ${cov.status === 'Green' ? 'text-[#10b981]' : 'text-gray-300'}`} />
+                                                <div className="w-px h-8 bg-white/5" />
+                                                <div className="flex-1 flex flex-col gap-1 items-end">
+                                                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Retorno</span>
+                                                    <div className={`px-2 py-0.5 rounded-md ${returnAmount > 0 ? 'bg-primary/10' : ''}`}>
+                                                        <MoneyDisplay value={returnAmount} className={`text-lg font-black tracking-tight ${returnAmount > 0 ? 'text-primary' : 'text-gray-600'}`} />
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
