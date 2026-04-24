@@ -129,12 +129,13 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
 
   // Initialize from props
   useEffect(() => {
-    if (isOpen) {
+    // Only sync from props if we are NOT currently dragging
+    if (isOpen && !dragTarget) {
       const rgb = hexToRgb(color || '#000000');
       setHsv(rgbToHsv(rgb.r, rgb.g, rgb.b));
       setAlpha(rgb.a);
     }
-  }, [isOpen, color]); // Recalculate if color prop changes externally
+  }, [isOpen, color, dragTarget]); // Recalculate if color prop changes externally
 
   // Calculate Popover Position
   useLayoutEffect(() => {
@@ -292,8 +293,8 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
         ref={satBoxRef}
         className="w-full h-[150px] relative cursor-crosshair touch-none"
         style={{ backgroundColor: `hsl(${hsv.h}, 100%, 50%)` }}
-        onMouseDown={(e) => { setDragTarget('sat'); handleSatBoxMove(e.nativeEvent); }}
-        onTouchStart={(e) => { setDragTarget('sat'); handleSatBoxMove(e.nativeEvent); }}
+        onMouseDown={(e) => { e.preventDefault(); setDragTarget('sat'); handleSatBoxMove(e.nativeEvent); }}
+        onTouchStart={(e) => { e.preventDefault(); setDragTarget('sat'); handleSatBoxMove(e.nativeEvent); }}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-white to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent" />
@@ -322,8 +323,8 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
               ref={hueSliderRef}
               className="h-2.5 rounded-full relative cursor-pointer touch-none"
               style={{ background: 'linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%)' }}
-              onMouseDown={(e) => { setDragTarget('hue'); handleHueMove(e.nativeEvent); }}
-              onTouchStart={(e) => { setDragTarget('hue'); handleHueMove(e.nativeEvent); }}
+              onMouseDown={(e) => { e.preventDefault(); setDragTarget('hue'); handleHueMove(e.nativeEvent); }}
+              onTouchStart={(e) => { e.preventDefault(); setDragTarget('hue'); handleHueMove(e.nativeEvent); }}
             >
               <div
                 className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md -translate-x-1/2 pointer-events-none"
@@ -335,8 +336,8 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
             <div
               ref={alphaSliderRef}
               className="h-2.5 rounded-full relative cursor-pointer touch-none bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAMUlEQVQ4T2NkYGAQYcAP3uCTZhw1gGGYhAGBZIA/nYDCgBDAm9BGDWAAJyRCgLaBCAAgXwixzAS0pgAAAABJRU5ErkJggg==')] bg-[length:8px_8px]"
-              onMouseDown={(e) => { setDragTarget('alpha'); handleAlphaMove(e.nativeEvent); }}
-              onTouchStart={(e) => { setDragTarget('alpha'); handleAlphaMove(e.nativeEvent); }}
+              onMouseDown={(e) => { e.preventDefault(); setDragTarget('alpha'); handleAlphaMove(e.nativeEvent); }}
+              onTouchStart={(e) => { e.preventDefault(); setDragTarget('alpha'); handleAlphaMove(e.nativeEvent); }}
             >
               <div
                 className="absolute inset-0 rounded-full"
