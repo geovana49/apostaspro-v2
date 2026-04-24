@@ -1086,7 +1086,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             date: dateStr,
             event: `${duplicatingBet.event} (Cópia)`,
             status: 'Pendente',
-            coverages: duplicatingBet.coverages.map(c => ({
+            coverages: (duplicatingBet.coverages || []).map(c => ({
                 ...c,
                 status: 'Pendente',
                 id: Date.now().toString() + Math.random().toString().slice(2, 6)

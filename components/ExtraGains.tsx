@@ -1557,7 +1557,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     confirmDuplicate(date);
                     setIsDuplicateDatePickerOpen(false);
                 }}
-                initialDate={new Date()}
+                date={new Date()}
                 title="Data da Cópia"
             />
 

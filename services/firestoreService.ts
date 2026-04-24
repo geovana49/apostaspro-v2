@@ -46,7 +46,14 @@ export const FirestoreService = {
             orderBy("date", "desc")
         );
         return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
-            const bets = snapshot.docs.map(doc => ({ id: doc.id, ...convertDate(doc.data()) } as Bet));
+            const bets = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return { 
+                    id: doc.id, 
+                    ...convertDate(data), 
+                    coverages: data.coverages || [] 
+                } as Bet;
+            });
             callback(bets, snapshot.metadata.hasPendingWrites);
         }, (error) => {
             console.error("Snapshot error (Bets):", error);
@@ -105,7 +112,14 @@ export const FirestoreService = {
             orderBy("date", "desc")
         );
         return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
-            const gains = snapshot.docs.map(doc => ({ id: doc.id, ...convertDate(doc.data()) } as ExtraGain));
+            const gains = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return { 
+                    id: doc.id, 
+                    ...convertDate(data), 
+                    coverages: data.coverages || [] 
+                } as ExtraGain;
+            });
             callback(gains, snapshot.metadata.hasPendingWrites);
         }, (error) => {
             console.error("Snapshot error (Gains):", error);

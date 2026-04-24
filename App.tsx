@@ -100,6 +100,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        setIsLoading(true);
         // User is signed in
         const user: User = {
           uid: firebaseUser.uid,

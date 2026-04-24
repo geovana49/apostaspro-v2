@@ -1,6 +1,15 @@
 import { Bet } from '../types';
 
 export const calculateBetStats = (bet: Bet) => {
+    if (!bet || !bet.coverages) {
+        return { 
+            totalStake: 0, 
+            totalReturn: 0, 
+            profit: Number(bet?.extraGain || 0), 
+            isDoubleGreen: !!bet?.isDoubleGreen, 
+            coverageProfits: [] 
+        };
+    }
     const isFreebetConversion = bet.promotionType?.toLowerCase().includes('conversão freebet');
 
     const totalStake = bet.coverages.reduce((sum, c, index) => {
