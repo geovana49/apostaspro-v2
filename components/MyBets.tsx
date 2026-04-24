@@ -1635,11 +1635,11 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
 
                                             {/* Top Stripe with subtle text */}
                                             <div
-                                                className="w-full rounded-t-2xl px-4 flex justify-end items-center h-[18px]"
-                                                style={{ background: `linear-gradient(90deg, ${accentColor}00, ${accentColor}55)` }}
+                                                className="w-full rounded-t-2xl px-4 flex justify-end items-center h-[14px]"
+                                                style={{ background: `linear-gradient(90deg, ${accentColor}00, ${accentColor}66)` }}
                                             >
                                                 <span 
-                                                    className="text-[8px] uppercase font-light italic tracking-[0.25em] text-white/70"
+                                                    className="text-[10px] lowercase font-serif italic tracking-[0.35em] text-white/90 drop-shadow-sm pr-1"
                                                 >
                                                     {bet.status}
                                                 </span>
