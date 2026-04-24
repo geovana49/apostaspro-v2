@@ -116,9 +116,8 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
   const [alpha, setAlpha] = useState(1);
   const [inputMode, setInputMode] = useState<'HEX' | 'RGB' | 'HSL'>('HEX');
 
-  // Dragging states
-  const [dragTarget, setDragTarget] = useState<'sat' | 'hue' | 'alpha' | null>(null);
-  const dragTargetRef = useRef<'sat' | 'hue' | 'alpha' | null>(null);
+  // Dragging state (ref only for performance)
+  const isDraggingRef = useRef<boolean>(false);
 
   // Layout positioning
   const [position, setPosition] = useState({ top: 0, left: 0 });
@@ -130,8 +129,7 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
 
   // Initialize from props
   useEffect(() => {
-    // Only sync from props if we are NOT currently dragging
-    if (isOpen && !dragTargetRef.current) {
+    if (isOpen && !isDraggingRef.current) {
       const rgb = hexToRgb(color || '#000000');
       setHsv(rgbToHsv(rgb.r, rgb.g, rgb.b));
       setAlpha(rgb.a);
@@ -162,28 +160,24 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
     }
   }, [isOpen, anchorEl]);
 
-  // Interaction Handlers (Stable)
-  const handleSatBoxMove = useCallback((e: MouseEvent | TouchEvent) => {
+  // Interaction Handlers
+  const handleSatBoxMove = useCallback((clientX: number, clientY: number) => {
     if (!satBoxRef.current) return;
     const rect = satBoxRef.current.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
-
     const s = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)) * 100;
     const v = Math.max(0, Math.min(1, 1 - (clientY - rect.top) / rect.height)) * 100;
 
     setHsv(prev => {
       const newHsv = { ...prev, s, v };
       const rgb = hsvToRgb(newHsv.h, newHsv.s / 100, newHsv.v / 100);
-      onChange(rgbToHex(rgb.r, rgb.g, rgb.b, alpha)); // Note: alpha from closure is fine here if it doesn't change during drag
+      onChange(rgbToHex(rgb.r, rgb.g, rgb.b, alpha));
       return newHsv;
     });
   }, [alpha, onChange]);
 
-  const handleHueMove = useCallback((e: MouseEvent | TouchEvent) => {
+  const handleHueMove = useCallback((clientX: number) => {
     if (!hueSliderRef.current) return;
     const rect = hueSliderRef.current.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
     let h = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)) * 360;
     if (h >= 360) h = 359.9;
     
@@ -195,10 +189,9 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
     });
   }, [alpha, onChange]);
 
-  const handleAlphaMove = useCallback((e: MouseEvent | TouchEvent) => {
+  const handleAlphaMove = useCallback((clientX: number) => {
     if (!alphaSliderRef.current) return;
     const rect = alphaSliderRef.current.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
     const a = parseFloat(Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)).toFixed(2));
     
     setAlpha(a);
@@ -209,38 +202,31 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
     });
   }, [onChange]);
 
-  // Global Drag Listeners
-  useEffect(() => {
-    const handleMove = (e: MouseEvent | TouchEvent) => {
-      if (!dragTargetRef.current) return;
-      e.preventDefault();
-      if (dragTargetRef.current === 'sat') handleSatBoxMove(e);
-      if (dragTargetRef.current === 'hue') handleHueMove(e);
-      if (dragTargetRef.current === 'alpha') handleAlphaMove(e);
-    };
-
-    const handleUp = () => {
-      dragTargetRef.current = null;
-      setDragTarget(null);
-    };
-
-    window.addEventListener('mousemove', handleMove);
-    window.addEventListener('mouseup', handleUp);
-    window.addEventListener('touchmove', handleMove, { passive: false });
-    window.addEventListener('touchend', handleUp);
+  // Unified Pointer Drag Logic
+  const startDragging = (type: 'sat' | 'hue' | 'alpha', e: React.PointerEvent) => {
+    // Only handle primary button (mouse left click) or touch
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
     
-    return () => {
-      window.removeEventListener('mousemove', handleMove);
-      window.removeEventListener('mouseup', handleUp);
-      window.removeEventListener('touchmove', handleMove);
-      window.removeEventListener('touchend', handleUp);
+    isDraggingRef.current = true;
+    const moveHandler = (pe: PointerEvent) => {
+      if (type === 'sat') handleSatBoxMove(pe.clientX, pe.clientY);
+      else if (type === 'hue') handleHueMove(pe.clientX);
+      else if (type === 'alpha') handleAlphaMove(pe.clientX);
     };
-  }, [handleSatBoxMove, handleHueMove, handleAlphaMove]);
 
-  // Sync ref with state
-  const updateDragTarget = (target: 'sat' | 'hue' | 'alpha' | null) => {
-    dragTargetRef.current = target;
-    setDragTarget(target);
+    const upHandler = () => {
+      isDraggingRef.current = false;
+      window.removeEventListener('pointermove', moveHandler);
+      window.removeEventListener('pointerup', upHandler);
+    };
+
+    window.addEventListener('pointermove', moveHandler);
+    window.addEventListener('pointerup', upHandler);
+    
+    // Initial call for the click location
+    if (type === 'sat') handleSatBoxMove(e.clientX, e.clientY);
+    else if (type === 'hue') handleHueMove(e.clientX);
+    else if (type === 'alpha') handleAlphaMove(e.clientX);
   };
 
   // Click Outside
@@ -305,10 +291,9 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
 
       <div
         ref={satBoxRef}
-        className="w-full h-[150px] relative cursor-crosshair touch-none overflow-hidden"
-        style={{ backgroundColor: `hsl(${hsv.h}, 100%, 50%)` }}
-        onMouseDown={(e) => { e.preventDefault(); updateDragTarget('sat'); handleSatBoxMove(e.nativeEvent); }}
-        onTouchStart={(e) => { e.preventDefault(); updateDragTarget('sat'); handleSatBoxMove(e.nativeEvent); }}
+        className="w-full h-[150px] relative cursor-crosshair overflow-hidden"
+        style={{ backgroundColor: `hsl(${hsv.h}, 100%, 50%)`, touchAction: 'none' }}
+        onPointerDown={(e) => startDragging('sat', e)}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-white to-transparent pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent pointer-events-none" />
@@ -335,10 +320,9 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
             {/* Hue */}
             <div
               ref={hueSliderRef}
-              className="h-2.5 rounded-full relative cursor-pointer touch-none"
-              style={{ background: 'linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%)' }}
-              onMouseDown={(e) => { e.preventDefault(); setDragTarget('hue'); handleHueMove(e.nativeEvent); }}
-              onTouchStart={(e) => { e.preventDefault(); setDragTarget('hue'); handleHueMove(e.nativeEvent); }}
+              className="h-2.5 rounded-full relative cursor-pointer"
+              style={{ background: 'linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%)', touchAction: 'none' }}
+              onPointerDown={(e) => startDragging('hue', e)}
             >
               <div
                 className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md -translate-x-1/2 pointer-events-none"
@@ -349,9 +333,9 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
             {/* Alpha */}
             <div
               ref={alphaSliderRef}
-              className="h-2.5 rounded-full relative cursor-pointer touch-none bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAMUlEQVQ4T2NkYGAQYcAP3uCTZhw1gGGYhAGBZIA/nYDCgBDAm9BGDWAAJyRCgLaBCAAgXwixzAS0pgAAAABJRU5ErkJggg==')] bg-[length:8px_8px]"
-              onMouseDown={(e) => { e.preventDefault(); setDragTarget('alpha'); handleAlphaMove(e.nativeEvent); }}
-              onTouchStart={(e) => { e.preventDefault(); setDragTarget('alpha'); handleAlphaMove(e.nativeEvent); }}
+              className="h-2.5 rounded-full relative cursor-pointer bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAMUlEQVQ4T2NkYGAQYcAP3uCTZhw1gGGYhAGBZIA/nYDCgBDAm9BGDWAAJyRCgLaBCAAgXwixzAS0pgAAAABJRU5ErkJggg==')] bg-[length:8px_8px]"
+              style={{ touchAction: 'none' }}
+              onPointerDown={(e) => startDragging('alpha', e)}
             >
               <div
                 className="absolute inset-0 rounded-full"
