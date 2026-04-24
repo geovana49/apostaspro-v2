@@ -1611,14 +1611,13 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                             {renderBookmakerLogo(bet.mainBookmakerId, 'md', bet.event + ' ' + (bet.notes || ''))}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-start justify-between gap-2">
-                                                <h4 className="font-bold text-white text-sm leading-snug line-clamp-2 flex-1">
-                                                    {bet.event}
-                                                    {isDraft && <span className="ml-2 text-[9px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-1.5 py-0.5 rounded font-bold tracking-wider">RASCUNHO</span>}
-                                                    {isDoubleGreen && <span className="ml-2 text-[9px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded font-bold tracking-wider inline-flex items-center gap-1"><Copy size={8} /> 2X</span>}
-                                                </h4>
-                                                <div className="shrink-0">{renderStatusBadge(bet.status)}</div>
-                                            </div>
+                                            {/* Status badge on top */}
+                                            <div className="mb-1.5">{renderStatusBadge(bet.status)}</div>
+                                            <h4 className="font-bold text-white text-sm leading-snug">
+                                                {bet.event}
+                                                {isDraft && <span className="ml-2 text-[9px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-1.5 py-0.5 rounded font-bold tracking-wider">RASCUNHO</span>}
+                                                {isDoubleGreen && <span className="ml-2 text-[9px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded font-bold tracking-wider inline-flex items-center gap-1"><Copy size={8} /> 2X</span>}
+                                            </h4>
                                             {/* Date + Promo badge + notes icon */}
                                             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                                                 <span className="text-[11px] text-textMuted">{new Date(bet.date).toLocaleDateString('pt-BR')}</span>
