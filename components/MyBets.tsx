@@ -1635,14 +1635,21 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
 
                                             {/* Top Stripe with subtle text */}
                                             <div
-                                                className="w-full rounded-t-2xl px-4 flex justify-end items-center h-[12px] pt-[2px]"
+                                                className="w-full rounded-t-2xl px-4 flex justify-end items-center h-[12px] md:h-[16px] pt-[2px] md:pt-0"
                                                 style={{ background: `linear-gradient(90deg, ${accentColor}00, ${accentColor})` }}
                                             >
+                                                {/* Mobile Cursive Version */}
                                                 <span 
-                                                    className="text-[15px] md:text-[20px] lowercase md:capitalize italic md:not-italic tracking-[0.4em] md:tracking-normal text-white drop-shadow-md pr-1 relative z-10 inline-block transform -skew-x-[35deg] md:-skew-x-0"
+                                                    className="md:hidden text-[15px] lowercase italic tracking-[0.4em] text-white drop-shadow-md pr-1 relative z-10 inline-block transform -skew-x-[35deg]"
                                                     style={{ fontFamily: "'Great Vibes', cursive", lineHeight: 0 }}
                                                 >
                                                     {bet.status.toLowerCase()}
+                                                </span>
+                                                {/* Desktop Premium Sans-Serif Version */}
+                                                <span 
+                                                    className="hidden md:inline-block text-[10px] uppercase font-bold tracking-[0.4em] text-white/95 drop-shadow-sm pr-1 relative z-10"
+                                                >
+                                                    {bet.status}
                                                 </span>
                                             </div>
 
