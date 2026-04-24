@@ -1639,7 +1639,7 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                                 style={{ background: `linear-gradient(90deg, ${accentColor}00, ${accentColor}66)` }}
                                             >
                                                 <span 
-                                                    className="text-[10px] lowercase font-serif italic tracking-[0.35em] text-white/90 drop-shadow-sm pr-1"
+                                                    className="text-[10px] lowercase font-serif italic tracking-[0.6em] text-white/90 drop-shadow-sm pr-1 inline-block -skew-x-12"
                                                 >
                                                     {bet.status}
                                                 </span>
