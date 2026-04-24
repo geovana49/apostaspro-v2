@@ -1635,36 +1635,36 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
 
                                             {/* Top Stripe with subtle text */}
                                             <div
-                                                className="w-full rounded-t-2xl px-4 py-0.5 flex justify-end"
-                                                style={{ background: `linear-gradient(90deg, ${accentColor}11, ${accentColor}66)` }}
+                                                className="w-full rounded-t-2xl px-4 flex justify-end items-center h-[18px]"
+                                                style={{ background: `linear-gradient(90deg, ${accentColor}00, ${accentColor}55)` }}
                                             >
                                                 <span 
-                                                    className="text-[9px] uppercase font-bold tracking-[0.2em] text-white/90 drop-shadow-sm"
+                                                    className="text-[8px] uppercase font-light italic tracking-[0.25em] text-white/70"
                                                 >
                                                     {bet.status}
                                                 </span>
                                             </div>
 
-                                            <div className="px-4 pt-2 pb-3 relative z-10 transition-opacity duration-300" style={{ opacity: longPressId === bet.id ? 0 : 1 }}>
+                                            <div className="px-4 pt-1.5 pb-3 relative z-10 transition-opacity duration-300" style={{ opacity: longPressId === bet.id ? 0 : 1 }}>
                                                 {/* Header row: logo + title block */}
-                                                <div className="flex items-start gap-3">
+                                                <div className="flex items-center gap-3">
                                                     {/* Logo with colored glow */}
                                                     <div
-                                                        className="shrink-0 rounded-xl overflow-hidden shadow-lg mt-0.5"
-                                                        style={{ boxShadow: `0 4px 14px ${accentColor}33` }}
+                                                        className="shrink-0 rounded-xl overflow-hidden shadow-sm"
+                                                        style={{ boxShadow: `0 4px 14px ${accentColor}25` }}
                                                     >
                                                         {renderBookmakerLogo(bet.mainBookmakerId, 'md', bet.event + ' ' + (bet.notes || ''))}
                                                     </div>
 
                                                     {/* Title + meta */}
                                                     <div className="flex-1 min-w-0">
-                                                        <div className="flex items-start justify-between gap-2 mb-1">
-                                                            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">{bookmaker?.name || ''}</span>
+                                                        <div className="mb-0.5">
+                                                            <span className="text-[9px] font-medium text-gray-500/80 uppercase tracking-widest">{bookmaker?.name || ''}</span>
                                                         </div>
-                                                        <h4 className="font-bold text-white text-[15px] leading-snug">
+                                                        <h4 className="font-bold text-white text-[14.5px] leading-tight">
                                                             {bet.event}
-                                                            {isDraft && <span className="ml-2 text-[9px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-1.5 py-0.5 rounded font-bold tracking-wider">RASCUNHO</span>}
-                                                            {isDoubleGreen && <span className="ml-2 text-[9px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded font-bold tracking-wider inline-flex items-center gap-1"><Copy size={8} /> 2X</span>}
+                                                            {isDraft && <span className="ml-2 text-[8px] bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-1.5 py-0.5 rounded font-bold tracking-wider">RASCUNHO</span>}
+                                                            {isDoubleGreen && <span className="ml-2 text-[8px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded font-bold tracking-wider inline-flex items-center gap-1"><Copy size={8} /> 2X</span>}
                                                         </h4>
                                                         {/* Date + promo + notes */}
                                                         <div className="flex items-center gap-2 mt-1.5 flex-wrap">
