@@ -1284,6 +1284,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                 </div>
                             </div>
                         </Card>
+                    </div>
                     );
                 }) : (
                     <div className="flex flex-col items-center justify-center py-12 text-center border border-dashed border-white/10 rounded-2xl bg-white/[0.01]">
