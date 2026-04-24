@@ -118,6 +118,7 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
 
   // Dragging states
   const [dragTarget, setDragTarget] = useState<'sat' | 'hue' | 'alpha' | null>(null);
+  const dragTargetRef = useRef<'sat' | 'hue' | 'alpha' | null>(null);
 
   // Layout positioning
   const [position, setPosition] = useState({ top: 0, left: 0 });
@@ -130,12 +131,12 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
   // Initialize from props
   useEffect(() => {
     // Only sync from props if we are NOT currently dragging
-    if (isOpen && !dragTarget) {
+    if (isOpen && !dragTargetRef.current) {
       const rgb = hexToRgb(color || '#000000');
       setHsv(rgbToHsv(rgb.r, rgb.g, rgb.b));
       setAlpha(rgb.a);
     }
-  }, [isOpen, color, dragTarget]); // Recalculate if color prop changes externally
+  }, [isOpen, color]); 
 
   // Calculate Popover Position
   useLayoutEffect(() => {
@@ -148,86 +149,99 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
       let top = rect.bottom + 8;
       let left = rect.left;
 
-      // Flip Up if no space
       if (top + pickerRect.height > viewportHeight) {
         top = rect.top - pickerRect.height - 8;
       }
 
-      // Shift Left if no space
       if (left + pickerRect.width > viewportWidth) {
         left = viewportWidth - pickerRect.width - 10;
       }
-      // Shift Right if off screen
       if (left < 0) left = 10;
 
       setPosition({ top: top + window.scrollY, left: left + window.scrollX });
     }
   }, [isOpen, anchorEl]);
 
-  // Color Updates
-  const emitChange = (newHsv: { h: number, s: number, v: number }, newAlpha: number) => {
-    setHsv(newHsv);
-    setAlpha(newAlpha);
-    const rgb = hsvToRgb(newHsv.h, newHsv.s / 100, newHsv.v / 100);
-    onChange(rgbToHex(rgb.r, rgb.g, rgb.b, newAlpha));
-  };
-
-  // Interaction Handlers
-  const handleSatBoxMove = (e: MouseEvent | TouchEvent) => {
+  // Interaction Handlers (Stable)
+  const handleSatBoxMove = useCallback((e: MouseEvent | TouchEvent) => {
     if (!satBoxRef.current) return;
     const rect = satBoxRef.current.getBoundingClientRect();
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
 
-    let s = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)) * 100;
-    let v = Math.max(0, Math.min(1, 1 - (clientY - rect.top) / rect.height)) * 100;
+    const s = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)) * 100;
+    const v = Math.max(0, Math.min(1, 1 - (clientY - rect.top) / rect.height)) * 100;
 
-    emitChange({ ...hsv, s, v }, alpha);
-  };
+    setHsv(prev => {
+      const newHsv = { ...prev, s, v };
+      const rgb = hsvToRgb(newHsv.h, newHsv.s / 100, newHsv.v / 100);
+      onChange(rgbToHex(rgb.r, rgb.g, rgb.b, alpha)); // Note: alpha from closure is fine here if it doesn't change during drag
+      return newHsv;
+    });
+  }, [alpha, onChange]);
 
-  const handleHueMove = (e: MouseEvent | TouchEvent) => {
+  const handleHueMove = useCallback((e: MouseEvent | TouchEvent) => {
     if (!hueSliderRef.current) return;
     const rect = hueSliderRef.current.getBoundingClientRect();
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
     let h = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)) * 360;
-    // Cap at 360, but if 0 keep 0
     if (h >= 360) h = 359.9;
-    emitChange({ ...hsv, h }, alpha);
-  };
+    
+    setHsv(prev => {
+      const newHsv = { ...prev, h };
+      const rgb = hsvToRgb(newHsv.h, newHsv.s / 100, newHsv.v / 100);
+      onChange(rgbToHex(rgb.r, rgb.g, rgb.b, alpha));
+      return newHsv;
+    });
+  }, [alpha, onChange]);
 
-  const handleAlphaMove = (e: MouseEvent | TouchEvent) => {
+  const handleAlphaMove = useCallback((e: MouseEvent | TouchEvent) => {
     if (!alphaSliderRef.current) return;
     const rect = alphaSliderRef.current.getBoundingClientRect();
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
-    let a = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    emitChange(hsv, parseFloat(a.toFixed(2)));
-  };
+    const a = parseFloat(Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)).toFixed(2));
+    
+    setAlpha(a);
+    setHsv(prev => {
+      const rgb = hsvToRgb(prev.h, prev.s / 100, prev.v / 100);
+      onChange(rgbToHex(rgb.r, rgb.g, rgb.b, a));
+      return prev;
+    });
+  }, [onChange]);
 
   // Global Drag Listeners
   useEffect(() => {
     const handleMove = (e: MouseEvent | TouchEvent) => {
-      if (!dragTarget) return;
+      if (!dragTargetRef.current) return;
       e.preventDefault();
-      if (dragTarget === 'sat') handleSatBoxMove(e);
-      if (dragTarget === 'hue') handleHueMove(e);
-      if (dragTarget === 'alpha') handleAlphaMove(e);
+      if (dragTargetRef.current === 'sat') handleSatBoxMove(e);
+      if (dragTargetRef.current === 'hue') handleHueMove(e);
+      if (dragTargetRef.current === 'alpha') handleAlphaMove(e);
     };
 
-    const handleUp = () => setDragTarget(null);
+    const handleUp = () => {
+      dragTargetRef.current = null;
+      setDragTarget(null);
+    };
 
-    if (dragTarget) {
-      window.addEventListener('mousemove', handleMove);
-      window.addEventListener('mouseup', handleUp);
-      window.addEventListener('touchmove', handleMove, { passive: false });
-      window.addEventListener('touchend', handleUp);
-    }
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
+    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchend', handleUp);
+    
     return () => {
       window.removeEventListener('mousemove', handleMove);
       window.removeEventListener('mouseup', handleUp);
       window.removeEventListener('touchmove', handleMove);
       window.removeEventListener('touchend', handleUp);
     };
-  }, [dragTarget, hsv, alpha]);
+  }, [handleSatBoxMove, handleHueMove, handleAlphaMove]);
+
+  // Sync ref with state
+  const updateDragTarget = (target: 'sat' | 'hue' | 'alpha' | null) => {
+    dragTargetRef.current = target;
+    setDragTarget(target);
+  };
 
   // Click Outside
   useEffect(() => {
@@ -238,7 +252,7 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
     };
     if (isOpen) document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen, anchorEl]);
+  }, [isOpen, anchorEl, onClose]);
 
   const handleEyedropper = async () => {
     if (!window.EyeDropper) {
@@ -251,7 +265,9 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
       const hex = result.sRGBHex;
       const rgb = hexToRgb(hex);
       const newHsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
-      emitChange(newHsv, 1);
+      setHsv(newHsv);
+      setAlpha(1);
+      onChange(hex);
     } catch (e) {
       console.log('Eyedropper cancelled');
     }
@@ -276,10 +292,9 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
       style={{
         top: anchorEl ? position.top : '50%',
         left: anchorEl ? position.left : '50%',
-        transform: anchorEl ? 'none' : 'translate(-50%, -50%)' // Fallback centering
+        transform: anchorEl ? 'none' : 'translate(-50%, -50%)' 
       }}
     >
-      {/* Close Button */}
       <button
         onClick={onClose}
         className="absolute top-2 right-2 z-[10] w-6 h-6 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center text-white/70 hover:text-white transition-all backdrop-blur-sm border border-white/10"
@@ -288,16 +303,15 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
         <X size={14} />
       </button>
 
-      {/* Saturation Box */}
       <div
         ref={satBoxRef}
-        className="w-full h-[150px] relative cursor-crosshair touch-none"
+        className="w-full h-[150px] relative cursor-crosshair touch-none overflow-hidden"
         style={{ backgroundColor: `hsl(${hsv.h}, 100%, 50%)` }}
-        onMouseDown={(e) => { e.preventDefault(); setDragTarget('sat'); handleSatBoxMove(e.nativeEvent); }}
-        onTouchStart={(e) => { e.preventDefault(); setDragTarget('sat'); handleSatBoxMove(e.nativeEvent); }}
+        onMouseDown={(e) => { e.preventDefault(); updateDragTarget('sat'); handleSatBoxMove(e.nativeEvent); }}
+        onTouchStart={(e) => { e.preventDefault(); updateDragTarget('sat'); handleSatBoxMove(e.nativeEvent); }}
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-white to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-white to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent pointer-events-none" />
         <div
           className="absolute w-3 h-3 rounded-full border-2 border-white shadow-sm -translate-x-1/2 -translate-y-1/2 pointer-events-none box-border"
           style={{ left: `${hsv.s}%`, top: `${100 - hsv.v}%`, backgroundColor: displayColor }}
