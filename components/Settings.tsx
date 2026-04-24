@@ -1262,8 +1262,7 @@ const Settings: React.FC<SettingsProps> = ({
                     <AlertTriangle size={16} /> Resetar Fábrica
                 </button>
             </div>
-            {/* Tabs */}
-            <div className="flex gap-1 bg-[#0d1121] p-1 rounded-xl overflow-x-auto custom-scrollbar border border-white/5">
+            <div className="flex gap-1 bg-[#0d1121] p-1 rounded-xl overflow-x-auto custom-scrollbar border border-white/5 scroll-smooth">
                 {[
                     { id: 'general', label: 'Geral', icon: <Layout size={16} /> },
                     { id: 'bookmakers', label: 'Casas', icon: <Smartphone size={16} /> },
@@ -1273,7 +1272,14 @@ const Settings: React.FC<SettingsProps> = ({
                 ].map(tab => {
                     const isActive = activeTab === tab.id;
                     return (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id as SettingsTab)} className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap flex-1 justify-center ${isActive ? 'bg-primary text-[#090c19] shadow-lg shadow-primary/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                        <button 
+                            key={tab.id} 
+                            onClick={(e) => {
+                                setActiveTab(tab.id as SettingsTab);
+                                e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                            }} 
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap flex-1 justify-center ${isActive ? 'bg-primary text-[#090c19] shadow-lg shadow-primary/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                        >
                             {tab.icon} {tab.label}
                         </button>
                     );
