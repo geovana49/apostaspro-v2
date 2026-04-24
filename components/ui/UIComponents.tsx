@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useLayoutEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronDown, Check, ZoomIn, ZoomOut, RotateCcw, RotateCw, Move, Crop, Pipette, ChevronUp, Gamepad2, Trophy, Star, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, Sun, Contrast, Maximize, Minimize, FlipHorizontal, FlipVertical, Sparkles, Scissors, Scaling, RefreshCw, Loader2, Calendar, Copy } from 'lucide-react';
+import { X, ChevronDown, Check, ZoomIn, ZoomOut, RotateCcw, RotateCw, Move, Crop, Pipette, ChevronUp, Gamepad2, Trophy, Star, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, Sun, Contrast, Maximize, Minimize, FlipHorizontal, FlipVertical, Sparkles, Scissors, Scaling, RefreshCw, Loader2, Calendar as CalendarIcon, Copy } from 'lucide-react';
 
 // --- Color Helpers ---
 const hexToRgb = (hex: string) => {
@@ -2144,7 +2144,7 @@ export const DuplicateActionModal: React.FC<{
         >
           <div className="flex items-center gap-3 text-left">
             <div className="p-2.5 bg-secondary/10 rounded-lg text-secondary group-hover:scale-110 transition-transform">
-              <Calendar size={20} />
+              <CalendarIcon size={20} />
             </div>
             <div>
               <span className="text-white font-bold block">Escolher Data</span>
