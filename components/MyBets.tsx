@@ -1636,10 +1636,10 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                             {/* Top Stripe with subtle text */}
                                             <div
                                                 className="w-full rounded-t-2xl px-4 flex justify-end items-center h-[8px]"
-                                                style={{ background: `linear-gradient(90deg, transparent, ${accentColor}55)` }}
+                                                style={{ background: `linear-gradient(90deg, transparent, ${accentColor}AA)` }}
                                             >
                                                 <span 
-                                                    className="text-[9px] lowercase font-light italic tracking-[0.7em] text-white/60 drop-shadow-sm pr-1 inline-block transform -skew-x-[25deg] -translate-y-px"
+                                                    className="text-[9px] lowercase font-light italic tracking-[0.7em] text-white/80 drop-shadow-sm pr-1 inline-block transform -skew-x-[40deg] -translate-y-px"
                                                 >
                                                     {bet.status}
                                                 </span>
