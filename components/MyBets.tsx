@@ -1605,20 +1605,20 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                 })()}
 
                                 <div className="pl-4 pr-4 pt-4 pb-3">
-                                    {/* Row 1: Logo + Title + Status badge */}
-                                    <div className="flex items-start gap-3">
-                                        <div className="shrink-0 mt-0.5">
+                                    {/* Row 1: Logo + Content + Status (top-right) */}
+                                    <div className="flex items-center gap-3">
+                                        {/* Logo: centered with the whole content block */}
+                                        <div className="shrink-0 self-center">
                                             {renderBookmakerLogo(bet.mainBookmakerId, 'md', bet.event + ' ' + (bet.notes || ''))}
                                         </div>
+                                        {/* Middle: title + meta */}
                                         <div className="flex-1 min-w-0">
-                                            {/* Status badge on top */}
-                                            <div className="mb-1.5">{renderStatusBadge(bet.status)}</div>
                                             <h4 className="font-bold text-white text-sm leading-snug">
                                                 {bet.event}
                                                 {isDraft && <span className="ml-2 text-[9px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-1.5 py-0.5 rounded font-bold tracking-wider">RASCUNHO</span>}
                                                 {isDoubleGreen && <span className="ml-2 text-[9px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded font-bold tracking-wider inline-flex items-center gap-1"><Copy size={8} /> 2X</span>}
                                             </h4>
-                                            {/* Date + Promo badge + notes icon */}
+                                            {/* Date + Promo + notes */}
                                             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                                                 <span className="text-[11px] text-textMuted">{new Date(bet.date).toLocaleDateString('pt-BR')}</span>
                                                 {bet.promotionType && bet.promotionType !== 'Nenhuma' && (() => {
@@ -1630,6 +1630,8 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                                 {bet.notes && <div className="flex items-center gap-1 text-textMuted" title="Tem anotações"><StickyNote size={11} /></div>}
                                             </div>
                                         </div>
+                                        {/* Status: top-right, self-start so it stays at top */}
+                                        <div className="shrink-0 self-start">{renderStatusBadge(bet.status)}</div>
                                     </div>
 
                                     {/* Row 2: Stats */}
