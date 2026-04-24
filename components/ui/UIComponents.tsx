@@ -1948,7 +1948,16 @@ const Calendar: React.FC<{
   selectedDate: Date;
   onChange: (date: Date) => void;
 }> = ({ selectedDate, onChange }) => {
-  const [viewDate, setViewDate] = useState(selectedDate);
+  // Defensive check: ensure selectedDate is a valid Date object
+  const safeDate = (selectedDate instanceof Date && !isNaN(selectedDate.getTime())) ? selectedDate : new Date();
+  const [viewDate, setViewDate] = useState(safeDate);
+
+  // Sync viewDate if selectedDate changes and is valid
+  useEffect(() => {
+    if (selectedDate instanceof Date && !isNaN(selectedDate.getTime())) {
+      setViewDate(selectedDate);
+    }
+  }, [selectedDate]);
 
   const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
   const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
@@ -2031,10 +2040,10 @@ export const SingleDatePickerModal: React.FC<{
   date: Date;
   onSelect: (date: Date) => void;
 }> = ({ isOpen, onClose, date, onSelect }) => {
-  const [selectedDate, setSelectedDate] = useState(date);
+  const [selectedDate, setSelectedDate] = useState(date instanceof Date ? date : new Date());
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && date instanceof Date) {
       setSelectedDate(date);
     }
   }, [isOpen, date]);
