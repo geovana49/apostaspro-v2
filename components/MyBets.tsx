@@ -1642,7 +1642,7 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                                     className="text-[15px] lowercase italic tracking-[0.4em] text-white/95 drop-shadow-md pr-1 relative z-10 inline-block transform -skew-x-[35deg]"
                                                     style={{ fontFamily: "'Great Vibes', cursive", lineHeight: 0 }}
                                                 >
-                                                    {bet.status}
+                                                    {bet.status.toLowerCase()}
                                                 </span>
                                             </div>
 
