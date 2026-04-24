@@ -142,6 +142,8 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const [isSearchHelpOpen, setIsSearchHelpOpen] = useState(false);
     const [pickerYear, setPickerYear] = useState(new Date().getFullYear());
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+    const [duplicatingBet, setDuplicatingBet] = useState<Bet | null>(null);
+    const [isDuplicateDatePickerOpen, setIsDuplicateDatePickerOpen] = useState(false);
 
     // Viewer State
     const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -1044,25 +1046,33 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         }
     };
 
-    const handleDuplicate = async (originalBet: Bet) => {
-        if (!currentUser) return;
+    const handleDuplicate = (originalBet: Bet) => {
+        setDuplicatingBet(originalBet);
+        setIsDuplicateDatePickerOpen(true);
+    };
 
+    const confirmDuplicate = async (targetDate: Date) => {
+        if (!currentUser || !duplicatingBet) return;
+
+        const dateStr = targetDate.toISOString().split('T')[0];
         const newBet: Bet = {
-            ...originalBet,
+            ...duplicatingBet,
             id: Date.now().toString(),
-            event: `${originalBet.event} (Cópia)`,
-            status: 'Rascunho',
-            coverages: originalBet.coverages.map(c => ({
+            date: dateStr,
+            event: `${duplicatingBet.event} (Cópia)`,
+            status: 'Pendente',
+            coverages: duplicatingBet.coverages.map(c => ({
                 ...c,
                 status: 'Pendente',
                 id: Date.now().toString() + Math.random().toString().slice(2, 6)
             })),
-            photos: originalBet.photos || []
+            photos: duplicatingBet.photos || []
         };
 
         try {
             await FirestoreService.saveBet(currentUser.uid, newBet);
             setLongPressId(null);
+            setDuplicatingBet(null);
         } catch (error) {
             console.error("Error duplicating bet:", error);
             alert("Erro ao duplicar a aposta.");
@@ -1265,6 +1275,16 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                         ? FirestoreService.getPhotoData(currentUser.uid, viewerParentId, photoId, 'bets')
                         : Promise.resolve(null)
                 }
+            />
+
+            <SingleDatePickerModal
+                isOpen={isDuplicateDatePickerOpen}
+                onClose={() => {
+                    setIsDuplicateDatePickerOpen(false);
+                    setDuplicatingBet(null);
+                }}
+                date={new Date()}
+                onSelect={confirmDuplicate}
             />
 
             <Modal

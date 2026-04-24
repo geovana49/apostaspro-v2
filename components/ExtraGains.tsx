@@ -208,6 +208,8 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         return (localStorage.getItem('apostaspro_gains_search_mode') as 'principal' | 'global') || 'principal';
     });
     const [isSearchHelpOpen, setIsSearchHelpOpen] = useState(false);
+    const [duplicatingGain, setDuplicatingGain] = useState<ExtraGain | null>(null);
+    const [isDuplicateDatePickerOpen, setIsDuplicateDatePickerOpen] = useState(false);
     const [periodType, setPeriodType] = useState<'month' | 'year' | 'custom' | 'all'>(() => {
         const saved = localStorage.getItem('apostaspro_extragains_period_type');
         return (saved as any) || 'month';
@@ -613,16 +615,32 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         }))
     };
 
-    const handleDuplicate = async (gain: ExtraGain) => {
-        if (!currentUser) return;
+    const handleDuplicate = (gain: ExtraGain) => {
+        setDuplicatingGain(gain);
+        setIsDuplicateDatePickerOpen(true);
+    };
+
+    const confirmDuplicate = async (targetDate: Date) => {
+        if (!currentUser || !duplicatingGain) return;
+
+        const dateStr = targetDate.toISOString().split('T')[0];
         const newGain: ExtraGain = {
-            ...gain,
+            ...duplicatingGain,
             id: Date.now().toString(),
-            game: gain.game ? `${gain.game} (Cópia)` : `${gain.origin} (Cópia)`,
-            photos: gain.photos || []
+            date: dateStr,
+            game: duplicatingGain.game ? `${duplicatingGain.game} (Cópia)` : `${duplicatingGain.origin} (Cópia)`,
+            status: 'Pendente',
+            coverages: duplicatingGain.coverages?.map(c => ({
+                ...c,
+                status: 'Pendente',
+                id: Date.now().toString() + Math.random().toString().slice(2, 6)
+            })),
+            photos: duplicatingGain.photos || []
         };
+
         try {
             await FirestoreService.saveGain(currentUser.uid, newGain);
+            setDuplicatingGain(null);
         } catch (error) {
             console.error("Error duplicating gain:", error);
             alert("Erro ao duplicar ganho.");
@@ -888,6 +906,16 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                         ? FirestoreService.getPhotoData(currentUser.uid, viewerParentId, photoId, 'gains')
                         : Promise.resolve(null)
                 }
+            />
+
+            <SingleDatePickerModal
+                isOpen={isDuplicateDatePickerOpen}
+                onClose={() => {
+                    setIsDuplicateDatePickerOpen(false);
+                    setDuplicatingGain(null);
+                }}
+                date={new Date()}
+                onSelect={confirmDuplicate}
             />
             <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-3">

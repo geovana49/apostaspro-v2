@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useLayoutEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronDown, Check, ZoomIn, ZoomOut, RotateCcw, RotateCw, Move, Crop, Pipette, ChevronUp, Gamepad2, Trophy, Star, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target, Search, ChevronLeft, ChevronRight, Download, Sun, Contrast, Maximize, Minimize, FlipHorizontal, FlipVertical, Sparkles, Scissors, Scaling, RefreshCw, Loader2 } from 'lucide-react';
+import { X, ChevronDown, Check, ZoomIn, ZoomOut, RotateCcw, RotateCw, Move, Crop, Pipette, ChevronUp, Gamepad2, Trophy, Star, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, Sun, Contrast, Maximize, Minimize, FlipHorizontal, FlipVertical, Sparkles, Scissors, Scaling, RefreshCw, Loader2 } from 'lucide-react';
 
 // --- Color Helpers ---
 const hexToRgb = (hex: string) => {
@@ -1980,17 +1980,29 @@ const Calendar: React.FC<{
 
   const handlePrevMonth = () => setViewDate(new Date(year, month - 1, 1));
   const handleNextMonth = () => setViewDate(new Date(year, month + 1, 1));
+  const handlePrevYear = () => setViewDate(new Date(year - 1, month, 1));
+  const handleNextYear = () => setViewDate(new Date(year + 1, month, 1));
 
   return (
     <div className="bg-[#0d1121] border border-white/5 rounded-xl p-4 select-none">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={handlePrevMonth} className="p-1 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors">
-          <ChevronLeft size={18} />
-        </button>
-        <span className="font-bold text-white capitalize">{months[month]} {year}</span>
-        <button onClick={handleNextMonth} className="p-1 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors">
-          <ChevronRight size={18} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button onClick={handlePrevYear} className="p-1 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors" title="Ano Anterior">
+            <ChevronsLeft size={18} />
+          </button>
+          <button onClick={handlePrevMonth} className="p-1 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors" title="Mês Anterior">
+            <ChevronLeft size={18} />
+          </button>
+        </div>
+        <span className="font-bold text-white capitalize text-sm">{months[month]} {year}</span>
+        <div className="flex items-center gap-1">
+          <button onClick={handleNextMonth} className="p-1 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors" title="Próximo Mês">
+            <ChevronRight size={18} />
+          </button>
+          <button onClick={handleNextYear} className="p-1 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors" title="Próximo Ano">
+            <ChevronsRight size={18} />
+          </button>
+        </div>
       </div>
       <div className="grid grid-cols-7 gap-1 mb-2 text-center">
         {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => (
