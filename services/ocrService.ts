@@ -21,7 +21,7 @@ class OCRService {
         if (!this.worker) {
             try {
                 console.log('[OCR v2.2] Initializing Tesseract worker (por+eng)...');
-                this.worker = await createWorker('por+eng', 1, {
+                this.worker = await createWorker('por', 1, {
                     logger: m => console.log('[Tesseract Progress]', m.status, Math.round(m.progress * 100) + '%'),
                     workerPath: 'https://unpkg.com/tesseract.js@v5.1.0/dist/worker.min.js',
                     corePath: 'https://unpkg.com/tesseract.js-core@v5.1.0/tesseract-core.wasm.js',

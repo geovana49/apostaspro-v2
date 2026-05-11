@@ -134,17 +134,10 @@ export const SmartScannerModal: React.FC<SmartScannerModalProps> = ({
 
             let value: any = text;
 
+            // Simple replacements to fix common OCR errors in numbers
             if (type === 'odd' || type === 'stake') {
-                // Try to parse numbers
-                const match = text.match(/[\d.,]+/);
-                if (match) {
-                    value = parseFloat(match[0].replace(',', '.'));
-                }
-            } else if (type === 'bookmaker') {
-                 // Try to match with known bookmakers
-                 const houses = ['betano', 'bet365', 'br4', 'nacional', 'sportingbet', 'kto', 'novibet', 'pixbet', 'estrela', 'superbet'];
-                 const found = houses.find(h => text.toLowerCase().includes(h));
-                 if (found) value = found.charAt(0).toUpperCase() + found.slice(1);
+                value = text.replace(/,/g, '.').replace(/[^\d.-]/g, '');
+                if (value) value = parseFloat(value);
             }
 
             if (value && String(value).trim() !== '') {
