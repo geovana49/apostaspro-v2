@@ -18,7 +18,14 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
-    const [expandedBookmaker, setExpandedBookmaker] = useState<string | null>(null); // For Top 3 expansion
+    const [expandedBookmaker, setExpandedBookmaker] = useState<string | null>(null);
+
+    const parseDate = (dateStr: string) => {
+        if (!dateStr || typeof dateStr !== 'string') return new Date();
+        const datePart = dateStr.split('T')[0];
+        const [year, month, day] = datePart.split('-').map(Number);
+        return new Date(year, month - 1, day);
+    };
 
 
     // Period Options with Icons
@@ -158,7 +165,7 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
 
         const resolvedBets = filteredBets
             .filter(b => !['Pendente', 'Rascunho'].includes(b.status))
-            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            .sort((a, b) => parseDate(a.date).getTime() - parseDate(b.date).getTime());
 
         let cumulativeProfit = 0;
         let resolvedStaked = 0;
@@ -172,7 +179,7 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
             cumulativeProfit += profit;
 
             return {
-                date: new Date(bet.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
+                date: parseDate(bet.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
                 profit: cumulativeProfit,
                 value: profit
             };
@@ -285,7 +292,7 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
 
         // Group bets by month
         allResolvedBets.forEach(bet => {
-            const date = new Date(bet.date);
+            const date = parseDate(bet.date);
             const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
             const { profit } = calculateBetStats(bet);
             monthlyProfits[key] = (monthlyProfits[key] || 0) + profit;
@@ -511,7 +518,7 @@ const Overview: React.FC<OverviewProps> = ({ bets, gains, settings, setSettings,
                             return (
                                 <div key={bet.id} className="bg-[#090c19]/40 p-3 rounded-lg border border-primary/10 hover:border-primary/30 transition-colors">
                                     <div className="flex justify-between items-start mb-2">
-                                        <span className="text-xs text-textMuted">{new Date(bet.date).toLocaleDateString()}</span>
+                                        <span className="text-xs text-textMuted">{parseDate(bet.date).toLocaleDateString()}</span>
                                         <span className="text-[10px] font-bold bg-primary/20 text-primary px-1.5 py-0.5 rounded border border-primary/20">2X</span>
                                     </div>
                                     <h4 className="font-bold text-white text-sm mb-1 truncate">{bet.event}</h4>

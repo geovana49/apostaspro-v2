@@ -1129,10 +1129,14 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const confirmDuplicate = async (targetDate: Date) => {
         if (!currentUser || !duplicatingBet) return;
 
-        const dateStr = targetDate.toISOString().split('T')[0];
-        const newBet: Bet = {
+        const year = targetDate.getFullYear();
+        const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+        const day = String(targetDate.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+        
+        const newForm: FormState = {
             ...duplicatingBet,
-            id: Date.now().toString(),
+            id: undefined,
             date: dateStr,
             event: `${duplicatingBet.event} (Cópia)`,
             status: 'Pendente',
@@ -1140,18 +1144,15 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                 ...c,
                 status: 'Pendente',
                 id: Date.now().toString() + Math.random().toString().slice(2, 6)
-            })),
-            photos: duplicatingBet.photos || []
+            }))
         };
 
-        try {
-            await FirestoreService.saveBet(currentUser.uid, newBet);
-            setLongPressId(null);
-            setDuplicatingBet(null);
-        } catch (error) {
-            console.error("Error duplicating bet:", error);
-            alert("Erro ao duplicar a aposta.");
-        }
+        dispatch({ type: 'SET_FORM', payload: newForm });
+        setTempPhotos(duplicatingBet.photos?.map(url => ({ url })) || []);
+        setIsEditing(false);
+        setIsModalOpen(true);
+        setDuplicatingBet(null);
+        setLongPressId(null);
     };
 
     const addCoverage = () => {

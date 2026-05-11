@@ -98,6 +98,15 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const [newCategoryColor, setNewCategoryColor] = useState(COLORS[6]);
     const [newCategoryBgColor, setNewCategoryBgColor] = useState<string>('');
     const [newCategoryIcon, setNewCategoryIcon] = useState('Star');
+    const [isDuplicateDatePickerOpen, setIsDuplicateDatePickerOpen] = useState(false);
+    const [isDuplicateActionModalOpen, setIsDuplicateActionModalOpen] = useState(false);
+
+    const parseDate = (dateStr: string) => {
+        if (!dateStr || typeof dateStr !== 'string') return new Date();
+        const datePart = dateStr.split('T')[0];
+        const [year, month, day] = datePart.split('-').map(Number);
+        return new Date(year, month - 1, day);
+    };
     const [newStatusName, setNewStatusName] = useState('');
     const [newStatusColor, setNewStatusColor] = useState(COLORS[6]);
     const [iconMode, setIconMode] = useState<'preset' | 'upload'>('preset');
@@ -593,7 +602,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     // Filter Logic
     const viewDate = startDate;
     const filteredGains = gains.filter(gain => {
-        const gainDate = new Date(gain.date);
+        const gainDate = parseDate(gain.date);
         const bookmakerName = bookmakers.find(b => b.id === gain.bookmakerId)?.name || '';
         const coverageBookmakers = gain.coverages?.map(c => bookmakers.find(b => b.id === c.bookmakerId)?.name || '').join(' ') || '';
 
@@ -677,28 +686,24 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const confirmDuplicate = async (targetDate: Date) => {
         if (!currentUser || !duplicatingGain) return;
 
-        const dateStr = targetDate.toISOString().split('T')[0];
-        const newGain: ExtraGain = {
+        const year = targetDate.getFullYear();
+        const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+        const day = String(targetDate.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+        
+        const newForm: FormState = {
             ...duplicatingGain,
-            id: Date.now().toString(),
+            id: undefined,
             date: dateStr,
             game: duplicatingGain.game ? `${duplicatingGain.game} (Cópia)` : `${duplicatingGain.origin} (Cópia)`,
-            status: 'Pendente',
-            coverages: duplicatingGain.coverages?.map(c => ({
-                ...c,
-                status: 'Pendente',
-                id: Date.now().toString() + Math.random().toString().slice(2, 6)
-            })),
-            photos: duplicatingGain.photos || []
+            status: 'Pendente'
         };
 
-        try {
-            await FirestoreService.saveGain(currentUser.uid, newGain);
-            setDuplicatingGain(null);
-        } catch (error) {
-            console.error("Error duplicating gain:", error);
-            alert("Erro ao duplicar ganho.");
-        }
+        dispatch({ type: 'SET_FORM', payload: newForm });
+        setTempPhotos(duplicatingGain.photos?.map(url => ({ url })) || []);
+        setEditingId(null);
+        setIsModalOpen(true);
+        setDuplicatingGain(null);
     };
 
     const handleDeleteModal = () => {
