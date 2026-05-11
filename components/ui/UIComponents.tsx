@@ -2168,7 +2168,7 @@ export const DuplicateActionModal: React.FC<{
         >
           <div className="flex items-center gap-3 text-left">
             <div className="p-2.5 bg-emerald-500/10 rounded-lg text-emerald-500 group-hover:scale-110 transition-transform">
-              <Calendar size={20} />
+              <CalendarIcon size={20} />
             </div>
             <div>
               <span className="text-white font-bold block">Manter Data Original</span>
