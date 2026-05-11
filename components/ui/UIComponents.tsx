@@ -89,6 +89,7 @@ const hslToRgb = (h: number, s: number, l: number) => {
     r: Math.round(f(0) * 255),
     g: Math.round(f(8) * 255),
     b: Math.round(f(4) * 255)
+  };
 };
 
 export const ScannerIcon = ({ size = 16, className = '' }: { size?: number, className?: string }) => (
