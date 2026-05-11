@@ -1,6 +1,6 @@
 import React, { useState, useReducer, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Button, Input, Dropdown, Modal, SingleDatePickerModal, ImageViewer, MoneyDisplay, BookmakerLogo } from './ui/UIComponents';
+import { Button, Input, Dropdown, Modal, SingleDatePickerModal, ImageViewer, MoneyDisplay, BookmakerLogo, ScannerIcon } from './ui/UIComponents';
 import { SmartScannerModal } from './ui/SmartScannerModal';
 import { FireImage } from './ui/FireImage';
 import {
@@ -966,8 +966,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                                     className="text-[#17baa4]/70 hover:text-[#17baa4] transition-colors p-1 flex items-center gap-1 bg-[#17baa4]/10 rounded px-2 ml-1"
                                                     title="Escanear Foto"
                                                 >
-                                                    <Sparkles size={12} />
-                                                    <span className="text-[12px]">🪄</span>
+                                                    <ScannerIcon size={16} />
                                                 </button>
                                                 <div className="w-px h-3 bg-white/10 mx-1" />
                                                 <button

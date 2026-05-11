@@ -89,8 +89,30 @@ const hslToRgb = (h: number, s: number, l: number) => {
     r: Math.round(f(0) * 255),
     g: Math.round(f(8) * 255),
     b: Math.round(f(4) * 255)
-  };
 };
+
+export const ScannerIcon = ({ size = 16, className = '' }: { size?: number, className?: string }) => (
+    <div className={`relative flex items-center justify-center ${className}`} style={{ width: size, height: size }}>
+        <style>
+        {`
+            @keyframes scan-laser-icon {
+                0% { top: 0%; opacity: 0; }
+                10% { opacity: 1; }
+                90% { opacity: 1; }
+                100% { top: calc(100% - 1px); opacity: 0; }
+            }
+            .animate-scan-laser-icon {
+                animation: scan-laser-icon 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+            }
+        `}
+        </style>
+        <div className="absolute top-0 left-0 w-[30%] h-[30%] border-t-[1.5px] border-l-[1.5px] border-current rounded-tl-[2px]" />
+        <div className="absolute top-0 right-0 w-[30%] h-[30%] border-t-[1.5px] border-r-[1.5px] border-current rounded-tr-[2px]" />
+        <div className="absolute bottom-0 left-0 w-[30%] h-[30%] border-b-[1.5px] border-l-[1.5px] border-current rounded-bl-[2px]" />
+        <div className="absolute bottom-0 right-0 w-[30%] h-[30%] border-b-[1.5px] border-r-[1.5px] border-current rounded-br-[2px]" />
+        <div className="absolute left-[10%] right-[10%] h-[1px] bg-current opacity-80 animate-scan-laser-icon shadow-[0_0_2px_currentColor]" />
+    </div>
+);
 
 // --- Custom Color Picker ---
 interface CustomColorPickerProps {
