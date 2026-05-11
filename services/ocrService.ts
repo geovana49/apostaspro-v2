@@ -20,6 +20,7 @@ export interface OCRResult {
 class OCRService {
     private worker: any = null;
     private isBusy: boolean = false;
+    private progressCallback: ((p: number) => void) | null = null;
 
     async getWorker() {
         if (!this.worker) {
@@ -27,8 +28,8 @@ class OCRService {
                 console.log('[OCR] Initializing Tesseract worker (por+eng)...');
                 this.worker = await createWorker(['por', 'eng'], 1, {
                     logger: m => {
-                        if (m.status === 'recognizing text') {
-                             console.log('[OCR Progress]', Math.round(m.progress * 100) + '%');
+                        if (m.status === 'recognizing text' && this.progressCallback) {
+                             this.progressCallback(Math.round(m.progress * 100));
                         }
                     },
                 });
@@ -47,18 +48,10 @@ class OCRService {
         }
 
         this.isBusy = true;
+        this.progressCallback = onProgress || null;
+        
         try {
             const worker = await this.getWorker();
-            
-            // Update logger for this specific run
-            worker.setOptions({
-                logger: (m: any) => {
-                    if (m.status === 'recognizing text' && onProgress) {
-                        onProgress(Math.round(m.progress * 100));
-                    }
-                }
-            });
-
             console.log('[OCR] Starting recognition...');
             const result = await worker.recognize(imageInput);
             const data = result.data;
