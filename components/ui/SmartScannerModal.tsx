@@ -211,6 +211,7 @@ export const SmartScannerModal: React.FC<SmartScannerModalProps> = ({
                             alt="Scanner Source" 
                             className="max-h-[75vh] lg:max-h-[80vh] max-w-full object-contain block pointer-events-none"
                             draggable={false}
+                            crossOrigin="anonymous"
                         />
 
                         {/* Crop Box */}
