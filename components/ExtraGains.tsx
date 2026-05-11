@@ -745,10 +745,17 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     };
 
     const handleCloseModal = () => {
+        // Discard all changes on close (X or Cancel)
+        localStorage.removeItem('apostaspro_draft_mybets');
+        localStorage.removeItem('apostaspro_live_draft');
+        if (formData.id) {
+            localStorage.removeItem(`apostaspro_draft_edit_${formData.id}`);
+        }
         dispatch({ type: 'SET_FORM', payload: initialFormState });
         setTempPhotos([]);
         setIsModalOpen(false);
-        setEditingId(null);
+        setIsEditing(false);
+        setEditingBet(null);
     };
 
     // ... (handlePhotoSelect, removePhoto remain the same)
@@ -1452,20 +1459,12 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                 }}
                             />
                         </div>
-                        <Dropdown label="Status" options={statusOptionsForForm} value={formData.status || 'Recebido'} onChange={async (v) => {
-                            dispatch({ type: 'UPDATE_FIELD', field: 'status', value: v as any });
-                            if (editingId && currentUser) {
-                                try {
-                                    const rawGainData: ExtraGain = { ...formData, id: editingId, status: v as any };
-                                    const gainData = JSON.parse(JSON.stringify(rawGainData, (k, v) => v === undefined ? null : v));
-                                    await FirestoreService.saveGain(currentUser.uid, gainData);
-                                    setIsModalOpen(false);
-                                    setEditingId(null);
-                                } catch (error) {
-                                    console.error('Error auto-saving status:', error);
-                                }
-                            }
-                        }} />
+                        <Dropdown 
+                            label="Status" 
+                            options={statusOptionsForForm} 
+                            value={formData.status || 'Recebido'} 
+                            onChange={(v) => dispatch({ type: 'UPDATE_FIELD', field: 'status', value: v as any })} 
+                        />
                     </div>
                     <Dropdown label="Origem" options={origins.map(o => ({ label: o.name, value: o.name, icon: <RenderIcon iconSource={o.icon} size={16} /> }))} value={formData.origin || ''} onChange={v => dispatch({ type: 'UPDATE_FIELD', field: 'origin', value: v })} />
                     <Dropdown
