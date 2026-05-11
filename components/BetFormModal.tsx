@@ -967,7 +967,7 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                                     title="Escanear Foto"
                                                 >
                                                     <Sparkles size={12} />
-                                                    <span className="text-[10px] font-bold">Scanner</span>
+                                                    <span className="text-[12px]">🪄</span>
                                                 </button>
                                                 <div className="w-px h-3 bg-white/10 mx-1" />
                                                 <button

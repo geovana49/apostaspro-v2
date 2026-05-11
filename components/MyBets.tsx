@@ -1,5 +1,6 @@
 import React, { useState, useReducer, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, SingleDatePickerModal, BookmakerLogo, DateSeparator, DuplicateActionModal } from './ui/UIComponents';
+import { SmartScannerModal } from './ui/SmartScannerModal';
 import { FireImage } from './ui/FireImage';
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
@@ -194,6 +195,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const [duplicatingBet, setDuplicatingBet] = useState<Bet | null>(null);
     const [isDuplicateDatePickerOpen, setIsDuplicateDatePickerOpen] = useState(false);
     const [isDuplicateActionModalOpen, setIsDuplicateActionModalOpen] = useState(false);
+    const [scannerData, setScannerData] = useState<{ isOpen: boolean, coverageId: string | null, photoUrl: string | null }>({ isOpen: false, coverageId: null, photoUrl: null });
 
     // Viewer State
     const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -2158,12 +2160,20 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                     <div className="h-px bg-white/5 my-2" />
 
                     <div>
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center justify-between mb-2">
                             <h3 className="text-sm font-bold text-primary uppercase tracking-wider">Coberturas</h3>
                             <div className="flex items-center gap-2">
                                 <Button size="sm" variant="neutral" onClick={addCoverage} className="text-[10px] h-8 px-3">
                                     <Plus size={14} /> Adicionar
                                 </Button>
+                            </div>
+                        </div>
+
+                        <div className="mb-4 bg-primary/10 border border-primary/20 rounded-lg p-3 text-xs text-gray-300 flex items-start gap-3">
+                            <Sparkles className="text-primary mt-0.5 shrink-0" size={16} />
+                            <div>
+                                <p className="font-bold text-primary mb-1">Novo: Scanner Mágico (BETA)</p>
+                                <p>Anexe uma foto do bilhete, clique no botão <strong>🪄</strong> na cobertura abaixo, recorte a Odd ou Stake na imagem e deixe a mágica preencher por você!</p>
                             </div>
                         </div>
 
@@ -2206,6 +2216,24 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                                 >
                                                     <Copy size={16} />
                                                 </button>
+                                                <div className="w-px h-3 bg-white/10 mx-1" />
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        if (tempPhotos.length === 0) {
+                                                            alert('Anexe pelo menos uma foto para usar o Scanner!');
+                                                            return;
+                                                        }
+                                                        const photo = tempPhotos[index] || tempPhotos[0];
+                                                        setScannerData({ isOpen: true, coverageId: cov.id, photoUrl: photo.url });
+                                                    }}
+                                                    className="text-[#17baa4]/70 hover:text-[#17baa4] transition-colors p-1 flex items-center gap-1 bg-[#17baa4]/10 rounded px-2 ml-1"
+                                                    title="Escanear Foto"
+                                                >
+                                                    <Sparkles size={12} />
+                                                    <span className="text-[12px]">🪄</span>
+                                                </button>
+                                                <div className="w-px h-3 bg-white/10 mx-1" />
                                                 <button
                                                     onClick={() => removeCoverage(cov.id)}
                                                     className="text-gray-600 hover:text-danger transition-colors p-1"
@@ -2467,6 +2495,21 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                         </div>
                     </div>
             </Modal>
+
+            <SmartScannerModal
+                isOpen={scannerData.isOpen}
+                onClose={() => setScannerData({ isOpen: false, coverageId: null, photoUrl: null })}
+                imageUrl={scannerData.photoUrl || ''}
+                onExtract={(type, value) => {
+                    if (!scannerData.coverageId) return;
+                    if (type === 'bookmaker') {
+                        const bk = bookmakers.find(b => b.name === value);
+                        if (bk) dispatch({ type: 'UPDATE_COVERAGE', id: scannerData.coverageId, field: 'bookmakerId', value: bk.id });
+                    } else {
+                        dispatch({ type: 'UPDATE_COVERAGE', id: scannerData.coverageId, field: type, value });
+                    }
+                }}
+            />
 
             {/* Floating Nova Aposta Button */}
             {showFloatingButton && (
