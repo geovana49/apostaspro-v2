@@ -1,10 +1,10 @@
 import React, { useState, useReducer, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
-import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, CustomColorPicker, RenderIcon, ICON_MAP, DateRangePickerModal, SingleDatePickerModal, DropdownOption, BookmakerLogo, DateSeparator, DuplicateActionModal } from './ui/UIComponents';
+import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, CustomColorPicker, RenderIcon, ICON_MAP, DateRangePickerModal, SingleDatePickerModal, DropdownOption, BookmakerLogo, DateSeparator, DuplicateActionModal, TextExtractionModal } from './ui/UIComponents';
 import { FireImage } from './ui/FireImage';
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronLeft, ChevronRight,
     Copy, MoreVertical, AlertCircle, ImageIcon, StickyNote, Trophy, Coins, Gamepad2, Paperclip, SearchX, Settings2,
-    Infinity, Eye, EyeOff, Maximize, Minimize, Palette, Box, Ban, Loader2, Ticket, Sparkles, Wand2, RefreshCw, HelpCircle
+    Infinity, Eye, EyeOff, Maximize, Minimize, Palette, Box, Ban, Loader2, Ticket, Sparkles, Wand2, RefreshCw, HelpCircle, ScanLine
 } from 'lucide-react';
 import { ExtraGain, Bookmaker, StatusItem, OriginItem, AppSettings, User, PromotionItem } from '../types';
 import BetFormModal from './BetFormModal';
@@ -212,6 +212,10 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const [duplicatingGain, setDuplicatingGain] = useState<ExtraGain | null>(null);
     const [isDuplicateDatePickerOpen, setIsDuplicateDatePickerOpen] = useState(false);
     const [isDuplicateActionModalOpen, setIsDuplicateActionModalOpen] = useState(false);
+
+    // Extraction State
+    const [extractionImageUrl, setExtractionImageUrl] = useState<string | null>(null);
+    const [isExtractionModalOpen, setIsExtractionModalOpen] = useState(false);
     const [periodType, setPeriodType] = useState<'month' | 'year' | 'custom' | 'all'>(() => {
         const saved = localStorage.getItem('apostaspro_extragains_period_type');
         return (saved as any) || 'month';
@@ -997,6 +1001,12 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 }
             />
 
+            <TextExtractionModal
+                isOpen={isExtractionModalOpen}
+                onClose={() => setIsExtractionModalOpen(false)}
+                imageUrl={extractionImageUrl || ''}
+            />
+
             <SingleDatePickerModal
                 isOpen={isDuplicateDatePickerOpen}
                 onClose={() => {
@@ -1594,8 +1604,16 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                         <button
                                             onClick={(e) => { e.stopPropagation(); openImageViewer(tempPhotos.map(p => p.url), index); }}
                                             className="absolute top-1.5 left-1.5 p-1.5 bg-black/70 text-white rounded-full hover:bg-primary transition-all z-20"
+                                            title="Ampliar"
                                         >
                                             <Maximize size={12} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setExtractionImageUrl(photo.url); setIsExtractionModalOpen(true); }}
+                                            className="absolute top-1.5 left-10 p-1.5 bg-black/70 text-white rounded-full hover:bg-secondary transition-all z-20"
+                                            title="Extrair Nomes/Texto"
+                                        >
+                                            <ScanLine size={12} />
                                         </button>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); removePhoto(index); }}

@@ -1,11 +1,11 @@
 import React, { useState, useReducer, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
-import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, SingleDatePickerModal, BookmakerLogo, DateSeparator, DuplicateActionModal, ScannerIcon } from './ui/UIComponents';
+import { Card, Button, Input, Dropdown, Modal, Badge, MoneyDisplay, ImageViewer, SingleDatePickerModal, BookmakerLogo, DateSeparator, DuplicateActionModal, ScannerIcon, TextExtractionModal } from './ui/UIComponents';
 import { SmartScannerModal } from './ui/SmartScannerModal';
 import { FireImage } from './ui/FireImage';
 import {
     Plus, Trash2, Edit2, X, Check, Search, Filter, Download, Upload, Calendar, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
     Copy, MoreVertical, AlertCircle, ImageIcon, Ticket, ArrowUpRight, ArrowDownRight, Minus, DollarSign, Percent, Target, Zap,
-    Maximize, Minimize, Palette, Box, Ban, Loader2, Sparkles, Wand2, Paperclip, StickyNote, Trophy, Coins, Gamepad2, SearchX, Settings2, Infinity, Eye, EyeOff, RefreshCw, HelpCircle
+    Maximize, Minimize, Palette, Box, Ban, Loader2, Sparkles, Wand2, Paperclip, StickyNote, Trophy, Coins, Gamepad2, SearchX, Settings2, Infinity, Eye, EyeOff, RefreshCw, HelpCircle, ScanLine
 } from 'lucide-react';
 import { Bet, Bookmaker, StatusItem, PromotionItem, AppSettings, Coverage, User } from '../types';
 import { FirestoreService } from '../services/firestoreService';
@@ -196,6 +196,10 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const [isDuplicateDatePickerOpen, setIsDuplicateDatePickerOpen] = useState(false);
     const [isDuplicateActionModalOpen, setIsDuplicateActionModalOpen] = useState(false);
     const [scannerData, setScannerData] = useState<{ isOpen: boolean, coverageId: string | null, photoUrl: string | null }>({ isOpen: false, coverageId: null, photoUrl: null });
+
+    // Extraction State
+    const [extractionImageUrl, setExtractionImageUrl] = useState<string | null>(null);
+    const [isExtractionModalOpen, setIsExtractionModalOpen] = useState(false);
 
     // Viewer State
     const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -1381,6 +1385,12 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                 }
             />
 
+            <TextExtractionModal
+                isOpen={isExtractionModalOpen}
+                onClose={() => setIsExtractionModalOpen(false)}
+                imageUrl={extractionImageUrl || ''}
+            />
+
             <DuplicateActionModal
                 isOpen={isDuplicateActionModalOpen}
                 onClose={() => setIsDuplicateActionModalOpen(false)}
@@ -2470,6 +2480,18 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                                 title="Ver foto"
                                             >
                                                 <Maximize size={14} className="sm:w-4 sm:h-4" />
+                                            </button>
+
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setExtractionImageUrl(photo.url);
+                                                    setIsExtractionModalOpen(true);
+                                                }}
+                                                className="absolute top-1.5 left-10 p-1.5 bg-black/70 text-white rounded-full hover:bg-secondary transition-all shadow-lg active:scale-90 z-20 sm:p-2"
+                                                title="Extrair Nomes/Texto"
+                                            >
+                                                <ScanLine size={14} className="sm:w-4 sm:h-4" />
                                             </button>
 
                                             {/* Delete Button */}

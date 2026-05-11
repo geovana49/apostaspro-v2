@@ -1,7 +1,8 @@
 
 import React, { useState, useRef, useEffect, useCallback, useLayoutEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronDown, Check, ZoomIn, ZoomOut, RotateCcw, RotateCw, Move, Crop, Pipette, ChevronUp, Gamepad2, Trophy, Star, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, Sun, Contrast, Maximize, Minimize, FlipHorizontal, FlipVertical, Sparkles, Scissors, Scaling, RefreshCw, Loader2, Calendar as CalendarIcon, Copy } from 'lucide-react';
+import { X, ChevronDown, Check, ZoomIn, ZoomOut, RotateCcw, RotateCw, Move, Crop, Pipette, ChevronUp, Gamepad2, Trophy, Star, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, Sun, Contrast, Maximize, Minimize, FlipHorizontal, FlipVertical, Sparkles, Scissors, Scaling, RefreshCw, Loader2, Calendar as CalendarIcon, Copy, Type, ScanLine, Type as TypeIcon } from 'lucide-react';
+import { ocrService } from '../services/ocrService';
 
 // --- Color Helpers ---
 const hexToRgb = (hex: string) => {
@@ -2200,4 +2201,91 @@ export const DuplicateActionModal: React.FC<{
       </div>
     </Modal>
   );
+};
+
+// --- Text Extraction Modal ---
+export const TextExtractionModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    imageUrl: string;
+    onSelect?: (text: string) => void;
+}> = ({ isOpen, onClose, imageUrl, onSelect }) => {
+    const [lines, setLines] = useState<string[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+    useEffect(() => {
+        if (isOpen && imageUrl) {
+            extract();
+        }
+    }, [isOpen, imageUrl]);
+
+    const extract = async () => {
+        setIsLoading(true);
+        try {
+            const result = await ocrService.runOCR(imageUrl);
+            const filteredLines = result.text
+                .split('\n')
+                .map(l => l.trim())
+                .filter(l => l.length > 2);
+            setLines(filteredLines);
+        } catch (err) {
+            console.error("OCR Error:", err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleCopy = (text: string, index: number) => {
+        navigator.clipboard.writeText(text);
+        setCopiedIndex(index);
+        setTimeout(() => setCopiedIndex(null), 2000);
+        if (onSelect) onSelect(text);
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="Extrair Nomes e Textos"
+            maxWidth="max-w-md"
+        >
+            <div className="space-y-4">
+                <div className="relative aspect-video rounded-xl overflow-hidden border border-white/10 bg-black/20 mb-4">
+                    <img src={imageUrl} alt="Scan Target" className="w-full h-full object-contain" />
+                    {isLoading && (
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+                            <Loader2 size={32} className="text-primary animate-spin" />
+                            <p className="text-xs font-bold text-white uppercase tracking-widest">Escaneando Imagem...</p>
+                        </div>
+                    )}
+                </div>
+
+                <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                    {lines.length === 0 && !isLoading ? (
+                        <p className="text-center py-8 text-gray-500 text-sm italic">Nenhum texto legível encontrado.</p>
+                    ) : (
+                        lines.map((line, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => handleCopy(line, idx)}
+                                className="w-full text-left p-3 rounded-lg bg-white/5 border border-white/5 hover:border-primary/30 hover:bg-primary/5 transition-all group flex items-center justify-between gap-3"
+                            >
+                                <span className="text-sm text-gray-200 line-clamp-2">{line}</span>
+                                <div className="shrink-0 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-primary group-hover:text-black transition-all">
+                                    {copiedIndex === idx ? <Check size={14} /> : <Copy size={14} />}
+                                </div>
+                            </button>
+                        ))
+                    )}
+                </div>
+
+                <p className="text-[10px] text-center text-gray-500 mt-4 italic">
+                    * Clique em uma linha para copiar para sua área de transferência.
+                </p>
+            </div>
+        </Modal>
+    );
 };
