@@ -2224,7 +2224,7 @@ export const TextExtractionModal: React.FC<{
     const [lines, setLines] = useState<string[]>([]);
     const [words, setWords] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [copiedIndex, setCopiedIndex] = useState<number | string | null>(null);
+    const [copiedIndex, setCopiedIndex] = useState<string | null>(null);
     const [imgRect, setImgRect] = useState<{ w: number, h: number, nw: number, nh: number } | null>(null);
     const imgRef = useRef<HTMLImageElement>(null);
 
@@ -2265,7 +2265,7 @@ export const TextExtractionModal: React.FC<{
         }
     };
 
-    const handleCopy = (text: string, index: number | string) => {
+    const handleCopy = (text: string, index: string) => {
         navigator.clipboard.writeText(text);
         setCopiedIndex(index);
         setTimeout(() => setCopiedIndex(null), 2000);
@@ -2278,97 +2278,92 @@ export const TextExtractionModal: React.FC<{
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title="Extrair Texto Interativo"
-            maxWidth="max-w-5xl"
+            title="Google Lens Style Scanner"
+            maxWidth="max-w-6xl"
             zIndex={zIndex}
         >
-            <div className="flex flex-col lg:flex-row gap-6 min-h-[400px]">
-                {/* Image Section with Overlays */}
-                <div className="flex-1 relative bg-black/40 rounded-xl overflow-hidden border border-white/10 select-none flex items-center justify-center min-h-[300px]">
-                    <img 
-                        ref={imgRef}
-                        src={imageUrl} 
-                        alt="Scan Target" 
-                        className="max-w-full max-h-[70vh] object-contain block" 
-                        onLoad={handleImageLoad}
-                    />
-                    
-                    {/* Word Overlays */}
-                    {!isLoading && imgRect && words.map((word, idx) => {
-                        const scaleX = imgRect.w / imgRect.nw;
-                        const scaleY = imgRect.h / imgRect.nh;
+            <div className="relative min-h-[500px] flex flex-col">
+                {/* Main Content Area */}
+                <div className="flex-1 relative bg-black/60 rounded-2xl overflow-hidden border border-white/5 select-none flex items-center justify-center p-4">
+                    <div className="relative inline-block">
+                        <img 
+                            ref={imgRef}
+                            src={imageUrl} 
+                            alt="Scan Target" 
+                            className="max-w-full max-h-[75vh] object-contain block rounded-lg shadow-2xl" 
+                            onLoad={handleImageLoad}
+                        />
                         
-                        // Calculate offset if image is centered in container
-                        const offsetX = (imgRef.current?.offsetLeft || 0);
-                        const offsetY = (imgRef.current?.offsetTop || 0);
+                        {/* Interactive Overlays (Google Lens Style) */}
+                        {!isLoading && imgRect && words.map((word, idx) => {
+                            const scaleX = imgRect.w / imgRect.nw;
+                            const scaleY = imgRect.h / imgRect.nh;
+                            
+                            const style = {
+                                left: (word.bbox.x0 * scaleX),
+                                top: (word.bbox.y0 * scaleY),
+                                width: (word.bbox.x1 - word.bbox.x0) * scaleX,
+                                height: (word.bbox.y1 - word.bbox.y0) * scaleY,
+                            };
+                            
+                            const isCopied = copiedIndex === `w-${idx}`;
 
-                        const style = {
-                            left: offsetX + (word.bbox.x0 * scaleX),
-                            top: offsetY + (word.bbox.y0 * scaleY),
-                            width: (word.bbox.x1 - word.bbox.x0) * scaleX,
-                            height: (word.bbox.y1 - word.bbox.y0) * scaleY,
-                        };
-                        return (
-                            <div
-                                key={idx}
-                                style={style}
-                                onClick={() => handleCopy(word.text, `w-${idx}`)}
-                                className="absolute bg-primary/0 hover:bg-primary/30 border border-transparent hover:border-primary/50 cursor-pointer transition-all group z-10"
-                                title={word.text}
-                            >
-                                <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-black/90 backdrop-blur-sm text-[10px] px-2 py-1 rounded border border-white/20 text-white whitespace-nowrap pointer-events-none shadow-xl transition-opacity flex items-center gap-1.5">
-                                    {copiedIndex === `w-${idx}` ? <Check size={10} className="text-primary" /> : <Copy size={10} />}
-                                    {copiedIndex === `w-${idx}` ? 'Copiado!' : 'Copiar'}
+                            return (
+                                <div
+                                    key={idx}
+                                    style={style}
+                                    onClick={(e) => { e.stopPropagation(); handleCopy(word.text, `w-${idx}`); }}
+                                    className={`absolute cursor-pointer transition-all duration-200 rounded-[2px] z-10 group
+                                        ${isCopied ? 'bg-primary shadow-[0_0_15px_rgba(0,242,234,0.6)] z-20 scale-110' : 'bg-white/10 hover:bg-primary/40 border border-white/5 hover:border-primary/50'}
+                                    `}
+                                >
+                                    {/* Action Popup */}
+                                    <div className={`absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/90 backdrop-blur-md rounded-full border border-white/10 text-white text-[11px] font-bold shadow-2xl flex items-center gap-2 transition-all pointer-events-none whitespace-nowrap z-50
+                                        ${isCopied ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-90 group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100'}
+                                    `}>
+                                        {isCopied ? <Check size={12} className="text-primary" /> : <Copy size={12} className="text-primary" />}
+                                        {isCopied ? 'Copiado!' : 'Copiar'}
+                                    </div>
                                 </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
+                    </div>
 
                     {isLoading && (
-                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3 z-20">
-                            <Loader2 size={40} className="text-primary animate-spin" />
-                            <p className="text-sm font-bold text-white uppercase tracking-widest animate-pulse">Mapeando áreas...</p>
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center gap-4 z-40">
+                            <div className="relative">
+                                <Loader2 size={48} className="text-primary animate-spin" />
+                                <div className="absolute inset-0 blur-xl bg-primary/20 animate-pulse" />
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <p className="text-sm font-black text-white uppercase tracking-[0.2em] mb-1">Analisando Imagem</p>
+                                <div className="flex gap-1">
+                                    {[0,1,2].map(i => (
+                                        <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: `${i * 0.1}s` }} />
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
 
-                {/* Sidebar List */}
-                <div className="w-full lg:w-80 flex flex-col">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2 text-gray-400">
-                            <ScanLine size={16} className="text-primary" />
-                            <span className="text-xs font-bold uppercase tracking-widest">Textos</span>
-                        </div>
-                        <Badge variant="neutral" className="text-[10px]">{lines.length} linhas</Badge>
+                {/* Footer Controls */}
+                <div className="mt-6 flex flex-col items-center gap-4">
+                    <div className="flex items-center gap-3 px-6 py-3 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm">
+                        <ScanLine size={20} className="text-primary animate-pulse" />
+                        <span className="text-xs font-bold text-gray-300 uppercase tracking-widest">
+                            {isLoading ? 'Escaneando...' : `Toque em qualquer texto destacado para copiar`}
+                        </span>
                     </div>
 
-                    <div className="flex-1 max-h-[60vh] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                        {lines.length === 0 && !isLoading ? (
-                            <div className="flex flex-col items-center justify-center py-20 text-gray-500 text-center px-4">
-                                <SearchX size={32} className="mb-2 opacity-20" />
-                                <p className="text-sm italic">Nenhum texto legível encontrado nesta imagem.</p>
-                            </div>
-                        ) : (
-                            lines.map((line, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => handleCopy(line, idx)}
-                                    className={`w-full text-left p-3 rounded-lg border transition-all group flex items-center justify-between gap-3
-                                        ${copiedIndex === idx ? 'bg-primary/10 border-primary/50' : 'bg-white/5 border-white/5 hover:border-primary/30 hover:bg-primary/5'}`}
-                                >
-                                    <span className="text-xs text-gray-200 line-clamp-2 leading-relaxed">{line}</span>
-                                    <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all
-                                        ${copiedIndex === idx ? 'bg-primary text-black' : 'bg-white/5 group-hover:bg-primary group-hover:text-black'}`}>
-                                        {copiedIndex === idx ? <Check size={12} /> : <Copy size={12} />}
-                                    </div>
-                                </button>
-                            ))
-                        )}
+                    <div className="flex gap-3">
+                        <button 
+                            onClick={onClose}
+                            className="px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold uppercase tracking-wider transition-all border border-white/5"
+                        >
+                            Fechar
+                        </button>
                     </div>
-                    
-                    <p className="text-[10px] text-center text-gray-500 mt-6 italic p-3 bg-white/5 rounded-lg border border-white/5">
-                        Dica: Você pode clicar diretamente nas palavras da imagem ou usar a lista ao lado.
-                    </p>
                 </div>
             </div>
         </Modal>
