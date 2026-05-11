@@ -59,12 +59,12 @@ class OCRService {
             }
 
             return {
-                text: data.text,
-                words: data.words.map((w: any) => ({
+                text: data.text || '',
+                words: Array.isArray(data.words) ? data.words.map((w: any) => ({
                     text: w.text,
                     bbox: w.bbox,
                     confidence: w.confidence
-                }))
+                })) : []
             };
         } finally {
             this.isBusy = false;
