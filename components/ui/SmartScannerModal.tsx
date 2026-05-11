@@ -91,17 +91,36 @@ export const SmartScannerModal: React.FC<SmartScannerModalProps> = ({
 
     const extractCroppedImage = async (): Promise<string> => {
         return new Promise((resolve, reject) => {
-            if (!imgRef.current) return reject('No image');
+            if (!imgRef.current || !containerRef.current) return reject('No image');
             
             const img = imgRef.current;
+            const container = containerRef.current;
+            
+            // Get actual dimensions and position of the image on screen
+            const imgRect = img.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+
+            // Calculate crop area in pixels relative to the image itself
+            const scaleX = img.naturalWidth / imgRect.width;
+            const scaleY = img.naturalHeight / imgRect.height;
+
+            const cropLeftPx = (crop.x / 100) * containerRect.width;
+            const cropTopPx = (crop.y / 100) * containerRect.height;
+            const cropWidthPx = (crop.width / 100) * containerRect.width;
+            const cropHeightPx = (crop.height / 100) * containerRect.height;
+
+            // Adjust for the image's offset within the container (letterboxing)
+            const offsetX = imgRect.left - containerRect.left;
+            const offsetY = imgRect.top - containerRect.top;
+
+            const sourceX = Math.max(0, (cropLeftPx - offsetX) * scaleX);
+            const sourceY = Math.max(0, (cropTopPx - offsetY) * scaleY);
+            const sourceW = Math.min(img.naturalWidth - sourceX, cropWidthPx * scaleX);
+            const sourceH = Math.min(img.naturalHeight - sourceY, cropHeightPx * scaleY);
+
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             if (!ctx) return reject('No context');
-
-            const sourceX = (crop.x / 100) * img.naturalWidth;
-            const sourceY = (crop.y / 100) * img.naturalHeight;
-            const sourceW = (crop.width / 100) * img.naturalWidth;
-            const sourceH = (crop.height / 100) * img.naturalHeight;
 
             canvas.width = sourceW;
             canvas.height = sourceH;
