@@ -683,7 +683,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         setIsDuplicateActionModalOpen(true);
     };
 
-    const confirmDuplicate = async (targetDate: Date) => {
+    const confirmDuplicate = async (targetDate: Date, directSave = false) => {
         if (!currentUser || !duplicatingGain) return;
 
         const year = targetDate.getFullYear();
@@ -691,19 +691,35 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         const day = String(targetDate.getDate()).padStart(2, '0');
         const dateStr = `${year}-${month}-${day}`;
         
-        const newForm: FormState = {
+        const newGain: ExtraGain = {
             ...duplicatingGain,
-            id: undefined,
+            id: Date.now().toString(),
             date: dateStr,
             game: duplicatingGain.game ? `${duplicatingGain.game} (Cópia)` : `${duplicatingGain.origin} (Cópia)`,
-            status: 'Pendente'
+            status: 'Pendente',
+            coverages: duplicatingGain.coverages?.map(c => ({
+                ...c,
+                status: 'Pendente',
+                id: Date.now().toString() + Math.random().toString().slice(2, 6)
+            })),
+            photos: duplicatingGain.photos || []
         };
 
-        dispatch({ type: 'SET_FORM', payload: newForm });
-        setTempPhotos(duplicatingGain.photos?.map(url => ({ url })) || []);
-        setEditingId(null);
-        setIsModalOpen(true);
-        setDuplicatingGain(null);
+        if (directSave) {
+            try {
+                await FirestoreService.saveGain(currentUser.uid, newGain);
+                setDuplicatingGain(null);
+            } catch (error) {
+                console.error("Error duplicating gain:", error);
+                alert("Erro ao duplicar ganho.");
+            }
+        } else {
+            dispatch({ type: 'SET_FORM', payload: { ...newGain, id: undefined } });
+            setTempPhotos(duplicatingGain.photos?.map(url => ({ url })) || []);
+            setEditingId(null);
+            setIsModalOpen(true);
+            setDuplicatingGain(null);
+        }
     };
 
     const handleDeleteModal = () => {
@@ -1583,12 +1599,12 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                 onClose={() => setIsDuplicateActionModalOpen(false)}
                 onDuplicateToday={() => {
                     setIsDuplicateActionModalOpen(false);
-                    confirmDuplicate(new Date());
+                    confirmDuplicate(new Date(), true);
                 }}
                 onKeepOriginalDate={() => {
                     setIsDuplicateActionModalOpen(false);
                     if (duplicatingGain) {
-                        confirmDuplicate(new Date(duplicatingGain.date + 'T12:00:00'));
+                        confirmDuplicate(parseDate(duplicatingGain.date), true);
                     }
                 }}
                 onChooseDate={() => {

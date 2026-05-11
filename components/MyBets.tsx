@@ -1126,7 +1126,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         setIsDuplicateActionModalOpen(true);
     };
 
-    const confirmDuplicate = async (targetDate: Date) => {
+    const confirmDuplicate = async (targetDate: Date, directSave = false) => {
         if (!currentUser || !duplicatingBet) return;
 
         const year = targetDate.getFullYear();
@@ -1134,9 +1134,9 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         const day = String(targetDate.getDate()).padStart(2, '0');
         const dateStr = `${year}-${month}-${day}`;
         
-        const newForm: FormState = {
+        const newBet: Bet = {
             ...duplicatingBet,
-            id: undefined,
+            id: Date.now().toString(),
             date: dateStr,
             event: `${duplicatingBet.event} (Cópia)`,
             status: 'Pendente',
@@ -1144,15 +1144,28 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                 ...c,
                 status: 'Pendente',
                 id: Date.now().toString() + Math.random().toString().slice(2, 6)
-            }))
+            })),
+            photos: duplicatingBet.photos || []
         };
 
-        dispatch({ type: 'SET_FORM', payload: newForm });
-        setTempPhotos(duplicatingBet.photos?.map(url => ({ url })) || []);
-        setIsEditing(false);
-        setIsModalOpen(true);
-        setDuplicatingBet(null);
-        setLongPressId(null);
+        if (directSave) {
+            try {
+                await FirestoreService.saveBet(currentUser.uid, newBet);
+                setDuplicatingBet(null);
+                setLongPressId(null);
+            } catch (error) {
+                console.error("Error duplicating bet:", error);
+                alert("Erro ao duplicar a aposta.");
+            }
+        } else {
+            // For custom date, we open the modal as requested
+            dispatch({ type: 'SET_FORM', payload: { ...newBet, id: undefined } });
+            setTempPhotos(duplicatingBet.photos?.map(url => ({ url })) || []);
+            setIsEditing(false);
+            setIsModalOpen(true);
+            setDuplicatingBet(null);
+            setLongPressId(null);
+        }
     };
 
     const addCoverage = () => {
@@ -1368,12 +1381,12 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                 onClose={() => setIsDuplicateActionModalOpen(false)}
                 onDuplicateToday={() => {
                     setIsDuplicateActionModalOpen(false);
-                    confirmDuplicate(new Date());
+                    confirmDuplicate(new Date(), true);
                 }}
                 onKeepOriginalDate={() => {
                     setIsDuplicateActionModalOpen(false);
                     if (duplicatingBet) {
-                        confirmDuplicate(new Date(duplicatingBet.date + 'T12:00:00'));
+                        confirmDuplicate(parseDate(duplicatingBet.date), true);
                     }
                 }}
                 onChooseDate={() => {
