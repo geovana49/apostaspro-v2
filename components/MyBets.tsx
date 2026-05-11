@@ -1105,14 +1105,11 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
     const handleCloseModal = () => {
         const hasContent = formData.event || formData.notes || formData.coverages.length > 0 || tempPhotos.length > 0;
 
-        if (hasContent && !isUploading) {
-            if (isEditing) {
-                handleSave();
-            } else {
-                saveAsDraft();
-            }
+        // User requested: Only save on close if it's an edit. New bets should be discarded.
+        if (isEditing && hasContent && !isUploading) {
+            handleSave();
         } else {
-            // Already empty or safe to close
+            // Already empty or discard draft for new bets
             localStorage.removeItem('apostaspro_draft_mybets');
             localStorage.removeItem('apostaspro_live_draft');
             if (formData.id) {
