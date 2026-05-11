@@ -439,7 +439,9 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     };
 
     const parseDate = (dateStr: string) => {
-        const [year, month, day] = dateStr.split('-').map(Number);
+        if (!dateStr) return new Date();
+        const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+        const [year, month, day] = datePart.split('-').map(Number);
         return new Date(year, month - 1, day);
     };
 
@@ -653,8 +655,9 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const calculateTotal = (items: ExtraGain[]) => {
         console.log('📊 Calculating total for', items.length, 'items');
         return items.reduce((acc, gain) => {
-            console.log(`Item: ${gain.origin} | Status: ${gain.status} | Amount: ${gain.amount} | Valid ? ${validStatuses.includes(gain.status)}`);
-            if (validStatuses.includes(gain.status)) {
+            const isValid = validStatuses.includes(gain.status);
+            console.log(`Item: ${gain.origin} | Status: ${gain.status} | Date: ${gain.date} | Amount: ${gain.amount} | Valid ? ${isValid}`);
+            if (isValid) {
                 return acc + gain.amount;
             }
             return acc;
@@ -664,10 +667,23 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const stats = {
         totalInPeriod: calculateTotal(filteredGains),
         totalYearly: calculateTotal(gains.filter(g => {
-            const d = new Date(g.date);
+            const d = parseDate(g.date);
             return d.getFullYear() === viewDate.getFullYear();
         }))
     };
+    
+    // Check if there are items in other periods to help the user
+    const hasItemsInOtherMonths = gains.some(g => {
+        const d = parseDate(g.date);
+        return d.getFullYear() === viewDate.getFullYear() && d.getMonth() !== viewDate.getMonth();
+    });
+    
+    const hasItemsInOtherYears = gains.some(g => {
+        const d = parseDate(g.date);
+        return d.getFullYear() !== viewDate.getFullYear();
+    });
+
+    const totalGainsInYear = gains.filter(g => parseDate(g.date).getFullYear() === viewDate.getFullYear()).length;
 
     const handleDuplicate = (gain: ExtraGain) => {
         setDuplicatingGain(gain);
@@ -1185,7 +1201,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                                     <span className="font-medium">{bookie?.name}</span>
                                                 </span>
                                                 <span className="text-xs text-textMuted">•</span>
-                                                <span className="text-xs text-textMuted">{new Date(gain.date).toLocaleDateString('pt-BR')}</span>
+                                                <span className="text-xs text-textMuted">{parseDate(gain.date).toLocaleDateString('pt-BR')}</span>
                                                 {gain.notes && (
                                                     <>
                                                         <span className="text-xs text-textMuted">•</span>
@@ -1307,10 +1323,52 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     </div>
                     );
                 }) : (
-                    <div className="flex flex-col items-center justify-center py-12 text-center border border-dashed border-white/10 rounded-2xl bg-white/[0.01]">
-                        <div className="p-4 bg-[#151b2e] rounded-full mb-3"> <SearchX size={32} className="text-gray-600" /> </div>
-                        <h3 className="text-white font-bold">Nenhum ganho encontrado</h3>
-                        <p className="text-sm text-textMuted mt-1">Registre novos ganhos para ver estatísticas.</p>
+                    <div className="flex flex-col items-center justify-center py-12 px-6 text-center border border-dashed border-white/10 rounded-2xl bg-white/[0.01] animate-in fade-in zoom-in duration-500">
+                        <div className="p-4 bg-[#151b2e] rounded-full mb-4 shadow-xl border border-white/5"> 
+                            <SearchX size={32} className="text-gray-500" /> 
+                        </div>
+                        <h3 className="text-white font-bold text-lg">Nada em {getShortPeriodLabel()}</h3>
+                        
+                        {totalGainsInYear > 0 ? (
+                            <div className="mt-4 p-4 bg-secondary/5 border border-secondary/20 rounded-xl max-w-[280px]">
+                                <p className="text-xs text-gray-300 leading-relaxed">
+                                    Encontramos <span className="text-secondary font-bold">{totalGainsInYear} registros</span> salvos em outros meses de <span className="text-white font-bold">{viewDate.getFullYear()}</span>.
+                                </p>
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => handlePeriodChange('year')}
+                                    className="mt-3 w-full border-secondary/30 text-secondary hover:bg-secondary/10"
+                                >
+                                    Ver Ano Todo
+                                </Button>
+                            </div>
+                        ) : hasItemsInOtherYears ? (
+                            <div className="mt-4 p-4 bg-primary/5 border border-primary/20 rounded-xl max-w-[280px]">
+                                <p className="text-xs text-gray-300 leading-relaxed">
+                                    Não há dados em {viewDate.getFullYear()}, mas existem registros em <span className="text-primary font-bold">outros anos</span>.
+                                </p>
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => handlePeriodChange('all')}
+                                    className="mt-3 w-full border-primary/30 text-primary hover:bg-primary/10"
+                                >
+                                    Ver Todo o Período
+                                </Button>
+                            </div>
+                        ) : (
+                            <p className="text-sm text-textMuted mt-2 max-w-[240px]">
+                                {searchTerm ? 'Nenhum resultado para sua busca.' : 'Você ainda não tem ganhos registrados.'}
+                            </p>
+                        )}
+
+                        {!searchTerm && totalGainsInYear === 0 && !hasItemsInOtherYears && (
+                            <Button variant="primary" onClick={handleOpenNew} className="mt-6">
+                                <Plus size={18} />
+                                Criar Primeiro Ganho
+                            </Button>
+                        )}
                     </div>
                 )}
             </div>
@@ -1432,7 +1490,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                 }}
                                 className="w-full bg-[#0d1121] border border-white/10 focus:border-primary text-white rounded-lg py-3 px-4 text-left hover:bg-[#151b2e] transition-colors flex items-center justify-between group"
                             >
-                                <span className="text-sm">{formData.date ? new Date(formData.date + 'T12:00:00').toLocaleDateString('pt-BR') : 'Selecione a data'}</span>
+                                <span className="text-sm">{formData.date ? parseDate(formData.date).toLocaleDateString('pt-BR') : 'Selecione a data'}</span>
                                 <Calendar size={16} className="text-gray-500 group-hover:text-primary transition-colors" />
                             </button>
                             <SingleDatePickerModal
