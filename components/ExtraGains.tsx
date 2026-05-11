@@ -999,6 +999,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                         ? FirestoreService.getPhotoData(currentUser.uid, viewerParentId, photoId, 'gains')
                         : Promise.resolve(null)
                 }
+                onExtract={(url) => { setExtractionImageUrl(url); setIsExtractionModalOpen(true); }}
             />
 
             <TextExtractionModal

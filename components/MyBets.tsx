@@ -1383,6 +1383,7 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                         ? FirestoreService.getPhotoData(currentUser.uid, viewerParentId, photoId, 'bets')
                         : Promise.resolve(null)
                 }
+                onExtract={(url) => { setExtractionImageUrl(url); setIsExtractionModalOpen(true); }}
             />
 
             <TextExtractionModal

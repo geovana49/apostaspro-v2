@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect, useCallback, useLayoutEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, ChevronDown, Check, ZoomIn, ZoomOut, RotateCcw, RotateCw, Move, Crop, Pipette, ChevronUp, Gamepad2, Trophy, Star, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, Sun, Contrast, Maximize, Minimize, FlipHorizontal, FlipVertical, Sparkles, Scissors, Scaling, RefreshCw, Loader2, Calendar as CalendarIcon, Copy, Type, ScanLine, Type as TypeIcon } from 'lucide-react';
-import { ocrService } from '../services/ocrService';
+import { ocrService } from '../../services/ocrService';
 
 // --- Color Helpers ---
 const hexToRgb = (hex: string) => {
@@ -1629,14 +1629,14 @@ export const ImageAdjuster: React.FC<ImageAdjusterProps> = ({ isOpen, imageSrc, 
 };
 
 // --- Image Viewer (Carousel/Lightbox) ---
-interface ImageViewerProps {
+export const ImageViewer: React.FC<{
   isOpen: boolean;
   onClose: () => void;
   images: string[];
   startIndex?: number;
-}
-
-export const ImageViewer: React.FC<ImageViewerProps & { resolvePhoto?: (id: string) => Promise<string | null> }> = ({ isOpen, onClose, images, startIndex = 0, resolvePhoto }) => {
+  resolvePhoto?: (photoId: string) => Promise<string | null>;
+  onExtract?: (imageUrl: string) => void;
+}> = ({ isOpen, onClose, images, startIndex = 0, resolvePhoto, onExtract }) => {
   const [currentIndex, setCurrentIndex] = useState(startIndex);
   const [showDownloadOptions, setShowDownloadOptions] = useState(false);
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
@@ -1814,6 +1814,16 @@ export const ImageViewer: React.FC<ImageViewerProps & { resolvePhoto?: (id: stri
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4 pointer-events-auto relative">
+          {onExtract && (
+            <button
+              onClick={(e) => { e.stopPropagation(); if (resolvedUrl) onExtract(resolvedUrl); }}
+              className="p-2 sm:p-2.5 bg-black/40 backdrop-blur rounded-full hover:bg-white/10 transition-colors text-white/80 hover:text-white"
+              title="Extrair Nomes/Texto"
+            >
+              <ScanLine size={20} className="sm:w-6 sm:h-6" />
+            </button>
+          )}
+
           <button
             onClick={(e) => { e.stopPropagation(); handleDownloadClick(); }}
             className={`p-2 sm:p-2.5 backdrop-blur rounded-full hover:bg-white/10 transition-colors text-white/80 hover:text-white ${showDownloadOptions ? 'bg-white/20 text-white' : 'bg-black/40'}`}
