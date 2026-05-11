@@ -700,6 +700,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
             coverages: duplicatingGain.coverages?.map(c => ({
                 ...c,
                 status: 'Pendente',
+                manualReturn: undefined,
                 id: Date.now().toString() + Math.random().toString().slice(2, 6)
             })),
             photos: duplicatingGain.photos || []

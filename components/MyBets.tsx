@@ -1140,9 +1140,11 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             date: dateStr,
             event: `${duplicatingBet.event} (Cópia)`,
             status: 'Pendente',
+            extraGain: undefined,
             coverages: (duplicatingBet.coverages || []).map(c => ({
                 ...c,
                 status: 'Pendente',
+                manualReturn: undefined,
                 id: Date.now().toString() + Math.random().toString().slice(2, 6)
             })),
             photos: duplicatingBet.photos || []
