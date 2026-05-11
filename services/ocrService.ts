@@ -7,11 +7,15 @@ export interface OCRResult {
         bbox: { x0: number; y0: number; x1: number; y1: number };
         confidence: number;
     }>;
+    lines: Array<{
+        text: string;
+        bbox: { x0: number; y0: number; x1: number; y1: number };
+        confidence: number;
+    }>;
 }
 
 /**
  * Hyper-Aggressive Local OCR Service
- * Designed to extract data without ANY cloud help whenever possible.
  */
 class OCRService {
     private worker: any = null;
@@ -20,43 +24,34 @@ class OCRService {
     async getWorker() {
         if (!this.worker) {
             try {
-                console.log('[OCR v2.2] Initializing Tesseract worker (por+eng)...');
+                console.log('[OCR] Initializing Tesseract worker...');
                 this.worker = await createWorker('por', 1, {
-                    logger: m => console.log('[Tesseract Progress]', m.status, Math.round(m.progress * 100) + '%'),
-                    workerPath: 'https://unpkg.com/tesseract.js@v5.1.0/dist/worker.min.js',
-                    corePath: 'https://unpkg.com/tesseract.js-core@v5.1.0/tesseract-core.wasm.js',
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                             // console.log('[OCR Progress]', Math.round(m.progress * 100) + '%');
+                        }
+                    },
                 });
-                console.log('[OCR v2.2] Worker ready (por+eng).');
             } catch (err) {
-                console.warn('[OCR v2.2] por+eng failed, falling back to basic por...', err);
-                try {
-                    this.worker = await createWorker('por');
-                    console.log('[OCR v2.2] Worker ready (basic por).');
-                } catch (err2) {
-                    console.error('[OCR v2.2] All workers failed:', err2);
-                    throw err2;
-                }
+                console.error('[OCR] Worker initialization failed:', err);
+                throw err;
             }
         }
         return this.worker;
     }
 
-    async runOCR(imageBuffer: string): Promise<OCRResult> {
+    async runOCR(imageInput: string | Blob | File): Promise<OCRResult> {
         if (this.isBusy) {
+            console.warn('[OCR] Busy, waiting...');
             await new Promise(r => setTimeout(r, 1000));
         }
 
         this.isBusy = true;
         try {
             const worker = await this.getWorker();
-            console.log('[OCR] Processing image. Source length:', imageBuffer.length);
-            const result = await worker.recognize(imageBuffer);
+            console.log('[OCR] Starting recognition...');
+            const result = await worker.recognize(imageInput);
             const data = result.data;
-
-            console.log(`[OCR] Recognition complete. Conf: ${data.confidence}%. Text length: ${data.text.length}`);
-            if (data.text.length < 5) {
-                console.warn('[OCR] Warning: Very little text found. Raw:', data.text);
-            }
 
             return {
                 text: data.text || '',
@@ -64,6 +59,11 @@ class OCRService {
                     text: w.text,
                     bbox: w.bbox,
                     confidence: w.confidence
+                })) : [],
+                lines: Array.isArray(data.lines) ? data.lines.map((l: any) => ({
+                    text: l.text,
+                    bbox: l.bbox,
+                    confidence: l.confidence
                 })) : []
             };
         } finally {
