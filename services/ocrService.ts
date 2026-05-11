@@ -11,21 +11,24 @@ export interface OCRResult {
  * Hyper-Aggressive Local OCR Service
  */
 class OCRService {
-    private worker: any = null;
-    private isBusy: boolean = false;
-    private progressCallback: ((p: number) => void) | null = null;
-
     async getWorker() {
         if (!this.worker) {
             try {
                 console.log('[OCR] Initializing Tesseract worker (por+eng)...');
-                this.worker = await createWorker(['por', 'eng'], 1, {
+                const worker = await createWorker(['por', 'eng'], 1, {
                     logger: m => {
                         if (m.status === 'recognizing text' && this.progressCallback) {
                              this.progressCallback(Math.round(m.progress * 100));
                         }
                     },
                 });
+
+                // PSM 11 is often better for sparse text in screenshots
+                await worker.setParameters({
+                    tessedit_pageseg_mode: '11' as any,
+                });
+
+                this.worker = worker;
             } catch (err) {
                 console.error('[OCR] Worker initialization failed:', err);
                 throw err;
@@ -34,35 +37,33 @@ class OCRService {
         return this.worker;
     }
 
-    private async preprocess(imageInput: string | Blob | File | HTMLImageElement): Promise<string> {
+    private async preprocess(imageInput: string | Blob | File | HTMLImageElement): Promise<string | Blob | File> {
         try {
             return new Promise((resolve) => {
                 const img = new Image();
                 
                 const processImg = (source: HTMLImageElement | HTMLCanvasElement) => {
                     const canvas = document.createElement('canvas');
-                    // FORCE a minimum width of 2500px for OCR (Tesseract loves large images)
-                    const minWidth = 2500;
-                    const scale = source.width < minWidth ? minWidth / source.width : 1;
-                    
+                    // Upscale 2x if small
+                    const scale = source.width < 1200 ? 2 : 1.2;
                     canvas.width = source.width * scale;
                     canvas.height = source.height * scale;
                     
                     const ctx = canvas.getContext('2d');
                     if (!ctx) {
-                        resolve(typeof imageInput === 'string' ? imageInput : '');
+                        resolve(imageInput as any);
                         return;
                     }
 
-                    // OCR-optimized settings: Grayscale + Sharp Contrast
                     ctx.fillStyle = 'white';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.filter = 'grayscale(1) contrast(1.5) brightness(1.1)';
+                    // Standard contrast boost
+                    ctx.filter = 'contrast(1.4) grayscale(1)';
                     ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
                     
-                    // Return as Base64 string
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-                    resolve(dataUrl);
+                    canvas.toBlob((blob) => {
+                        resolve(blob || (imageInput as any));
+                    }, 'image/jpeg', 0.9);
                 };
 
                 if (imageInput instanceof HTMLImageElement) {
@@ -70,11 +71,8 @@ class OCRService {
                         processImg(imageInput);
                     } else {
                         imageInput.onload = () => processImg(imageInput);
-                        imageInput.onerror = () => resolve('');
+                        imageInput.onerror = () => resolve(imageInput as any);
                     }
-                } else if (typeof imageInput === 'string' && !imageInput.startsWith('blob:')) {
-                    // It's already a URL/Base64
-                    resolve(imageInput);
                 } else {
                     const url = typeof imageInput === 'string' ? imageInput : URL.createObjectURL(imageInput as Blob);
                     img.onload = () => {
@@ -83,14 +81,14 @@ class OCRService {
                     };
                     img.onerror = () => {
                         if (url.startsWith('blob:')) URL.revokeObjectURL(url);
-                        resolve('');
+                        resolve(imageInput as any);
                     };
                     img.src = url;
                 }
             });
         } catch (e) {
             console.error('[OCR Preprocess] Error:', e);
-            return typeof imageInput === 'string' ? imageInput : '';
+            return imageInput as any;
         }
     }
 
@@ -104,26 +102,15 @@ class OCRService {
         this.progressCallback = onProgress || null;
         
         try {
-            console.log('[OCR] Pre-processing image (Base64 + Scale)...');
-            const processedBase64 = await this.preprocess(imageInput);
+            console.log('[OCR] Pre-processing...');
+            const processed = await this.preprocess(imageInput);
             
-            if (!processedBase64) throw new Error('Falha no processamento da imagem');
-
             const worker = await this.getWorker();
-            console.log('[OCR] Starting recognition...');
-            const result = await worker.recognize(processedBase64);
-            
-            // Allow a tiny delay to ensure Tesseract finishes internal segmentation
-            await new Promise(r => setTimeout(r, 100));
-
+            console.log('[OCR] Recognition (PSM 11)...');
+            const result = await worker.recognize(processed);
             const data = result.data;
 
-            console.log(`[OCR] Result Summary:
-                - Text length: ${data.text?.length || 0}
-                - Lines: ${data.lines?.length || 0}
-                - Words: ${data.words?.length || 0}
-                - Blocks: ${data.blocks?.length || 0}
-                - Confidence: ${data.confidence}%`);
+            console.log(`[OCR] Done: Text=${data.text?.length || 0}, Lines=${data.lines?.length || 0}, Words=${data.words?.length || 0}, Conf=${data.confidence}%`);
 
             return {
                 text: data.text || '',
