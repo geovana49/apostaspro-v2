@@ -180,7 +180,7 @@ export const SmartScannerModal: React.FC<SmartScannerModalProps> = ({
                 if (value) value = parseFloat(value);
             } else if (type === 'bookmaker') {
                 const houses = [
-                    { id: 'Betano', keywords: ['betano', 'b'], color: 'orange' },
+                    { id: 'Betano', keywords: ['betano'], color: 'orange' },
                     { id: 'Bet365', keywords: ['bet365', '365'], color: 'green' },
                     { id: 'BR4', keywords: ['br4'], color: 'unknown' },
                     { id: 'Nacional', keywords: ['nacional', 'betnacional'], color: 'unknown' },
@@ -273,7 +273,7 @@ export const SmartScannerModal: React.FC<SmartScannerModalProps> = ({
                 )}
 
                 {/* Image & Crop Area */}
-                <div className="flex-1 relative flex items-center justify-center p-8 overflow-hidden">
+                <div className="flex-1 relative flex items-center justify-center p-2 sm:p-8 overflow-hidden bg-black/20">
                     <div ref={containerRef} className="relative max-h-full max-w-full flex items-center justify-center shadow-2xl touch-none">
                         <img 
                             ref={imgRef} 
