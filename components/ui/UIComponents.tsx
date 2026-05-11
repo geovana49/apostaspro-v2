@@ -2239,24 +2239,23 @@ export const TextExtractionModal: React.FC<{
     }, [isOpen, imageUrl]);
 
     const extract = async () => {
+        if (!imgRef.current) return;
+        
         setIsLoading(true);
         setError(null);
         setProgress(0);
         try {
-            console.log('[Lens] Fetching image for OCR...');
-            const response = await fetch(imageUrl);
-            if (!response.ok) throw new Error('Falha ao carregar imagem');
-            const blob = await response.blob();
+            console.log('[Lens] Starting OCR from image element...');
+            // Wait a tiny bit to ensure the image is painted
+            await new Promise(r => setTimeout(r, 300));
             
-            console.log('[Lens] Starting OCR...');
-            const result = await ocrService.runOCR(blob, (p) => setProgress(p));
+            const result = await ocrService.runOCR(imgRef.current, (p) => setProgress(p));
             
             if (result.lines && result.lines.length > 0) {
                 setLines(result.lines);
                 console.log(`[Lens] Found ${result.lines.length} lines.`);
             } else {
                 console.warn('[Lens] No text found.');
-                // Fallback: maybe the words array has something?
                 if (result.words && result.words.length > 0) {
                     setLines(result.words);
                 } else {

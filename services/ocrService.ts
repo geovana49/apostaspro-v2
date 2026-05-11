@@ -41,42 +41,54 @@ class OCRService {
         return this.worker;
     }
 
-    private async preprocess(imageInput: string | Blob | File): Promise<string | Blob | File> {
+    private async preprocess(imageInput: string | Blob | File | HTMLImageElement): Promise<string | Blob | File | HTMLImageElement> {
         try {
-            // Only preprocess Blobs/Files
-            if (!(imageInput instanceof Blob) && !(imageInput instanceof File)) return imageInput;
+            // If it's a string (URL) and not a blob/file/image, we can't easily preprocess without fetch
+            if (typeof imageInput === 'string') return imageInput;
 
             return new Promise((resolve) => {
                 const img = new Image();
-                const url = URL.createObjectURL(imageInput);
-                img.onload = () => {
+                
+                const processImg = (source: HTMLImageElement | HTMLCanvasElement) => {
                     const canvas = document.createElement('canvas');
-                    // Ensure enough resolution
-                    const scale = img.width < 1000 ? 2 : 1;
-                    canvas.width = img.width * scale;
-                    canvas.height = img.height * scale;
+                    const scale = source.width < 1500 ? 2 : 1;
+                    canvas.width = source.width * scale;
+                    canvas.height = source.height * scale;
                     
                     const ctx = canvas.getContext('2d');
                     if (!ctx) {
-                        URL.revokeObjectURL(url);
                         resolve(imageInput);
                         return;
                     }
 
-                    // OCR-friendly filters
-                    ctx.filter = 'contrast(1.5) brightness(1.1) grayscale(1)';
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    // Intense OCR-optimized filters
+                    ctx.filter = 'contrast(2) brightness(1.2) grayscale(1)';
+                    ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
                     
                     canvas.toBlob((blob) => {
-                        URL.revokeObjectURL(url);
                         resolve(blob || imageInput);
-                    }, 'image/jpeg', 0.95);
+                    }, 'image/jpeg', 0.9);
                 };
-                img.onerror = () => {
-                    URL.revokeObjectURL(url);
-                    resolve(imageInput);
-                };
-                img.src = url;
+
+                if (imageInput instanceof HTMLImageElement) {
+                    if (imageInput.complete) {
+                        processImg(imageInput);
+                    } else {
+                        imageInput.onload = () => processImg(imageInput);
+                        imageInput.onerror = () => resolve(imageInput);
+                    }
+                } else {
+                    const url = URL.createObjectURL(imageInput as Blob);
+                    img.onload = () => {
+                        processImg(img);
+                        URL.revokeObjectURL(url);
+                    };
+                    img.onerror = () => {
+                        URL.revokeObjectURL(url);
+                        resolve(imageInput);
+                    };
+                    img.src = url;
+                }
             });
         } catch (e) {
             console.error('[OCR Preprocess] Error:', e);
@@ -84,7 +96,7 @@ class OCRService {
         }
     }
 
-    async runOCR(imageInput: string | Blob | File, onProgress?: (p: number) => void): Promise<OCRResult> {
+    async runOCR(imageInput: string | Blob | File | HTMLImageElement, onProgress?: (p: number) => void): Promise<OCRResult> {
         if (this.isBusy) {
             console.warn('[OCR] Busy, waiting...');
             await new Promise(r => setTimeout(r, 1000));
@@ -99,7 +111,7 @@ class OCRService {
             
             const worker = await this.getWorker();
             console.log('[OCR] Starting recognition...');
-            const result = await worker.recognize(processedInput);
+            const result = await worker.recognize(processedInput as any);
             const data = result.data;
 
             return {
