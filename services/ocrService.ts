@@ -34,33 +34,35 @@ class OCRService {
         return this.worker;
     }
 
-    private async preprocess(imageInput: string | Blob | File | HTMLImageElement): Promise<string | Blob | File | HTMLImageElement> {
+    private async preprocess(imageInput: string | Blob | File | HTMLImageElement): Promise<string> {
         try {
-            if (typeof imageInput === 'string') return imageInput;
-
             return new Promise((resolve) => {
                 const img = new Image();
                 
                 const processImg = (source: HTMLImageElement | HTMLCanvasElement) => {
                     const canvas = document.createElement('canvas');
-                    // Upscale significantly (Tesseract works better with large text)
-                    const scale = source.width < 2000 ? 3 : 1.5;
+                    // FORCE a minimum width of 2500px for OCR (Tesseract loves large images)
+                    const minWidth = 2500;
+                    const scale = source.width < minWidth ? minWidth / source.width : 1;
+                    
                     canvas.width = source.width * scale;
                     canvas.height = source.height * scale;
                     
                     const ctx = canvas.getContext('2d');
                     if (!ctx) {
-                        resolve(imageInput);
+                        resolve(typeof imageInput === 'string' ? imageInput : '');
                         return;
                     }
 
-                    // Simple contrast boost, avoid over-processing which can crush blacks
-                    ctx.filter = 'contrast(1.2) grayscale(1)';
+                    // OCR-optimized settings: Grayscale + Sharp Contrast
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.filter = 'grayscale(1) contrast(1.5) brightness(1.1)';
                     ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
                     
-                    canvas.toBlob((blob) => {
-                        resolve(blob || imageInput);
-                    }, 'image/jpeg', 0.95);
+                    // Return as Base64 string
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    resolve(dataUrl);
                 };
 
                 if (imageInput instanceof HTMLImageElement) {
@@ -68,24 +70,27 @@ class OCRService {
                         processImg(imageInput);
                     } else {
                         imageInput.onload = () => processImg(imageInput);
-                        imageInput.onerror = () => resolve(imageInput);
+                        imageInput.onerror = () => resolve('');
                     }
+                } else if (typeof imageInput === 'string' && !imageInput.startsWith('blob:')) {
+                    // It's already a URL/Base64
+                    resolve(imageInput);
                 } else {
-                    const url = URL.createObjectURL(imageInput as Blob);
+                    const url = typeof imageInput === 'string' ? imageInput : URL.createObjectURL(imageInput as Blob);
                     img.onload = () => {
                         processImg(img);
-                        URL.revokeObjectURL(url);
+                        if (url.startsWith('blob:')) URL.revokeObjectURL(url);
                     };
                     img.onerror = () => {
-                        URL.revokeObjectURL(url);
-                        resolve(imageInput);
+                        if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+                        resolve('');
                     };
                     img.src = url;
                 }
             });
         } catch (e) {
             console.error('[OCR Preprocess] Error:', e);
-            return imageInput;
+            return typeof imageInput === 'string' ? imageInput : '';
         }
     }
 
@@ -99,15 +104,17 @@ class OCRService {
         this.progressCallback = onProgress || null;
         
         try {
-            console.log('[OCR] Pre-processing image...');
-            const processedInput = await this.preprocess(imageInput);
+            console.log('[OCR] Pre-processing image (Base64 + Scale)...');
+            const processedBase64 = await this.preprocess(imageInput);
             
+            if (!processedBase64) throw new Error('Falha no processamento da imagem');
+
             const worker = await this.getWorker();
             console.log('[OCR] Starting recognition...');
-            const result = await worker.recognize(processedInput as any);
+            const result = await worker.recognize(processedBase64);
             const data = result.data;
 
-            console.log(`[OCR] Done. Text length: ${data.text?.length || 0}. Lines: ${data.lines?.length || 0}`);
+            console.log(`[OCR] Result: ${data.text?.length || 0} chars, ${data.lines?.length || 0} lines.`);
 
             return {
                 text: data.text || '',
