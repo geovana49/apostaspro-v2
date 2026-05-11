@@ -2254,13 +2254,15 @@ export const TextExtractionModal: React.FC<{
             if (result.lines && result.lines.length > 0) {
                 setLines(result.lines);
                 console.log(`[Lens] Found ${result.lines.length} lines.`);
+            } else if (result.blocks && result.blocks.length > 0) {
+                setLines(result.blocks);
+                console.log(`[Lens] Found ${result.blocks.length} blocks.`);
+            } else if (result.words && result.words.length > 0) {
+                setLines(result.words);
+                console.log(`[Lens] Found ${result.words.length} words.`);
             } else {
                 console.warn('[Lens] No text found.');
-                if (result.words && result.words.length > 0) {
-                    setLines(result.words);
-                } else {
-                    setError('Nenhum texto identificado. Tente uma imagem mais nítida ou aguarde carregar totalmente.');
-                }
+                setError('Nenhum texto identificado. Tente uma imagem mais nítida ou aguarde carregar totalmente.');
             }
         } catch (err: any) {
             console.error("[Lens] OCR Error:", err);

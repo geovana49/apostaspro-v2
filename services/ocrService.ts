@@ -2,16 +2,9 @@ import { createWorker } from 'tesseract.js';
 
 export interface OCRResult {
     text: string;
-    words: Array<{
-        text: string;
-        bbox: { x0: number; y0: number; x1: number; y1: number };
-        confidence: number;
-    }>;
-    lines: Array<{
-        text: string;
-        bbox: { x0: number; y0: number; x1: number; y1: number };
-        confidence: number;
-    }>;
+    words: any[];
+    lines: any[];
+    blocks: any[];
 }
 
 /**
@@ -43,7 +36,6 @@ class OCRService {
 
     private async preprocess(imageInput: string | Blob | File | HTMLImageElement): Promise<string | Blob | File | HTMLImageElement> {
         try {
-            // If it's a string (URL) and not a blob/file/image, we can't easily preprocess without fetch
             if (typeof imageInput === 'string') return imageInput;
 
             return new Promise((resolve) => {
@@ -51,7 +43,8 @@ class OCRService {
                 
                 const processImg = (source: HTMLImageElement | HTMLCanvasElement) => {
                     const canvas = document.createElement('canvas');
-                    const scale = source.width < 1500 ? 2 : 1;
+                    // Upscale significantly (Tesseract works better with large text)
+                    const scale = source.width < 2000 ? 3 : 1.5;
                     canvas.width = source.width * scale;
                     canvas.height = source.height * scale;
                     
@@ -61,13 +54,13 @@ class OCRService {
                         return;
                     }
 
-                    // Intense OCR-optimized filters
-                    ctx.filter = 'contrast(2) brightness(1.2) grayscale(1)';
+                    // Simple contrast boost, avoid over-processing which can crush blacks
+                    ctx.filter = 'contrast(1.2) grayscale(1)';
                     ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
                     
                     canvas.toBlob((blob) => {
                         resolve(blob || imageInput);
-                    }, 'image/jpeg', 0.9);
+                    }, 'image/jpeg', 0.95);
                 };
 
                 if (imageInput instanceof HTMLImageElement) {
@@ -114,23 +107,19 @@ class OCRService {
             const result = await worker.recognize(processedInput as any);
             const data = result.data;
 
+            console.log(`[OCR] Done. Text length: ${data.text?.length || 0}. Lines: ${data.lines?.length || 0}`);
+
             return {
                 text: data.text || '',
-                words: Array.isArray(data.words) ? data.words.map((w: any) => ({
-                    text: w.text,
-                    bbox: w.bbox,
-                    confidence: w.confidence
-                })) : [],
-                lines: Array.isArray(data.lines) ? data.lines.map((l: any) => ({
-                    text: l.text,
-                    bbox: l.bbox,
-                    confidence: l.confidence
-                })) : []
+                words: data.words || [],
+                lines: data.lines || [],
+                blocks: data.blocks || []
             };
         } finally {
             this.isBusy = false;
         }
     }
+}
 
     /**
      * Extracts data using a "Heuristic Pattern Matcher"
