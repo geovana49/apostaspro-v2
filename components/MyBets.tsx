@@ -2502,8 +2502,10 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                 onExtract={(type, value) => {
                     if (!scannerData.coverageId) return;
                     if (type === 'bookmaker') {
-                        const bk = bookmakers.find(b => b.name === value);
+                        const bk = bookmakers.find(b => b.name.toLowerCase().trim() === String(value).toLowerCase().trim());
                         if (bk) dispatch({ type: 'UPDATE_COVERAGE', id: scannerData.coverageId, field: 'bookmakerId', value: bk.id });
+                    } else if (type === 'return') {
+                        dispatch({ type: 'UPDATE_COVERAGE', id: scannerData.coverageId, field: 'manualReturn', value });
                     } else {
                         dispatch({ type: 'UPDATE_COVERAGE', id: scannerData.coverageId, field: type, value });
                     }

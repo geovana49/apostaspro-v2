@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Target, Zap, DollarSign, Briefcase, Check, Loader2, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { X, Target, Zap, DollarSign, Briefcase, Check, Loader2, Sparkles, Image as ImageIcon, TrendingUp } from 'lucide-react';
 import { ocrService } from '../../services/ocrService';
 
 interface SmartScannerModalProps {
     isOpen: boolean;
     onClose: () => void;
     imageUrl: string;
-    onExtract: (type: 'odd' | 'stake' | 'market' | 'bookmaker', value: any) => void;
+    onExtract: (type: 'odd' | 'stake' | 'market' | 'bookmaker' | 'return', value: any) => void;
 }
 
 export const SmartScannerModal: React.FC<SmartScannerModalProps> = ({
@@ -163,7 +163,7 @@ export const SmartScannerModal: React.FC<SmartScannerModalProps> = ({
         });
     };
 
-    const handleExtract = async (type: 'odd' | 'stake' | 'market' | 'bookmaker') => {
+    const handleExtract = async (type: 'odd' | 'stake' | 'market' | 'bookmaker' | 'return') => {
         setIsScanning(true);
         setScanResult(null);
         try {
@@ -175,7 +175,7 @@ export const SmartScannerModal: React.FC<SmartScannerModalProps> = ({
             let value: any = text;
 
             // Simple replacements to fix common OCR errors in numbers
-            if (type === 'odd' || type === 'stake') {
+            if (type === 'odd' || type === 'stake' || type === 'return') {
                 value = text.replace(/,/g, '.').replace(/[^\d.-]/g, '');
                 if (value) value = parseFloat(value);
             } else if (type === 'bookmaker') {
@@ -343,32 +343,39 @@ export const SmartScannerModal: React.FC<SmartScannerModalProps> = ({
 
                 {/* Unified Bottom Controls */}
                 <div className="bg-[#0a0d18] border-t border-white/5 p-4 z-50 shrink-0 mb-safe">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl mx-auto">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 max-w-5xl mx-auto">
                         <button 
                             onClick={() => handleExtract('odd')}
                             disabled={isScanning}
-                            className="py-3.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 border border-primary/20 shadow-lg active:scale-95"
+                            className="py-3.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 border border-primary/20 shadow-lg active:scale-95"
                         >
-                            <Target size={14} /> Extrair Odd
+                            <Target size={14} /> Odd
                         </button>
                         <button 
                             onClick={() => handleExtract('stake')}
                             disabled={isScanning}
-                            className="py-3.5 bg-secondary/10 hover:bg-secondary/20 text-secondary rounded-xl text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 border border-secondary/20 shadow-lg active:scale-95"
+                            className="py-3.5 bg-secondary/10 hover:bg-secondary/20 text-secondary rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 border border-secondary/20 shadow-lg active:scale-95"
                         >
-                            <DollarSign size={14} /> Extrair Stake
+                            <DollarSign size={14} /> Stake
+                        </button>
+                        <button 
+                            onClick={() => handleExtract('return')}
+                            disabled={isScanning}
+                            className="py-3.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 border border-amber-500/20 shadow-lg active:scale-95"
+                        >
+                            <TrendingUp size={14} /> Retorno
                         </button>
                         <button 
                             onClick={() => handleExtract('market')}
                             disabled={isScanning}
-                            className="py-3.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 rounded-xl text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 border border-emerald-500/20 shadow-lg active:scale-95"
+                            className="py-3.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 border border-emerald-500/20 shadow-lg active:scale-95"
                         >
                             <Zap size={14} /> Mercado
                         </button>
                         <button 
                             onClick={() => handleExtract('bookmaker')}
                             disabled={isScanning}
-                            className="py-3.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 rounded-xl text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 border border-blue-500/20 shadow-lg active:scale-95"
+                            className="py-3.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 border border-blue-500/20 shadow-lg active:scale-95 col-span-2 sm:col-span-1"
                         >
                             <Briefcase size={14} /> Casa
                         </button>
