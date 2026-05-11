@@ -138,6 +138,13 @@ export const SmartScannerModal: React.FC<SmartScannerModalProps> = ({
             if (type === 'odd' || type === 'stake') {
                 value = text.replace(/,/g, '.').replace(/[^\d.-]/g, '');
                 if (value) value = parseFloat(value);
+            } else if (type === 'bookmaker') {
+                const houses = ['betano', 'bet365', 'br4', 'nacional', 'sportingbet', 'kto', 'novibet', 'pixbet', 'estrela', 'superbet', 'parimatch', 'betway', 'dafabet', '1xbet', 'betfair', 'rivalo', 'playpix', 'shark', 'galera', 'r7', 'r7.bet'];
+                const found = houses.find(h => text.toLowerCase().includes(h));
+                if (found) {
+                    value = found.charAt(0).toUpperCase() + found.slice(1);
+                    if (value.toLowerCase().includes('r7')) value = 'R7.BET';
+                }
             }
 
             if (value && String(value).trim() !== '') {
