@@ -41,6 +41,49 @@ class OCRService {
         return this.worker;
     }
 
+    private async preprocess(imageInput: string | Blob | File): Promise<string | Blob | File> {
+        try {
+            // Only preprocess Blobs/Files
+            if (!(imageInput instanceof Blob) && !(imageInput instanceof File)) return imageInput;
+
+            return new Promise((resolve) => {
+                const img = new Image();
+                const url = URL.createObjectURL(imageInput);
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    // Ensure enough resolution
+                    const scale = img.width < 1000 ? 2 : 1;
+                    canvas.width = img.width * scale;
+                    canvas.height = img.height * scale;
+                    
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) {
+                        URL.revokeObjectURL(url);
+                        resolve(imageInput);
+                        return;
+                    }
+
+                    // OCR-friendly filters
+                    ctx.filter = 'contrast(1.5) brightness(1.1) grayscale(1)';
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    canvas.toBlob((blob) => {
+                        URL.revokeObjectURL(url);
+                        resolve(blob || imageInput);
+                    }, 'image/jpeg', 0.95);
+                };
+                img.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    resolve(imageInput);
+                };
+                img.src = url;
+            });
+        } catch (e) {
+            console.error('[OCR Preprocess] Error:', e);
+            return imageInput;
+        }
+    }
+
     async runOCR(imageInput: string | Blob | File, onProgress?: (p: number) => void): Promise<OCRResult> {
         if (this.isBusy) {
             console.warn('[OCR] Busy, waiting...');
@@ -51,9 +94,12 @@ class OCRService {
         this.progressCallback = onProgress || null;
         
         try {
+            console.log('[OCR] Pre-processing image...');
+            const processedInput = await this.preprocess(imageInput);
+            
             const worker = await this.getWorker();
             console.log('[OCR] Starting recognition...');
-            const result = await worker.recognize(imageInput);
+            const result = await worker.recognize(processedInput);
             const data = result.data;
 
             return {
