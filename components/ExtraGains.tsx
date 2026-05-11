@@ -98,15 +98,6 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
     const [newCategoryColor, setNewCategoryColor] = useState(COLORS[6]);
     const [newCategoryBgColor, setNewCategoryBgColor] = useState<string>('');
     const [newCategoryIcon, setNewCategoryIcon] = useState('Star');
-    const [isDuplicateDatePickerOpen, setIsDuplicateDatePickerOpen] = useState(false);
-    const [isDuplicateActionModalOpen, setIsDuplicateActionModalOpen] = useState(false);
-
-    const parseDate = (dateStr: string) => {
-        if (!dateStr || typeof dateStr !== 'string') return new Date();
-        const datePart = dateStr.split('T')[0];
-        const [year, month, day] = datePart.split('-').map(Number);
-        return new Date(year, month - 1, day);
-    };
     const [newStatusName, setNewStatusName] = useState('');
     const [newStatusColor, setNewStatusColor] = useState(COLORS[6]);
     const [iconMode, setIconMode] = useState<'preset' | 'upload'>('preset');

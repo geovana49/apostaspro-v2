@@ -1155,7 +1155,14 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
             }
         } else {
             // For custom date, we open the modal as requested
-            dispatch({ type: 'SET_FORM', payload: { ...newBet, id: undefined } });
+            dispatch({ 
+                type: 'SET_FORM', 
+                payload: { 
+                    ...newBet, 
+                    id: undefined,
+                    calcMode: newBet.calcMode || 'manual'
+                } as any
+            });
             setTempPhotos(duplicatingBet.photos?.map(url => ({ url })) || []);
             setIsEditing(false);
             setIsModalOpen(true);
