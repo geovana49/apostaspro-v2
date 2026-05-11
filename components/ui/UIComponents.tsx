@@ -2210,7 +2210,10 @@ export const DuplicateActionModal: React.FC<{
         </div>
       </div>
     </Modal>
-  export const TextExtractionModal: React.FC<{
+  );
+};
+
+export const TextExtractionModal: React.FC<{
     isOpen: boolean;
     onClose: () => void;
     imageUrl: string;
