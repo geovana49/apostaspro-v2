@@ -101,26 +101,54 @@ class OCRService {
         this.isBusy = true;
         this.progressCallback = onProgress || null;
         
+        const cleanup = async () => {
+            if (this.worker) {
+                await this.worker.terminate();
+                this.worker = null;
+            }
+        };
+
         try {
-            const dims = imageInput instanceof HTMLImageElement ? `${imageInput.naturalWidth}x${imageInput.naturalHeight}` : 'unknown';
-            console.log(`[OCR] Starting OCR on image (${dims})...`);
-            console.log('[OCR] Pre-processing...');
+            const isImg = imageInput instanceof HTMLImageElement;
+            const dims = isImg ? `${(imageInput as any).naturalWidth}x${(imageInput as any).naturalHeight}` : 'non-img';
+            console.log(`[OCR] Input Type: ${typeof imageInput}, Name: ${imageInput?.constructor?.name}, Dims: ${dims}`);
+
             const processed = await this.preprocess(imageInput);
             
-            let worker = await this.getWorker();
-            
-            // Try PSM 11 first (Sparse Text)
-            console.log('[OCR] Recognition (PSM 11)...');
-            await worker.setParameters({ tessedit_pageseg_mode: '11' as any });
-            let result = await worker.recognize(processed);
-            let data = result.data;
+            const runAttempt = async (input: any, psm: string, langs: string[]) => {
+                await cleanup();
+                console.log(`[OCR] Attempting ${langs.join('+')} with PSM ${psm}...`);
+                const worker = await createWorker(langs, 1, {
+                    logger: m => {
+                        if (m.status === 'recognizing text' && this.progressCallback) {
+                             this.progressCallback(Math.round(m.progress * 100));
+                        }
+                    },
+                });
+                await worker.setParameters({ tessedit_pageseg_mode: psm as any });
+                const res = await worker.recognize(input);
+                return { res, worker };
+            };
 
-            // FALLBACK: Try RAW image if processed one failed segmentation
-            if ((!data.words || data.words.length === 0) && data.text && data.text.trim().length > 5) {
-                console.log('[OCR] Try 2: RAW Image + PSM 3...');
-                await worker.setParameters({ tessedit_pageseg_mode: '3' as any });
-                result = await worker.recognize(imageInput as any);
-                data = result.data;
+            // Stage 1: Processed + PSM 11 (Sparse)
+            let { res, worker } = await runAttempt(processed, '11', ['por', 'eng']);
+            let data = res.data;
+            this.worker = worker;
+
+            // Stage 2: RAW + PSM 3 (Default)
+            if ((!data.words || data.words.length === 0) && data.text?.length > 5) {
+                console.log('[OCR] Fallback to Stage 2: RAW + PSM 3');
+                const retry = await runAttempt(imageInput as any, '3', ['por', 'eng']);
+                data = retry.res.data;
+                this.worker = retry.worker;
+            }
+
+            // Stage 3: RAW + PSM 6 (Uniform Block)
+            if ((!data.words || data.words.length === 0) && data.text?.length > 5) {
+                console.log('[OCR] Fallback to Stage 3: RAW + PSM 6');
+                const retry = await runAttempt(imageInput as any, '6', ['eng']);
+                data = retry.res.data;
+                this.worker = retry.worker;
             }
 
             console.log(`[OCR] Final: Text=${data.text?.length || 0}, Segments=${data.words?.length || 0}, Conf=${data.confidence}%`);
@@ -131,6 +159,9 @@ class OCRService {
                 lines: data.lines || [],
                 blocks: data.blocks || []
             };
+        } catch (err) {
+            console.error('[OCR Service] Fatal Error:', err);
+            return { text: '', words: [], lines: [], blocks: [] };
         } finally {
             this.isBusy = false;
         }
