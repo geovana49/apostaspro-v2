@@ -102,6 +102,8 @@ class OCRService {
         this.progressCallback = onProgress || null;
         
         try {
+            const dims = imageInput instanceof HTMLImageElement ? `${imageInput.naturalWidth}x${imageInput.naturalHeight}` : 'unknown';
+            console.log(`[OCR] Starting OCR on image (${dims})...`);
             console.log('[OCR] Pre-processing...');
             const processed = await this.preprocess(imageInput);
             
@@ -113,24 +115,15 @@ class OCRService {
             let result = await worker.recognize(processed);
             let data = result.data;
 
-            // FALLBACK: If PSM 11 found text but NO segmentation, RE-CREATE worker with PSM 3
-            const hasNoSegments = (!data.words || data.words.length === 0) && 
-                                 (!data.lines || data.lines.length === 0);
-                                 
-            if (hasNoSegments && data.text && data.text.trim().length > 5) {
-                console.log('[OCR] PSM 11 failed segmentation. Re-creating worker for PSM 3...');
-                if (this.worker) {
-                    await this.worker.terminate();
-                    this.worker = null;
-                }
-                
-                worker = await this.getWorker();
+            // FALLBACK: Try RAW image if processed one failed segmentation
+            if ((!data.words || data.words.length === 0) && data.text && data.text.trim().length > 5) {
+                console.log('[OCR] Try 2: RAW Image + PSM 3...');
                 await worker.setParameters({ tessedit_pageseg_mode: '3' as any });
-                result = await worker.recognize(processed);
+                result = await worker.recognize(imageInput as any);
                 data = result.data;
             }
 
-            console.log(`[OCR] Done: Text=${data.text?.length || 0}, Segments=${data.words?.length || 0}, Conf=${data.confidence}%`);
+            console.log(`[OCR] Final: Text=${data.text?.length || 0}, Segments=${data.words?.length || 0}, Conf=${data.confidence}%`);
 
             return {
                 text: data.text || '',
