@@ -2281,6 +2281,17 @@ export const TextExtractionModal: React.FC<{
         }
     };
 
+    const handleImageLoad = () => {
+        if (imgRef.current) {
+            setImgRect({
+                w: imgRef.current.clientWidth,
+                h: imgRef.current.clientHeight,
+                nw: imgRef.current.naturalWidth || 1,
+                nh: imgRef.current.naturalHeight || 1
+            });
+        }
+    };
+
     const handleCopySelection = () => {
         if (selectedText) {
             navigator.clipboard.writeText(selectedText);
