@@ -38,6 +38,21 @@ const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, operationName: s
     ]);
 };
 
+// Helper for recursive cleanup of undefined values
+const recursiveClean = (obj: any): any => {
+    if (Array.isArray(obj)) {
+        return obj.map(v => recursiveClean(v));
+    }
+    if (obj !== null && typeof obj === 'object') {
+        return Object.fromEntries(
+            Object.entries(obj)
+                .filter(([_, v]) => v !== undefined)
+                .map(([k, v]) => [k, recursiveClean(v)])
+        );
+    }
+    return obj;
+};
+
 export const FirestoreService = {
     // --- Bets ---
     subscribeToBets: (userId: string, callback: (bets: Bet[], isSyncing: boolean) => void, onError?: (err: any) => void) => {
@@ -72,10 +87,8 @@ export const FirestoreService = {
                 dateToSave = new Date(); // Fallback
             }
 
-            // Cleanup undefined values
-            const cleanData = Object.fromEntries(
-                Object.entries(bet).filter(([_, v]) => v !== undefined)
-            );
+            // Cleanup nested undefined values recursively
+            const cleanData = recursiveClean(bet);
 
             const dataToSave = {
                 ...cleanData,
@@ -134,10 +147,8 @@ export const FirestoreService = {
             let dateToSave = new Date(gain.date);
             if (isNaN(dateToSave.getTime())) dateToSave = new Date();
 
-            // Cleanup undefined values
-            const cleanData = Object.fromEntries(
-                Object.entries(gain).filter(([_, v]) => v !== undefined)
-            );
+            // Cleanup nested undefined values recursively
+            const cleanData = recursiveClean(gain);
 
             const dataToSave = {
                 ...cleanData,
