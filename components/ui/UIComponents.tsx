@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useLayoutEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronDown, Check, ZoomIn, ZoomOut, RotateCcw, RotateCw, Move, Crop, Pipette, ChevronUp, Gamepad2, Trophy, Star, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, Sun, Contrast, Maximize, Minimize, FlipHorizontal, FlipVertical, Sparkles, Scissors, Scaling, RefreshCw, Loader2, Calendar as CalendarIcon, Copy, Type, ScanLine, Type as TypeIcon, SearchX } from 'lucide-react';
+import { X, ChevronDown, Check, ZoomIn, ZoomOut, RotateCcw, RotateCw, Move, Crop, Pipette, ChevronUp, Gamepad2, Trophy, Star, Zap, Gift, Coins, Briefcase, Ghost, Box, Banknote, CreditCard, Smartphone, Target, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, Sun, Contrast, Maximize, Minimize, FlipHorizontal, FlipVertical, Sparkles, Scissors, Scaling, RefreshCw, Loader2, Calendar as CalendarIcon, Copy, Type, ScanLine, Type as TypeIcon, SearchX, MousePointer2 } from 'lucide-react';
 import { ocrService } from '../../services/ocrService';
 
 // --- Color Helpers ---
@@ -2226,9 +2226,10 @@ export const TextExtractionModal: React.FC<{
     const [error, setError] = useState<string | null>(null);
     const [copiedIndex, setCopiedIndex] = useState<string | null>(null);
     const [imgRect, setImgRect] = useState<{ w: number, h: number, nw: number, nh: number } | null>(null);
-    const [fullText, setFullText] = useState('');
-    const [showTextList, setShowTextList] = useState(false);
     const imgRef = useRef<HTMLImageElement>(null);
+
+    const [selectedText, setSelectedText] = useState('');
+    const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (isOpen && imageUrl) {
@@ -2237,10 +2238,22 @@ export const TextExtractionModal: React.FC<{
             setLines([]);
             setError(null);
             setProgress(0);
-            setFullText('');
-            setShowTextList(false);
+            setSelectedText('');
         }
     }, [isOpen, imageUrl]);
+
+    useEffect(() => {
+        const handleSelection = () => {
+            const selection = window.getSelection();
+            if (selection && selection.toString().trim().length > 0) {
+                setSelectedText(selection.toString());
+            } else {
+                setSelectedText('');
+            }
+        };
+        document.addEventListener('selectionchange', handleSelection);
+        return () => document.removeEventListener('selectionchange', handleSelection);
+    }, []);
 
     const extract = async () => {
         if (!imgRef.current) return;
@@ -2249,54 +2262,32 @@ export const TextExtractionModal: React.FC<{
         setError(null);
         setProgress(0);
         try {
-            console.log('[Lens] Starting OCR from image element...');
-            await new Promise(r => setTimeout(r, 500));
-            
+            console.log('[Lens] Starting OCR for selectable overlay...');
+            // PSM 11 is used in service to find all text fragments
             const result = await ocrService.runOCR(imgRef.current, (p) => setProgress(p));
-            setFullText(result.text);
-
-            if (result.lines && result.lines.length > 0) {
-                setLines(result.lines);
-                console.log(`[Lens] Found ${result.lines.length} lines.`);
-            } else if (result.blocks && result.blocks.length > 0) {
-                setLines(result.blocks);
-                console.log(`[Lens] Found ${result.blocks.length} blocks.`);
-            } else if (result.words && result.words.length > 0) {
-                setLines(result.words);
-                console.log(`[Lens] Found ${result.words.length} words.`);
+            
+            if (result.words && result.words.length > 0) {
+                setLines(result.words); // Using words for better selection granularity
+                console.log(`[Lens] Loaded ${result.words.length} selectable words.`);
             } else {
-                console.warn('[Lens] No segmented text found.');
-                if (result.text && result.text.length > 5) {
-                    setShowTextList(true);
-                } else {
-                    setError('Nenhum texto identificado. Tente uma imagem mais nítida ou aguarde carregar totalmente.');
-                }
+                console.warn('[Lens] No text found for overlay.');
+                setError('Nenhum texto identificado. Tente uma imagem mais nítida.');
             }
         } catch (err: any) {
             console.error("[Lens] OCR Error:", err);
-            setError('Erro ao processar imagem. Verifique sua conexão.');
+            setError('Erro ao processar imagem.');
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleImageLoad = () => {
-        if (imgRef.current) {
-            setImgRect({
-                w: imgRef.current.clientWidth,
-                h: imgRef.current.clientHeight,
-                nw: imgRef.current.naturalWidth || 1,
-                nh: imgRef.current.naturalHeight || 1
-            });
+    const handleCopySelection = () => {
+        if (selectedText) {
+            navigator.clipboard.writeText(selectedText);
+            setCopiedIndex('selection');
+            setTimeout(() => setCopiedIndex(null), 2000);
+            if (onSelect) onSelect(selectedText);
         }
-    };
-
-    const handleCopy = (text: string, index: string) => {
-        const cleanText = text.replace(/[\n\r]/g, ' ').trim();
-        navigator.clipboard.writeText(cleanText);
-        setCopiedIndex(index);
-        setTimeout(() => setCopiedIndex(null), 2000);
-        if (onSelect) onSelect(cleanText);
     };
 
     if (!isOpen) return null;
@@ -2310,67 +2301,62 @@ export const TextExtractionModal: React.FC<{
             zIndex={zIndex}
         >
             <div className="relative min-h-[500px] flex flex-col">
-                <div className="flex-1 relative bg-black/60 rounded-2xl overflow-hidden border border-white/5 select-none flex items-center justify-center p-4">
-                    <div className="relative inline-block">
+                <div 
+                    ref={containerRef}
+                    className="flex-1 relative bg-[#0a0a0a] rounded-2xl overflow-hidden border border-white/5 flex items-center justify-center p-4"
+                >
+                    <div className="relative inline-block select-text">
                         <img 
                             ref={imgRef}
                             src={imageUrl} 
                             alt="Scan Target" 
-                            className="max-w-full max-h-[75vh] object-contain block rounded-lg shadow-2xl" 
+                            className="max-w-full max-h-[75vh] object-contain block rounded-lg shadow-2xl pointer-events-none" 
                             onLoad={handleImageLoad}
                             crossOrigin="anonymous"
                         />
                         
-                        {/* Interactive Overlays (Google Lens Style) */}
-                        {!isLoading && !error && !showTextList && imgRect && lines.map((line, idx) => {
-                            if (!line.bbox) return null;
-                            const scaleX = imgRect.w / imgRect.nw;
-                            const scaleY = imgRect.h / imgRect.nh;
-                            
-                            const style = {
-                                left: (line.bbox.x0 * scaleX),
-                                top: (line.bbox.y0 * scaleY),
-                                width: Math.max(2, (line.bbox.x1 - line.bbox.x0) * scaleX),
-                                height: Math.max(2, (line.bbox.y1 - line.bbox.y0) * scaleY),
-                            };
-                            
-                            const isCopied = copiedIndex === `l-${idx}`;
+                        {/* Selectable Text Layer (Invisible but captures selection) */}
+                        {!isLoading && !error && imgRect && (
+                            <div className="absolute inset-0 z-20 overflow-hidden" style={{ width: imgRect.w, height: imgRect.h }}>
+                                {lines.map((word, idx) => {
+                                    if (!word.bbox) return null;
+                                    const scaleX = imgRect.w / imgRect.nw;
+                                    const scaleY = imgRect.h / imgRect.nh;
+                                    
+                                    const style = {
+                                        position: 'absolute' as const,
+                                        left: word.bbox.x0 * scaleX,
+                                        top: word.bbox.y0 * scaleY,
+                                        width: (word.bbox.x1 - word.bbox.x0) * scaleX,
+                                        height: (word.bbox.y1 - word.bbox.y0) * scaleY,
+                                        fontSize: (word.bbox.y1 - word.bbox.y0) * scaleY * 0.9,
+                                        lineHeight: 1,
+                                        color: 'transparent',
+                                        backgroundColor: 'rgba(0, 242, 234, 0.08)',
+                                        whiteSpace: 'nowrap' as const,
+                                        cursor: 'text',
+                                        borderRadius: '2px'
+                                    };
+                                    
+                                    return (
+                                        <span key={idx} style={style} className="hover:bg-primary/20 transition-colors">
+                                            {word.text}
+                                        </span>
+                                    );
+                                })}
+                            </div>
+                        )}
 
-                            return (
-                                <div
-                                    key={idx}
-                                    style={style}
-                                    onClick={(e) => { e.stopPropagation(); handleCopy(line.text, `l-${idx}`); }}
-                                    className={`absolute cursor-pointer transition-all duration-200 rounded-[2px] z-10 group
-                                        ${isCopied ? 'bg-primary/60 ring-2 ring-primary shadow-[0_0_20px_rgba(0,242,234,0.8)] z-20 scale-105' : 'bg-white/10 hover:bg-primary/30 border border-white/5 hover:border-primary/40'}
-                                    `}
+                        {/* Floating Copy Button */}
+                        {selectedText && (
+                            <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-[200001] animate-in fade-in slide-in-from-bottom-4 duration-300">
+                                <button
+                                    onClick={handleCopySelection}
+                                    className="flex items-center gap-2 px-6 py-3 bg-primary text-black rounded-full font-black text-xs uppercase tracking-widest shadow-[0_10px_30px_rgba(0,242,234,0.4)] hover:scale-105 transition-transform"
                                 >
-                                    <div className={`absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/90 backdrop-blur-md rounded-full border border-white/10 text-white text-[11px] font-bold shadow-2xl flex items-center gap-2 transition-all pointer-events-none whitespace-nowrap z-50
-                                        ${isCopied ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-90 group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100'}
-                                    `}>
-                                        {isCopied ? <Check size={12} className="text-primary" /> : <Copy size={12} className="text-primary" />}
-                                        {isCopied ? 'Copiado!' : 'Copiar'}
-                                    </div>
-                                </div>
-                            );
-                        })}
-
-                        {/* Fallback Text List if segmentation fails but text exists */}
-                        {showTextList && !isLoading && (
-                            <div className="absolute inset-0 bg-black/80 backdrop-blur-md p-6 overflow-y-auto z-30">
-                                <h3 className="text-primary text-xs font-black uppercase tracking-[0.2em] mb-4">Texto Identificado (Lista)</h3>
-                                <div className="space-y-2">
-                                    {fullText.split('\n').filter(t => t.trim().length > 1).map((text, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => handleCopy(text, `fallback-${i}`)}
-                                            className="w-full text-left p-3 rounded-lg bg-white/5 hover:bg-primary/20 border border-white/10 hover:border-primary/30 transition-all text-sm text-gray-200"
-                                        >
-                                            {text}
-                                            {copiedIndex === `fallback-${i}` && <span className="ml-2 text-primary font-bold">Copiado!</span>}
-                                        </button>
-                                    ))}
-                                </div>
+                                    {copiedIndex === 'selection' ? <Check size={16} /> : <Copy size={16} />}
+                                    {copiedIndex === 'selection' ? 'Copiado!' : 'Copiar Seleção'}
+                                </button>
                             </div>
                         )}
                     </div>
@@ -2386,42 +2372,27 @@ export const TextExtractionModal: React.FC<{
                                     />
                                 </div>
                                 <p className="text-[10px] font-black text-white uppercase tracking-[0.2em] mt-3">
-                                    {progress > 0 ? `Lendo: ${progress}%` : 'Iniciando...'}
+                                    {progress > 0 ? `Processando: ${progress}%` : 'Analisando...'}
                                 </p>
                             </div>
-                        </div>
-                    )}
-
-                    {error && (
-                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center gap-4 z-40 p-8 text-center">
-                            <SearchX size={48} className="text-gray-500 mb-2" />
-                            <p className="text-gray-300 text-sm font-medium max-w-xs">{error}</p>
-                            <button 
-                                onClick={extract}
-                                className="px-6 py-2 bg-primary text-black text-xs font-bold rounded-lg hover:scale-105 transition-transform"
-                            >
-                                Tentar Novamente
-                            </button>
                         </div>
                     )}
                 </div>
 
                 <div className="mt-6 flex flex-col items-center gap-4">
                     <div className="flex items-center gap-3 px-6 py-3 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm">
-                        <ScanLine size={20} className="text-primary" />
-                        <span className="text-xs font-bold text-gray-300 uppercase tracking-widest">
-                            {isLoading ? 'Lendo imagem...' : error ? 'Falha no reconhecimento' : `Encontramos ${lines.length} trechos de texto`}
+                        <MousePointer2 size={18} className="text-primary" />
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                            {isLoading ? 'Escaneando...' : 'Arraste para selecionar o texto na imagem'}
                         </span>
                     </div>
 
-                    <div className="flex gap-3">
-                        <button 
-                            onClick={onClose}
-                            className="px-8 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold uppercase tracking-wider transition-all border border-white/5"
-                        >
-                            Fechar Scanner
-                        </button>
-                    </div>
+                    <button 
+                        onClick={onClose}
+                        className="px-8 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold uppercase tracking-wider transition-all border border-white/5"
+                    >
+                        Fechar
+                    </button>
                 </div>
             </div>
         </Modal>
