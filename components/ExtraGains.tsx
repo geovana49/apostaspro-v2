@@ -754,8 +754,7 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
         dispatch({ type: 'SET_FORM', payload: initialFormState });
         setTempPhotos([]);
         setIsModalOpen(false);
-        setIsEditing(false);
-        setEditingBet(null);
+        setEditingId(null);
     };
 
     // ... (handlePhotoSelect, removePhoto remain the same)
