@@ -92,6 +92,35 @@ class OCRService {
         }
     }
 
+    private async resizeToMin(imageInput: any, minWidth: number): Promise<string> {
+        return new Promise((resolve) => {
+            const img = new Image();
+            const process = (source: any) => {
+                const canvas = document.createElement('canvas');
+                const scale = source.width < minWidth ? minWidth / source.width : 1.5;
+                canvas.width = source.width * scale;
+                canvas.height = source.height * scale;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return resolve('');
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/jpeg', 0.9));
+            };
+
+            if (imageInput instanceof HTMLImageElement) {
+                process(imageInput);
+            } else {
+                const url = typeof imageInput === 'string' ? imageInput : URL.createObjectURL(imageInput as Blob);
+                img.onload = () => {
+                    process(img);
+                    if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+                };
+                img.src = url;
+            }
+        });
+    }
+
     async runOCR(imageInput: string | Blob | File | HTMLImageElement, onProgress?: (p: number) => void): Promise<OCRResult> {
         if (this.isBusy) {
             console.warn('[OCR] Busy, waiting...');
@@ -101,57 +130,28 @@ class OCRService {
         this.isBusy = true;
         this.progressCallback = onProgress || null;
         
-        const cleanup = async () => {
-            if (this.worker) {
-                await this.worker.terminate();
-                this.worker = null;
-            }
-        };
-
         try {
-            const isImg = imageInput instanceof HTMLImageElement;
-            const dims = isImg ? `${(imageInput as any).naturalWidth}x${(imageInput as any).naturalHeight}` : 'non-img';
-            console.log(`[OCR] Input Type: ${typeof imageInput}, Name: ${imageInput?.constructor?.name}, Dims: ${dims}`);
-
-            const processed = await this.preprocess(imageInput);
+            console.log('[OCR] Resizing to 2000px for better segmentation...');
+            const upscaled = await this.resizeToMin(imageInput, 2000);
             
-            const runAttempt = async (input: any, psm: string, langs: string[]) => {
-                await cleanup();
-                console.log(`[OCR] Attempting ${langs.join('+')} with PSM ${psm}...`);
-                const worker = await createWorker(langs, 1, {
-                    logger: m => {
-                        if (m.status === 'recognizing text' && this.progressCallback) {
-                             this.progressCallback(Math.round(m.progress * 100));
-                        }
-                    },
-                });
-                await worker.setParameters({ tessedit_pageseg_mode: psm as any });
-                const res = await worker.recognize(input);
-                return { res, worker };
-            };
+            console.log('[OCR] Initializing worker...');
+            if (this.worker) await this.worker.terminate();
+            this.worker = await createWorker(['por', 'eng'], 1, {
+                logger: m => {
+                    if (m.status === 'recognizing text' && this.progressCallback) {
+                         this.progressCallback(Math.round(m.progress * 100));
+                    }
+                },
+            });
 
-            // Stage 1: Processed + PSM 11 (Sparse)
-            let { res, worker } = await runAttempt(processed, '11', ['por', 'eng']);
-            let data = res.data;
-            this.worker = worker;
+            console.log('[OCR] Recognizing (PSM 1)...');
+            await this.worker.setParameters({
+                tessedit_pageseg_mode: '1' as any, // PSM 1 is automatic with OSD
+            });
 
-            // Stage 2: RAW + PSM 3 (Default)
-            if ((!data.words || data.words.length === 0) && data.text?.length > 5) {
-                console.log('[OCR] Fallback to Stage 2: RAW + PSM 3');
-                const retry = await runAttempt(imageInput as any, '3', ['por', 'eng']);
-                data = retry.res.data;
-                this.worker = retry.worker;
-            }
-
-            // Stage 3: RAW + PSM 6 (Uniform Block)
-            if ((!data.words || data.words.length === 0) && data.text?.length > 5) {
-                console.log('[OCR] Fallback to Stage 3: RAW + PSM 6');
-                const retry = await runAttempt(imageInput as any, '6', ['eng']);
-                data = retry.res.data;
-                this.worker = retry.worker;
-            }
-
-            console.log(`[OCR] Final: Text=${data.text?.length || 0}, Segments=${data.words?.length || 0}, Conf=${data.confidence}%`);
+            const { data } = await this.worker.recognize(upscaled);
+            
+            console.log(`[OCR] Final Result: Text=${data.text?.length || 0}, Words=${data.words?.length || 0}, Lines=${data.lines?.length || 0}`);
 
             return {
                 text: data.text || '',
@@ -160,12 +160,13 @@ class OCRService {
                 blocks: data.blocks || []
             };
         } catch (err) {
-            console.error('[OCR Service] Fatal Error:', err);
+            console.error('[OCR] Fatal error:', err);
             return { text: '', words: [], lines: [], blocks: [] };
         } finally {
             this.isBusy = false;
         }
     }
+}
 
     /**
      * Extracts data using a "Heuristic Pattern Matcher"
