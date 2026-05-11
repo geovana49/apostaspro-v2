@@ -106,9 +106,20 @@ class OCRService {
             const processed = await this.preprocess(imageInput);
             
             const worker = await this.getWorker();
+            
+            // Try PSM 11 first (Sparse Text)
             console.log('[OCR] Recognition (PSM 11)...');
-            const result = await worker.recognize(processed);
-            const data = result.data;
+            await worker.setParameters({ tessedit_pageseg_mode: '11' as any });
+            let result = await worker.recognize(processed);
+            let data = result.data;
+
+            // FALLBACK: If PSM 11 found text but NO segmentation, try PSM 3 (Default)
+            if ((!data.words || data.words.length === 0) && data.text && data.text.trim().length > 10) {
+                console.log('[OCR] PSM 11 failed segmentation. Retrying with PSM 3...');
+                await worker.setParameters({ tessedit_pageseg_mode: '3' as any });
+                result = await worker.recognize(processed);
+                data = result.data;
+            }
 
             console.log(`[OCR] Done: Text=${data.text?.length || 0}, Lines=${data.lines?.length || 0}, Words=${data.words?.length || 0}, Conf=${data.confidence}%`);
 

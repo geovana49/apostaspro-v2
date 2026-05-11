@@ -2314,21 +2314,21 @@ export const TextExtractionModal: React.FC<{
             <div className="relative min-h-[500px] flex flex-col">
                 <div 
                     ref={containerRef}
-                    className="flex-1 relative bg-[#0a0a0a] rounded-2xl overflow-hidden border border-white/5 flex items-center justify-center p-4"
+                    className="flex-1 relative bg-[#0a0a0a] rounded-2xl overflow-hidden border border-white/5 flex items-center justify-center p-4 select-none"
                 >
-                    <div className="relative inline-block select-text">
+                    <div className="relative inline-block select-none">
                         <img 
                             ref={imgRef}
                             src={imageUrl} 
                             alt="Scan Target" 
-                            className="max-w-full max-h-[75vh] object-contain block rounded-lg shadow-2xl pointer-events-none" 
+                            className="max-w-full max-h-[75vh] object-contain block rounded-lg shadow-2xl pointer-events-none select-none" 
                             onLoad={handleImageLoad}
                             crossOrigin="anonymous"
                         />
                         
                         {/* Selectable Text Layer (Invisible but captures selection) */}
                         {!isLoading && !error && imgRect && (
-                            <div className="absolute inset-0 z-20 overflow-hidden" style={{ width: imgRect.w, height: imgRect.h }}>
+                            <div className="absolute inset-0 z-20 overflow-hidden select-text" style={{ width: imgRect.w, height: imgRect.h }}>
                                 {lines.map((word, idx) => {
                                     if (!word.bbox) return null;
                                     const scaleX = imgRect.w / imgRect.nw;
