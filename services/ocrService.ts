@@ -105,7 +105,7 @@ class OCRService {
             console.log('[OCR] Pre-processing...');
             const processed = await this.preprocess(imageInput);
             
-            const worker = await this.getWorker();
+            let worker = await this.getWorker();
             
             // Try PSM 11 first (Sparse Text)
             console.log('[OCR] Recognition (PSM 11)...');
@@ -113,15 +113,24 @@ class OCRService {
             let result = await worker.recognize(processed);
             let data = result.data;
 
-            // FALLBACK: If PSM 11 found text but NO segmentation, try PSM 3 (Default)
-            if ((!data.words || data.words.length === 0) && data.text && data.text.trim().length > 10) {
-                console.log('[OCR] PSM 11 failed segmentation. Retrying with PSM 3...');
+            // FALLBACK: If PSM 11 found text but NO segmentation, RE-CREATE worker with PSM 3
+            const hasNoSegments = (!data.words || data.words.length === 0) && 
+                                 (!data.lines || data.lines.length === 0);
+                                 
+            if (hasNoSegments && data.text && data.text.trim().length > 5) {
+                console.log('[OCR] PSM 11 failed segmentation. Re-creating worker for PSM 3...');
+                if (this.worker) {
+                    await this.worker.terminate();
+                    this.worker = null;
+                }
+                
+                worker = await this.getWorker();
                 await worker.setParameters({ tessedit_pageseg_mode: '3' as any });
                 result = await worker.recognize(processed);
                 data = result.data;
             }
 
-            console.log(`[OCR] Done: Text=${data.text?.length || 0}, Lines=${data.lines?.length || 0}, Words=${data.words?.length || 0}, Conf=${data.confidence}%`);
+            console.log(`[OCR] Done: Text=${data.text?.length || 0}, Segments=${data.words?.length || 0}, Conf=${data.confidence}%`);
 
             return {
                 text: data.text || '',

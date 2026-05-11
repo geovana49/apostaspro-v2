@@ -2314,9 +2314,10 @@ export const TextExtractionModal: React.FC<{
             <div className="relative min-h-[500px] flex flex-col">
                 <div 
                     ref={containerRef}
+                    onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
                     className="flex-1 relative bg-[#0a0a0a] rounded-2xl overflow-hidden border border-white/5 flex items-center justify-center p-4 select-none"
                 >
-                    <div className="relative inline-block select-none">
+                    <div className="relative inline-block select-none" onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
                         <img 
                             ref={imgRef}
                             src={imageUrl} 
@@ -2324,6 +2325,7 @@ export const TextExtractionModal: React.FC<{
                             className="max-w-full max-h-[75vh] object-contain block rounded-lg shadow-2xl pointer-events-none select-none" 
                             onLoad={handleImageLoad}
                             crossOrigin="anonymous"
+                            draggable={false}
                         />
                         
                         {/* Selectable Text Layer (Invisible but captures selection) */}
