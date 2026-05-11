@@ -112,9 +112,18 @@ class OCRService {
             const worker = await this.getWorker();
             console.log('[OCR] Starting recognition...');
             const result = await worker.recognize(processedBase64);
+            
+            // Allow a tiny delay to ensure Tesseract finishes internal segmentation
+            await new Promise(r => setTimeout(r, 100));
+
             const data = result.data;
 
-            console.log(`[OCR] Result: ${data.text?.length || 0} chars, ${data.lines?.length || 0} lines.`);
+            console.log(`[OCR] Result Summary:
+                - Text length: ${data.text?.length || 0}
+                - Lines: ${data.lines?.length || 0}
+                - Words: ${data.words?.length || 0}
+                - Blocks: ${data.blocks?.length || 0}
+                - Confidence: ${data.confidence}%`);
 
             return {
                 text: data.text || '',

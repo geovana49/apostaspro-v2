@@ -2226,6 +2226,8 @@ export const TextExtractionModal: React.FC<{
     const [error, setError] = useState<string | null>(null);
     const [copiedIndex, setCopiedIndex] = useState<string | null>(null);
     const [imgRect, setImgRect] = useState<{ w: number, h: number, nw: number, nh: number } | null>(null);
+    const [fullText, setFullText] = useState('');
+    const [showTextList, setShowTextList] = useState(false);
     const imgRef = useRef<HTMLImageElement>(null);
 
     useEffect(() => {
@@ -2235,6 +2237,8 @@ export const TextExtractionModal: React.FC<{
             setLines([]);
             setError(null);
             setProgress(0);
+            setFullText('');
+            setShowTextList(false);
         }
     }, [isOpen, imageUrl]);
 
@@ -2246,11 +2250,11 @@ export const TextExtractionModal: React.FC<{
         setProgress(0);
         try {
             console.log('[Lens] Starting OCR from image element...');
-            // Wait a tiny bit to ensure the image is painted
-            await new Promise(r => setTimeout(r, 300));
+            await new Promise(r => setTimeout(r, 500));
             
             const result = await ocrService.runOCR(imgRef.current, (p) => setProgress(p));
-            
+            setFullText(result.text);
+
             if (result.lines && result.lines.length > 0) {
                 setLines(result.lines);
                 console.log(`[Lens] Found ${result.lines.length} lines.`);
@@ -2261,8 +2265,12 @@ export const TextExtractionModal: React.FC<{
                 setLines(result.words);
                 console.log(`[Lens] Found ${result.words.length} words.`);
             } else {
-                console.warn('[Lens] No text found.');
-                setError('Nenhum texto identificado. Tente uma imagem mais nítida ou aguarde carregar totalmente.');
+                console.warn('[Lens] No segmented text found.');
+                if (result.text && result.text.length > 5) {
+                    setShowTextList(true);
+                } else {
+                    setError('Nenhum texto identificado. Tente uma imagem mais nítida ou aguarde carregar totalmente.');
+                }
             }
         } catch (err: any) {
             console.error("[Lens] OCR Error:", err);
@@ -2277,8 +2285,8 @@ export const TextExtractionModal: React.FC<{
             setImgRect({
                 w: imgRef.current.clientWidth,
                 h: imgRef.current.clientHeight,
-                nw: imgRef.current.naturalWidth,
-                nh: imgRef.current.naturalHeight
+                nw: imgRef.current.naturalWidth || 1,
+                nh: imgRef.current.naturalHeight || 1
             });
         }
     };
@@ -2314,15 +2322,16 @@ export const TextExtractionModal: React.FC<{
                         />
                         
                         {/* Interactive Overlays (Google Lens Style) */}
-                        {!isLoading && !error && imgRect && lines.map((line, idx) => {
+                        {!isLoading && !error && !showTextList && imgRect && lines.map((line, idx) => {
+                            if (!line.bbox) return null;
                             const scaleX = imgRect.w / imgRect.nw;
                             const scaleY = imgRect.h / imgRect.nh;
                             
                             const style = {
                                 left: (line.bbox.x0 * scaleX),
                                 top: (line.bbox.y0 * scaleY),
-                                width: (line.bbox.x1 - line.bbox.x0) * scaleX,
-                                height: (line.bbox.y1 - line.bbox.y0) * scaleY,
+                                width: Math.max(2, (line.bbox.x1 - line.bbox.x0) * scaleX),
+                                height: Math.max(2, (line.bbox.y1 - line.bbox.y0) * scaleY),
                             };
                             
                             const isCopied = copiedIndex === `l-${idx}`;
@@ -2345,6 +2354,25 @@ export const TextExtractionModal: React.FC<{
                                 </div>
                             );
                         })}
+
+                        {/* Fallback Text List if segmentation fails but text exists */}
+                        {showTextList && !isLoading && (
+                            <div className="absolute inset-0 bg-black/80 backdrop-blur-md p-6 overflow-y-auto z-30">
+                                <h3 className="text-primary text-xs font-black uppercase tracking-[0.2em] mb-4">Texto Identificado (Lista)</h3>
+                                <div className="space-y-2">
+                                    {fullText.split('\n').filter(t => t.trim().length > 1).map((text, i) => (
+                                        <button
+                                            key={i}
+                                            onClick={() => handleCopy(text, `fallback-${i}`)}
+                                            className="w-full text-left p-3 rounded-lg bg-white/5 hover:bg-primary/20 border border-white/10 hover:border-primary/30 transition-all text-sm text-gray-200"
+                                        >
+                                            {text}
+                                            {copiedIndex === `fallback-${i}` && <span className="ml-2 text-primary font-bold">Copiado!</span>}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {isLoading && (
