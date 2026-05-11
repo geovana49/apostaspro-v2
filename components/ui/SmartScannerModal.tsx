@@ -185,37 +185,6 @@ export const SmartScannerModal: React.FC<SmartScannerModalProps> = ({
 
             {/* Main Area */}
             <div className="flex-1 relative flex flex-col overflow-hidden bg-black/50">
-                {/* Tools Panel */}
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex gap-2 p-2 bg-[#151b2e]/90 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl">
-                    <button 
-                        onClick={() => handleExtract('odd')}
-                        disabled={isScanning}
-                        className="px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 border border-primary/20"
-                    >
-                        <Target size={14} /> Extrair Odd
-                    </button>
-                    <button 
-                        onClick={() => handleExtract('stake')}
-                        disabled={isScanning}
-                        className="px-4 py-2 bg-secondary/10 hover:bg-secondary/20 text-secondary rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 border border-secondary/20"
-                    >
-                        <DollarSign size={14} /> Extrair Stake
-                    </button>
-                    <button 
-                        onClick={() => handleExtract('market')}
-                        disabled={isScanning}
-                        className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 border border-emerald-500/20 hidden sm:flex"
-                    >
-                        <Zap size={14} /> Mercado
-                    </button>
-                    <button 
-                        onClick={() => handleExtract('bookmaker')}
-                        disabled={isScanning}
-                        className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 border border-blue-500/20 hidden sm:flex"
-                    >
-                        <Briefcase size={14} /> Casa
-                    </button>
-                </div>
 
                 {/* Scan Overlay Success */}
                 {scanResult && (
@@ -301,22 +270,38 @@ export const SmartScannerModal: React.FC<SmartScannerModalProps> = ({
                     </div>
                 </div>
 
-                {/* Mobile Extra Controls */}
-                <div className="sm:hidden h-20 bg-[#0a0d18] border-t border-white/5 flex items-center justify-around px-4 gap-2 pb-4">
-                    <button 
-                        onClick={() => handleExtract('market')}
-                        disabled={isScanning}
-                        className="flex-1 py-3 bg-emerald-500/10 text-emerald-500 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 border border-emerald-500/20"
-                    >
-                        <Zap size={12} /> Mercado
-                    </button>
-                    <button 
-                        onClick={() => handleExtract('bookmaker')}
-                        disabled={isScanning}
-                        className="flex-1 py-3 bg-blue-500/10 text-blue-500 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 border border-blue-500/20"
-                    >
-                        <Briefcase size={12} /> Casa
-                    </button>
+                {/* Unified Bottom Controls */}
+                <div className="bg-[#0a0d18] border-t border-white/5 p-4 z-50 shrink-0 mb-safe">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl mx-auto">
+                        <button 
+                            onClick={() => handleExtract('odd')}
+                            disabled={isScanning}
+                            className="py-3.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 border border-primary/20 shadow-lg active:scale-95"
+                        >
+                            <Target size={14} /> Extrair Odd
+                        </button>
+                        <button 
+                            onClick={() => handleExtract('stake')}
+                            disabled={isScanning}
+                            className="py-3.5 bg-secondary/10 hover:bg-secondary/20 text-secondary rounded-xl text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 border border-secondary/20 shadow-lg active:scale-95"
+                        >
+                            <DollarSign size={14} /> Extrair Stake
+                        </button>
+                        <button 
+                            onClick={() => handleExtract('market')}
+                            disabled={isScanning}
+                            className="py-3.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 rounded-xl text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 border border-emerald-500/20 shadow-lg active:scale-95"
+                        >
+                            <Zap size={14} /> Mercado
+                        </button>
+                        <button 
+                            onClick={() => handleExtract('bookmaker')}
+                            disabled={isScanning}
+                            className="py-3.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 rounded-xl text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 border border-blue-500/20 shadow-lg active:scale-95"
+                        >
+                            <Briefcase size={14} /> Casa
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>,
