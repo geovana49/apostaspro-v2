@@ -1580,6 +1580,12 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                     setIsDuplicateActionModalOpen(false);
                     confirmDuplicate(new Date());
                 }}
+                onKeepOriginalDate={() => {
+                    setIsDuplicateActionModalOpen(false);
+                    if (duplicatingGain) {
+                        confirmDuplicate(new Date(duplicatingGain.date + 'T12:00:00'));
+                    }
+                }}
                 onChooseDate={() => {
                     setIsDuplicateActionModalOpen(false);
                     setIsDuplicateDatePickerOpen(true);

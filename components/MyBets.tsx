@@ -1372,6 +1372,12 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                     setIsDuplicateActionModalOpen(false);
                     confirmDuplicate(new Date());
                 }}
+                onKeepOriginalDate={() => {
+                    setIsDuplicateActionModalOpen(false);
+                    if (duplicatingBet) {
+                        confirmDuplicate(new Date(duplicatingBet.date + 'T12:00:00'));
+                    }
+                }}
                 onChooseDate={() => {
                     setIsDuplicateActionModalOpen(false);
                     setIsDuplicateDatePickerOpen(true);

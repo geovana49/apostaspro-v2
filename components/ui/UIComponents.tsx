@@ -2138,8 +2138,9 @@ export const DuplicateActionModal: React.FC<{
   isOpen: boolean;
   onClose: () => void;
   onDuplicateToday: () => void;
+  onKeepOriginalDate: () => void;
   onChooseDate: () => void;
-}> = ({ isOpen, onClose, onDuplicateToday, onChooseDate }) => {
+}> = ({ isOpen, onClose, onDuplicateToday, onKeepOriginalDate, onChooseDate }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Duplicar Aposta" zIndex={100002}>
       <div className="space-y-4">
@@ -2159,6 +2160,22 @@ export const DuplicateActionModal: React.FC<{
             </div>
           </div>
           <ChevronRight size={18} className="text-gray-600 group-hover:text-primary transition-colors" />
+        </button>
+
+        <button
+          onClick={onKeepOriginalDate}
+          className="w-full flex items-center justify-between p-4 bg-[#151b2e] hover:bg-emerald-500/10 border border-white/5 hover:border-emerald-500/30 rounded-xl transition-all group"
+        >
+          <div className="flex items-center gap-3 text-left">
+            <div className="p-2.5 bg-emerald-500/10 rounded-lg text-emerald-500 group-hover:scale-110 transition-transform">
+              <Calendar size={20} />
+            </div>
+            <div>
+              <span className="text-white font-bold block">Manter Data Original</span>
+              <span className="text-[10px] text-gray-500 font-medium">Usa a mesma data da aposta original</span>
+            </div>
+          </div>
+          <ChevronRight size={18} className="text-gray-600 group-hover:text-emerald-500 transition-colors" />
         </button>
 
         <button

@@ -968,14 +968,6 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                                 >
                                                     <ScannerIcon size={16} />
                                                 </button>
-                                                <div className="w-px h-3 bg-white/10 mx-1" />
-                                                <button
-                                                    onClick={() => removeCoverage(cov.id)}
-                                                    className="text-gray-600 hover:text-danger transition-colors p-1"
-                                                    title="Excluir"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
                                             </div>
                                         </div>
 
@@ -1072,13 +1064,23 @@ const BetFormModal: React.FC<BetFormModalProps> = ({
                                                 />
                                             </div>
 
-                                            <div className="col-span-2 mt-1">
-                                                <label className="text-[10px] text-textMuted uppercase font-bold block mb-2">Status Cobertura</label>
-                                                <Dropdown
-                                                    options={statusOptions}
-                                                    value={cov.status}
-                                                    onChange={value => updateCoverage(cov.id, 'status', value)}
-                                                />
+                                            <div className="col-span-2 mt-1 flex items-end gap-3">
+                                                <div className="flex-1">
+                                                    <label className="text-[10px] text-textMuted uppercase font-bold block mb-2">Status Cobertura</label>
+                                                    <Dropdown
+                                                        options={statusOptions}
+                                                        value={cov.status}
+                                                        onChange={value => updateCoverage(cov.id, 'status', value)}
+                                                        className="text-xs"
+                                                    />
+                                                </div>
+                                                <button
+                                                    onClick={() => removeCoverage(cov.id)}
+                                                    className="p-2.5 bg-danger/10 hover:bg-danger/20 text-danger rounded-xl border border-danger/20 transition-all active:scale-95 shadow-lg flex items-center justify-center"
+                                                    title="Excluir Cobertura"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
