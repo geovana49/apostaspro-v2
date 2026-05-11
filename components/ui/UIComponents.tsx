@@ -2219,14 +2219,21 @@ export const TextExtractionModal: React.FC<{
     onClose: () => void;
     imageUrl: string;
     onSelect?: (text: string) => void;
-}> = ({ isOpen, onClose, imageUrl, onSelect }) => {
+    zIndex?: number;
+}> = ({ isOpen, onClose, imageUrl, onSelect, zIndex = 200000 }) => {
     const [lines, setLines] = useState<string[]>([]);
+    const [words, setWords] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+    const [copiedIndex, setCopiedIndex] = useState<number | string | null>(null);
+    const [imgRect, setImgRect] = useState<{ w: number, h: number, nw: number, nh: number } | null>(null);
+    const imgRef = useRef<HTMLImageElement>(null);
 
     useEffect(() => {
         if (isOpen && imageUrl) {
             extract();
+        } else {
+            setLines([]);
+            setWords([]);
         }
     }, [isOpen, imageUrl]);
 
@@ -2239,6 +2246,7 @@ export const TextExtractionModal: React.FC<{
                 .map(l => l.trim())
                 .filter(l => l.length > 2);
             setLines(filteredLines);
+            setWords(result.words || []);
         } catch (err) {
             console.error("OCR Error:", err);
         } finally {
@@ -2246,7 +2254,18 @@ export const TextExtractionModal: React.FC<{
         }
     };
 
-    const handleCopy = (text: string, index: number) => {
+    const handleImageLoad = () => {
+        if (imgRef.current) {
+            setImgRect({
+                w: imgRef.current.clientWidth,
+                h: imgRef.current.clientHeight,
+                nw: imgRef.current.naturalWidth,
+                nh: imgRef.current.naturalHeight
+            });
+        }
+    };
+
+    const handleCopy = (text: string, index: number | string) => {
         navigator.clipboard.writeText(text);
         setCopiedIndex(index);
         setTimeout(() => setCopiedIndex(null), 2000);
@@ -2259,42 +2278,98 @@ export const TextExtractionModal: React.FC<{
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title="Extrair Nomes e Textos"
-            maxWidth="max-w-md"
+            title="Extrair Texto Interativo"
+            maxWidth="max-w-5xl"
+            zIndex={zIndex}
         >
-            <div className="space-y-4">
-                <div className="relative aspect-video rounded-xl overflow-hidden border border-white/10 bg-black/20 mb-4">
-                    <img src={imageUrl} alt="Scan Target" className="w-full h-full object-contain" />
+            <div className="flex flex-col lg:flex-row gap-6 min-h-[400px]">
+                {/* Image Section with Overlays */}
+                <div className="flex-1 relative bg-black/40 rounded-xl overflow-hidden border border-white/10 select-none flex items-center justify-center min-h-[300px]">
+                    <img 
+                        ref={imgRef}
+                        src={imageUrl} 
+                        alt="Scan Target" 
+                        className="max-w-full max-h-[70vh] object-contain block" 
+                        onLoad={handleImageLoad}
+                    />
+                    
+                    {/* Word Overlays */}
+                    {!isLoading && imgRect && words.map((word, idx) => {
+                        const scaleX = imgRect.w / imgRect.nw;
+                        const scaleY = imgRect.h / imgRect.nh;
+                        
+                        // Calculate offset if image is centered in container
+                        const offsetX = (imgRef.current?.offsetLeft || 0);
+                        const offsetY = (imgRef.current?.offsetTop || 0);
+
+                        const style = {
+                            left: offsetX + (word.bbox.x0 * scaleX),
+                            top: offsetY + (word.bbox.y0 * scaleY),
+                            width: (word.bbox.x1 - word.bbox.x0) * scaleX,
+                            height: (word.bbox.y1 - word.bbox.y0) * scaleY,
+                        };
+                        return (
+                            <div
+                                key={idx}
+                                style={style}
+                                onClick={() => handleCopy(word.text, `w-${idx}`)}
+                                className="absolute bg-primary/0 hover:bg-primary/30 border border-transparent hover:border-primary/50 cursor-pointer transition-all group z-10"
+                                title={word.text}
+                            >
+                                <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-black/90 backdrop-blur-sm text-[10px] px-2 py-1 rounded border border-white/20 text-white whitespace-nowrap pointer-events-none shadow-xl transition-opacity flex items-center gap-1.5">
+                                    {copiedIndex === `w-${idx}` ? <Check size={10} className="text-primary" /> : <Copy size={10} />}
+                                    {copiedIndex === `w-${idx}` ? 'Copiado!' : 'Copiar'}
+                                </div>
+                            </div>
+                        );
+                    })}
+
                     {isLoading && (
-                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
-                            <Loader2 size={32} className="text-primary animate-spin" />
-                            <p className="text-xs font-bold text-white uppercase tracking-widest">Escaneando Imagem...</p>
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3 z-20">
+                            <Loader2 size={40} className="text-primary animate-spin" />
+                            <p className="text-sm font-bold text-white uppercase tracking-widest animate-pulse">Mapeando áreas...</p>
                         </div>
                     )}
                 </div>
 
-                <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                    {lines.length === 0 && !isLoading ? (
-                        <p className="text-center py-8 text-gray-500 text-sm italic">Nenhum texto legível encontrado.</p>
-                    ) : (
-                        lines.map((line, idx) => (
-                            <button
-                                key={idx}
-                                onClick={() => handleCopy(line, idx)}
-                                className="w-full text-left p-3 rounded-lg bg-white/5 border border-white/5 hover:border-primary/30 hover:bg-primary/5 transition-all group flex items-center justify-between gap-3"
-                            >
-                                <span className="text-sm text-gray-200 line-clamp-2">{line}</span>
-                                <div className="shrink-0 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-primary group-hover:text-black transition-all">
-                                    {copiedIndex === idx ? <Check size={14} /> : <Copy size={14} />}
-                                </div>
-                            </button>
-                        ))
-                    )}
-                </div>
+                {/* Sidebar List */}
+                <div className="w-full lg:w-80 flex flex-col">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2 text-gray-400">
+                            <ScanLine size={16} className="text-primary" />
+                            <span className="text-xs font-bold uppercase tracking-widest">Textos</span>
+                        </div>
+                        <Badge variant="neutral" className="text-[10px]">{lines.length} linhas</Badge>
+                    </div>
 
-                <p className="text-[10px] text-center text-gray-500 mt-4 italic">
-                    * Clique em uma linha para copiar para sua área de transferência.
-                </p>
+                    <div className="flex-1 max-h-[60vh] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                        {lines.length === 0 && !isLoading ? (
+                            <div className="flex flex-col items-center justify-center py-20 text-gray-500 text-center px-4">
+                                <SearchX size={32} className="mb-2 opacity-20" />
+                                <p className="text-sm italic">Nenhum texto legível encontrado nesta imagem.</p>
+                            </div>
+                        ) : (
+                            lines.map((line, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => handleCopy(line, idx)}
+                                    className={`w-full text-left p-3 rounded-lg border transition-all group flex items-center justify-between gap-3
+                                        ${copiedIndex === idx ? 'bg-primary/10 border-primary/50' : 'bg-white/5 border-white/5 hover:border-primary/30 hover:bg-primary/5'}`}
+                                >
+                                    <span className="text-xs text-gray-200 line-clamp-2 leading-relaxed">{line}</span>
+                                    <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all
+                                        ${copiedIndex === idx ? 'bg-primary text-black' : 'bg-white/5 group-hover:bg-primary group-hover:text-black'}`}>
+                                        {copiedIndex === idx ? <Check size={12} /> : <Copy size={12} />}
+                                    </div>
+                                </button>
+                            ))
+                        )}
+                    </div>
+                    
+                    <p className="text-[10px] text-center text-gray-500 mt-6 italic p-3 bg-white/5 rounded-lg border border-white/5">
+                        Dica: Você pode clicar diretamente nas palavras da imagem ou usar a lista ao lado.
+                    </p>
+                </div>
             </div>
         </Modal>
     );

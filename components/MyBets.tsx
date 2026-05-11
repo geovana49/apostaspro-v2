@@ -2483,17 +2483,6 @@ text - [10px] font - bold uppercase py - 2.5 rounded - lg transition - all
                                                 <Maximize size={14} className="sm:w-4 sm:h-4" />
                                             </button>
 
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setExtractionImageUrl(photo.url);
-                                                    setIsExtractionModalOpen(true);
-                                                }}
-                                                className="absolute top-1.5 left-10 p-1.5 bg-black/70 text-white rounded-full hover:bg-secondary transition-all shadow-lg active:scale-90 z-20 sm:p-2"
-                                                title="Extrair Nomes/Texto"
-                                            >
-                                                <ScanLine size={14} className="sm:w-4 sm:h-4" />
-                                            </button>
 
                                             {/* Delete Button */}
                                             <button

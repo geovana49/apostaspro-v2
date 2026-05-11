@@ -1610,13 +1610,6 @@ const ExtraGains: React.FC<ExtraGainsProps> = ({
                                             <Maximize size={12} />
                                         </button>
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); setExtractionImageUrl(photo.url); setIsExtractionModalOpen(true); }}
-                                            className="absolute top-1.5 left-10 p-1.5 bg-black/70 text-white rounded-full hover:bg-secondary transition-all z-20"
-                                            title="Extrair Nomes/Texto"
-                                        >
-                                            <ScanLine size={12} />
-                                        </button>
-                                        <button
                                             onClick={(e) => { e.stopPropagation(); removePhoto(index); }}
                                             className="absolute top-1.5 right-1.5 p-1.5 bg-black/70 text-white rounded-full hover:bg-danger transition-all z-20"
                                         >
