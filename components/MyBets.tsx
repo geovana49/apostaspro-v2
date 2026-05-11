@@ -1113,7 +1113,6 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
         setTempPhotos([]);
         setIsModalOpen(false);
         setIsEditing(false);
-        setEditingBet(null);
     };
 
     const handleDuplicate = (originalBet: Bet) => {
