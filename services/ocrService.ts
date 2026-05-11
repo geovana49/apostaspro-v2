@@ -24,11 +24,11 @@ class OCRService {
     async getWorker() {
         if (!this.worker) {
             try {
-                console.log('[OCR] Initializing Tesseract worker...');
-                this.worker = await createWorker('por', 1, {
+                console.log('[OCR] Initializing Tesseract worker (por+eng)...');
+                this.worker = await createWorker(['por', 'eng'], 1, {
                     logger: m => {
                         if (m.status === 'recognizing text') {
-                             // console.log('[OCR Progress]', Math.round(m.progress * 100) + '%');
+                             console.log('[OCR Progress]', Math.round(m.progress * 100) + '%');
                         }
                     },
                 });
@@ -40,7 +40,7 @@ class OCRService {
         return this.worker;
     }
 
-    async runOCR(imageInput: string | Blob | File): Promise<OCRResult> {
+    async runOCR(imageInput: string | Blob | File, onProgress?: (p: number) => void): Promise<OCRResult> {
         if (this.isBusy) {
             console.warn('[OCR] Busy, waiting...');
             await new Promise(r => setTimeout(r, 1000));
@@ -49,6 +49,16 @@ class OCRService {
         this.isBusy = true;
         try {
             const worker = await this.getWorker();
+            
+            // Update logger for this specific run
+            worker.setOptions({
+                logger: (m: any) => {
+                    if (m.status === 'recognizing text' && onProgress) {
+                        onProgress(Math.round(m.progress * 100));
+                    }
+                }
+            });
+
             console.log('[OCR] Starting recognition...');
             const result = await worker.recognize(imageInput);
             const data = result.data;

@@ -2222,6 +2222,7 @@ export const TextExtractionModal: React.FC<{
 }> = ({ isOpen, onClose, imageUrl, onSelect, zIndex = 200000 }) => {
     const [lines, setLines] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [progress, setProgress] = useState(0);
     const [error, setError] = useState<string | null>(null);
     const [copiedIndex, setCopiedIndex] = useState<string | null>(null);
     const [imgRect, setImgRect] = useState<{ w: number, h: number, nw: number, nh: number } | null>(null);
@@ -2233,12 +2234,14 @@ export const TextExtractionModal: React.FC<{
         } else {
             setLines([]);
             setError(null);
+            setProgress(0);
         }
     }, [isOpen, imageUrl]);
 
     const extract = async () => {
         setIsLoading(true);
         setError(null);
+        setProgress(0);
         try {
             console.log('[Lens] Fetching image for OCR...');
             const response = await fetch(imageUrl);
@@ -2246,7 +2249,7 @@ export const TextExtractionModal: React.FC<{
             const blob = await response.blob();
             
             console.log('[Lens] Starting OCR...');
-            const result = await ocrService.runOCR(blob);
+            const result = await ocrService.runOCR(blob, (p) => setProgress(p));
             
             if (result.lines && result.lines.length > 0) {
                 setLines(result.lines);
@@ -2257,7 +2260,7 @@ export const TextExtractionModal: React.FC<{
                 if (result.words && result.words.length > 0) {
                     setLines(result.words);
                 } else {
-                    setError('Nenhum texto identificado. Tente uma imagem mais nítida.');
+                    setError('Nenhum texto identificado. Tente uma imagem mais nítida ou aguarde carregar totalmente.');
                 }
             }
         } catch (err: any) {
@@ -2345,8 +2348,18 @@ export const TextExtractionModal: React.FC<{
 
                     {isLoading && (
                         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center gap-4 z-40">
-                            <Loader2 size={48} className="text-primary animate-spin" />
-                            <p className="text-sm font-black text-white uppercase tracking-[0.2em]">Escaneando...</p>
+                            <div className="relative flex flex-col items-center">
+                                <Loader2 size={48} className="text-primary animate-spin mb-4" />
+                                <div className="w-48 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                    <div 
+                                        className="h-full bg-primary transition-all duration-300 shadow-[0_0_10px_rgba(0,242,234,0.5)]" 
+                                        style={{ width: `${progress}%` }} 
+                                    />
+                                </div>
+                                <p className="text-[10px] font-black text-white uppercase tracking-[0.2em] mt-3">
+                                    {progress > 0 ? `Lendo: ${progress}%` : 'Iniciando...'}
+                                </p>
+                            </div>
                         </div>
                     )}
 
