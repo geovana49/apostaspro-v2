@@ -119,7 +119,6 @@ class OCRService {
             this.isBusy = false;
         }
     }
-}
 
     /**
      * Extracts data using a "Heuristic Pattern Matcher"
