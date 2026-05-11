@@ -259,7 +259,7 @@ export const SmartScannerModal: React.FC<SmartScannerModalProps> = ({
 
                             {/* Scanner Box */}
                             <div 
-                                className="absolute pointer-events-auto cursor-move border-2 border-primary shadow-[0_0_20px_rgba(23,186,164,0.4)]"
+                                className="absolute pointer-events-auto cursor-move shadow-[0_0_30px_rgba(23,186,164,0.1)] transition-colors"
                                 style={{ 
                                     left: `${crop.x}%`, 
                                     top: `${crop.y}%`, 
@@ -268,14 +268,34 @@ export const SmartScannerModal: React.FC<SmartScannerModalProps> = ({
                                 }}
                                 onPointerDown={(e) => handlePointerDown('move', e)}
                             >
-                                {/* Center Scanner Line Effect */}
-                                <div className="absolute inset-x-0 top-1/2 h-0.5 bg-primary/50 shadow-[0_0_10px_#17baa4] animate-pulse" />
+                                <style>
+                                {`
+                                    @keyframes scan-laser {
+                                        0% { top: 0%; opacity: 0; }
+                                        5% { opacity: 1; }
+                                        95% { opacity: 1; }
+                                        100% { top: calc(100% - 2px); opacity: 0; }
+                                    }
+                                    .animate-scan-laser {
+                                        animation: scan-laser 2s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+                                    }
+                                `}
+                                </style>
+
+                                {/* Corner Brackets (QR style) */}
+                                <div className="absolute -top-1 -left-1 w-6 h-6 border-t-[3px] border-l-[3px] border-primary rounded-tl-lg pointer-events-none" />
+                                <div className="absolute -top-1 -right-1 w-6 h-6 border-t-[3px] border-r-[3px] border-primary rounded-tr-lg pointer-events-none" />
+                                <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-[3px] border-l-[3px] border-primary rounded-bl-lg pointer-events-none" />
+                                <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-[3px] border-r-[3px] border-primary rounded-br-lg pointer-events-none" />
+
+                                {/* Sweeping Laser Line Effect */}
+                                <div className="absolute left-0 right-0 h-[2px] bg-primary shadow-[0_0_15px_3px_rgba(23,186,164,0.8)] animate-scan-laser pointer-events-none" />
 
                                 {/* Resize Handles */}
-                                <div className="absolute -top-3 -left-3 w-6 h-6 cursor-nw-resize pointer-events-auto" onPointerDown={(e) => handlePointerDown('nw', e)}><div className="w-4 h-4 border-t-4 border-l-4 border-primary m-1" /></div>
-                                <div className="absolute -top-3 -right-3 w-6 h-6 cursor-ne-resize pointer-events-auto" onPointerDown={(e) => handlePointerDown('ne', e)}><div className="w-4 h-4 border-t-4 border-r-4 border-primary m-1 ml-auto" /></div>
-                                <div className="absolute -bottom-3 -left-3 w-6 h-6 cursor-sw-resize pointer-events-auto" onPointerDown={(e) => handlePointerDown('sw', e)}><div className="w-4 h-4 border-b-4 border-l-4 border-primary m-1 mt-auto" /></div>
-                                <div className="absolute -bottom-3 -right-3 w-6 h-6 cursor-se-resize pointer-events-auto" onPointerDown={(e) => handlePointerDown('se', e)}><div className="w-4 h-4 border-b-4 border-r-4 border-primary m-1 mt-auto ml-auto" /></div>
+                                <div className="absolute -top-4 -left-4 w-10 h-10 cursor-nw-resize pointer-events-auto" onPointerDown={(e) => handlePointerDown('nw', e)} />
+                                <div className="absolute -top-4 -right-4 w-10 h-10 cursor-ne-resize pointer-events-auto" onPointerDown={(e) => handlePointerDown('ne', e)} />
+                                <div className="absolute -bottom-4 -left-4 w-10 h-10 cursor-sw-resize pointer-events-auto" onPointerDown={(e) => handlePointerDown('sw', e)} />
+                                <div className="absolute -bottom-4 -right-4 w-10 h-10 cursor-se-resize pointer-events-auto" onPointerDown={(e) => handlePointerDown('se', e)} />
                             </div>
                         </div>
                     </div>
