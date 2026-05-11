@@ -89,7 +89,7 @@ export const SmartScannerModal: React.FC<SmartScannerModalProps> = ({
         window.addEventListener('pointerup', handlePointerUp);
     };
 
-    const extractCroppedImage = async (): Promise<string> => {
+    const extractCroppedImage = async (): Promise<{ base64: string, color: string }> => {
         return new Promise((resolve, reject) => {
             if (!imgRef.current || !containerRef.current) return reject('No image');
             
@@ -127,6 +127,27 @@ export const SmartScannerModal: React.FC<SmartScannerModalProps> = ({
 
             ctx.drawImage(img, sourceX, sourceY, sourceW, sourceH, 0, 0, sourceW, sourceH);
             
+            // Analyze dominant color
+            const pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            let r = 0, g = 0, b = 0;
+            const total = pixelData.length / 4;
+            for (let i = 0; i < pixelData.length; i += 4) {
+                r += pixelData[i];
+                g += pixelData[i+1];
+                b += pixelData[i+2];
+            }
+            r = Math.floor(r / total);
+            g = Math.floor(g / total);
+            b = Math.floor(b / total);
+
+            let color = 'unknown';
+            if (r > 180 && g > 60 && g < 160 && b < 80) color = 'orange'; // Betano
+            else if (g > 80 && r < 100 && b < 120) color = 'green'; // Bet365
+            else if (b > 100 && r < 80 && g < 150) color = 'blue'; // Sportingbet
+            else if (r > 150 && g < 70 && b < 70) color = 'red'; // KTO / Superbet
+            else if (r > 180 && g > 150 && b < 100) color = 'yellow'; // Estrela
+            else if (r < 50 && g < 50 && b < 50) color = 'black';
+
             // To improve OCR, scale up the cropped area if it's small
             const scaledCanvas = document.createElement('canvas');
             const scale = 2;
@@ -135,9 +156,9 @@ export const SmartScannerModal: React.FC<SmartScannerModalProps> = ({
             const sCtx = scaledCanvas.getContext('2d');
             if (sCtx) {
                 sCtx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
-                resolve(scaledCanvas.toDataURL('image/png', 1.0));
+                resolve({ base64: scaledCanvas.toDataURL('image/png', 1.0), color });
             } else {
-                resolve(canvas.toDataURL('image/png', 1.0));
+                resolve({ base64: canvas.toDataURL('image/png', 1.0), color });
             }
         });
     };
@@ -146,10 +167,10 @@ export const SmartScannerModal: React.FC<SmartScannerModalProps> = ({
         setIsScanning(true);
         setScanResult(null);
         try {
-            const base64 = await extractCroppedImage();
+            const { base64, color } = await extractCroppedImage();
             const ocrResult = await ocrService.runOCR(base64);
             const text = ocrResult.text.trim();
-            console.log(`[Smart Scanner] Raw text for ${type}:`, text);
+            console.log(`[Smart Scanner] Raw text for ${type}:`, text, 'Dominant color:', color);
 
             let value: any = text;
 
@@ -158,11 +179,41 @@ export const SmartScannerModal: React.FC<SmartScannerModalProps> = ({
                 value = text.replace(/,/g, '.').replace(/[^\d.-]/g, '');
                 if (value) value = parseFloat(value);
             } else if (type === 'bookmaker') {
-                const houses = ['betano', 'bet365', 'br4', 'nacional', 'sportingbet', 'kto', 'novibet', 'pixbet', 'estrela', 'superbet', 'parimatch', 'betway', 'dafabet', '1xbet', 'betfair', 'rivalo', 'playpix', 'shark', 'galera', 'r7', 'r7.bet'];
-                const found = houses.find(h => text.toLowerCase().includes(h));
+                const houses = [
+                    { id: 'Betano', keywords: ['betano', 'b'], color: 'orange' },
+                    { id: 'Bet365', keywords: ['bet365', '365'], color: 'green' },
+                    { id: 'BR4', keywords: ['br4'], color: 'unknown' },
+                    { id: 'Nacional', keywords: ['nacional', 'betnacional'], color: 'unknown' },
+                    { id: 'Sportingbet', keywords: ['sportingbet', 'sporting'], color: 'blue' },
+                    { id: 'KTO', keywords: ['kto'], color: 'red' },
+                    { id: 'Novibet', keywords: ['novibet', 'novi'], color: 'black' },
+                    { id: 'Pixbet', keywords: ['pixbet', 'pix'], color: 'unknown' },
+                    { id: 'Estrela', keywords: ['estrela', 'estrelabet'], color: 'yellow' },
+                    { id: 'Superbet', keywords: ['superbet', 'super'], color: 'red' },
+                    { id: 'Parimatch', keywords: ['parimatch', 'pari'], color: 'yellow' },
+                    { id: 'Betway', keywords: ['betway'], color: 'unknown' },
+                    { id: 'Dafabet', keywords: ['dafabet'], color: 'red' },
+                    { id: '1xbet', keywords: ['1xbet', '1x'], color: 'blue' },
+                    { id: 'Betfair', keywords: ['betfair'], color: 'orange' },
+                    { id: 'Rivalo', keywords: ['rivalo'], color: 'orange' },
+                    { id: 'Playpix', keywords: ['playpix'], color: 'unknown' },
+                    { id: 'R7.BET', keywords: ['r7', 'r7.bet'], color: 'unknown' }
+                ];
+                
+                const textLower = text.toLowerCase().trim();
+                let found = houses.find(h => h.keywords.some(k => textLower.includes(k) || (textLower === k)));
+                
+                // Color fallback if OCR text is very short or ambiguous
+                if ((!found || textLower.length <= 1) && color !== 'unknown') {
+                    const colorMatches = houses.filter(h => h.color === color);
+                    if (colorMatches.length > 0) {
+                        // If we have a specific color match and OCR was inconclusive
+                        found = colorMatches[0];
+                    }
+                }
+
                 if (found) {
-                    value = found.charAt(0).toUpperCase() + found.slice(1);
-                    if (value.toLowerCase().includes('r7')) value = 'R7.BET';
+                    value = found.id;
                 }
             }
 
