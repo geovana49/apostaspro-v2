@@ -131,27 +131,32 @@ class OCRService {
         this.progressCallback = onProgress || null;
         
         try {
-            console.log('[OCR] Resizing to 2000px for better segmentation...');
+            console.log('[OCR] Preparing image (2000px upscale)...');
             const upscaled = await this.resizeToMin(imageInput, 2000);
             
-            console.log('[OCR] Initializing worker...');
-            if (this.worker) await this.worker.terminate();
-            this.worker = await createWorker(['por', 'eng'], 1, {
-                logger: m => {
-                    if (m.status === 'recognizing text' && this.progressCallback) {
-                         this.progressCallback(Math.round(m.progress * 100));
-                    }
-                },
-            });
+            if (!this.worker) {
+                console.log('[OCR] Initializing new worker...');
+                this.worker = await createWorker(['por', 'eng'], 1, {
+                    logger: m => {
+                        if (m.status === 'recognizing text' && this.progressCallback) {
+                             this.progressCallback(Math.round(m.progress * 100));
+                        }
+                    },
+                });
+            }
 
-            console.log('[OCR] Recognizing (PSM 1)...');
+            console.log('[OCR] Recognizing (PSM 6)...');
             await this.worker.setParameters({
-                tessedit_pageseg_mode: '1' as any, // PSM 1 is automatic with OSD
+                tessedit_pageseg_mode: '6' as any, 
             });
 
             const { data } = await this.worker.recognize(upscaled);
             
-            console.log(`[OCR] Final Result: Text=${data.text?.length || 0}, Words=${data.words?.length || 0}, Lines=${data.lines?.length || 0}`);
+            console.log(`[OCR] Result: Text=${data.text?.length || 0}, Words=${data.words?.length || 0}`);
+            
+            if (data.words && data.words.length > 0) {
+                console.log('[OCR] First word found:', data.words[0].text);
+            }
 
             return {
                 text: data.text || '',
@@ -160,7 +165,11 @@ class OCRService {
                 blocks: data.blocks || []
             };
         } catch (err) {
-            console.error('[OCR] Fatal error:', err);
+            console.error('[OCR] Error:', err);
+            if (this.worker) {
+                try { await this.worker.terminate(); } catch(e) {}
+                this.worker = null;
+            }
             return { text: '', words: [], lines: [], blocks: [] };
         } finally {
             this.isBusy = false;
