@@ -8,167 +8,52 @@ export interface OCRResult {
 }
 
 /**
- * Hyper-Aggressive Local OCR Service
+ * Simple OCR Service — matches basic Tesseract.js usage
  */
 class OCRService {
-    async getWorker() {
-        if (!this.worker) {
-            try {
-                console.log('[OCR] Initializing Tesseract worker (por+eng)...');
-                const worker = await createWorker(['por', 'eng'], 1, {
-                    logger: m => {
-                        if (m.status === 'recognizing text' && this.progressCallback) {
-                             this.progressCallback(Math.round(m.progress * 100));
-                        }
-                    },
-                });
+    private worker: any = null;
+    private isBusy: boolean = false;
+    private progressCallback: ((p: number) => void) | null = null;
 
-                // PSM 11 is often better for sparse text in screenshots
-                await worker.setParameters({
-                    tessedit_pageseg_mode: '11' as any,
-                });
-
-                this.worker = worker;
-            } catch (err) {
-                console.error('[OCR] Worker initialization failed:', err);
-                throw err;
-            }
-        }
-        return this.worker;
-    }
-
-    private async preprocess(imageInput: string | Blob | File | HTMLImageElement): Promise<string | Blob | File> {
-        try {
-            return new Promise((resolve) => {
-                const img = new Image();
-                
-                const processImg = (source: HTMLImageElement | HTMLCanvasElement) => {
-                    const canvas = document.createElement('canvas');
-                    // Upscale 2x if small
-                    const scale = source.width < 1200 ? 2 : 1.2;
-                    canvas.width = source.width * scale;
-                    canvas.height = source.height * scale;
-                    
-                    const ctx = canvas.getContext('2d');
-                    if (!ctx) {
-                        resolve(imageInput as any);
-                        return;
-                    }
-
-                    ctx.fillStyle = 'white';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    // Standard contrast boost
-                    ctx.filter = 'contrast(1.4) grayscale(1)';
-                    ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
-                    
-                    canvas.toBlob((blob) => {
-                        resolve(blob || (imageInput as any));
-                    }, 'image/jpeg', 0.9);
-                };
-
-                if (imageInput instanceof HTMLImageElement) {
-                    if (imageInput.complete) {
-                        processImg(imageInput);
-                    } else {
-                        imageInput.onload = () => processImg(imageInput);
-                        imageInput.onerror = () => resolve(imageInput as any);
-                    }
-                } else {
-                    const url = typeof imageInput === 'string' ? imageInput : URL.createObjectURL(imageInput as Blob);
-                    img.onload = () => {
-                        processImg(img);
-                        if (url.startsWith('blob:')) URL.revokeObjectURL(url);
-                    };
-                    img.onerror = () => {
-                        if (url.startsWith('blob:')) URL.revokeObjectURL(url);
-                        resolve(imageInput as any);
-                    };
-                    img.src = url;
-                }
-            });
-        } catch (e) {
-            console.error('[OCR Preprocess] Error:', e);
-            return imageInput as any;
-        }
-    }
-
-    private async resizeToMin(imageInput: any, minWidth: number): Promise<string> {
-        return new Promise((resolve) => {
-            const img = new Image();
-            const process = (source: any) => {
-                const canvas = document.createElement('canvas');
-                const scale = source.width < minWidth ? minWidth / source.width : 1.5;
-                canvas.width = source.width * scale;
-                canvas.height = source.height * scale;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) return resolve('');
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
-                resolve(canvas.toDataURL('image/jpeg', 0.9));
-            };
-
-            if (imageInput instanceof HTMLImageElement) {
-                process(imageInput);
-            } else {
-                const url = typeof imageInput === 'string' ? imageInput : URL.createObjectURL(imageInput as Blob);
-                img.onload = () => {
-                    process(img);
-                    if (url.startsWith('blob:')) URL.revokeObjectURL(url);
-                };
-                img.src = url;
-            }
-        });
-    }
-
-    async runOCR(imageInput: string | Blob | File | HTMLImageElement, onProgress?: (p: number) => void): Promise<OCRResult> {
+    async runOCR(
+        imageInput: string | Blob | File | HTMLImageElement,
+        onProgress?: (p: number) => void
+    ): Promise<OCRResult> {
         if (this.isBusy) {
-            console.warn('[OCR] Busy, waiting...');
-            await new Promise(r => setTimeout(r, 1000));
+            await new Promise(r => setTimeout(r, 1500));
         }
-
         this.isBusy = true;
         this.progressCallback = onProgress || null;
-        
-        try {
-            console.log('[OCR] Preparing image (2000px upscale)...');
-            const upscaledDataUrl = await this.resizeToMin(imageInput, 2000);
-            
-            // Convert to Blob for better worker compatibility
-            const upscaledBlob = await (await fetch(upscaledDataUrl)).blob();
-            
-            if (!this.worker) {
-                console.log('[OCR] Initializing new worker (OEM 3)...');
-                this.worker = await createWorker(['por', 'eng'], 3 as any, {
-                    logger: m => {
-                        if (m.status === 'recognizing text' && this.progressCallback) {
-                             this.progressCallback(Math.round(m.progress * 100));
-                        }
-                    },
-                });
-            }
 
-            console.log('[OCR] Recognizing (PSM 3)...');
-            await this.worker.setParameters({
-                tessedit_pageseg_mode: '3' as any, 
+        // Always create a fresh worker — no state carryover
+        if (this.worker) {
+            try { await this.worker.terminate(); } catch (_) {}
+            this.worker = null;
+        }
+
+        try {
+            console.log('[OCR] Creating fresh worker...');
+            this.worker = await createWorker('por+eng', 1, {
+                logger: (m: any) => {
+                    if (m.status === 'recognizing text' && this.progressCallback) {
+                        this.progressCallback(Math.round(m.progress * 100));
+                    }
+                },
             });
 
-            const { data } = await this.worker.recognize(upscaledBlob);
-            
-            console.log(`[OCR] Result: Text=${data.text?.length || 0}, Words=${data.words?.length || 0}`);
-            
+            console.log('[OCR] Recognizing...');
+            const { data } = await this.worker.recognize(imageInput as any);
+
+            console.log(`[OCR] Done: text=${data.text?.length || 0}, words=${data.words?.length || 0}, lines=${data.lines?.length || 0}`);
+
             return {
                 text: data.text || '',
-                words: (data.words && data.words.length > 0) ? data.words : (data.lines || []),
+                words: data.words || [],
                 lines: data.lines || [],
-                blocks: data.blocks || []
+                blocks: data.blocks || [],
             };
         } catch (err) {
             console.error('[OCR] Error:', err);
-            if (this.worker) {
-                try { await this.worker.terminate(); } catch(e) {}
-                this.worker = null;
-            }
             return { text: '', words: [], lines: [], blocks: [] };
         } finally {
             this.isBusy = false;
