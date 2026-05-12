@@ -2220,61 +2220,44 @@ export const TextExtractionModal: React.FC<{
     onSelect?: (text: string) => void;
     zIndex?: number;
 }> = ({ isOpen, onClose, imageUrl, onSelect, zIndex = 200000 }) => {
-    const [lines, setLines] = useState<any[]>([]);
+    const [segments, setSegments] = useState<Array<{ text: string; bbox: any | null }>>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [progress, setProgress] = useState(0);
     const [error, setError] = useState<string | null>(null);
     const [copiedIndex, setCopiedIndex] = useState<string | null>(null);
-    const [imgRect, setImgRect] = useState<{ w: number, h: number, nw: number, nh: number } | null>(null);
+    const [imgRect, setImgRect] = useState<{ w: number; h: number; nw: number; nh: number } | null>(null);
     const imgRef = useRef<HTMLImageElement>(null);
-
-    const [selectedText, setSelectedText] = useState('');
-    const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (isOpen && imageUrl) {
-            extract();
-        } else {
-            setLines([]);
+            setSegments([]);
             setError(null);
             setProgress(0);
-            setSelectedText('');
+            // Wait for image to render before extracting
+            setTimeout(() => extract(), 600);
         }
     }, [isOpen, imageUrl]);
 
-    useEffect(() => {
-        const handleSelection = () => {
-            const selection = window.getSelection();
-            if (selection && selection.toString().trim().length > 0) {
-                setSelectedText(selection.toString());
-            } else {
-                setSelectedText('');
-            }
-        };
-        document.addEventListener('selectionchange', handleSelection);
-        return () => document.removeEventListener('selectionchange', handleSelection);
-    }, []);
-
     const extract = async () => {
         if (!imgRef.current) return;
-        
         setIsLoading(true);
         setError(null);
-        setProgress(0);
         try {
-            console.log('[Lens] Starting OCR for selectable overlay...');
-            // PSM 11 is used in service to find all text fragments
             const result = await ocrService.runOCR(imgRef.current, (p) => setProgress(p));
-            
+            let segs: Array<{ text: string; bbox: any | null }> = [];
             if (result.words && result.words.length > 0) {
-                setLines(result.words); // Using words for better selection granularity
-                console.log(`[Lens] Loaded ${result.words.length} selectable words.`);
-            } else {
-                console.warn('[Lens] No text found for overlay.');
-                setError('Nenhum texto identificado. Tente uma imagem mais nítida.');
+                segs = result.words.map((w: any) => ({ text: w.text, bbox: w.bbox || null }));
+            } else if (result.lines && result.lines.length > 0) {
+                segs = result.lines.map((l: any) => ({ text: l.text, bbox: l.bbox || null }));
+            } else if (result.text && result.text.trim().length > 0) {
+                segs = result.text.split('\n')
+                    .map((t: string) => t.trim())
+                    .filter((t: string) => t.length > 1)
+                    .map((text: string) => ({ text, bbox: null }));
             }
-        } catch (err: any) {
-            console.error("[Lens] OCR Error:", err);
+            if (segs.length > 0) setSegments(segs);
+            else setError('Nenhum texto encontrado. Tente uma imagem mais nítida.');
+        } catch {
             setError('Erro ao processar imagem.');
         } finally {
             setIsLoading(false);
@@ -2287,123 +2270,137 @@ export const TextExtractionModal: React.FC<{
                 w: imgRef.current.clientWidth,
                 h: imgRef.current.clientHeight,
                 nw: imgRef.current.naturalWidth || 1,
-                nh: imgRef.current.naturalHeight || 1
+                nh: imgRef.current.naturalHeight || 1,
             });
         }
     };
 
-    const handleCopySelection = () => {
-        if (selectedText) {
-            navigator.clipboard.writeText(selectedText);
-            setCopiedIndex('selection');
-            setTimeout(() => setCopiedIndex(null), 2000);
-            if (onSelect) onSelect(selectedText);
-        }
+    const handleCopy = (text: string, idx: string) => {
+        navigator.clipboard.writeText(text.trim());
+        setCopiedIndex(idx);
+        setTimeout(() => setCopiedIndex(null), 2000);
+        if (onSelect) onSelect(text.trim());
     };
+
+    const handleCopyAll = () => {
+        const all = segments.map((s) => s.text).join('\n');
+        navigator.clipboard.writeText(all);
+        setCopiedIndex('all');
+        setTimeout(() => setCopiedIndex(null), 2000);
+    };
+
+    const hasCoords = segments.length > 0 && segments[0].bbox !== null;
 
     if (!isOpen) return null;
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            title="Google Lens Scanner"
-            maxWidth="max-w-6xl"
-            zIndex={zIndex}
-        >
-            <div className="relative min-h-[500px] flex flex-col">
-                <div 
-                    ref={containerRef}
-                    onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
-                    className="flex-1 relative bg-[#0a0a0a] rounded-2xl overflow-hidden border border-white/5 flex items-center justify-center p-4 select-none"
-                >
-                    <div className="relative inline-block select-none" onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                        <img 
-                            ref={imgRef}
-                            src={imageUrl} 
-                            alt="Scan Target" 
-                            className="max-w-full max-h-[75vh] object-contain block rounded-lg shadow-2xl pointer-events-none select-none" 
-                            onLoad={handleImageLoad}
-                            crossOrigin="anonymous"
-                            draggable={false}
-                        />
-                        
-                        {/* Selectable Text Layer (Invisible but captures selection) */}
-                        {!isLoading && !error && imgRect && (
-                            <div className="absolute inset-0 z-20 overflow-hidden select-text" style={{ width: imgRect.w, height: imgRect.h }}>
-                                {lines.map((word, idx) => {
-                                    if (!word.bbox) return null;
-                                    const scaleX = imgRect.w / imgRect.nw;
-                                    const scaleY = imgRect.h / imgRect.nh;
-                                    
-                                    const style = {
-                                        position: 'absolute' as const,
-                                        left: word.bbox.x0 * scaleX,
-                                        top: word.bbox.y0 * scaleY,
-                                        width: (word.bbox.x1 - word.bbox.x0) * scaleX,
-                                        height: (word.bbox.y1 - word.bbox.y0) * scaleY,
-                                        fontSize: (word.bbox.y1 - word.bbox.y0) * scaleY * 0.9,
-                                        lineHeight: 1,
-                                        color: 'transparent',
-                                        backgroundColor: 'rgba(0, 242, 234, 0.08)',
-                                        whiteSpace: 'nowrap' as const,
-                                        cursor: 'text',
-                                        borderRadius: '2px'
-                                    };
-                                    
-                                    return (
-                                        <span key={idx} style={style} className="hover:bg-primary/20 transition-colors">
-                                            {word.text}
-                                        </span>
-                                    );
-                                })}
-                            </div>
-                        )}
+        <Modal isOpen={isOpen} onClose={onClose} title="Google Lens Scanner" maxWidth="max-w-7xl" zIndex={zIndex}>
+            <div className="flex flex-col gap-4" style={{ minHeight: '60vh' }}>
+                <div className="flex gap-3 flex-col md:flex-row" style={{ minHeight: '55vh' }}>
 
-                        {/* Floating Copy Button */}
-                        {selectedText && (
-                            <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-[200001] animate-in fade-in slide-in-from-bottom-4 duration-300">
-                                <button
-                                    onClick={handleCopySelection}
-                                    className="flex items-center gap-2 px-6 py-3 bg-primary text-black rounded-full font-black text-xs uppercase tracking-widest shadow-[0_10px_30px_rgba(0,242,234,0.4)] hover:scale-105 transition-transform"
-                                >
-                                    {copiedIndex === 'selection' ? <Check size={16} /> : <Copy size={16} />}
-                                    {copiedIndex === 'selection' ? 'Copiado!' : 'Copiar Seleção'}
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    {isLoading && (
-                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center gap-4 z-40">
-                            <div className="relative flex flex-col items-center">
-                                <Loader2 size={48} className="text-primary animate-spin mb-4" />
-                                <div className="w-48 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                                    <div 
-                                        className="h-full bg-primary transition-all duration-300 shadow-[0_0_10px_rgba(0,242,234,0.5)]" 
-                                        style={{ width: `${progress}%` }} 
-                                    />
+                    {/* LEFT: Image */}
+                    <div className="flex-1 relative bg-black/40 rounded-2xl border border-white/5 flex items-center justify-center p-3 overflow-hidden select-none min-h-[280px]">
+                        <div className="relative inline-block" onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                            <img
+                                ref={imgRef}
+                                src={imageUrl}
+                                alt="Scan"
+                                className="max-w-full max-h-[55vh] object-contain block rounded-lg shadow-2xl select-none pointer-events-none"
+                                onLoad={handleImageLoad}
+                                crossOrigin="anonymous"
+                                draggable={false}
+                            />
+                            {!isLoading && hasCoords && imgRect && (
+                                <div className="absolute inset-0 z-10" style={{ width: imgRect.w, height: imgRect.h }}>
+                                    {segments.map((seg, idx) => {
+                                        if (!seg.bbox) return null;
+                                        const sx = imgRect.w / imgRect.nw;
+                                        const sy = imgRect.h / imgRect.nh;
+                                        const isCopied = copiedIndex === `seg-${idx}`;
+                                        return (
+                                            <div
+                                                key={idx}
+                                                onClick={() => handleCopy(seg.text, `seg-${idx}`)}
+                                                className={`absolute cursor-pointer rounded-sm transition-all duration-150 ${isCopied ? 'bg-primary/50 ring-1 ring-primary' : 'bg-primary/10 hover:bg-primary/30'}`}
+                                                style={{
+                                                    left: seg.bbox.x0 * sx,
+                                                    top: seg.bbox.y0 * sy,
+                                                    width: (seg.bbox.x1 - seg.bbox.x0) * sx,
+                                                    height: (seg.bbox.y1 - seg.bbox.y0) * sy,
+                                                }}
+                                            />
+                                        );
+                                    })}
                                 </div>
-                                <p className="text-[10px] font-black text-white uppercase tracking-[0.2em] mt-3">
-                                    {progress > 0 ? `Processando: ${progress}%` : 'Analisando...'}
+                            )}
+                        </div>
+                        {isLoading && (
+                            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-4 rounded-2xl z-20">
+                                <Loader2 size={40} className="text-primary animate-spin" />
+                                <div className="w-40 h-1 bg-white/10 rounded-full overflow-hidden">
+                                    <div className="h-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }} />
+                                </div>
+                                <p className="text-[10px] font-black text-white uppercase tracking-[0.2em]">
+                                    {progress > 0 ? `${progress}%` : 'Lendo...'}
                                 </p>
                             </div>
-                        </div>
-                    )}
-                </div>
-
-                <div className="mt-6 flex flex-col items-center gap-4">
-                    <div className="flex items-center gap-3 px-6 py-3 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm">
-                        <MousePointer2 size={18} className="text-primary" />
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                            {isLoading ? 'Escaneando...' : 'Arraste para selecionar o texto na imagem'}
-                        </span>
+                        )}
                     </div>
 
-                    <button 
-                        onClick={onClose}
-                        className="px-8 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold uppercase tracking-wider transition-all border border-white/5"
-                    >
+                    {/* RIGHT: Copyable text list */}
+                    <div className="w-full md:w-72 flex flex-col bg-black/40 rounded-2xl border border-white/5 overflow-hidden">
+                        <div className="flex items-center justify-between px-4 pt-4 pb-2 border-b border-white/5">
+                            <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-1.5">
+                                <ScanLine size={12} /> Texto Identificado
+                            </span>
+                            {segments.length > 0 && (
+                                <button onClick={handleCopyAll} className="flex items-center gap-1 text-[9px] font-bold text-gray-500 hover:text-primary uppercase tracking-widest transition-colors">
+                                    {copiedIndex === 'all' ? <Check size={10} className="text-primary" /> : <Copy size={10} />}
+                                    {copiedIndex === 'all' ? 'Copiado!' : 'Tudo'}
+                                </button>
+                            )}
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                            {isLoading && <div className="flex justify-center items-center h-32 text-gray-600 text-xs">Processando...</div>}
+                            {!isLoading && error && (
+                                <div className="flex flex-col items-center justify-center h-32 gap-3 p-4 text-center">
+                                    <SearchX size={28} className="text-gray-600" />
+                                    <p className="text-gray-400 text-[11px]">{error}</p>
+                                    <button onClick={extract} className="px-4 py-1.5 text-[10px] font-bold bg-primary/20 text-primary rounded-lg hover:bg-primary/30 transition-colors">
+                                        Tentar novamente
+                                    </button>
+                                </div>
+                            )}
+                            {!isLoading && !error && segments.length === 0 && (
+                                <div className="flex justify-center items-center h-32 text-gray-600 text-xs">Aguardando...</div>
+                            )}
+                            {!isLoading && segments.map((seg, idx) => {
+                                const text = seg.text.trim();
+                                if (!text) return null;
+                                const isCopied = copiedIndex === `seg-${idx}`;
+                                return (
+                                    <button
+                                        key={idx}
+                                        onClick={() => handleCopy(text, `seg-${idx}`)}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-all border group relative flex items-center gap-2 ${
+                                            isCopied
+                                                ? 'bg-primary/20 border-primary/40 text-primary'
+                                                : 'bg-white/5 border-white/5 text-gray-300 hover:bg-white/10 hover:border-white/10'
+                                        }`}
+                                    >
+                                        <span className="flex-1 truncate">{text}</span>
+                                        <span className={`shrink-0 transition-opacity ${isCopied ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                            {isCopied ? <Check size={11} className="text-primary" /> : <Copy size={11} className="text-gray-500" />}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex justify-center pt-1">
+                    <button onClick={onClose} className="px-8 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold uppercase tracking-wider transition-all border border-white/5">
                         Fechar
                     </button>
                 </div>
@@ -2411,3 +2408,4 @@ export const TextExtractionModal: React.FC<{
         </Modal>
     );
 };
+
