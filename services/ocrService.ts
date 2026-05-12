@@ -132,11 +132,14 @@ class OCRService {
         
         try {
             console.log('[OCR] Preparing image (2000px upscale)...');
-            const upscaled = await this.resizeToMin(imageInput, 2000);
+            const upscaledDataUrl = await this.resizeToMin(imageInput, 2000);
+            
+            // Convert to Blob for better worker compatibility
+            const upscaledBlob = await (await fetch(upscaledDataUrl)).blob();
             
             if (!this.worker) {
-                console.log('[OCR] Initializing new worker...');
-                this.worker = await createWorker(['por', 'eng'], 1, {
+                console.log('[OCR] Initializing new worker (OEM 3)...');
+                this.worker = await createWorker(['por', 'eng'], 3 as any, {
                     logger: m => {
                         if (m.status === 'recognizing text' && this.progressCallback) {
                              this.progressCallback(Math.round(m.progress * 100));
@@ -145,22 +148,18 @@ class OCRService {
                 });
             }
 
-            console.log('[OCR] Recognizing (PSM 6)...');
+            console.log('[OCR] Recognizing (PSM 3)...');
             await this.worker.setParameters({
-                tessedit_pageseg_mode: '6' as any, 
+                tessedit_pageseg_mode: '3' as any, 
             });
 
-            const { data } = await this.worker.recognize(upscaled);
+            const { data } = await this.worker.recognize(upscaledBlob);
             
             console.log(`[OCR] Result: Text=${data.text?.length || 0}, Words=${data.words?.length || 0}`);
             
-            if (data.words && data.words.length > 0) {
-                console.log('[OCR] First word found:', data.words[0].text);
-            }
-
             return {
                 text: data.text || '',
-                words: data.words || [],
+                words: (data.words && data.words.length > 0) ? data.words : (data.lines || []),
                 lines: data.lines || [],
                 blocks: data.blocks || []
             };
