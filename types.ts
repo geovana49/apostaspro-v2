@@ -52,6 +52,7 @@ export interface Bet {
   extraGain?: number; // Optional extra gain/loss to add to profit calculation
   isDoubleGreen?: boolean; // Indicator for Double Green bets
   calcMode?: 'manual' | 'surebet' | 'freebet'; // Mode for calculating cover stakes
+  isQuickBet?: boolean; // Indicates if the bet was created via the quick entry form
 }
 
 export interface ExtraGain {
@@ -112,6 +113,7 @@ export enum Page {
   NOTES = 'notes',
   MONTHLY_HISTORY = 'monthlyHistory',
   NEW_BETS = 'newBets',
+  QUICK_BETS = 'quickBets',
 }
 
 export interface CaixaAccount {

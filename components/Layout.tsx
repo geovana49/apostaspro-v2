@@ -2,7 +2,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Menu, LayoutDashboard, Ticket, DollarSign, Bot, Settings, TrendingUp, User, LogOut, ChevronRight, X,
-  ArrowUp, ArrowDown, Cloud, CloudOff, RefreshCw, Calculator, Wallet, ClipboardList, BarChart3, Calendar, SlidersHorizontal
+  ArrowUp, ArrowDown, Cloud, CloudOff, RefreshCw, Calculator, Wallet, ClipboardList, BarChart3, Calendar, SlidersHorizontal,
+  Zap
 } from 'lucide-react';
 import { Page, AppSettings, SettingsTab } from '../types';
 
@@ -138,6 +139,7 @@ const Layout: React.FC<LayoutProps> = ({
   const navItems = [
     { id: Page.OVERVIEW, label: 'Visão Geral', icon: <LayoutDashboard size={20} /> },
     { id: Page.BETS, label: 'Minhas Apostas', icon: <Ticket size={20} /> },
+    { id: Page.QUICK_BETS, label: 'Apostas Rápidas', icon: <Zap size={20} /> },
     { id: Page.NEW_BETS, label: 'Filtros Avançados', icon: <SlidersHorizontal size={20} /> },
     { id: Page.GAINS, label: 'Ganhos Extras', icon: <DollarSign size={20} /> },
     { id: Page.CAIXA, label: 'Controle de Caixa', icon: <Wallet size={20} /> },
@@ -151,6 +153,7 @@ const Layout: React.FC<LayoutProps> = ({
     switch (page) {
       case Page.OVERVIEW: return 'Visão Geral';
       case Page.BETS: return 'Minhas Apostas';
+      case Page.QUICK_BETS: return 'Apostas Rápidas';
       case Page.GAINS: return 'Ganhos Extras';
       case Page.COACH: return 'Coach';
       case Page.SETTINGS: return 'Ajustes';

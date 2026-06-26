@@ -19,6 +19,7 @@ const Caixa = lazy(() => import('./components/Caixa'));
 const BlocoNotas = lazy(() => import('./components/BlocoNotas'));
 const MonthlyHistory = lazy(() => import('./components/MonthlyHistory'));
 const NewBets = lazy(() => import('./components/NewBets'));
+const QuickBets = lazy(() => import('./components/QuickBets'));
 
 // A simplified loading component for page transitions
 const PageLoader = () => (
@@ -419,6 +420,18 @@ const App: React.FC = () => {
                   promotions={promotions}
                   settings={settings}
                   setSettings={setSettings}
+                  currentUser={currentUser}
+                />
+              )}
+
+              {activePage === Page.QUICK_BETS && (
+                <QuickBets
+                  bets={bets}
+                  setBets={setBets}
+                  bookmakers={bookmakers}
+                  statuses={statuses}
+                  promotions={promotions}
+                  settings={settings}
                   currentUser={currentUser}
                 />
               )}
