@@ -8,6 +8,7 @@ import { Card, Button, Input, Dropdown, MoneyDisplay, Badge, Modal, BookmakerLog
 import { FireImage } from './ui/FireImage';
 import { FirestoreService } from '../services/firestoreService';
 import { calculateBetStats } from '../utils/betCalculations';
+import { analyzeImage } from '../services/aiService';
 
 interface QuickBetsProps {
   bets: Bet[];
@@ -55,18 +56,17 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
   // Tab 1: Matched Betting States
   const [mainOdd, setMainOdd] = useState('');
   const [mainStake, setMainStake] = useState('');
-  const [coverBookmakerId, setCoverBookmakerId] = useState('');
-  const [coverOdd, setCoverOdd] = useState('');
-  const [coverStake, setCoverStake] = useState('');
-  const [matchedWinner, setMatchedWinner] = useState<'main' | 'cover' | null>(null);
+  const [matchedCoverages, setMatchedCoverages] = useState<{id: string, bookmakerId: string, stake: string, odd: string}[]>([
+    { id: `cov_match_${Date.now()}`, bookmakerId: '', stake: '', odd: '' }
+  ]);
+  const [matchedWinner, setMatchedWinner] = useState<'main' | string | null>(null);
 
   // Tab 2: Freebet / Free Spins States
   const [freebetType, setFreebetType] = useState<'sports' | 'casino'>('sports');
   const [fbStake, setFbStake] = useState('');
   const [fbOdd, setFbOdd] = useState('');
-  const [fbCoverStake, setFbCoverStake] = useState('');
-  const [fbCoverOdd, setFbCoverOdd] = useState('');
-  const [fbWinner, setFbWinner] = useState<'main' | 'cover' | null>(null);
+  const [fbCoverages, setFbCoverages] = useState<{id: string, bookmakerId: string, stake: string, odd: string}[]>([]);
+  const [fbWinner, setFbWinner] = useState<'main' | string | null>(null);
   const [casinoReturn, setCasinoReturn] = useState('');
   const [casinoCost, setCasinoCost] = useState('');
 
@@ -74,20 +74,68 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
   const [manualResultType, setManualResultType] = useState<'profit' | 'loss'>('profit');
   const [manualValue, setManualValue] = useState('');
 
-  // History State
+  // History & Filter State
   const [selectedBetId, setSelectedBetId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterMonth, setFilterMonth] = useState<string>(() => String(new Date().getMonth() + 1).padStart(2, '0'));
+  const [filterYear, setFilterYear] = useState<string>(() => String(new Date().getFullYear()));
+  const [isAnalyzingAI, setIsAnalyzingAI] = useState(false);
+  const [aiMessage, setAiMessage] = useState<string | null>(null);
 
   // Set default bookmakers on load
   useEffect(() => {
     if (bookmakers.length > 0) {
       setMainBookmakerId(bookmakers[0].id);
-      if (bookmakers.length > 1) {
-        setCoverBookmakerId(bookmakers[1].id);
-      } else {
-        setCoverBookmakerId(bookmakers[0].id);
-      }
+      const defaultCover = bookmakers.length > 1 ? bookmakers[1].id : bookmakers[0].id;
+      setMatchedCoverages(prev => prev.map(c => ({...c, bookmakerId: c.bookmakerId || defaultCover})));
+      setFbCoverages(prev => prev.map(c => ({...c, bookmakerId: c.bookmakerId || defaultCover})));
     }
   }, [bookmakers]);
+
+  // ---- AI AUTO-FILL ----
+  const processImageWithAI = async (base64: string) => {
+    setIsAnalyzingAI(true);
+    setAiMessage('🤖 Analisando imagem com IA...');
+    try {
+      const result = await analyzeImage(base64);
+      if (result && result.confidence > 0.3 && result.data) {
+        const d = result.data;
+        // Try to match bookmaker by name
+        if (d.bookmaker) {
+          const matchBookie = bookmakers.find(b =>
+            b.name.toLowerCase().includes(d.bookmaker!.toLowerCase()) ||
+            d.bookmaker!.toLowerCase().includes(b.name.toLowerCase())
+          );
+          if (matchBookie) setMainBookmakerId(matchBookie.id);
+        }
+        // Fill odd and stake on active tab
+        if (activeTab === 'matched') {
+          if (d.odds) setMainOdd(String(d.odds));
+          if (d.value) setMainStake(String(d.value));
+        } else if (activeTab === 'freebet') {
+          if (d.odds) setFbOdd(String(d.odds));
+          if (d.value) setFbStake(String(d.value));
+        } else if (activeTab === 'manual') {
+          if (d.value) setManualValue(String(d.value));
+        }
+        // Fill event name
+        if (d.match) setEventDescription(d.match);
+        else if (d.description) setEventDescription(d.description);
+        // Fill date
+        if (d.date) setDate(d.date);
+        // Fill promo
+        if (d.promotionType && d.promotionType !== 'Nenhuma') setPromoType(d.promotionType);
+        setAiMessage(`✅ Campos preenchidos automaticamente (${result.source || 'IA'})`);
+      } else {
+        setAiMessage('⚠️ IA não conseguiu extrair dados. Preencha manualmente.');
+      }
+    } catch (e) {
+      setAiMessage('❌ Erro na análise de IA. Preencha manualmente.');
+    } finally {
+      setIsAnalyzingAI(false);
+      setTimeout(() => setAiMessage(null), 5000);
+    }
+  };
 
   // Support pasting image from clipboard (Ctrl + V)
   useEffect(() => {
@@ -112,6 +160,8 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
                 name: `print_copiado_${prev.length + 1}.png`
               }
             ]);
+            // Auto-fill fields with AI
+            processImageWithAI(base64);
           };
           reader.readAsDataURL(file);
         }
@@ -120,7 +170,8 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
 
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, bookmakers]);
 
   // Register global drop handler
   useLayoutEffect(() => {
@@ -139,6 +190,8 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
                   name: file.name
                 }
               ]);
+              // Auto-fill with AI on first image only
+              processImageWithAI(base64);
             };
             reader.readAsDataURL(file);
           }
@@ -148,7 +201,8 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
     return () => {
       (window as any).onApostasProDrop = null;
     };
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, bookmakers]);
 
   // Handle Drag & Drop Events
   const handleDragOver = (e: React.DragEvent) => {
@@ -179,6 +233,7 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
                 name: file.name
               }
             ]);
+            processImageWithAI(base64);
           };
           reader.readAsDataURL(file);
         }
@@ -217,47 +272,58 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
   const matchedStats = useMemo(() => {
     const sMain = parseFloat(mainStake) || 0;
     const oMain = parseFloat(mainOdd) || 0;
-    const sCover = parseFloat(coverStake) || 0;
-    const oCover = parseFloat(coverOdd) || 0;
+    
+    let totalCoverCost = 0;
+    const coverReturns: Record<string, number> = {};
+    let coversValid = true;
 
-    const returnMain = sMain * oMain;
-    const returnCover = sCover * oCover;
-    const totalCost = sMain + sCover;
+    matchedCoverages.forEach(cov => {
+        const sCov = parseFloat(cov.stake) || 0;
+        const oCov = parseFloat(cov.odd) || 0;
+        if (sCov <= 0 || oCov <= 0) coversValid = false;
+        totalCoverCost += sCov;
+        coverReturns[cov.id] = sCov * oCov;
+    });
 
-    const profitIfMainWins = returnMain - totalCost;
-    const profitIfCoverWins = returnCover - totalCost;
+    const totalCost = sMain + totalCoverCost;
+    const profitIfMainWins = (sMain * oMain) - totalCost;
 
     return {
       profitIfMainWins,
-      profitIfCoverWins,
+      coverReturns,
       totalCost,
-      isValid: sMain > 0 && oMain > 0 && sCover > 0 && oCover > 0
+      isValid: sMain > 0 && oMain > 0 && matchedCoverages.length > 0 && coversValid
     };
-  }, [mainStake, mainOdd, coverStake, coverOdd]);
+  }, [mainStake, mainOdd, matchedCoverages]);
 
   // Freebet Calculation
   const freebetStats = useMemo(() => {
     if (freebetType === 'sports') {
       const sFb = parseFloat(fbStake) || 0;
       const oFb = parseFloat(fbOdd) || 0;
-      const sCover = parseFloat(fbCoverStake) || 0;
-      const oCover = parseFloat(fbCoverOdd) || 0;
+      
+      let totalCoverCost = 0;
+      const coverReturns: Record<string, number> = {};
+      let coversValid = true;
 
-      // In sports freebet, the stake is not returned. Net return = Stake * (Odd - 1)
+      fbCoverages.forEach(cov => {
+          const sCov = parseFloat(cov.stake) || 0;
+          const oCov = parseFloat(cov.odd) || 0;
+          if (sCov <= 0 || oCov <= 0) coversValid = false;
+          totalCoverCost += sCov;
+          coverReturns[cov.id] = sCov * oCov;
+      });
+
       const returnFb = sFb * (oFb - 1);
-      const returnCover = sCover * oFb; // Wait, cover is normal bet, returns CoverStake * CoverOdd
-      // Let's standardise cover bet return: Stake * Odd
-      const actualCoverReturn = sCover * oCover;
-      const totalCost = sCover; // The freebet cost is 0, so user only spends cover stake
+      const totalCost = totalCoverCost;
 
       const profitIfMainWins = returnFb - totalCost;
-      const profitIfCoverWins = actualCoverReturn - totalCost;
 
       return {
         profitIfMainWins,
-        profitIfCoverWins,
+        coverReturns,
         totalCost,
-        isValid: sFb > 0 && oFb > 0 && sCover >= 0
+        isValid: sFb > 0 && oFb > 0 && (fbCoverages.length === 0 || coversValid)
       };
     } else {
       // Casino Free Spins
@@ -271,7 +337,7 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
         isValid: ret >= 0
       };
     }
-  }, [freebetType, fbStake, fbOdd, fbCoverStake, fbCoverOdd, casinoReturn, casinoCost]);
+  }, [freebetType, fbStake, fbOdd, fbCoverages, casinoReturn, casinoCost]);
 
   // Manual Calculation
   const manualStats = useMemo(() => {
@@ -287,11 +353,13 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
   const currentProfit = useMemo(() => {
     if (activeTab === 'matched') {
       if (!matchedStats.isValid || matchedWinner === null) return 0;
-      return matchedWinner === 'main' ? matchedStats.profitIfMainWins : matchedStats.profitIfCoverWins;
+      if (matchedWinner === 'main') return matchedStats.profitIfMainWins;
+      return (matchedStats.coverReturns[matchedWinner] || 0) - matchedStats.totalCost;
     } else if (activeTab === 'freebet') {
       if (freebetType === 'sports') {
         if (!freebetStats.isValid || fbWinner === null) return 0;
-        return fbWinner === 'main' ? freebetStats.profitIfMainWins : freebetStats.profitIfCoverWins;
+        if (fbWinner === 'main') return freebetStats.profitIfMainWins;
+        return (freebetStats.coverReturns[fbWinner] || 0) - freebetStats.totalCost;
       } else {
         return freebetStats.profit;
       }
@@ -327,15 +395,13 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
     // Matched tab resets
     setMainOdd('');
     setMainStake('');
-    setCoverOdd('');
-    setCoverStake('');
+    setMatchedCoverages([{ id: `cov_match_${Date.now()}`, bookmakerId: bookmakers.length > 1 ? bookmakers[1].id : bookmakers[0]?.id || '', stake: '', odd: '' }]);
     setMatchedWinner(null);
     
     // Freebet tab resets
     setFbStake('');
     setFbOdd('');
-    setFbCoverStake('');
-    setFbCoverOdd('');
+    setFbCoverages([]);
     setFbWinner(null);
     setCasinoReturn('');
     setCasinoCost('');
@@ -368,7 +434,8 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
         finalStatus = currentProfit >= 0 ? 'Green' : 'Red';
         if (!finalEventName) {
           const mainBookieName = bookmakers.find(b => b.id === mainBookmakerId)?.name || 'Casa';
-          const coverBookieName = bookmakers.find(b => b.id === coverBookmakerId)?.name || 'Cobertura';
+          const firstCoverId = matchedCoverages[0]?.bookmakerId || '';
+          const coverBookieName = bookmakers.find(b => b.id === firstCoverId)?.name || 'Cobertura';
           finalEventName = `Aposta Rápida: ${mainBookieName} x ${coverBookieName}`;
         }
 
@@ -381,14 +448,14 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
             stake: parseFloat(mainStake),
             status: matchedWinner === 'main' ? 'Green' : 'Red'
           },
-          {
-            id: `cov_cover_${Date.now()}`,
-            bookmakerId: coverBookmakerId,
+          ...matchedCoverages.map(cov => ({
+            id: cov.id,
+            bookmakerId: cov.bookmakerId || mainBookmakerId,
             market: 'Cobertura (Rápida)',
-            odd: parseFloat(coverOdd),
-            stake: parseFloat(coverStake),
-            status: matchedWinner === 'cover' ? 'Green' : 'Red'
-          }
+            odd: parseFloat(cov.odd) || 1.0,
+            stake: parseFloat(cov.stake) || 0,
+            status: matchedWinner === cov.id ? 'Green' : 'Red'
+          }))
         ];
       } else if (activeTab === 'freebet' && freebetType === 'sports') {
         finalStatus = currentProfit >= 0 ? 'Green' : 'Red';
@@ -409,17 +476,19 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
         ];
 
         // Add cover coverage if stake was used
-        const cStake = parseFloat(fbCoverStake) || 0;
-        if (cStake > 0) {
-          coverages.push({
-            id: `cov_cover_${Date.now()}`,
-            bookmakerId: coverBookmakerId || mainBookmakerId,
-            market: 'Cobertura Freebet',
-            odd: parseFloat(fbCoverOdd) || 1.0,
-            stake: cStake,
-            status: fbWinner === 'cover' ? 'Green' : 'Red'
-          });
-        }
+        fbCoverages.forEach(cov => {
+          const cStake = parseFloat(cov.stake) || 0;
+          if (cStake > 0) {
+            coverages.push({
+              id: cov.id,
+              bookmakerId: cov.bookmakerId || mainBookmakerId,
+              market: 'Cobertura Freebet',
+              odd: parseFloat(cov.odd) || 1.0,
+              stake: cStake,
+              status: fbWinner === cov.id ? 'Green' : 'Red'
+            });
+          }
+        });
       } else if (activeTab === 'freebet' && freebetType === 'casino') {
         finalStatus = 'Green';
         if (!finalEventName) {
@@ -521,9 +590,29 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
   };
 
   // --- HISTORY FILTERING ---
-  const quickBetsHistory = useMemo(() => {
-    return bets.filter(b => b.isQuickBet === true);
+  // All quick bets sorted newest first
+  const allQuickBets = useMemo(() => {
+    return bets.filter(b => b.isQuickBet === true).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [bets]);
+
+  // Filtered by month/year + search term
+  const quickBetsHistory = useMemo(() => {
+    return allQuickBets.filter(bet => {
+      const betDate = new Date(bet.date);
+      const matchesMonth = String(betDate.getMonth() + 1).padStart(2, '0') === filterMonth;
+      const matchesYear = String(betDate.getFullYear()) === filterYear;
+      const term = searchTerm.toLowerCase();
+      const matchesSearch = !term ||
+        bet.event?.toLowerCase().includes(term) ||
+        bookmakers.find(bm => bm.id === bet.mainBookmakerId)?.name.toLowerCase().includes(term);
+      return matchesMonth && matchesYear && matchesSearch;
+    });
+  }, [allQuickBets, filterMonth, filterYear, searchTerm, bookmakers]);
+
+  // Monthly profit from filtered bets
+  const monthlyProfit = useMemo(() => {
+    return quickBetsHistory.reduce((sum, bet) => sum + calculateBetStats(bet).profit, 0);
+  }, [quickBetsHistory]);
 
   const handleDeleteBet = async (betId: string) => {
     if (!currentUser) return;
@@ -731,49 +820,70 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
                       </div>
                     </div>
 
-                    {/* Cover Bet Column */}
-                    <div className="space-y-4 bg-white/[0.01] border border-white/[0.03] p-4 rounded-2xl relative">
-                      <div className="absolute top-3 right-3 text-[10px] font-black text-[#22d3ee] uppercase tracking-widest bg-[#22d3ee]/10 px-2 py-0.5 rounded border border-[#22d3ee]/20">Cobertura</div>
+                    {/* Cover Bet Column(s) */}
+                    <div className="space-y-4">
+                      {matchedCoverages.map((cov, index) => (
+                        <div key={cov.id} className="space-y-4 bg-white/[0.01] border border-white/[0.03] p-4 rounded-2xl relative">
+                          <div className="absolute top-3 right-3 flex items-center gap-2">
+                            {matchedCoverages.length > 1 && (
+                              <button 
+                                onClick={() => setMatchedCoverages(prev => prev.filter(c => c.id !== cov.id))}
+                                className="text-gray-500 hover:text-danger bg-[#05070e] p-1 rounded-md"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            )}
+                            <div className="text-[10px] font-black text-[#22d3ee] uppercase tracking-widest bg-[#22d3ee]/10 px-2 py-0.5 rounded border border-[#22d3ee]/20">Cobertura {index + 1}</div>
+                          </div>
 
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Casa de Cobertura</label>
-                        <Dropdown
-                          value={coverBookmakerId}
-                          onChange={setCoverBookmakerId}
-                          options={bookmakers.map(b => ({
-                            label: b.name,
-                            value: b.id,
-                            icon: <BookmakerLogo logo={b.logo} name={b.name} color={b.color} size="sm" />
-                          }))}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Stake Cobertura</label>
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold">R$</span>
-                            <Input
-                              type="number"
-                              placeholder="0,00"
-                              value={coverStake}
-                              onChange={e => setCoverStake(e.target.value)}
-                              className="pl-9 bg-[#05070e] border-white/5 focus:border-primary/50 text-white font-bold"
+                          <div className="space-y-2 mt-2">
+                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Casa de Cobertura</label>
+                            <Dropdown
+                              value={cov.bookmakerId}
+                              onChange={(val) => setMatchedCoverages(prev => prev.map(c => c.id === cov.id ? {...c, bookmakerId: val} : c))}
+                              options={bookmakers.map(b => ({
+                                label: b.name,
+                                value: b.id,
+                                icon: <BookmakerLogo logo={b.logo} name={b.name} color={b.color} size="sm" />
+                              }))}
                             />
                           </div>
-                        </div>
 
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Odd Cobertura</label>
-                          <Input
-                            type="number"
-                            placeholder="2.20"
-                            value={coverOdd}
-                            onChange={e => setCoverOdd(e.target.value)}
-                            className="bg-[#05070e] border-white/5 focus:border-primary/50 text-white font-bold"
-                          />
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Stake Cobertura</label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold">R$</span>
+                                <Input
+                                  type="number"
+                                  placeholder="0,00"
+                                  value={cov.stake}
+                                  onChange={(e) => setMatchedCoverages(prev => prev.map(c => c.id === cov.id ? {...c, stake: e.target.value} : c))}
+                                  className="pl-9 bg-[#05070e] border-white/5 focus:border-primary/50 text-white font-bold"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Odd Cobertura</label>
+                              <Input
+                                type="number"
+                                placeholder="2.20"
+                                value={cov.odd}
+                                onChange={(e) => setMatchedCoverages(prev => prev.map(c => c.id === cov.id ? {...c, odd: e.target.value} : c))}
+                                className="bg-[#05070e] border-white/5 focus:border-primary/50 text-white font-bold"
+                              />
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      ))}
+                      
+                      <button 
+                        onClick={() => setMatchedCoverages(prev => [...prev, {id: `cov_match_${Date.now()}`, bookmakerId: bookmakers[1]?.id || bookmakers[0]?.id || '', stake: '', odd: ''}])}
+                        className="w-full py-2 border-2 border-dashed border-white/10 rounded-xl text-gray-400 text-xs font-bold hover:text-white hover:border-white/30 hover:bg-white/5 flex items-center justify-center gap-2 transition-all"
+                      >
+                        <Plus size={14} /> Adicionar Cobertura
+                      </button>
                     </div>
                   </div>
 
@@ -782,11 +892,11 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
                     <div className="space-y-4 pt-2 border-t border-white/5 animate-in slide-in-from-top-2 duration-300">
                       <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">QUEM VENCEU?</p>
                       
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="flex flex-wrap gap-3">
                         <button
                           onClick={() => setMatchedWinner('main')}
                           className={`
-                            py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 border flex items-center justify-center gap-2 active:scale-95
+                            flex-1 py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 border flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap
                             ${matchedWinner === 'main'
                               ? 'bg-primary text-[#090c19] border-primary shadow-[0_0_15px_rgba(23,186,164,0.3)]'
                               : 'bg-white/5 text-gray-300 border-white/5 hover:bg-white/10 hover:text-white'
@@ -797,19 +907,22 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
                           <span>Casa Principal</span>
                         </button>
 
-                        <button
-                          onClick={() => setMatchedWinner('cover')}
-                          className={`
-                            py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 border flex items-center justify-center gap-2 active:scale-95
-                            ${matchedWinner === 'cover'
-                              ? 'bg-primary text-[#090c19] border-primary shadow-[0_0_15px_rgba(23,186,164,0.3)]'
-                              : 'bg-white/5 text-gray-300 border-white/5 hover:bg-white/10 hover:text-white'
-                            }
-                          `}
-                        >
-                          <CheckCircle2 size={14} className={matchedWinner === 'cover' ? 'fill-none' : 'opacity-30'} />
-                          <span>Casa Cobertura</span>
-                        </button>
+                        {matchedCoverages.map((cov, idx) => (
+                          <button
+                            key={cov.id}
+                            onClick={() => setMatchedWinner(cov.id)}
+                            className={`
+                              flex-1 py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 border flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap
+                              ${matchedWinner === cov.id
+                                ? 'bg-[#22d3ee] text-[#090c19] border-[#22d3ee] shadow-[0_0_15px_rgba(34,211,238,0.3)]'
+                                : 'bg-white/5 text-gray-300 border-white/5 hover:bg-white/10 hover:text-white'
+                              }
+                            `}
+                          >
+                            <CheckCircle2 size={14} className={matchedWinner === cov.id ? 'fill-none' : 'opacity-30'} />
+                            <span>Cob. {idx + 1}</span>
+                          </button>
+                        ))}
                       </div>
 
                       {/* Display calculations box */}
@@ -890,33 +1003,66 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
                         </div>
 
                         {/* Optional Coverage Inputs */}
-                        <div className="space-y-4 bg-white/[0.01] border border-white/[0.03] p-4 rounded-2xl">
-                          <p className="text-[10px] font-black text-[#22d3ee] uppercase tracking-widest mb-1">Cobertura (Opcional)</p>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-2">
-                              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Stake Cobertura</label>
-                              <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold">R$</span>
-                                <Input
-                                  type="number"
-                                  placeholder="0,00"
-                                  value={fbCoverStake}
-                                  onChange={e => setFbCoverStake(e.target.value)}
-                                  className="pl-9 bg-[#05070e] border-white/5 text-white font-bold"
+                        <div className="space-y-4">
+                          {fbCoverages.map((cov, index) => (
+                            <div key={cov.id} className="space-y-4 bg-white/[0.01] border border-white/[0.03] p-4 rounded-2xl relative">
+                              <div className="absolute top-3 right-3 flex items-center gap-2">
+                                <button 
+                                  onClick={() => setFbCoverages(prev => prev.filter(c => c.id !== cov.id))}
+                                  className="text-gray-500 hover:text-danger bg-[#05070e] p-1 rounded-md"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                                <div className="text-[10px] font-black text-[#22d3ee] uppercase tracking-widest bg-[#22d3ee]/10 px-2 py-0.5 rounded border border-[#22d3ee]/20">Cobertura {index + 1}</div>
+                              </div>
+
+                              <div className="space-y-2 mt-2">
+                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Casa de Cobertura</label>
+                                <Dropdown
+                                  value={cov.bookmakerId}
+                                  onChange={(val) => setFbCoverages(prev => prev.map(c => c.id === cov.id ? {...c, bookmakerId: val} : c))}
+                                  options={bookmakers.map(b => ({
+                                    label: b.name,
+                                    value: b.id,
+                                    icon: <BookmakerLogo logo={b.logo} name={b.name} color={b.color} size="sm" />
+                                  }))}
                                 />
                               </div>
+
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-2">
+                                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Stake Cobertura</label>
+                                  <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold">R$</span>
+                                    <Input
+                                      type="number"
+                                      placeholder="0,00"
+                                      value={cov.stake}
+                                      onChange={(e) => setFbCoverages(prev => prev.map(c => c.id === cov.id ? {...c, stake: e.target.value} : c))}
+                                      className="pl-9 bg-[#05070e] border-white/5 text-white font-bold"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Odd Cobertura</label>
+                                  <Input
+                                    type="number"
+                                    placeholder="1.50"
+                                    value={cov.odd}
+                                    onChange={(e) => setFbCoverages(prev => prev.map(c => c.id === cov.id ? {...c, odd: e.target.value} : c))}
+                                    className="bg-[#05070e] border-white/5 text-white font-bold"
+                                  />
+                                </div>
+                              </div>
                             </div>
-                            <div className="space-y-2">
-                              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Odd Cobertura</label>
-                              <Input
-                                type="number"
-                                placeholder="1.50"
-                                value={fbCoverOdd}
-                                onChange={e => setFbCoverOdd(e.target.value)}
-                                className="bg-[#05070e] border-white/5 text-white font-bold"
-                              />
-                            </div>
-                          </div>
+                          ))}
+                          
+                          <button 
+                            onClick={() => setFbCoverages(prev => [...prev, {id: `cov_fb_${Date.now()}`, bookmakerId: bookmakers[1]?.id || bookmakers[0]?.id || '', stake: '', odd: ''}])}
+                            className="w-full py-2 border-2 border-dashed border-white/10 rounded-xl text-gray-400 text-xs font-bold hover:text-white hover:border-white/30 hover:bg-white/5 flex items-center justify-center gap-2 transition-all"
+                          >
+                            <Plus size={14} /> Adicionar Cobertura Opcional
+                          </button>
                         </div>
                       </div>
 
@@ -925,11 +1071,11 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
                         <div className="space-y-4 pt-2 border-t border-white/5 animate-in slide-in-from-top-2 duration-300">
                           <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">RESULTADO DA APOSTA</p>
                           
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="flex flex-wrap gap-3">
                             <button
                               onClick={() => setFbWinner('main')}
                               className={`
-                                py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 border flex items-center justify-center gap-2 active:scale-95
+                                flex-1 py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 border flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap
                                 ${fbWinner === 'main'
                                   ? 'bg-primary text-[#090c19] border-primary shadow-[0_0_15px_rgba(23,186,164,0.3)]'
                                   : 'bg-white/5 text-gray-300 border-white/5 hover:bg-white/10 hover:text-white'
@@ -940,19 +1086,22 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
                               <span>Ganhou Freebet</span>
                             </button>
 
-                            <button
-                              onClick={() => setFbWinner('cover')}
-                              className={`
-                                py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 border flex items-center justify-center gap-2 active:scale-95
-                                ${fbWinner === 'cover'
-                                  ? 'bg-primary text-[#090c19] border-primary shadow-[0_0_15px_rgba(23,186,164,0.3)]'
-                                  : 'bg-white/5 text-gray-300 border-white/5 hover:bg-white/10 hover:text-white'
-                                }
-                              `}
-                            >
-                              <CheckCircle2 size={14} className={fbWinner === 'cover' ? 'fill-none' : 'opacity-30'} />
-                              <span>Ganhou Cobertura / Red</span>
-                            </button>
+                            {fbCoverages.map((cov, idx) => (
+                              <button
+                                key={cov.id}
+                                onClick={() => setFbWinner(cov.id)}
+                                className={`
+                                  flex-1 py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 border flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap
+                                  ${fbWinner === cov.id
+                                    ? 'bg-[#22d3ee] text-[#090c19] border-[#22d3ee] shadow-[0_0_15px_rgba(34,211,238,0.3)]'
+                                    : 'bg-white/5 text-gray-300 border-white/5 hover:bg-white/10 hover:text-white'
+                                  }
+                                `}
+                              >
+                                <CheckCircle2 size={14} className={fbWinner === cov.id ? 'fill-none' : 'opacity-30'} />
+                                <span>Cob. {idx + 1}</span>
+                              </button>
+                            ))}
                           </div>
 
                           {fbWinner && (
@@ -1190,11 +1339,79 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
       </div>
 
       {/* History Grid of Quick Bets */}
-      <div className="space-y-4 pt-4">
-        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 pl-1">
-          <Zap className="text-primary w-4.5 h-4.5" />
-          Histórico de Entradas Rápidas ({quickBetsHistory.length})
-        </h3>
+      <div className="space-y-5 pt-4">
+        {/* AI status message */}
+        {aiMessage && (
+          <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold border animate-in slide-in-from-top-2 duration-300 ${
+            aiMessage.startsWith('✅') ? 'bg-[#10b981]/10 border-[#10b981]/20 text-[#10b981]' :
+            aiMessage.startsWith('❌') ? 'bg-danger/10 border-danger/20 text-danger' :
+            'bg-primary/10 border-primary/20 text-primary'
+          }`}>
+            {isAnalyzingAI && <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />}
+            {aiMessage}
+          </div>
+        )}
+
+        {/* Filters header */}
+        <div className="bg-[#0d1421]/60 border border-white/5 rounded-2xl p-4 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+              <Zap className="text-primary w-4 h-4" />
+              Histórico de Entradas Rápidas
+            </h3>
+            {/* Month profit card */}
+            <div className={`flex items-center gap-3 px-4 py-2 rounded-xl border ${monthlyProfit >= 0 ? 'bg-[#10b981]/10 border-[#10b981]/20' : 'bg-danger/10 border-danger/20'}`}>
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Resultado do Mês</p>
+                <p className={`text-base font-black ${monthlyProfit >= 0 ? 'text-[#10b981]' : 'text-danger'}`}>
+                  {monthlyProfit >= 0 ? '+' : ''}<MoneyDisplay value={monthlyProfit} />
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Search + Filters Row */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Search bar */}
+            <div className="relative flex-1">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <input
+                type="text"
+                placeholder="Buscar por evento ou casa..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-[#05070e] border border-white/5 rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-primary/40 transition-colors"
+              />
+            </div>
+            {/* Month filter */}
+            <select
+              value={filterMonth}
+              onChange={e => setFilterMonth(e.target.value)}
+              className="bg-[#05070e] border border-white/5 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-primary/40 cursor-pointer"
+            >
+              {['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => (
+                <option key={m} value={m}>
+                  {new Date(2000, parseInt(m) - 1, 1).toLocaleString('pt-BR', { month: 'long' })}
+                </option>
+              ))}
+            </select>
+            {/* Year filter */}
+            <select
+              value={filterYear}
+              onChange={e => setFilterYear(e.target.value)}
+              className="bg-[#05070e] border border-white/5 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-primary/40 cursor-pointer"
+            >
+              {[2023, 2024, 2025, 2026, 2027].map(y => (
+                <option key={y} value={String(y)}>{y}</option>
+              ))}
+            </select>
+          </div>
+          {/* Results count */}
+          <p className="text-[10px] text-gray-600 font-bold uppercase tracking-wider">
+            {quickBetsHistory.length} entrada{quickBetsHistory.length !== 1 ? 's' : ''} encontrada{quickBetsHistory.length !== 1 ? 's' : ''}
+            {searchTerm && ` para "${searchTerm}"`}
+          </p>
+        </div>
 
         {quickBetsHistory.length === 0 ? (
           <div className="bg-[#0d1421]/30 border border-dashed border-white/5 rounded-3xl p-16 text-center flex flex-col items-center justify-center gap-3">

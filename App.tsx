@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useMemo } from 'react';
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
 import { FirestoreService } from "./services/firestoreService";
@@ -389,6 +389,9 @@ const App: React.FC = () => {
     );
   }
 
+  const regularBets = useMemo(() => bets.filter(b => !b.isQuickBet), [bets]);
+  const quickBets = useMemo(() => bets.filter(b => b.isQuickBet), [bets]);
+
   return (
     <Suspense fallback={<div className="min-h-screen bg-[#020617] flex items-center justify-center text-white">Carregando...</div>}>
       <div className="min-h-screen bg-[#090c19]">
@@ -409,11 +412,11 @@ const App: React.FC = () => {
             notesCount={notes.filter(n => !n.completed).length}
           >
             <Suspense fallback={<PageLoader />}>
-              {activePage === Page.OVERVIEW && <Overview bets={bets} gains={gains} settings={settings} setSettings={setSettings} bookmakers={bookmakers} />}
+              {activePage === Page.OVERVIEW && <Overview bets={regularBets} gains={gains} settings={settings} setSettings={setSettings} bookmakers={bookmakers} />}
 
               {activePage === Page.BETS && (
                 <MyBets
-                  bets={bets}
+                  bets={regularBets}
                   setBets={setBets}
                   bookmakers={bookmakers}
                   statuses={statuses}
@@ -426,7 +429,7 @@ const App: React.FC = () => {
 
               {activePage === Page.QUICK_BETS && (
                 <QuickBets
-                  bets={bets}
+                  bets={quickBets}
                   setBets={setBets}
                   bookmakers={bookmakers}
                   statuses={statuses}
@@ -454,7 +457,7 @@ const App: React.FC = () => {
 
               {activePage === Page.COACH && (
                 <Coach
-                  bets={bets}
+                  bets={regularBets}
                   gains={gains}
                   bookmakers={bookmakers}
                   statuses={statuses}
