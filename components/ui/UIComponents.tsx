@@ -138,6 +138,13 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({ isOpen, on
   // State for HSV/Alpha
   const [hsv, setHsv] = useState({ h: 0, s: 0, v: 0 });
   const [alpha, setAlpha] = useState(1);
+
+  const emitChange = (newHsv: { h: number; s: number; v: number }, newAlpha: number) => {
+    setHsv(newHsv);
+    setAlpha(newAlpha);
+    const rgb = hsvToRgb(newHsv.h, newHsv.s / 100, newHsv.v / 100);
+    onChange(rgbToHex(rgb.r, rgb.g, rgb.b, newAlpha));
+  };
   const [inputMode, setInputMode] = useState<'HEX' | 'RGB' | 'HSL'>('HEX');
 
   // Dragging state (ref only for performance)

@@ -138,7 +138,7 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
     
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
-      Array.from(files).forEach(file => {
+      Array.from(files).forEach((file: any) => {
         if (file.type.startsWith('image/')) {
           const reader = new FileReader();
           reader.onload = (event) => {
@@ -161,7 +161,7 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      Array.from(files).forEach(file => {
+      Array.from(files).forEach((file: any) => {
         const reader = new FileReader();
         reader.onload = (event) => {
           const base64 = event.target?.result as string;
@@ -1400,7 +1400,7 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
                         className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/zoom:opacity-100 transition-opacity duration-200"
                       >
                         <Eye size={18} className="text-white" />
-                      </a style="display:none;">
+                      </a>
                       
                       <span className="absolute bottom-2 left-2 px-2.5 py-0.5 bg-black/70 border border-white/5 text-[9px] font-black text-white/90 rounded-md select-none">
                         Print {idx + 1}

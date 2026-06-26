@@ -43,8 +43,7 @@ const Coach: React.FC<CoachProps> = ({ bets, gains, bookmakers, statuses }) => {
     scrollToBottom();
   }, [messages]);
 
-  // --- Gemini Setup ---
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
 
   const sendMessage = async () => {
     if (!input.trim()) return;

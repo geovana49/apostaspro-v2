@@ -19,6 +19,8 @@ export interface HouseResult {
     computedStake: number;  // calculated stake
     responsibility: number; // for Layer bets
     profitIfWin: number;    // net profit if this house's selection wins
+    tempIsLay?: boolean;
+    tempCommDec?: number;
 }
 
 export interface ArbResult {

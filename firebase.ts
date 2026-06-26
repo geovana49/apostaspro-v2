@@ -26,7 +26,7 @@ export const storage = getStorage(app);
 // Nota: ForceLongPolling ativado para maior resiliência em redes móveis instáveis
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({
-    tabManager: persistentSingleTabManager(),
+    tabManager: persistentSingleTabManager({}),
     cacheSizeBytes: 100 * 1024 * 1024 // 100MB limit for better mobile performance
   }),
   experimentalForceLongPolling: true

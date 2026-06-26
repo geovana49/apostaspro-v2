@@ -52,7 +52,7 @@ export const FireImage: React.FC<FireImageProps> = ({
             }
 
             try {
-                const dataUrl = await FirestoreService.getPhotoData(userId, parentId, photoId, type);
+                const dataUrl = await FirestoreService.getPhotoData(userId, parentId, photoId, type as 'bets' | 'gains');
                 if (isMounted) {
                     if (dataUrl) {
                         photoCache[photoId] = dataUrl;

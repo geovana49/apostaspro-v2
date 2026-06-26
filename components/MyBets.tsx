@@ -343,7 +343,8 @@ const MyBets: React.FC<MyBetsProps> = ({ bets, setBets, bookmakers, statuses, pr
                 status: overallStatus,
                 coverages: newCoverages,
                 notes: `[DEBUG] IA: ${results[0].source || 'Local'}\n[RAW]: ${results[0].rawText?.substring(0, 200)}...`,
-                isDoubleGreen: false
+                isDoubleGreen: false,
+                calcMode: 'manual'
             };
 
             setIsEditing(false);
