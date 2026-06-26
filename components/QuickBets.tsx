@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useLayoutEffect } from 'react';
 import {
   Zap, UploadCloud, Trash2, Image as ImageIcon, Sparkles, Calculator,
   AlertCircle, CheckCircle2, ArrowUpRight, ArrowDownRight, Eye, X, Calendar, Plus, Trash
