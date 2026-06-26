@@ -122,6 +122,34 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
     return () => window.removeEventListener('paste', handlePaste);
   }, []);
 
+  // Register global drop handler
+  useLayoutEffect(() => {
+    (window as any).onApostasProDrop = (files: FileList) => {
+      if (files && files.length > 0) {
+        Array.from(files).forEach((file: any) => {
+          if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              const base64 = event.target?.result as string;
+              setTempPhotos(prev => [
+                ...prev,
+                {
+                  id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                  base64,
+                  name: file.name
+                }
+              ]);
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+      }
+    };
+    return () => {
+      (window as any).onApostasProDrop = null;
+    };
+  }, []);
+
   // Handle Drag & Drop Events
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -527,8 +555,8 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
             <Zap className="text-primary w-6 h-6 fill-primary/10" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Apostas Rápidas</h1>
-            <p className="text-gray-500 text-xs font-semibold uppercase tracking-widest mt-0.5">Salve suas entradas e coberturas de forma ultra veloz</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Apostas Rápidas</h1>
+            <p className="text-gray-500 text-[10px] sm:text-xs font-semibold uppercase tracking-widest mt-0.5 max-w-[200px] sm:max-w-none leading-tight sm:leading-normal">Salve suas entradas e coberturas de forma ultra veloz</p>
           </div>
         </div>
 
@@ -545,12 +573,12 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
         
         {/* Left Column: Visual Proof / Drag & Drop & Clipboard */}
         <div className="lg:col-span-5 space-y-4">
-          <div className="flex items-center justify-between pl-1">
-            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-              <ImageIcon size={16} className="text-primary" />
+          <div className="flex items-center justify-between pl-1 gap-2 flex-wrap">
+            <h3 className="text-[11px] sm:text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 sm:gap-2">
+              <ImageIcon size={14} className="text-primary shrink-0" />
               Provas Visuais (Prints)
             </h3>
-            <span className="text-[10px] text-gray-500 font-bold bg-[#151b2e] px-2.5 py-1 rounded-md border border-white/5">Ctrl+V ativo na tela</span>
+            <span className="text-[9px] sm:text-[10px] text-gray-500 font-bold bg-[#151b2e] px-2 py-1 rounded-md border border-white/5 whitespace-nowrap">Ctrl+V ativo na tela</span>
           </div>
 
           <div
@@ -634,7 +662,7 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as QuickBetTab)}
                     className={`
-                      flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl text-xs font-bold transition-all duration-300 relative
+                      flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 sm:py-3 px-1 sm:px-2 rounded-xl text-[10px] sm:text-xs font-bold transition-all duration-300 relative text-center leading-tight
                       ${isActive 
                         ? 'text-white bg-white/[0.03] shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]' 
                         : 'text-gray-400 hover:text-white hover:bg-white/[0.01]'
@@ -642,10 +670,10 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
                     `}
                   >
                     {isActive && (
-                      <span className="absolute bottom-0 left-4 right-4 h-[2px] bg-primary rounded-t-full shadow-[0_0_8px_#17baa4]" />
+                      <span className="absolute bottom-0 left-2 right-2 sm:left-4 sm:right-4 h-[2px] bg-primary rounded-t-full shadow-[0_0_8px_#17baa4]" />
                     )}
                     {tab.icon}
-                    <span>{tab.label}</span>
+                    <span className="whitespace-nowrap sm:whitespace-normal">{tab.label}</span>
                   </button>
                 );
               })}
