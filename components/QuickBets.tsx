@@ -79,6 +79,7 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMonth, setFilterMonth] = useState<string>(() => String(new Date().getMonth() + 1).padStart(2, '0'));
   const [filterYear, setFilterYear] = useState<string>(() => String(new Date().getFullYear()));
+  const [filterCategory, setFilterCategory] = useState<'all' | 'surebet' | 'freebet' | 'manual'>('all');
   const [isAnalyzingAI, setIsAnalyzingAI] = useState(false);
   const [aiMessage, setAiMessage] = useState<string | null>(null);
 
@@ -98,34 +99,53 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
     setAiMessage('🤖 Analisando imagem com IA...');
     try {
       const result = await analyzeImage(base64);
-      if (result && result.confidence > 0.3 && result.data) {
+      if (result && result.confidence > 0.1 && result.data) {
         const d = result.data;
-        // Try to match bookmaker by name
+        let filledFields: string[] = [];
+
+        // ---- Flexible bookmaker matching ----
         if (d.bookmaker) {
-          const matchBookie = bookmakers.find(b =>
-            b.name.toLowerCase().includes(d.bookmaker!.toLowerCase()) ||
-            d.bookmaker!.toLowerCase().includes(b.name.toLowerCase())
-          );
-          if (matchBookie) setMainBookmakerId(matchBookie.id);
+          const aiName = d.bookmaker.toLowerCase()
+            .replace(/[.\-_]/g, '') // strip dots/hyphens (bet365.com → bet365)
+            .replace(/\s+/g, '');   // strip spaces
+
+          const matchBookie = bookmakers.find(b => {
+            const bName = b.name.toLowerCase().replace(/[.\-_\s]/g, '');
+            const bUrl  = (b.siteUrl || '').toLowerCase().replace(/https?:\/\//, '').replace(/[.\-_\s\/]/g, '');
+            return bName.includes(aiName) || aiName.includes(bName) ||
+                   bUrl.includes(aiName) || aiName.includes(bUrl);
+          });
+
+          if (matchBookie) {
+            setMainBookmakerId(matchBookie.id);
+            filledFields.push(`Casa: ${matchBookie.name}`);
+          } else {
+            filledFields.push(`Casa detectada: "${d.bookmaker}" (não cadastrada)`);
+          }
         }
         // Fill odd and stake on active tab
         if (activeTab === 'matched') {
-          if (d.odds) setMainOdd(String(d.odds));
-          if (d.value) setMainStake(String(d.value));
+          if (d.odds) { setMainOdd(String(d.odds)); filledFields.push(`Odd: ${d.odds}`); }
+          if (d.value) { setMainStake(String(d.value)); filledFields.push(`Stake: R$${d.value}`); }
         } else if (activeTab === 'freebet') {
-          if (d.odds) setFbOdd(String(d.odds));
-          if (d.value) setFbStake(String(d.value));
+          if (d.odds) { setFbOdd(String(d.odds)); filledFields.push(`Odd: ${d.odds}`); }
+          if (d.value) { setFbStake(String(d.value)); filledFields.push(`Valor: R$${d.value}`); }
         } else if (activeTab === 'manual') {
-          if (d.value) setManualValue(String(d.value));
+          if (d.value) { setManualValue(String(d.value)); filledFields.push(`Valor: R$${d.value}`); }
         }
         // Fill event name
-        if (d.match) setEventDescription(d.match);
-        else if (d.description) setEventDescription(d.description);
+        if (d.match) { setEventDescription(d.match); filledFields.push(`Evento: ${d.match.substring(0, 25)}`); }
+        else if (d.description) { setEventDescription(d.description); }
         // Fill date
-        if (d.date) setDate(d.date);
+        if (d.date) { setDate(d.date); filledFields.push(`Data: ${d.date}`); }
         // Fill promo
         if (d.promotionType && d.promotionType !== 'Nenhuma') setPromoType(d.promotionType);
-        setAiMessage(`✅ Campos preenchidos automaticamente (${result.source || 'IA'})`);
+
+        if (filledFields.length > 0) {
+          setAiMessage(`✅ IA preencheu: ${filledFields.slice(0, 3).join(' · ')}`);
+        } else {
+          setAiMessage('⚠️ IA não encontrou dados no print. Preencha manualmente.');
+        }
       } else {
         setAiMessage('⚠️ IA não conseguiu extrair dados. Preencha manualmente.');
       }
@@ -568,7 +588,7 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
         photos: photoIds,
         notes: notes.trim(),
         isQuickBet: true,
-        calcMode: activeTab === 'matched' ? 'surebet' : 'manual'
+        calcMode: activeTab === 'matched' ? 'surebet' : activeTab === 'freebet' ? 'freebet' : 'manual'
       };
 
       // 4. Save to Firestore
@@ -595,7 +615,7 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
     return bets.filter(b => b.isQuickBet === true).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [bets]);
 
-  // Filtered by month/year + search term
+  // Filtered by month/year + search term + category
   const quickBetsHistory = useMemo(() => {
     return allQuickBets.filter(bet => {
       const betDate = new Date(bet.date);
@@ -605,9 +625,10 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
       const matchesSearch = !term ||
         bet.event?.toLowerCase().includes(term) ||
         bookmakers.find(bm => bm.id === bet.mainBookmakerId)?.name.toLowerCase().includes(term);
-      return matchesMonth && matchesYear && matchesSearch;
+      const matchesCategory = filterCategory === 'all' || bet.calcMode === filterCategory;
+      return matchesMonth && matchesYear && matchesSearch && matchesCategory;
     });
-  }, [allQuickBets, filterMonth, filterYear, searchTerm, bookmakers]);
+  }, [allQuickBets, filterMonth, filterYear, searchTerm, filterCategory, bookmakers]);
 
   // Monthly profit from filtered bets
   const monthlyProfit = useMemo(() => {
@@ -1406,6 +1427,30 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
               ))}
             </select>
           </div>
+          {/* Category filter buttons */}
+          <div className="flex flex-wrap gap-2">
+            {([
+              { value: 'all', label: 'Todos', color: 'text-gray-400 border-white/10 hover:border-white/30' },
+              { value: 'surebet', label: 'Com Cobertura', color: 'text-primary border-primary/20 hover:border-primary/50 bg-primary/5' },
+              { value: 'freebet', label: 'Freebet / Spins', color: 'text-[#a78bfa] border-[#a78bfa]/20 hover:border-[#a78bfa]/50 bg-[#a78bfa]/5' },
+              { value: 'manual', label: 'Entrada Manual', color: 'text-[#f59e0b] border-[#f59e0b]/20 hover:border-[#f59e0b]/50 bg-[#f59e0b]/5' },
+            ] as const).map(cat => (
+              <button
+                key={cat.value}
+                onClick={() => setFilterCategory(cat.value)}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider border transition-all duration-200 ${
+                  filterCategory === cat.value
+                    ? cat.color + ' opacity-100 shadow-sm'
+                    : 'text-gray-600 border-white/5 hover:text-gray-400 opacity-70'
+                }`}
+              >
+                {cat.label}
+                {filterCategory === cat.value && (
+                  <span className="ml-2 text-[9px] opacity-70">({allQuickBets.filter(b => cat.value === 'all' || b.calcMode === cat.value).length})</span>
+                )}
+              </button>
+            ))}
+          </div>
           {/* Results count */}
           <p className="text-[10px] text-gray-600 font-bold uppercase tracking-wider">
             {quickBetsHistory.length} entrada{quickBetsHistory.length !== 1 ? 's' : ''} encontrada{quickBetsHistory.length !== 1 ? 's' : ''}
@@ -1438,9 +1483,14 @@ export const QuickBets: React.FC<QuickBetsProps> = ({
                   />
 
                   <div className="space-y-4 pl-2">
-                    {/* Top Row: Date + Trash */}
+                    {/* Top Row: Date + Category badge + Trash */}
                     <div className="flex justify-between items-center w-full">
-                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">{bDate.toLocaleDateString('pt-BR')}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">{bDate.toLocaleDateString('pt-BR')}</span>
+                        {bet.calcMode === 'surebet' && <span className="text-[8px] font-black uppercase bg-primary/10 border border-primary/20 text-primary px-1.5 py-0.5 rounded">Cobertura</span>}
+                        {bet.calcMode === 'freebet' && <span className="text-[8px] font-black uppercase bg-[#a78bfa]/10 border border-[#a78bfa]/20 text-[#a78bfa] px-1.5 py-0.5 rounded">Freebet</span>}
+                        {bet.calcMode === 'manual' && <span className="text-[8px] font-black uppercase bg-[#f59e0b]/10 border border-[#f59e0b]/20 text-[#f59e0b] px-1.5 py-0.5 rounded">Manual</span>}
+                      </div>
                       
                       <div className="flex items-center gap-2">
                         {bet.photos && bet.photos.length > 0 && (

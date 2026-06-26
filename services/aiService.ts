@@ -1,4 +1,4 @@
-// AI Service v2.1 - Hybrid OCR + AI Fallback
+// AI Service v3.0 - Gemini Vision Primary + OCR Fallback
 import { ocrService, OCRResult } from './ocrService';
 export interface AIAnalysisResult {
     type: 'bet' | 'gain' | 'unknown';
@@ -31,181 +31,145 @@ export interface BookmakerExtraction {
 }
 
 const HF_API_KEY = (import.meta as any).env.VITE_HF_API_KEY || '';
+const GEMINI_API_KEY = (import.meta as any).env.VITE_GEMINI_API_KEY || '';
 
 const analysisCache = new Map<string, AIAnalysisResult>();
 
 /**
- * Analyzes a bet screenshot using Hugging Face Vision Models
- * @param imageBase64 - Base64 encoded image (with or without data URI prefix)
- * @param context - Optional context of recent bets to improve accuracy
- * @returns Structured bet information
+ * Analyzes a bet screenshot using Gemini Vision API (primary) + OCR (fallback)
  */
 export async function analyzeImage(imageBase64: string, context?: any): Promise<AIAnalysisResult> {
-    // 0. Try Deterministic Local OCR First (Zero Cost, No Limits)
-    let localData: any = null;
-    try {
-        console.log('[AI v2.1] Attempting Local OCR extraction...');
-        localData = await ocrService.extractData(imageBase64);
+    // Cache check
+    const cacheKey = imageBase64.substring(0, 100);
+    if (analysisCache.has(cacheKey)) {
+        console.log('[AI v3.0] Returning cached analysis.');
+        return analysisCache.get(cacheKey)!;
+    }
 
-        // If we found HIGH QUALITY data (Stake AND Odds), return immediately!
-        if (localData && localData.stake && localData.odds) {
-            console.log('[AI Service] Local OCR High-Quality Success:', localData);
+    // ---- PRIMARY: Gemini Vision API ----
+    if (GEMINI_API_KEY) {
+        try {
+            console.log('[AI v3.0] Trying Gemini Vision API...');
+
+            // Strip data URI prefix if present
+            const base64Data = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
+            const mimeType = imageBase64.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
+
+            const prompt = `Você é um especialista em apostas esportivas brasileiras. Analise este print de tela de uma casa de apostas.
+
+IDENTIFIQUE A CASA DE APOSTAS usando QUALQUER pista visual disponível:
+- Nome visível no app/site (Bet365, Betano, KTO, Sportingbet, Pixbet, Novibet, etc.)
+- URL na barra de endereço (bet365.com, betano.com, kto.com, etc.)
+- Logo/ícone da casa (cor, formato, símbolo)
+- Watermark ou rodapé da página
+- Qualquer texto de marca registrada
+
+EXTRAIA os dados VISÍVEIS no print:
+
+Retorne SOMENTE um JSON válido neste formato exato (use null para campos não visíveis):
+{
+  "bookmaker": "nome da casa de apostas ou null",
+  "event": "nome do evento/partida (ex: Flamengo x Vasco) ou null",
+  "market": "mercado da aposta (ex: Resultado Final, Ambas Marcam) ou null",
+  "odds": número_decimal ou null,
+  "stake": valor_em_reais como número ou null,
+  "date": "data no formato DD/MM/YYYY ou null",
+  "status": "Green se ganhou, Red se perdeu, Pendente se em aberto, ou null"
+}
+
+Responda APENAS com o JSON, sem explicações.`;
+
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: prompt },
+                                { inline_data: { mime_type: mimeType, data: base64Data } }
+                            ]
+                        }],
+                        generationConfig: { temperature: 0.1, maxOutputTokens: 512 }
+                    })
+                }
+            );
+
+            if (response.ok) {
+                const geminiData = await response.json();
+                const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                console.log('[AI v3.0] Gemini raw response:', rawText);
+
+                // Parse JSON from response (handle markdown code blocks)
+                const jsonMatch = rawText.match(/```json\s*([\s\S]*?)\s*```/) ||
+                                  rawText.match(/```\s*([\s\S]*?)\s*```/) ||
+                                  [null, rawText];
+                const jsonStr = jsonMatch[1]?.trim() || rawText.trim();
+
+                const parsed = JSON.parse(jsonStr);
+
+                const result: AIAnalysisResult = {
+                    type: 'bet',
+                    confidence: 0.92,
+                    data: {
+                        bookmaker: parsed.bookmaker || undefined,
+                        value: parsed.stake || undefined,
+                        odds: parsed.odds || undefined,
+                        date: parsed.date ? normalizeDate(parsed.date) : undefined,
+                        match: parsed.event || undefined,
+                        market: parsed.market || undefined,
+                        status: parsed.status || undefined,
+                    },
+                    rawText,
+                    source: 'Gemini Vision',
+                    analysisType: 'remote',
+                    suggestions: ['✨ Extraído via Gemini Vision AI']
+                };
+
+                analysisCache.set(cacheKey, result);
+                return result;
+            }
+        } catch (geminiError) {
+            console.warn('[AI v3.0] Gemini failed:', geminiError);
+        }
+    }
+
+    // ---- FALLBACK: Local OCR ----
+    try {
+        console.log('[AI v3.0] Falling back to Local OCR...');
+        const localData = await ocrService.extractData(imageBase64);
+
+        if (localData && (localData.stake || localData.odds)) {
             return {
                 type: 'bet',
-                confidence: 1.0,
+                confidence: 0.6,
                 data: {
-                    bookmaker: localData.bookmaker || 'Casa via OCR',
-                    value: localData.stake,
-                    odds: localData.odds,
-                    market: localData.market || 'Mercado via OCR',
-                    match: localData.event || 'Evento via OCR',
-                    date: localData.date || normalizeDate(),
-                    promotionType: localData.promotion || 'Nenhuma'
+                    bookmaker: localData.bookmaker || undefined,
+                    value: localData.stake || undefined,
+                    odds: localData.odds || undefined,
+                    market: localData.market || undefined,
+                    match: localData.event || undefined,
+                    date: localData.date ? normalizeDate(localData.date) : undefined,
                 },
-                source: 'Local OCR',
+                source: 'OCR Local',
                 analysisType: 'local',
-                rawText: localData.raw || JSON.stringify(localData),
-                words: localData.words,
-                suggestions: ['Processado Localmente (Instantâneo)']
+                rawText: localData.raw,
+                suggestions: ['Dados extraídos via OCR - verifique os valores']
             };
         }
-    } catch (e) {
-        console.warn('[AI Service] Local OCR failed, falling back to AI Proxy:', e);
+    } catch (ocrError) {
+        console.warn('[AI v3.0] OCR also failed:', ocrError);
     }
 
-    console.log('[AI Service] Local OCR insufficient or partial. Activating AI Proxy...');
-
-    // Basic deduplication: Check session cache first
-    if (analysisCache.has(imageBase64)) {
-        console.log('[AI Service] Returning cached analysis for identical image.');
-        return analysisCache.get(imageBase64)!;
-    }
-
-    console.log('[AI Service] Starting analysis via Proxy API with context:', !!context);
-
-    let attempts = 0;
-    const maxAttempts = 2;
-
-    while (attempts < maxAttempts) {
-        try {
-            const response = await fetch('/api/analyze', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    image: imageBase64,
-                    context: context // Passing recent bets/bookmakers for few-shot learning
-                })
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-
-                // If it's a 429 on the first try, wait 3s and retry
-                if (response.status === 429 && attempts === 0) {
-                    console.warn('[AI Service] Quota hit (429). Retrying in 3s...');
-                    attempts++;
-                    await new Promise(r => setTimeout(r, 3000));
-                    continue;
-                }
-
-                throw new Error(errorData.error || `Erro no servidor: ${response.status}`);
-            }
-
-            const { data } = await response.json();
-            if (!data) throw new Error("A IA respondeu mas os dados vieram vazios ou mal formatados.");
-
-            console.log('[AI Service] Proxy structured response received:', data);
-
-            // Helper to clean hallucinations like "Sucesso via..."
-            const clean = (val: string) => val?.replace(/Sucesso via.*/gi, '').trim() || '';
-
-            // Map the structured data directly
-            const result: AIAnalysisResult = {
-                type: data.type === 'gain' ? 'gain' : 'bet',
-                confidence: 0.95,
-                data: {
-                    bookmaker: clean(data.bookmaker),
-                    value: data.stake,
-                    odds: data.odds,
-                    date: normalizeDate(data.date),
-                    description: clean(data.market),
-                    market: clean(data.market),
-                    match: clean(data.event),
-                    status: 'Yellow',
-                    promotionType: data.promotion || 'Nenhuma'
-                },
-                rawText: JSON.stringify(data),
-                source: data.source || 'AI Proxy',
-                analysisType: 'remote',
-                suggestions: []
-            };
-
-            // Cache for future identical requests in this session
-            analysisCache.set(imageBase64, result);
-            return result;
-
-        } catch (error) {
-            console.error(`[AI Service] Attempt ${attempts + 1} failed:`, error);
-
-            // --- RECOVERY MODE: If AI fails perfectly but we have SOME OCR data, use it! ---
-            if (localData) {
-                console.log('[AI Service] AI Failed, but recovering via Partial Local OCR.');
-                // Try to get a decent match/market from raw text if missing
-                const rawLines = localData.raw?.split('\n').filter((l: string) => l.length > 5) || [];
-                return {
-                    type: 'bet',
-                    confidence: 0.5,
-                    data: {
-                        bookmaker: localData.bookmaker || (rawLines[0]?.substring(0, 20)) || 'Casa Automática',
-                        value: localData.stake || 0,
-                        odds: localData.odds || 1.0,
-                        market: localData.market || (rawLines[1]?.substring(0, 40)) || 'Mercado via OCR',
-                        match: localData.event || (rawLines[2]?.substring(0, 40)) || 'Evento via OCR',
-                        date: localData.date || normalizeDate(),
-                        promotionType: 'Nenhuma'
-                    },
-                    source: 'Local OCR (Recuperado)',
-                    analysisType: 'partial',
-                    rawText: localData.raw || JSON.stringify(localData),
-                    words: localData.words,
-                    suggestions: ['⚠️ Limite de IA atingido - Dados originais carregados (Verifique!)']
-                };
-            }
-
-            if (attempts >= maxAttempts - 1) {
-                console.warn('[AI Service] All methods failed. Returning blank scaffold.');
-                return {
-                    type: 'bet',
-                    confidence: 0,
-                    data: {
-                        bookmaker: 'Casa (Preencha)',
-                        value: 0,
-                        odds: 1.0,
-                        market: 'Preencha',
-                        match: 'Preencha',
-                        date: normalizeDate(),
-                    },
-                    source: localData ? 'Local OCR (Falha na Extração)' : 'Erro Total',
-                    analysisType: localData ? 'partial' : 'remote',
-                    rawText: localData?.raw || 'Nenhum texto detectado no print.',
-                    suggestions: ['⚠️ Não foi possível extrair dados automaticamente. Por favor, preencha manualmente.']
-                };
-            }
-            attempts++;
-            await new Promise(r => setTimeout(r, 2000));
-        }
-    }
-
-    // Final safety return
+    // ---- TOTAL FAILURE ----
     return {
-        type: 'bet',
+        type: 'unknown',
         confidence: 0,
-        data: { date: normalizeDate() },
-        source: 'Erro Inesperado',
-        rawText: 'Nenhum dado capturado devido a um erro inesperado.',
-        suggestions: ['Erro inesperado. Tente preencher manualmente.']
+        data: {},
+        source: 'Erro',
+        analysisType: 'partial',
+        suggestions: ['Não foi possível extrair dados. Configure VITE_GEMINI_API_KEY ou preencha manualmente.']
     };
 }
 
